@@ -1,0 +1,30 @@
+{
+  "name": "Forge Loop",
+  "short_name": "Forge",
+  "description": "Entrenamiento local-first con tarjetas, swipes, PRs, backups y progreso offline.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f8f6ee",
+  "theme_color": "#f8f6ee",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/assets/training-path.png",
+      "sizes": "864x1821",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}
