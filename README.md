@@ -971,6 +971,12 @@ Cuenta de usuario:
 - La unicidad se valida contra los handles de las personas demo.
 - Se persiste en `social.account`. Editable desde la pestana Amigos (chip "Editar").
 
+Perfil de un amigo:
+
+- Al pulsar sobre una persona (en Amigos, resultados de busqueda o cabecera del chat) se abre su perfil.
+- Muestra Nivel, Gym Score (con tier), racha, desglose de pilares y entrenos recientes.
+- Datos demo deterministas por persona (`buildFriendHistory` con RNG sembrado desde el id); reusa `calculateGymScore`/`getLevelProgress`/`getDayStreak`.
+
 Amigos:
 
 - Buscador por nombre o `@usuario` arriba (filtra todas las personas).
@@ -1002,7 +1008,7 @@ Pendiente:
 - Geolocalizacion real en iOS via puente nativo (ver seccion 11).
 - Segmento Chats/Amigos que ocupaba toda la pantalla: el overlay usaba grid de 2 filas con 3 hijos; se paso a flexbox.
 - Cabeceras de overlays (Mensajes/Chat/Notificaciones) colisionaban con la barra de estado del iPhone (reloj) y la flecha de volver no era pulsable: se anadio `env(safe-area-inset-top)` al padding superior. Ademas, al abrir un chat desde la lista, el overlay de Mensajes queda debajo para que "atras" vuelva a la lista de conversaciones.
-- Tab-bar que seguia desapareciendo (p. ej. al abrir "Buscar compañero"): el `backdrop-filter` del tab-bar lo hacia desvanecerse en WKWebView. Se quito el `backdrop-filter` y se dejo fondo solido. Layout: `phone-stage` es un grid de 3 filas (`auto minmax(0,1fr) auto`); en escritorio el tab-bar es la 3ª fila EN FLUJO (al fondo de la tarjeta) y en MOVIL es `position: fixed` anclado al fondo del viewport (siempre visible). El `<nav class="tab-bar">` se movio en el JSX a despues de `.screen-body`.
+- Tab-bar que seguia desapareciendo (incl. al iniciar/seleccionar entreno): `position: fixed` es fragil en WKWebView (se desvanece durante animaciones de cambio de vista). Solucion final y a prueba de balas: el tab-bar es SIEMPRE una fila EN FLUJO del grid de 3 filas del `phone-stage` (`auto minmax(0,1fr) auto`), sin `position: fixed` ni `backdrop-filter`. Como `phone-stage` ocupa 100svh, la fila queda fija al fondo de la pantalla y nunca puede recortarse/desaparecer. El `<nav class="tab-bar">` va en el JSX despues de `.screen-body`.
 - Formulario "Buscar compañero" (Partner): ahora se puede cerrar siempre (el boton de cabecera alterna a "Cerrar" y hay un boton "Cancelar"), sin necesidad de crear un plan.
 
 ## 23. Instruccion para futuras sesiones

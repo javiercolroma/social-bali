@@ -2159,6 +2159,7 @@ function App() {
   const [activeOverlay, setActiveOverlay] = useState<'messages' | 'notifications' | null>(null)
   const [messagesInitialTab, setMessagesInitialTab] = useState<'chats' | 'friends'>('chats')
   const [activeConversationPersonId, setActiveConversationPersonId] = useState<string | null>(null)
+  const [activeProfilePersonId, setActiveProfilePersonId] = useState<string | null>(null)
   const [editingAccount, setEditingAccount] = useState(false)
   const activeConversationRef = useRef<string | null>(null)
   const social = useSocial(activeConversationRef)
@@ -3053,6 +3054,7 @@ function App() {
             onAcceptFriendRequest={social.acceptFriendRequest}
             onRejectFriendRequest={social.rejectFriendRequest}
             onEditAccount={() => setEditingAccount(true)}
+            onOpenProfile={(personId) => setActiveProfilePersonId(personId)}
           />
         )}
 
@@ -3075,6 +3077,14 @@ function App() {
             onClose={() => setActiveConversationPersonId(null)}
             onSend={(text) => social.sendMessage(activeConversationPersonId, text)}
             onMarkRead={() => social.markConversationRead(activeConversationPersonId)}
+            onOpenProfile={(personId) => setActiveProfilePersonId(personId)}
+          />
+        )}
+
+        {activeProfilePersonId && getPerson(social.social, activeProfilePersonId) && (
+          <FriendProfile
+            person={getPerson(social.social, activeProfilePersonId)!}
+            onClose={() => setActiveProfilePersonId(null)}
           />
         )}
 
@@ -4519,6 +4529,154 @@ function SocialAvatar({ person, size = 'md' }: { person?: SocialPerson; size?: '
   )
 }
 
+const friendExercisePool: Array<[string, number, number, number]> = [
+  ['Press banca', 4, 6, 80],
+  ['Sentadilla trasera', 5, 5, 110],
+  ['Peso muerto', 3, 5, 140],
+  ['Remo con barra', 4, 8, 70],
+  ['Press militar', 4, 6, 45],
+  ['Dominadas lastradas', 4, 6, 15],
+  ['Hip thrust', 4, 8, 120],
+  ['Press inclinado', 4, 8, 55],
+  ['Jalón dorsal', 3, 10, 60],
+  ['Curl de bíceps', 3, 12, 25],
+]
+
+function hashSeed(value: string) {
+  let hash = 0
+  for (let i = 0; i < value.length; i += 1) {
+    hash = (hash * 31 + value.charCodeAt(i)) >>> 0
+  }
+  return hash
+}
+
+function makeSeededRandom(seed: number) {
+  let state = seed >>> 0
+  return () => {
+    state = (state + 0x6d2b79f5) >>> 0
+    let t = Math.imul(state ^ (state >>> 15), 1 | state)
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296
+  }
+}
+
+// Deterministic demo training history for a friend (no backend yet).
+function buildFriendHistory(person: SocialPerson): HistoryEntry[] {
+  const rng = makeSeededRandom(hashSeed(person.id))
+  const strengthFactor = 0.6 + rng() * 0.85
+  const sessions = 10 + Math.floor(rng() * 4)
+  const entries: HistoryEntry[] = []
+  const base = new Date()
+  base.setHours(18, 0, 0, 0)
+
+  for (let s = 0; s < sessions; s += 1) {
+    const dayOffset = Math.round(((sessions - 1 - s) / Math.max(1, sessions - 1)) * 24)
+    const date = new Date(base)
+    date.setDate(base.getDate() - dayOffset)
+    const sessionId = `friend-${person.id}-${s}`
+    const exerciseCount = 3 + Math.floor(rng() * 2)
+
+    for (let e = 0; e < exerciseCount; e += 1) {
+      const [name, sets, reps, baseWeight] = friendExercisePool[Math.floor(rng() * friendExercisePool.length)]
+      const weight = Math.max(0, Math.round((baseWeight * strengthFactor) / 2.5) * 2.5)
+      const completedAt = new Date(date)
+      completedAt.setMinutes(date.getMinutes() + e * 6)
+      entries.push({
+        id: `${sessionId}-${e}`,
+        exerciseId: `${sessionId}-${e}`,
+        exerciseName: name,
+        day: 'Entreno',
+        status: 'done',
+        sets,
+        reps,
+        weight,
+        volume: sets * reps * weight,
+        xp: xpRules.set * sets,
+        completedAt: completedAt.toISOString(),
+        isPr: false,
+        sessionId,
+      })
+    }
+  }
+
+  return entries
+}
+
+function FriendProfile({ person, onClose }: { person: SocialPerson; onClose: () => void }) {
+  const history = useMemo(() => buildFriendHistory(person), [person])
+  const gymScore = useMemo(() => calculateGymScore(history), [history])
+  const totalXp = useMemo(() => history.reduce((total, entry) => total + entry.xp, 0) + 600, [history])
+  const level = getLevelProgress(totalXp)
+  const streak = getDayStreak(history)
+  const sessionsCount = new Set(history.map((entry) => entry.sessionId)).size
+  const recent = useMemo(
+    () =>
+      [...history]
+        .sort((first, second) => new Date(second.completedAt).getTime() - new Date(first.completedAt).getTime())
+        .slice(0, 8),
+    [history],
+  )
+
+  return (
+    <section className="social-overlay friend-profile" aria-label={`Perfil de ${person.name}`}>
+      <header className="chat-head">
+        <button type="button" className="chat-back" onClick={onClose} aria-label="Volver">
+          <ArrowLeft size={18} />
+        </button>
+        <SocialAvatar person={person} />
+        <div className="chat-head-main">
+          <strong>{person.name}</strong>
+          <span>@{person.handle} · {person.gym}</span>
+        </div>
+      </header>
+
+      <div className="social-overlay-body">
+        <div className="friend-profile-summary">
+          <div>
+            <span>Nivel</span>
+            <strong>{level.level}</strong>
+          </div>
+          <div>
+            <span>Gym Score</span>
+            <strong>{gymScore.total}</strong>
+            <small>{gymScore.tier}</small>
+          </div>
+          <div>
+            <span>Racha</span>
+            <strong>{streak} 🔥</strong>
+          </div>
+        </div>
+
+        <section className="gym-score-card" aria-label="Desglose">
+          <div className="score-breakdown">
+            <ScoreBar label="Fuerza" value={gymScore.strength} />
+            <ScoreBar label="Constancia" value={gymScore.consistency} />
+            <ScoreBar label="Progreso" value={gymScore.progression} />
+            <ScoreBar label="Volumen" value={gymScore.volume} />
+            <ScoreBar label="Calidad" value={gymScore.quality} />
+            <ScoreBar label="Variedad" value={gymScore.variety} />
+          </div>
+        </section>
+
+        <section className="friend-history">
+          <h3>Entrenos recientes · {sessionsCount} sesiones</h3>
+          <ul>
+            {recent.map((entry) => (
+              <li key={entry.id}>
+                <div className="friend-main">
+                  <strong>{entry.exerciseName}</strong>
+                  <span>{entry.sets}×{entry.reps} · {entry.weight} kg</span>
+                </div>
+                <time>{formatShortTime(entry.completedAt)}</time>
+              </li>
+            ))}
+          </ul>
+        </section>
+      </div>
+    </section>
+  )
+}
+
 function MessagesOverlay({
   social,
   initialTab = 'chats',
@@ -4528,6 +4686,7 @@ function MessagesOverlay({
   onAcceptFriendRequest,
   onRejectFriendRequest,
   onEditAccount,
+  onOpenProfile,
 }: {
   social: SocialState
   initialTab?: 'chats' | 'friends'
@@ -4537,6 +4696,7 @@ function MessagesOverlay({
   onAcceptFriendRequest: (personId: string) => void
   onRejectFriendRequest: (personId: string) => void
   onEditAccount: () => void
+  onOpenProfile: (personId: string) => void
 }) {
   const [tab, setTab] = useState<'chats' | 'friends'>(initialTab)
 
@@ -4613,6 +4773,7 @@ function MessagesOverlay({
             onAcceptFriendRequest={onAcceptFriendRequest}
             onRejectFriendRequest={onRejectFriendRequest}
             onEditAccount={onEditAccount}
+            onOpenProfile={onOpenProfile}
           />
         )}
       </div>
@@ -4627,6 +4788,7 @@ function FriendsView({
   onAcceptFriendRequest,
   onRejectFriendRequest,
   onEditAccount,
+  onOpenProfile,
 }: {
   social: SocialState
   onOpenChat: (personId: string) => void
@@ -4634,6 +4796,7 @@ function FriendsView({
   onAcceptFriendRequest: (personId: string) => void
   onRejectFriendRequest: (personId: string) => void
   onEditAccount: () => void
+  onOpenProfile: (personId: string) => void
 }) {
   const [query, setQuery] = useState('')
   const incoming = social.people.filter((person) => getRelationship(social, person.id) === 'incoming')
@@ -4656,11 +4819,13 @@ function FriendsView({
 
     return (
       <li key={person.id}>
-        <SocialAvatar person={person} />
-        <div className="friend-main">
-          <strong>{person.name}</strong>
-          <span>@{person.handle}</span>
-        </div>
+        <button type="button" className="friend-open" onClick={() => onOpenProfile(person.id)}>
+          <SocialAvatar person={person} />
+          <div className="friend-main">
+            <strong>{person.name}</strong>
+            <span>@{person.handle}</span>
+          </div>
+        </button>
         {status === 'incoming' ? (
           <div className="friend-actions">
             <button type="button" className="friend-accept" onClick={() => onAcceptFriendRequest(person.id)} aria-label="Aceptar">
@@ -4850,6 +5015,7 @@ function ChatScreen({
   onClose,
   onSend,
   onMarkRead,
+  onOpenProfile,
 }: {
   person?: SocialPerson
   conversation?: Conversation
@@ -4857,6 +5023,7 @@ function ChatScreen({
   onClose: () => void
   onSend: (text: string) => void
   onMarkRead: () => void
+  onOpenProfile: (personId: string) => void
 }) {
   const [draft, setDraft] = useState('')
   const bodyRef = useRef<HTMLDivElement>(null)
@@ -4889,11 +5056,18 @@ function ChatScreen({
         <button type="button" className="chat-back" onClick={onClose} aria-label="Volver">
           <ArrowLeft size={18} />
         </button>
-        <SocialAvatar person={person} />
-        <div className="chat-head-main">
-          <strong>{person?.name ?? 'Compañero'}</strong>
-          <span>{relationship === 'friends' ? `Amigo · ${person?.gym ?? ''}` : person?.gym ?? 'Compañero de entreno'}</span>
-        </div>
+        <button
+          type="button"
+          className="chat-head-open"
+          onClick={() => person && onOpenProfile(person.id)}
+          disabled={!person}
+        >
+          <SocialAvatar person={person} />
+          <div className="chat-head-main">
+            <strong>{person?.name ?? 'Compañero'}</strong>
+            <span>{relationship === 'friends' ? `Amigo · ${person?.gym ?? ''}` : person?.gym ?? 'Compañero de entreno'}</span>
+          </div>
+        </button>
       </header>
 
       <div className="chat-body" ref={bodyRef}>
