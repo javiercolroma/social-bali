@@ -63,7 +63,6 @@ struct ActivityView: View {
                        msg: "Completa y guarda entrenos para medir tu evolución de carga y volumen.")
         } else {
             trendCard
-            volumeCard
             strengthCard
             if store.sessions.count < 2 {
                 Text("Guarda al menos 2 entrenos para ver tendencias más fiables.")
@@ -78,11 +77,8 @@ struct ActivityView: View {
         PanelCard {
             Text("TENDENCIA").font(.caption2).fontWeight(.heavy).foregroundColor(Brand.muted)
                 .frame(maxWidth: .infinity, alignment: .leading)
-            HStack(spacing: 10) {
-                trendTile("Carga (1RM medio)", strengthTrendPct, "dumbbell.fill")
-                trendTile("Volumen semanal", weeklyVolumeTrendPct, "calendar")
-            }
-            Text("La carga compara tu 1RM estimado actual con el primero registrado; el volumen compara esta semana con la anterior.")
+            trendTile("Carga (1RM medio)", strengthTrendPct, "dumbbell.fill")
+            Text("Compara tu 1RM estimado actual con el primero que registraste, promediado entre tus ejercicios.")
                 .font(.caption2).foregroundColor(Brand.soft)
         }
     }
@@ -104,30 +100,6 @@ struct ActivityView: View {
         }
         .frame(maxWidth: .infinity).padding(.vertical, 14)
         .background(Brand.surface).clipShape(RoundedRectangle(cornerRadius: 12))
-    }
-
-    /// Volumen por sesión (kg movidos), evolución en el tiempo.
-    private var volumeCard: some View {
-        PanelCard {
-            HStack {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("Volumen por sesión").font(.system(size: 16, weight: .heavy)).foregroundColor(Brand.ink)
-                    Text("kg movidos · últimas \(volumePoints.count)").font(.caption2).foregroundColor(Brand.soft)
-                }
-                Spacer()
-            }
-            Chart(volumePoints) { p in
-                BarMark(
-                    x: .value("Sesión", p.date, unit: .day),
-                    y: .value("Volumen", p.volume)
-                )
-                .foregroundStyle(LinearGradient(colors: [Brand.green, Color(hex: "b6e26a")],
-                                                startPoint: .top, endPoint: .bottom))
-                .cornerRadius(5)
-            }
-            .chartYAxis { AxisMarks(position: .leading) }
-            .frame(height: 180)
-        }
     }
 
     /// Fuerza estimada (1RM) por ejercicio: la medida certera del progreso de carga.
@@ -307,13 +279,8 @@ struct ActivityView: View {
 
     // MARK: - Métricas
 
-    private struct VolPoint: Identifiable { let id = UUID(); let date: Date; let volume: Double }
     private struct E1RMPoint: Identifiable { let id = UUID(); let date: Date; let value: Double }
     private struct LiftProgress: Identifiable { let id: String; let name: String; let current: Double; let first: Double; let points: [E1RMPoint] }
-
-    private var volumePoints: [VolPoint] {
-        sessionsChrono.suffix(12).map { VolPoint(date: $0.date, volume: $0.volume) }
-    }
 
     /// 1RM estimado (Epley): w · (1 + reps/30).
     private func e1rm(_ w: Double, _ reps: Int) -> Double { w * (1 + Double(reps) / 30) }
@@ -342,21 +309,6 @@ struct ActivityView: View {
         guard !tracked.isEmpty else { return nil }
         let pcts = tracked.map { ($0.current - $0.first) / $0.first * 100 }
         return pcts.reduce(0, +) / Double(pcts.count)
-    }
-
-    private func volumeInWeek(_ weeksAgo: Int) -> Double {
-        let cal = Calendar.current
-        let now = Date()
-        guard let start = cal.date(byAdding: .day, value: -7 * (weeksAgo + 1), to: now),
-              let end = cal.date(byAdding: .day, value: -7 * weeksAgo, to: now) else { return 0 }
-        return store.sessions.filter { $0.date >= start && $0.date < end }.reduce(0) { $0 + $1.volume }
-    }
-
-    private var weeklyVolumeTrendPct: Double? {
-        let this = volumeInWeek(0)
-        let prev = volumeInWeek(1)
-        guard prev > 0 else { return nil }
-        return (this - prev) / prev * 100
     }
 
     // MARK: - Helpers
