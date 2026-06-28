@@ -99,31 +99,50 @@ final class AppStore: ObservableObject {
         guard let idx = exercises.firstIndex(where: { $0.id == exerciseId }) else { return }
         var ex = exercises[idx]
         if ex.closedSets >= ex.sets { return }
-        if done { ex.completedSets += 1; player.xp += 12 } else { ex.skippedSets += 1 }
+        if done { ex.completedSets += 1 } else { ex.skippedSets += 1 }
         ex.status = ex.resolvedStatus
         exercises[idx] = ex
-
-        if ex.status != .pending {
-            let entry = HistoryEntry(
-                id: "h-\(ex.id)-\(Date().timeIntervalSince1970)",
-                exerciseName: ex.name, day: ex.day, status: ex.status,
-                sets: max(ex.completedSets, 1), reps: ex.reps, weight: ex.weight,
-                volume: Double(ex.completedSets) * Double(ex.reps) * ex.weight,
-                xp: ex.completedSets * 12, completedAt: Date(),
-                sessionId: "session-\(dayKey(Date()))"
-            )
-            history.insert(entry, at: 0)
-            if ex.status == .done { player.xp += 18 }
-        }
         lastAction = done ? "Serie completada" : "Serie saltada"
         persist()
     }
 
-    func resetSession() {
-        exercises = exercises.map { e in
-            var c = e; c.completedSets = 0; c.skippedSets = 0; c.status = .pending; return c
+    // Commit the session: write history + XP, then clear the loaded workout.
+    func saveSession() {
+        let sid = "session-\(Int(Date().timeIntervalSince1970))"
+        var gained = 0
+        for ex in exercises where (ex.completedSets + ex.skippedSets) > 0 {
+            let status: ExerciseStatus = ex.completedSets > 0 ? .done : .skipped
+            let xp = ex.completedSets * 12 + (status == .done ? 18 : 0)
+            gained += xp
+            history.insert(HistoryEntry(
+                id: "h-\(ex.id)-\(Int(Date().timeIntervalSince1970 * 1000))-\(Int.random(in: 0..<9999))",
+                exerciseName: ex.name, day: ex.day, status: status,
+                sets: ex.completedSets > 0 ? ex.completedSets : ex.sets, reps: ex.reps, weight: ex.weight,
+                volume: Double(ex.completedSets) * Double(ex.reps) * ex.weight,
+                xp: xp, completedAt: Date(), sessionId: sid), at: 0)
         }
+        player.xp += gained
+        player.streak = currentStreak()
+        exercises = []
+        lastAction = "Entreno guardado"
         persist()
+    }
+
+    func discardSession() {
+        exercises = []
+        lastAction = "Entreno descartado"
+        persist()
+    }
+
+    private func currentStreak() -> Int {
+        let doneDays = Set(history.filter { $0.status == .done }.map { dayKey($0.completedAt) })
+        var streak = 0
+        var cursor = Date()
+        while doneDays.contains(dayKey(cursor)) {
+            streak += 1
+            cursor = Calendar.current.date(byAdding: .day, value: -1, to: cursor) ?? cursor
+        }
+        return streak
     }
 
     private func dayKey(_ date: Date) -> String {

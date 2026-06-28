@@ -32,11 +32,6 @@ struct ProfileView: View {
                         }
                         Spacer()
                     }
-                    if store.account?.photoData != nil {
-                        Button { editingData = store.account?.photoData; showEditor = true } label: {
-                            Label("Ajustar foto", systemImage: "crop").font(.system(size: 13, weight: .heavy))
-                        }
-                    }
                 }
 
                 PanelCard {

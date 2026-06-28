@@ -4,27 +4,45 @@ struct TrainView: View {
     @EnvironmentObject var store: AppStore
     @State private var sessionStart: Date?
     @State private var restUntil: Date?
+    @State private var showSummary = false
 
     private var totalSets: Int { store.exercises.reduce(0) { $0 + $1.sets } }
     private var closedSets: Int { store.exercises.reduce(0) { $0 + $1.completedSets + $1.skippedSets } }
+    private var completedSets: Int { store.exercises.reduce(0) { $0 + $1.completedSets } }
+    private var skippedSets: Int { store.exercises.reduce(0) { $0 + $1.skippedSets } }
+    private var sessionVolume: Double { store.exercises.reduce(0) { $0 + Double($1.completedSets) * Double($1.reps) * $1.weight } }
+    private var sessionXP: Int { store.exercises.reduce(0) { $0 + $1.completedSets * 12 + ($1.completedSets > 0 ? 18 : 0) } }
+    private var exercisesDone: Int { store.exercises.filter { $0.completedSets > 0 }.count }
+    private var elapsedSeconds: Int { sessionStart.map { max(0, Int(-$0.timeIntervalSinceNow)) } ?? 0 }
+
+    private var finished: Bool { store.activeExercise == nil && !store.exercises.isEmpty }
 
     var body: some View {
         ScrollView {
             VStack(spacing: 14) {
                 if store.exercises.isEmpty {
                     emptyState
+                } else if showSummary || finished {
+                    summary
                 } else if let ex = store.activeExercise {
                     sessionHeader
                     activeCard(ex)
-                } else {
-                    finishedState
+                    Button {
+                        showSummary = true
+                    } label: {
+                        Label("Finalizar entrenamiento", systemImage: "flag.checkered")
+                            .font(.system(size: 15, weight: .heavy)).foregroundColor(Brand.ink)
+                            .frame(maxWidth: .infinity).frame(minHeight: 48)
+                            .background(Brand.chip).clipShape(RoundedRectangle(cornerRadius: 12))
+                    }
                 }
             }
-            .padding(.horizontal, 14)
-            .padding(.vertical, 12)
+            .padding(.horizontal, 14).padding(.vertical, 12)
         }
         .background(Brand.bg)
     }
+
+    // MARK: - Session
 
     private var sessionHeader: some View {
         PanelCard {
@@ -36,7 +54,7 @@ struct TrainView: View {
                 Spacer()
                 if let start = sessionStart {
                     TimelineView(.periodic(from: .now, by: 1)) { _ in
-                        Text(elapsed(start)).font(.system(size: 18, weight: .heavy)).monospacedDigit().foregroundColor(Brand.ink)
+                        Text(timeString(max(0, Int(-start.timeIntervalSinceNow)))).font(.system(size: 18, weight: .heavy)).monospacedDigit().foregroundColor(Brand.ink)
                     }
                 }
             }
@@ -46,12 +64,9 @@ struct TrainView: View {
                     let remaining = max(0, Int(until.timeIntervalSinceNow))
                     if remaining > 0 {
                         HStack {
-                            Image(systemName: "timer")
-                            Text("Descanso \(remaining)s").fontWeight(.bold)
-                            Spacer()
-                            Button("Saltar") { restUntil = nil }.font(.system(size: 13, weight: .heavy))
-                        }
-                        .font(.system(size: 14)).foregroundColor(Color(hex: "4b6211"))
+                            Image(systemName: "timer"); Text("Descanso \(remaining)s").fontWeight(.bold)
+                            Spacer(); Button("Saltar") { restUntil = nil }.font(.system(size: 13, weight: .heavy))
+                        }.font(.system(size: 14)).foregroundColor(Color(hex: "4b6211"))
                     } else { Color.clear.frame(height: 0).onAppear { restUntil = nil } }
                 }
             }
@@ -63,29 +78,19 @@ struct TrainView: View {
             Text(ex.day.uppercased()).font(.caption2).fontWeight(.heavy).foregroundColor(Brand.muted)
             Text(ex.name).font(.system(size: 26, weight: .heavy)).foregroundColor(Brand.ink)
             HStack(spacing: 6) {
-                ForEach(0..<ex.sets, id: \.self) { i in
-                    Circle()
-                        .fill(dotColor(ex, i))
-                        .frame(width: 12, height: 12)
-                }
+                ForEach(0..<ex.sets, id: \.self) { i in Circle().fill(dotColor(ex, i)).frame(width: 12, height: 12) }
             }
             HStack(spacing: 16) {
-                stat("\(ex.reps)", "reps")
-                stat(weightText(ex.weight), "kg")
-                stat("\(ex.rest)s", "descanso")
-            }
-            .padding(.vertical, 4)
+                stat("\(ex.reps)", "reps"); stat(weightText(ex.weight), "kg"); stat("\(ex.rest)s", "descanso")
+            }.padding(.vertical, 4)
             HStack(spacing: 10) {
-                Button {
-                    store.registerSet(ex.id, done: false)
-                } label: {
+                Button { register(ex, done: false) } label: {
                     Label("Saltar", systemImage: "xmark").font(.system(size: 15, weight: .heavy))
                         .foregroundColor(Color(hex: "a73232")).frame(maxWidth: .infinity).frame(minHeight: 50)
                         .background(Brand.redSoft).clipShape(RoundedRectangle(cornerRadius: 12))
                 }
                 Button {
-                    store.registerSet(ex.id, done: true)
-                    if sessionStart == nil { sessionStart = Date() }
+                    register(ex, done: true)
                     restUntil = Date().addingTimeInterval(Double(ex.rest))
                 } label: {
                     Label("Hecho", systemImage: "checkmark").font(.system(size: 15, weight: .heavy))
@@ -96,17 +101,57 @@ struct TrainView: View {
         }
     }
 
-    private var finishedState: some View {
+    private func register(_ ex: Exercise, done: Bool) {
+        if sessionStart == nil { sessionStart = Date() }
+        store.registerSet(ex.id, done: done)
+    }
+
+    // MARK: - Summary (Strava-style)
+
+    private var summary: some View {
         PanelCard {
-            HStack { Spacer(); Text("💪").font(.system(size: 44)); Spacer() }
-            Text("¡Entreno completado!").font(.system(size: 20, weight: .heavy)).foregroundColor(Brand.ink)
+            HStack { Spacer(); Text("🏁").font(.system(size: 44)); Spacer() }
+            Text("Resumen del entreno").font(.system(size: 20, weight: .heavy)).foregroundColor(Brand.ink)
                 .frame(maxWidth: .infinity, alignment: .center)
-            Text("\(closedSets) series registradas").foregroundColor(Brand.muted)
+            Text(workoutName).font(.footnote).foregroundColor(Brand.muted)
                 .frame(maxWidth: .infinity, alignment: .center)
-            Button("Reiniciar entreno") { store.resetSession(); sessionStart = nil; restUntil = nil }
+
+            HStack(spacing: 10) {
+                summaryStat(timeString(elapsedSeconds), "Duración", "clock")
+                summaryStat("\(completedSets)", "Series", "checkmark.circle")
+            }
+            HStack(spacing: 10) {
+                summaryStat("\(Int(sessionVolume)) kg", "Volumen", "scalemass")
+                summaryStat("+\(sessionXP)", "XP", "bolt.fill")
+            }
+            if skippedSets > 0 {
+                Text("\(skippedSets) series saltadas · \(exercisesDone) ejercicios").font(.caption).foregroundColor(Brand.soft)
+                    .frame(maxWidth: .infinity, alignment: .center)
+            }
+
+            Button { store.saveSession(); resetLocal() } label: { Label("Guardar entrenamiento", systemImage: "checkmark") }
                 .buttonStyle(PrimaryButtonStyle())
+            Button(role: .destructive) { store.discardSession(); resetLocal() } label: {
+                Label("Descartar", systemImage: "trash").frame(maxWidth: .infinity)
+            }.padding(.top, 2)
         }
     }
+
+    private func summaryStat(_ value: String, _ label: String, _ icon: String) -> some View {
+        VStack(spacing: 4) {
+            Image(systemName: icon).font(.system(size: 16)).foregroundColor(Color(hex: "6ea300"))
+            Text(value).font(.system(size: 22, weight: .heavy)).foregroundColor(Brand.ink)
+            Text(label).font(.caption2).fontWeight(.bold).foregroundColor(Brand.muted)
+        }
+        .frame(maxWidth: .infinity).padding(.vertical, 14)
+        .background(Brand.surface).clipShape(RoundedRectangle(cornerRadius: 12))
+    }
+
+    private var workoutName: String { store.exercises.first?.day ?? "Entreno" }
+
+    private func resetLocal() { sessionStart = nil; restUntil = nil; showSummary = false }
+
+    // MARK: - Empty
 
     private var emptyState: some View {
         PanelCard {
@@ -116,13 +161,14 @@ struct TrainView: View {
             Text("Carga uno desde la pestaña Plan o empieza con uno rápido.").foregroundColor(Brand.muted)
                 .multilineTextAlignment(.center).frame(maxWidth: .infinity)
             ForEach(store.templates.prefix(3)) { t in
-                Button { store.loadWorkout(t); sessionStart = nil; restUntil = nil } label: {
+                Button { store.loadWorkout(t); resetLocal() } label: {
                     HStack { Image(systemName: "bolt.fill"); Text("Cargar \(t.name)") }
-                }
-                .buttonStyle(PrimaryButtonStyle())
+                }.buttonStyle(PrimaryButtonStyle())
             }
         }
     }
+
+    // MARK: - Helpers
 
     private func stat(_ value: String, _ label: String) -> some View {
         VStack(spacing: 2) {
@@ -138,9 +184,5 @@ struct TrainView: View {
     }
 
     private func weightText(_ w: Double) -> String { w == w.rounded() ? String(Int(w)) : String(format: "%.1f", w) }
-
-    private func elapsed(_ start: Date) -> String {
-        let s = max(0, Int(-start.timeIntervalSinceNow))
-        return String(format: "%d:%02d", s / 60, s % 60)
-    }
+    private func timeString(_ s: Int) -> String { String(format: "%d:%02d", s / 60, s % 60) }
 }
