@@ -18,7 +18,7 @@ struct RootView: View {
         VStack(spacing: 0) {
             header
             TabView(selection: $tab) {
-                TrainView().tag(0).tabItem { Label("Entreno", systemImage: "dumbbell.fill") }
+                TrainView(onGoToPlan: { tab = 1 }).tag(0).tabItem { Label("Entreno", systemImage: "dumbbell.fill") }
                 PlanView().tag(1).tabItem { Label("Plan", systemImage: "list.bullet.clipboard") }
                 RankingView().tag(2).tabItem { Label("Ranking", systemImage: "globe.europe.africa.fill") }
                 PartnerView(onOpenChat: { chatPerson = IdString(id: $0) }).tag(3).tabItem { Label("Partner", systemImage: "person.2.fill") }

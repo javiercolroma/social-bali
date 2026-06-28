@@ -10,6 +10,8 @@ Ultima actualizacion: 2026-06-28
 >
 > **Añadido tras Fase 1:** Plan con "Crear entrenamiento" (formulario de ejercicios) y sin tarjeta "Biblioteca; Ranking con scope "Amigos" por defecto (ranking real de tus amigos); Partner con "Cuándo" y "Dónde" en el creador y flecha atrás a la izquierda (en vez de X); foto de perfil seleccionable (PhotosPicker) y ajustable (arrastrar/pellizcar), tanto en Perfil como al crear cuenta (`Account.photoData/scale/offset`, `PhotoSupport.swift`).
 >
+> **Entreno (flujo de sesion):** boton "Finalizar entrenamiento"; al terminar se muestra un RESUMEN tipo Strava (duracion, series, volumen, XP) con Guardar/Descartar (el historial/XP/racha se confirman solo al Guardar). Tras Guardar/Descartar se vuelve al estado de carga, que muestra "TUS MÁS FRECUENTES" (`AppStore.frequentWorkouts`, por sesiones pasadas) + boton "Otros entrenos" que cambia a la pestaña Plan (`onGoToPlan` → `tab = 1`).
+>
 > **Pendiente de portar/afinar:** gesto de swipe del deck de entreno (ahora botones Hecho/Saltar), edicion inline de peso/reps, editar rutinas guardadas, compartir entrenos, calendario de progreso, pulido visual.
 >
 > **Futuro (autenticacion):** hoy la cuenta es LOCAL (nombre + @handle + foto en el dispositivo, sin login). Para multiusuario real hara falta backend con auth: email+contraseña y/o **Sign in with Apple** (OBLIGATORIO por Apple si se ofrece login de terceros). Requiere servidor (usuarios, sesiones, recuperacion de contraseña) — pendiente de decidir stack (p. ej. Supabase/Firebase para ir rapido).

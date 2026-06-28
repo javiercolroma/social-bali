@@ -75,6 +75,24 @@ final class AppStore: ObservableObject {
     var gymScore: GymScore { GymScoreEngine.calculate(history) }
     var activeExercise: Exercise? { exercises.first { $0.status == .pending } }
     var allWorkouts: [WorkoutTemplate] { templates + savedWorkouts }
+
+    /// Workouts the user trains most often (by past sessions), else the first templates.
+    var frequentWorkouts: [WorkoutTemplate] {
+        let sessions = Dictionary(grouping: history) { $0.sessionId ?? $0.id }
+        var counts: [String: Int] = [:]
+        for (_, entries) in sessions {
+            if let day = entries.first?.day { counts[day, default: 0] += 1 }
+        }
+        var result: [WorkoutTemplate] = []
+        for day in counts.sorted(by: { $0.value > $1.value }).map(\.key) {
+            if let w = allWorkouts.first(where: { $0.name == day || $0.exercises.first?.day == day }),
+               !result.contains(where: { $0.id == w.id }) {
+                result.append(w)
+            }
+            if result.count >= 3 { break }
+        }
+        return result.isEmpty ? Array(templates.prefix(3)) : result
+    }
     var unreadMessages: Int { conversations.reduce(0) { $0 + $1.unread } }
     var unreadNotifications: Int { notifications.filter { !$0.read }.count }
 

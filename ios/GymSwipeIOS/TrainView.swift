@@ -2,6 +2,7 @@ import SwiftUI
 
 struct TrainView: View {
     @EnvironmentObject var store: AppStore
+    var onGoToPlan: () -> Void = {}
     @State private var sessionStart: Date?
     @State private var restUntil: Date?
     @State private var showSummary = false
@@ -156,14 +157,28 @@ struct TrainView: View {
     private var emptyState: some View {
         PanelCard {
             HStack { Spacer(); Text("🏋️").font(.system(size: 44)); Spacer() }
-            Text("Aún no has cargado un entreno").font(.system(size: 18, weight: .heavy)).foregroundColor(Brand.ink)
+            Text("¿Qué entrenamos hoy?").font(.system(size: 20, weight: .heavy)).foregroundColor(Brand.ink)
                 .frame(maxWidth: .infinity, alignment: .center)
-            Text("Carga uno desde la pestaña Plan o empieza con uno rápido.").foregroundColor(Brand.muted)
-                .multilineTextAlignment(.center).frame(maxWidth: .infinity)
-            ForEach(store.templates.prefix(3)) { t in
+            Text("TUS MÁS FRECUENTES").font(.caption2).fontWeight(.heavy).foregroundColor(Brand.muted)
+                .padding(.top, 4)
+            ForEach(store.frequentWorkouts) { t in
                 Button { store.loadWorkout(t); resetLocal() } label: {
-                    HStack { Image(systemName: "bolt.fill"); Text("Cargar \(t.name)") }
+                    HStack {
+                        Image(systemName: "bolt.fill")
+                        VStack(alignment: .leading, spacing: 1) {
+                            Text(t.name).font(.system(size: 15, weight: .heavy))
+                            Text("\(t.exercises.count) ejercicios").font(.caption2).fontWeight(.bold).opacity(0.7)
+                        }
+                        Spacer()
+                    }
+                    .padding(.horizontal, 4)
                 }.buttonStyle(PrimaryButtonStyle())
+            }
+            Button { onGoToPlan() } label: {
+                HStack { Image(systemName: "square.grid.2x2"); Text("Otros entrenos"); Spacer(); Image(systemName: "chevron.right") }
+                    .font(.system(size: 15, weight: .heavy)).foregroundColor(Brand.ink)
+                    .padding(.horizontal, 14).frame(maxWidth: .infinity).frame(minHeight: 50)
+                    .background(Brand.chip).clipShape(RoundedRectangle(cornerRadius: 12))
             }
         }
     }
