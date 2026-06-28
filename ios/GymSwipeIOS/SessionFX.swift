@@ -26,9 +26,12 @@ enum FX {
     }
     /// Destructive / cautionary action.
     static func warning() { if hapticsOn { Haptics.warning() } }
+    /// Starting a workout — always a sound (if sounds on) + success haptic.
+    static func start() { if hapticsOn { Haptics.success() }; if soundOn { SoundFX.play(SoundFX.start) } }
 }
 
 enum SoundFX {
+    static let start: SystemSoundID = 1113     // empezar entreno
     static let done: SystemSoundID = 1057      // Tink (serie hecha)
     static let skip: SystemSoundID = 1104      // Tock
     static let exercise: SystemSoundID = 1054  // cambio de ejercicio (distinto a serie)

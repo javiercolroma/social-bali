@@ -98,7 +98,7 @@ struct WorkoutPreview: View {
                                 .padding(12).background(Brand.panel).clipShape(RoundedRectangle(cornerRadius: 10))
                                 .overlay(RoundedRectangle(cornerRadius: 10).stroke(Brand.line))
                             }
-                            Button { FX.tap(); store.loadWorkout(workout); dismiss(); onLoaded() } label: { Label("Cargar entreno", systemImage: "dumbbell.fill") }
+                            Button { FX.start(); store.loadWorkout(workout); dismiss(); onLoaded() } label: { Label("Cargar entreno", systemImage: "dumbbell.fill") }
                                 .buttonStyle(PrimaryButtonStyle()).padding(.top, 8)
                             Button { showEditor = true } label: {
                                 Label("Editar", systemImage: "pencil").font(.system(size: 15, weight: .heavy)).foregroundColor(Brand.ink)
