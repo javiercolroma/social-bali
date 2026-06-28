@@ -24,6 +24,8 @@ struct SocialFeedView: View {
     var onOpenProfile: (String) -> Void
     @State private var liked: Set<String> = []
     @State private var activity: FeedItem?
+    @State private var commentTarget: FeedItem?
+    @State private var comments: [String: [String]] = [:]
 
     private var friends: [SocialPerson] { store.people.filter { store.relationship($0.id) == .friends } }
 
@@ -40,6 +42,12 @@ struct SocialFeedView: View {
         }
         .background(Brand.bg)
         .sheet(item: $activity) { ActivityDetailView(item: feedItemView($0)).environmentObject(store) }
+        .sheet(item: $commentTarget) { item in
+            CommentsSheet(title: item.title, comments: Binding(
+                get: { comments[item.id] ?? [] },
+                set: { comments[item.id] = $0 }))
+                .environmentObject(store)
+        }
     }
 
     private func feedItemView(_ item: FeedItem) -> ActivityData {
@@ -111,21 +119,44 @@ struct SocialFeedView: View {
             .contentShape(Rectangle())
             .onTapGesture { FX.tap(); activity = item }
 
-            Button {
-                FX.tap()
-                if liked.contains(item.id) { liked.remove(item.id) } else { liked.insert(item.id) }
-            } label: {
-                let isLiked = liked.contains(item.id)
-                HStack(spacing: 6) {
-                    Image(systemName: isLiked ? "hands.clap.fill" : "hands.clap")
-                    Text("\(kudos(item) + (isLiked ? 1 : 0))")
-                }
-                .font(.system(size: 13, weight: .heavy))
-                .foregroundColor(isLiked ? Color(hex: "10150a") : Brand.muted)
-                .padding(.horizontal, 12).frame(height: 34)
-                .background(isLiked ? Brand.greenSoft : Brand.chip).clipShape(Capsule())
+            HStack(spacing: 8) {
+                // Aplausos
+                Button {
+                    FX.tap()
+                    if liked.contains(item.id) { liked.remove(item.id) } else { liked.insert(item.id) }
+                } label: {
+                    let isLiked = liked.contains(item.id)
+                    actionChip(icon: isLiked ? "hands.clap.fill" : "hands.clap",
+                               text: "\(kudos(item) + (isLiked ? 1 : 0))", active: isLiked)
+                }.buttonStyle(.plain)
+
+                // Comentar
+                Button { FX.tap(); commentTarget = item } label: {
+                    let n = comments[item.id]?.count ?? 0
+                    actionChip(icon: "bubble.left", text: n > 0 ? "\(n)" : "Comentar", active: n > 0)
+                }.buttonStyle(.plain)
+
+                // Compartir
+                ShareLink(item: shareText(item)) {
+                    actionChip(icon: "square.and.arrow.up", text: "Compartir", active: false)
+                }.buttonStyle(.plain)
             }
         }
+    }
+
+    private func actionChip(icon: String, text: String, active: Bool) -> some View {
+        HStack(spacing: 6) {
+            Image(systemName: icon)
+            Text(text)
+        }
+        .font(.system(size: 13, weight: .heavy))
+        .foregroundColor(active ? Color(hex: "10150a") : Brand.muted)
+        .frame(maxWidth: .infinity).frame(height: 36)
+        .background(active ? Brand.greenSoft : Brand.chip).clipShape(Capsule())
+    }
+
+    private func shareText(_ item: FeedItem) -> String {
+        "\(item.authorName) entrenó \(item.title): \(item.sets) series · \(Int(item.volume)) kg de volumen · \(durationText(item.elapsed)). 💪 vía Forge Loop"
     }
 
     @ViewBuilder
@@ -218,5 +249,80 @@ struct SocialFeedView: View {
         let names = ["pierna": "Pierna", "bisagra": "Cadena posterior", "empuje": "Empuje",
                      "tiron": "Tirón", "condicion": "Cardio & core", "accesorio": "Full body"]
         return names[top] ?? "Entreno"
+    }
+}
+
+/// Hoja de comentarios de un post del muro (almacenados localmente).
+struct CommentsSheet: View {
+    @EnvironmentObject var store: AppStore
+    @Environment(\.dismiss) private var dismiss
+    let title: String
+    @Binding var comments: [String]
+    @State private var draft = ""
+
+    var body: some View {
+        NavigationStack {
+            VStack(spacing: 0) {
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 12) {
+                        if comments.isEmpty {
+                            VStack(spacing: 8) {
+                                Image(systemName: "bubble.left.and.bubble.right").font(.system(size: 34)).foregroundColor(Brand.soft)
+                                Text("Sé el primero en comentar").font(.system(size: 15, weight: .heavy)).foregroundColor(Brand.ink)
+                                Text("Anima a quien ha entrenado 💬").font(.footnote).foregroundColor(Brand.muted)
+                            }
+                            .frame(maxWidth: .infinity).padding(.top, 40)
+                        } else {
+                            ForEach(Array(comments.enumerated()), id: \.offset) { _, c in commentRow(c) }
+                        }
+                    }
+                    .padding(16)
+                }
+                Divider()
+                HStack(spacing: 10) {
+                    MeAvatar(account: store.account, size: 32)
+                    TextField("Añade un comentario…", text: $draft, axis: .vertical)
+                        .font(.system(size: 15))
+                        .padding(.horizontal, 12).padding(.vertical, 9)
+                        .background(Brand.chip).clipShape(RoundedRectangle(cornerRadius: 18))
+                        .lineLimit(1...4)
+                    Button { post() } label: {
+                        Image(systemName: "paperplane.fill").font(.system(size: 16, weight: .heavy))
+                            .foregroundColor(canPost ? Color(hex: "10150a") : Brand.soft)
+                            .frame(width: 38, height: 38)
+                            .background(canPost ? Brand.green : Brand.chip).clipShape(Circle())
+                    }.disabled(!canPost)
+                }
+                .padding(.horizontal, 14).padding(.vertical, 10)
+                .background(Brand.bg)
+            }
+            .background(Brand.bg)
+            .navigationTitle("Comentarios").navigationBarTitleDisplayMode(.inline)
+            .toolbar { ToolbarItem(placement: .topBarTrailing) { Button("Cerrar") { dismiss() } } }
+        }
+        .presentationDetents([.medium, .large])
+    }
+
+    private var canPost: Bool { !draft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
+
+    private func post() {
+        let t = draft.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !t.isEmpty else { return }
+        FX.tap()
+        comments.append(t)
+        draft = ""
+    }
+
+    private func commentRow(_ text: String) -> some View {
+        HStack(alignment: .top, spacing: 10) {
+            MeAvatar(account: store.account, size: 32)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(store.account?.name ?? "Tú").font(.system(size: 13, weight: .heavy)).foregroundColor(Brand.ink)
+                Text(text).font(.system(size: 14)).foregroundColor(Color(hex: "2c3127"))
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            Spacer()
+        }
+        .padding(12).background(Brand.surface).clipShape(RoundedRectangle(cornerRadius: 12))
     }
 }
