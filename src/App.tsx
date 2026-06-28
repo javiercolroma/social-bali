@@ -1418,6 +1418,7 @@ type TrainingPlanCard = TrainingPlanDraft & {
   objective: string
   note: string
   ownerId: string
+  score: number
 }
 
 const trainingPlansStorageKey = 'gym-swipe-training-plans-v1'
@@ -1432,7 +1433,6 @@ const defaultTrainingPlanDraft: TrainingPlanDraft = {
 const planWhenOptions = ['Hoy', 'Mañana', 'Esta semana', 'Fecha concreta']
 const planWhereOptions = ['Mi gimnasio', 'Cerca de mí', 'Parque / calistenia']
 const planWorkoutOptions = ['Pecho', 'Espalda', 'Pierna', 'Push', 'Pull', 'Full body', 'Calistenia', 'Cardio', 'Otro']
-const planLevelOptions = ['Cualquiera', 'Similar al mío', 'Más avanzado', 'Principiante friendly']
 const planSpotOptions = ['1 persona', '2 personas', 'Grupo pequeño', 'Me adapto']
 
 const defaultTrainingPlans: TrainingPlanCard[] = [
@@ -1450,6 +1450,7 @@ const defaultTrainingPlans: TrainingPlanCard[] = [
     objective: 'Hipertrofia',
     note: '',
     ownerId: 'p-mika',
+    score: 71,
   },
   {
     id: 'plan-demo-legs',
@@ -1465,6 +1466,7 @@ const defaultTrainingPlans: TrainingPlanCard[] = [
     objective: 'Fuerza + volumen',
     note: '',
     ownerId: 'p-sofia',
+    score: 64,
   },
 ]
 
@@ -1500,7 +1502,7 @@ function getPlanIntensity(level: string) {
   return level === 'Más avanzado' ? 'Fuerte' : level === 'Principiante friendly' ? 'Moderada' : 'Media-alta'
 }
 
-function createTrainingPlan(draft: TrainingPlanDraft, profile: Profile): TrainingPlanCard {
+function createTrainingPlan(draft: TrainingPlanDraft, profile: Profile, score: number): TrainingPlanCard {
   const title = draft.workout === 'Pecho' ? 'Pecho + tríceps' : draft.workout === 'Espalda' ? 'Espalda + bíceps' : draft.workout
   const when = draft.when === 'Fecha concreta' && draft.date ? new Date(`${draft.date}T12:00:00`).toLocaleDateString('es-ES', { day: '2-digit', month: 'short' }) : draft.when
 
@@ -1514,6 +1516,7 @@ function createTrainingPlan(draft: TrainingPlanDraft, profile: Profile): Trainin
     objective: getPlanObjective(draft.workout),
     note: '',
     ownerId: 'me',
+    score,
   }
 }
 
@@ -1530,6 +1533,7 @@ function loadTrainingPlans() {
           ...plan,
           where: Array.isArray(plan.where) ? plan.where : [String(plan.where)],
           ownerId: plan.ownerId || demoPlanOwnerIds[index % demoPlanOwnerIds.length],
+          score: typeof plan.score === 'number' ? plan.score : 60,
         }))
       : defaultTrainingPlans
   } catch {
@@ -1568,7 +1572,7 @@ type Conversation = {
   lastAt: string
 }
 
-type NotificationType = 'friend_request' | 'friend_accepted' | 'message' | 'training_accepted'
+type NotificationType = 'friend_request' | 'friend_accepted' | 'training_accepted'
 
 type AppNotification = {
   id: string
@@ -1684,16 +1688,6 @@ function getDefaultSocialState(): SocialState {
         at: new Date(now - 40 * minute).toISOString(),
         read: false,
         personId: 'p-leo',
-      },
-      {
-        id: 'seed-notif-mika',
-        type: 'message',
-        title: 'Nuevo mensaje de Mika',
-        body: '¿Entrenamos mañana pecho?',
-        at: new Date(now - 8 * minute).toISOString(),
-        read: false,
-        personId: 'p-mika',
-        conversationId: conversationId('p-mika'),
       },
     ],
   }
@@ -1835,13 +1829,6 @@ function useSocial(activeConversationRef: MutableRefObject<string | null>): Soci
   const unreadMessages = social.conversations.reduce((total, conversation) => total + conversation.unread, 0)
   const unreadNotifications = social.notifications.filter((notification) => !notification.read).length
 
-  function addNotification(notification: AppNotification) {
-    setSocial((current) => ({
-      ...current,
-      notifications: [notification, ...current.notifications],
-    }))
-  }
-
   function scheduleReply(personId: string) {
     const person = getPerson(social, personId)
     if (!person) {
@@ -1853,23 +1840,12 @@ function useSocial(activeConversationRef: MutableRefObject<string | null>): Soci
       const isOpen = activeConversationRef.current === conversationId(personId)
       const reply = createMessage(false, text)
 
+      // New messages only surface in Messages (envelope unread badge),
+      // they are NOT added to the Notifications (bell) list.
       setSocial((current) => ({
         ...current,
         conversations: appendMessageToConversations(current.conversations, personId, reply, isOpen),
       }))
-
-      if (!isOpen) {
-        addNotification({
-          id: `notif-${Date.now()}-${Math.round(Math.random() * 1e6)}`,
-          type: 'message',
-          title: `Nuevo mensaje de ${person.name}`,
-          body: text,
-          at: new Date().toISOString(),
-          read: false,
-          personId,
-          conversationId: conversationId(personId),
-        })
-      }
     }, 2600)
   }
 
@@ -3071,6 +3047,7 @@ function App() {
               profile={state.profile}
               account={social.social.account}
               people={social.social.people}
+              myScore={calculateGymScore(state.history).total}
               onAcceptPlan={acceptPlan}
             />
           )}
@@ -4988,7 +4965,6 @@ function ChatScreen({
 const notificationIcons: Record<NotificationType, React.ReactNode> = {
   friend_request: <UserPlus size={16} />,
   friend_accepted: <UserCheck size={16} />,
-  message: <MessageSquare size={16} />,
   training_accepted: <Dumbbell size={16} />,
 }
 
@@ -5066,11 +5042,13 @@ function PartnerView({
   profile,
   account,
   people,
+  myScore,
   onAcceptPlan,
 }: {
   profile: Profile
   account: Account | null
   people: SocialPerson[]
+  myScore: number
   onAcceptPlan: (plan: TrainingPlanCard) => void
 }) {
   const [trainingPlans, setTrainingPlans] = useState<TrainingPlanCard[]>(loadTrainingPlans)
@@ -5082,7 +5060,7 @@ function PartnerView({
   }, [trainingPlans])
 
   function saveTrainingPlan() {
-    const nextPlan = createTrainingPlan(planDraft, profile)
+    const nextPlan = createTrainingPlan(planDraft, profile, myScore)
     setTrainingPlans((current) => [nextPlan, ...current].slice(0, 8))
     setPlanDraft(defaultTrainingPlanDraft)
     setShowPlanCreator(false)
@@ -5137,12 +5115,6 @@ function PartnerView({
               onChange={(workout) => setPlanDraft((current) => ({ ...current, workout }))}
             />
             <PlanChoiceGroup
-              label="Nivel"
-              value={planDraft.level}
-              options={planLevelOptions}
-              onChange={(level) => setPlanDraft((current) => ({ ...current, level }))}
-            />
-            <PlanChoiceGroup
               label="Plazas"
               value={planDraft.spots}
               options={planSpotOptions}
@@ -5180,7 +5152,7 @@ function PartnerView({
                   <span>{plan.place}</span>
                 </div>
                 <div className="plan-card-tags">
-                  <span>{plan.level}</span>
+                  <span className="plan-score-tag">Score {plan.score}</span>
                   <span>{plan.spots}</span>
                   <span>{plan.intensity}</span>
                   <span>{plan.objective}</span>
@@ -5199,9 +5171,20 @@ function PartnerView({
                     </button>
                   </div>
                 ) : (
-                  <button className="accept-plan-button" type="button" onClick={() => onAcceptPlan(plan)}>
-                    Aceptar entrenamiento
-                  </button>
+                  <div className="plan-card-mine-row">
+                    <button className="accept-plan-button" type="button" onClick={() => onAcceptPlan(plan)}>
+                      Aceptar entrenamiento
+                    </button>
+                    <button
+                      className="plan-delete-button"
+                      type="button"
+                      onClick={() => deletePlan(plan.id)}
+                      aria-label="Descartar plan"
+                    >
+                      <X size={15} />
+                      Descartar
+                    </button>
+                  </div>
                 )}
               </article>
             )

@@ -716,7 +716,9 @@ Ajustes aplicados:
 - Plazas incluye opcion flexible.
 - No se generan descripciones que el usuario no escribio.
 - Cada plan tiene un `ownerId` (la persona que lo propone).
-- Los planes que creas tienen `ownerId: 'me'`: salen con TU nombre, marcados como "Tu plan · Esperando compañero…", con boton Eliminar y SIN boton de aceptar (no puedes aceptar/chatear contigo mismo). Solo los planes de otros (demo) son aceptables.
+- Los planes que creas tienen `ownerId: 'me'`: salen con TU nombre (de la cuenta @), marcados como "Tu plan · Esperando compañero…", con boton Eliminar y SIN boton de aceptar (no puedes aceptar/chatear contigo mismo). Solo los planes de otros (demo) son aceptables.
+- Ya no se muestra el "Nivel"; cada plan muestra una puntuacion (`score`, el Gym Score del proponente; en tus planes es tu propio Gym Score).
+- Cualquier plan que no te interese se puede descartar (boton Descartar en planes de otros, Eliminar en los tuyos); la lista se persiste, asi que no se perpetuan.
 
 Aceptar entrenamiento (flujo actual):
 
@@ -979,7 +981,8 @@ Amigos:
 
 Notificaciones (overlay):
 
-- Tipos: `friend_request`, `friend_accepted`, `message`, `training_accepted`.
+- Tipos: `friend_request`, `friend_accepted`, `training_accepted`.
+- Los mensajes nuevos NO generan notificacion (campana): solo aparecen en Mensajes con el badge de no leidos del sobre.
 - Cada una: titulo, descripcion corta, tiempo relativo, leida/no leida.
 - Tocar abre el chat o la pestana Amigos segun el tipo. Boton "Marcar leido".
 

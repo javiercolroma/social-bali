@@ -4837,3 +4837,18 @@ input:focus-visible {
   font-weight: 950;
   background: #fff0ef;
 }
+
+/* ===== Partner: score tag + accept/dismiss row ===== */
+.plan-score-tag {
+  color: #10150a !important;
+  font-weight: 950 !important;
+  background: #c8e98a !important;
+}
+
+.plan-card-mine-row .accept-plan-button {
+  flex: 1;
+}
+
+.plan-card-mine-row .plan-delete-button {
+  flex: 0 0 auto;
+}
