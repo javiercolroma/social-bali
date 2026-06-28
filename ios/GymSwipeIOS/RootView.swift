@@ -19,13 +19,12 @@ struct RootView: View {
         VStack(spacing: 0) {
             header
             TabView(selection: $tab) {
-                SocialFeedView(onOpenProfile: { profilePerson = IdString(id: $0) }).tag(0)
-                PlanView(onLoaded: { tab = 2 }).tag(1)
-                TrainView(onGoToPlan: { tab = 1 }).tag(2)
-                RankingView().tag(3)
-                PartnerView(onOpenChat: { chatPerson = IdString(id: $0) }).tag(4)
+                SocialFeedView(onOpenProfile: { profilePerson = IdString(id: $0) }).tag(0).toolbar(.hidden, for: .tabBar)
+                PlanView(onLoaded: { tab = 2 }).tag(1).toolbar(.hidden, for: .tabBar)
+                TrainView(onGoToPlan: { tab = 1 }).tag(2).toolbar(.hidden, for: .tabBar)
+                RankingView().tag(3).toolbar(.hidden, for: .tabBar)
+                PartnerView(onOpenChat: { chatPerson = IdString(id: $0) }).tag(4).toolbar(.hidden, for: .tabBar)
             }
-            .toolbar(.hidden, for: .tabBar)
             .onChange(of: tab) { _ in FX.selection() }
 
             CustomTabBar(tab: $tab)
