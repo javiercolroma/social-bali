@@ -6,6 +6,7 @@ struct TrainView: View {
     @State private var sessionStart: Date?
     @State private var restUntil: Date?
     @State private var showSummary = false
+    @State private var previewWorkout: WorkoutTemplate?
 
     private var totalSets: Int { store.exercises.reduce(0) { $0 + $1.sets } }
     private var closedSets: Int { store.exercises.reduce(0) { $0 + $1.completedSets + $1.skippedSets } }
@@ -41,6 +42,12 @@ struct TrainView: View {
             .padding(.horizontal, 14).padding(.vertical, 12)
         }
         .background(Brand.bg)
+        .sheet(item: $previewWorkout) { w in
+            WorkoutPreview(workoutId: w.id).environmentObject(store)
+        }
+        .onChange(of: store.exercises.isEmpty) { empty in
+            if !empty { resetLocal() }
+        }
     }
 
     // MARK: - Session
@@ -162,7 +169,7 @@ struct TrainView: View {
             Text("TUS MÁS FRECUENTES").font(.caption2).fontWeight(.heavy).foregroundColor(Brand.muted)
                 .padding(.top, 4)
             ForEach(store.frequentWorkouts) { t in
-                Button { store.loadWorkout(t); resetLocal() } label: {
+                Button { previewWorkout = t } label: {
                     HStack {
                         Image(systemName: "bolt.fill")
                         VStack(alignment: .leading, spacing: 1) {
@@ -170,6 +177,7 @@ struct TrainView: View {
                             Text("\(t.exercises.count) ejercicios").font(.caption2).fontWeight(.bold).opacity(0.7)
                         }
                         Spacer()
+                        Image(systemName: "chevron.right").font(.system(size: 13, weight: .bold)).opacity(0.6)
                     }
                     .padding(.horizontal, 4)
                 }.buttonStyle(PrimaryButtonStyle())
