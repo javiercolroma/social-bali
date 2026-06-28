@@ -23,6 +23,7 @@
 		B2BA2EDCA173DDEDD61FF8BD /* SocialViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = A94209F7155C5A09DA6E950A /* SocialViews.swift */; };
 		BEBB454C3035C16BFE9C0067 /* RankingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 351AF069FE04261E1DB0C543 /* RankingView.swift */; };
 		C01A2049E004FBE4ADDF5F10 /* SessionFX.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6323375755B5CE9680137707 /* SessionFX.swift */; };
+		C181C6D254D5000258AD8003 /* ActivityDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ED8AD2852D06439AA4198279 /* ActivityDetailView.swift */; };
 		C96DA3E9AC38A13BD8D381B1 /* PartnerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C6E2A074351DB17430CAE561 /* PartnerView.swift */; };
 		CF3EFCE5F7B166F143B9B408 /* PlanView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EF5C837837CFA069C8F53AE4 /* PlanView.swift */; };
 		D1A51AF5DF1BCC6CDABBD42C /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1596E5BECE9666DDA76867A /* Models.swift */; };
@@ -54,6 +55,7 @@
 		D1596E5BECE9666DDA76867A /* Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models.swift; sourceTree = "<group>"; };
 		D1DF8FC23C0BF2E64342C5D7 /* TrainView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrainView.swift; sourceTree = "<group>"; };
 		E53E08D1A4CF0DE70074A344 /* ProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileView.swift; sourceTree = "<group>"; };
+		ED8AD2852D06439AA4198279 /* ActivityDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActivityDetailView.swift; sourceTree = "<group>"; };
 		EF5C837837CFA069C8F53AE4 /* PlanView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlanView.swift; sourceTree = "<group>"; };
 		F46519F370ACB4CE695F4928 /* LocationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationManager.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -78,6 +80,7 @@
 		DF4F6CA473D782953BF29753 /* GymSwipeIOS */ = {
 			isa = PBXGroup;
 			children = (
+				ED8AD2852D06439AA4198279 /* ActivityDetailView.swift */,
 				D0B083763AEA6D7CE3C7B500 /* AppStore.swift */,
 				B83B0B92285D78A53157123F /* Assets.xcassets */,
 				A415A6402658DC75C3C37C3C /* Components.swift */,
@@ -173,6 +176,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				C181C6D254D5000258AD8003 /* ActivityDetailView.swift in Sources */,
 				46EBB8712F3CB101DB8A4FED /* AppStore.swift in Sources */,
 				2A71043ED4BBAF7A09523AFF /* Components.swift in Sources */,
 				FF1D8080F80F010C04EB3609 /* Countries.swift in Sources */,

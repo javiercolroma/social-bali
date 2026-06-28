@@ -148,6 +148,7 @@ final class AppStore: ObservableObject {
         var doneExercises = 0
         var totalSets = 0
         var totalVolume = 0.0
+        var sessionItems: [SessionExercise] = []
         for ex in exercises where (ex.completedSets + ex.skippedSets) > 0 {
             let status: ExerciseStatus = ex.completedSets > 0 ? .done : .skipped
             let xp = ex.completedSets * 12 + (status == .done ? 18 : 0)
@@ -155,6 +156,7 @@ final class AppStore: ObservableObject {
             if ex.completedSets > 0 { doneExercises += 1 }
             totalSets += ex.completedSets
             totalVolume += Double(ex.completedSets) * Double(ex.reps) * ex.weight
+            sessionItems.append(SessionExercise(name: ex.name, sets: ex.completedSets > 0 ? ex.completedSets : ex.sets, reps: ex.reps, weight: ex.weight))
             history.insert(HistoryEntry(
                 id: "h-\(ex.id)-\(Int(Date().timeIntervalSince1970 * 1000))-\(Int.random(in: 0..<9999))",
                 exerciseName: ex.name, day: ex.day, status: status,
@@ -167,7 +169,7 @@ final class AppStore: ObservableObject {
             id: sid, name: trimmed.isEmpty ? (exercises.first?.day ?? "Entreno") : trimmed,
             note: note.trimmingCharacters(in: .whitespaces), date: Date(), elapsed: elapsed,
             exercises: doneExercises, sets: totalSets, volume: totalVolume, xp: gained,
-            photoData: photoData, visibility: visibility), at: 0)
+            photoData: photoData, visibility: visibility, items: sessionItems), at: 0)
         player.xp += gained
         player.streak = currentStreak()
         exercises = []

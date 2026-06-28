@@ -16,12 +16,14 @@ private struct FeedItem: Identifiable {
     let exercises: Int
     let sets: Int
     let volume: Double
+    let items: [SessionExercise]
 }
 
 struct SocialFeedView: View {
     @EnvironmentObject var store: AppStore
     var onOpenProfile: (String) -> Void
     @State private var liked: Set<String> = []
+    @State private var activity: FeedItem?
 
     private var friends: [SocialPerson] { store.people.filter { store.relationship($0.id) == .friends } }
 
@@ -37,6 +39,14 @@ struct SocialFeedView: View {
             .padding(.horizontal, 14).padding(.vertical, 12)
         }
         .background(Brand.bg)
+        .sheet(item: $activity) { ActivityDetailView(item: feedItemView($0)).environmentObject(store) }
+    }
+
+    private func feedItemView(_ item: FeedItem) -> ActivityData {
+        ActivityData(authorName: item.authorName, avatarPhoto: item.avatarPhoto, avatarEmoji: item.avatarEmoji,
+                     flag: item.flag, location: item.location, date: item.date, title: item.title, note: item.note,
+                     photo: item.photo, elapsed: item.elapsed, exercises: item.exercises, sets: item.sets,
+                     volume: item.volume, items: item.items)
     }
 
     private var emptyState: some View {
@@ -51,8 +61,8 @@ struct SocialFeedView: View {
 
     private func card(_ item: FeedItem) -> some View {
         PanelCard {
-            // Header: avatar, name, time, location
-            Button { if let pid = item.personId { onOpenProfile(pid) } } label: {
+            VStack(alignment: .leading, spacing: 12) {
+                // Header: avatar, name, time, location
                 HStack(spacing: 11) {
                     ZStack(alignment: .bottomTrailing) {
                         authorAvatar(item)
@@ -69,35 +79,37 @@ struct SocialFeedView: View {
                         }.font(.caption2).foregroundColor(Brand.soft)
                     }
                     Spacer()
-                    if item.personId != nil { Image(systemName: "chevron.right").font(.system(size: 12, weight: .bold)).foregroundColor(Brand.soft) }
+                    Image(systemName: "chevron.right").font(.system(size: 12, weight: .bold)).foregroundColor(Brand.soft)
                 }
-            }.buttonStyle(.plain).disabled(item.personId == nil)
 
-            // Title
-            HStack(spacing: 8) {
-                Image(systemName: "dumbbell.fill").font(.system(size: 13)).foregroundColor(Color(hex: "6ea300"))
-                Text(item.title).font(.system(size: 16, weight: .heavy)).foregroundColor(Brand.ink)
-            }
+                // Title
+                HStack(spacing: 8) {
+                    Image(systemName: "dumbbell.fill").font(.system(size: 13)).foregroundColor(Color(hex: "6ea300"))
+                    Text(item.title).font(.system(size: 16, weight: .heavy)).foregroundColor(Brand.ink)
+                }
 
-            // Comment / note
-            if !item.note.isEmpty {
-                Text(item.note).font(.system(size: 14)).foregroundColor(Color(hex: "2c3127")).fixedSize(horizontal: false, vertical: true)
-            }
+                // Comment / note
+                if !item.note.isEmpty {
+                    Text(item.note).font(.system(size: 14)).foregroundColor(Color(hex: "2c3127")).lineLimit(2).fixedSize(horizontal: false, vertical: true)
+                }
 
-            // Photo
-            if let data = item.photo, let ui = UIImage(data: data) {
-                Image(uiImage: ui).resizable().scaledToFill()
-                    .frame(maxWidth: .infinity).frame(height: 180).clipped()
-                    .clipShape(RoundedRectangle(cornerRadius: 12))
-            }
+                // Photo
+                if let data = item.photo, let ui = UIImage(data: data) {
+                    Image(uiImage: ui).resizable().scaledToFill()
+                        .frame(maxWidth: .infinity).frame(height: 180).clipped()
+                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                }
 
-            // Metrics
-            HStack(spacing: 8) {
-                stat(durationText(item.elapsed), "Tiempo", "clock")
-                stat("\(item.sets)", "Series", "checkmark.circle")
-                stat("\(Int(item.volume))", "kg vol.", "dumbbell.fill")
-                stat("\(item.exercises)", "Ejerc.", "list.bullet")
+                // Metrics
+                HStack(spacing: 8) {
+                    stat(durationText(item.elapsed), "Tiempo", "clock")
+                    stat("\(item.sets)", "Series", "checkmark.circle")
+                    stat("\(Int(item.volume))", "kg vol.", "dumbbell.fill")
+                    stat("\(item.exercises)", "Ejerc.", "list.bullet")
+                }
             }
+            .contentShape(Rectangle())
+            .onTapGesture { FX.tap(); activity = item }
 
             Button {
                 FX.tap()
@@ -158,7 +170,8 @@ struct SocialFeedView: View {
                 avatarPhoto: store.account?.photoData, avatarEmoji: "🙂",
                 flag: countryFlag(store.profile.country), location: loc,
                 date: s.date, title: s.name, note: s.note, photo: s.photoData,
-                elapsed: s.elapsed, exercises: s.exercises, sets: s.sets, volume: s.volume)
+                elapsed: s.elapsed, exercises: s.exercises, sets: s.sets, volume: s.volume,
+                items: s.items ?? [])
         }
     }
 
@@ -185,7 +198,8 @@ struct SocialFeedView: View {
                     title: Self.title(for: entries), note: friendNotes[Int(seed % UInt64(friendNotes.count))],
                     photo: nil, elapsed: entries.count * 240 + sets * 40,
                     exercises: entries.count, sets: sets,
-                    volume: entries.reduce(0) { $0 + $1.volume }))
+                    volume: entries.reduce(0) { $0 + $1.volume },
+                    items: entries.map { SessionExercise(name: $0.exerciseName, sets: $0.sets, reps: $0.reps, weight: $0.weight) }))
             }
         }
         return items

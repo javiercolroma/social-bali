@@ -66,6 +66,14 @@ enum WorkoutVisibility: String, Codable, CaseIterable {
     }
 }
 
+struct SessionExercise: Codable, Hashable, Identifiable {
+    var id = UUID()
+    var name: String
+    var sets: Int
+    var reps: Int
+    var weight: Double
+}
+
 struct WorkoutSession: Identifiable, Codable {
     var id: String
     var name: String
@@ -78,6 +86,7 @@ struct WorkoutSession: Identifiable, Codable {
     var xp: Int
     var photoData: Data?
     var visibility: WorkoutVisibility
+    var items: [SessionExercise]? = nil
 }
 
 struct WorkoutTemplate: Identifiable, Codable, Hashable {
