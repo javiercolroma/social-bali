@@ -13,19 +13,22 @@ struct RootView: View {
     @State private var profilePerson: IdString?
     @State private var showProfile = false
 
-    private let titles = ["Entreno", "Plan", "Ranking", "Social", "Partner"]
+    private let titles = ["Social", "Plan", "Entreno", "Ranking", "Partner"]
 
     var body: some View {
         VStack(spacing: 0) {
             header
             TabView(selection: $tab) {
-                TrainView(onGoToPlan: { tab = 1 }).tag(0).tabItem { Label("Entreno", systemImage: "dumbbell.fill") }
-                PlanView(onLoaded: { tab = 0 }).tag(1).tabItem { Label("Plan", systemImage: "list.bullet.clipboard") }
-                RankingView().tag(2).tabItem { Label("Ranking", systemImage: "globe.europe.africa.fill") }
-                SocialFeedView(onOpenProfile: { profilePerson = IdString(id: $0) }).tag(3).tabItem { Label("Social", systemImage: "newspaper.fill") }
-                PartnerView(onOpenChat: { chatPerson = IdString(id: $0) }).tag(4).tabItem { Label("Partner", systemImage: "person.2.fill") }
+                SocialFeedView(onOpenProfile: { profilePerson = IdString(id: $0) }).tag(0)
+                PlanView(onLoaded: { tab = 2 }).tag(1)
+                TrainView(onGoToPlan: { tab = 1 }).tag(2)
+                RankingView().tag(3)
+                PartnerView(onOpenChat: { chatPerson = IdString(id: $0) }).tag(4)
             }
+            .toolbar(.hidden, for: .tabBar)
             .onChange(of: tab) { _ in FX.selection() }
+
+            CustomTabBar(tab: $tab)
         }
         .background(Brand.bg.ignoresSafeArea())
         .sheet(isPresented: $showMessages) {
@@ -105,6 +108,64 @@ struct RootView: View {
                         .offset(x: 5, y: -5)
                 }
             }
+        }
+    }
+}
+
+struct CustomTabBar: View {
+    @Binding var tab: Int
+    private let items: [(title: String, icon: String)] = [
+        ("Social", "newspaper.fill"),
+        ("Plan", "list.bullet.clipboard"),
+        ("Entreno", "dumbbell.fill"),
+        ("Ranking", "globe.europe.africa.fill"),
+        ("Partner", "person.2.fill"),
+    ]
+
+    var body: some View {
+        HStack(alignment: .bottom, spacing: 0) {
+            ForEach(Array(items.enumerated()), id: \.offset) { idx, item in
+                if idx == 2 { centerButton(idx, item) } else { tabButton(idx, item) }
+            }
+        }
+        .padding(.horizontal, 10)
+        .padding(.top, 6)
+        .padding(.bottom, max(8, safeBottom))
+        .background(Brand.bg)
+        .overlay(Divider(), alignment: .top)
+    }
+
+    private var safeBottom: CGFloat {
+        (UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }.first?
+            .windows.first?.safeAreaInsets.bottom) ?? 0
+    }
+
+    private func tabButton(_ idx: Int, _ item: (title: String, icon: String)) -> some View {
+        Button { tab = idx } label: {
+            VStack(spacing: 4) {
+                Image(systemName: item.icon).font(.system(size: 18, weight: .semibold))
+                Text(item.title).font(.system(size: 10, weight: .heavy))
+            }
+            .foregroundColor(tab == idx ? Color(hex: "4b6211") : Brand.soft)
+            .frame(maxWidth: .infinity)
+        }
+    }
+
+    private func centerButton(_ idx: Int, _ item: (title: String, icon: String)) -> some View {
+        Button { tab = idx } label: {
+            VStack(spacing: 4) {
+                Image(systemName: item.icon).font(.system(size: 24, weight: .heavy))
+                    .foregroundColor(Color(hex: "10150a"))
+                    .frame(width: 58, height: 58)
+                    .background(Brand.green)
+                    .clipShape(Circle())
+                    .overlay(Circle().stroke(Brand.bg, lineWidth: 4))
+                    .shadow(color: Brand.green.opacity(0.5), radius: 10, y: 4)
+                Text(item.title).font(.system(size: 10, weight: .heavy))
+                    .foregroundColor(tab == idx ? Color(hex: "4b6211") : Brand.soft)
+            }
+            .frame(maxWidth: .infinity)
+            .offset(y: -14)
         }
     }
 }
