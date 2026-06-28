@@ -9,6 +9,7 @@ struct ActivityView: View {
     @EnvironmentObject var store: AppStore
     @State private var section = 0
     @State private var detail: WorkoutSession?
+    @State private var daySheet: DayPayload?
 
     private let tabs: [(title: String, icon: String)] = [
         ("Progreso", "chart.line.uptrend.xyaxis"),
@@ -30,6 +31,7 @@ struct ActivityView: View {
         }
         .background(Brand.bg)
         .sheet(item: $detail) { ActivityDetailView(item: activityData($0)).environmentObject(store) }
+        .sheet(item: $daySheet) { DaySessionsSheet(date: $0.date, sessions: $0.sessions).environmentObject(store) }
     }
 
     private var switcher: some View {
@@ -202,6 +204,9 @@ struct ActivityView: View {
                        title: "Aún no tienes actividad",
                        msg: "Completa y guarda un entreno para ver aquí tu historial.")
         } else {
+            TrainingCalendarView(sessions: sessions) { date, daySessions in
+                daySheet = DayPayload(id: date, date: date, sessions: daySessions)
+            }
             HStack {
                 Text("TU HISTORIAL").font(.caption2).fontWeight(.heavy).foregroundColor(Brand.muted)
                 Spacer()
@@ -212,8 +217,7 @@ struct ActivityView: View {
     }
 
     private var summaryCard: some View {
-        let totalVol = sessions.reduce(0.0) { $0 + $1.volume }
-        return PanelCard {
+        PanelCard {
             HStack(alignment: .top) {
                 VStack(alignment: .leading, spacing: 3) {
                     Text("TU ACTIVIDAD").font(.caption2).fontWeight(.heavy).foregroundColor(Brand.muted)
@@ -233,10 +237,7 @@ struct ActivityView: View {
                         .background(Brand.greenSoft).clipShape(Capsule())
                 }
             }
-            HStack(spacing: 10) {
-                stat("\(sessionsThisWeek)", "Esta semana", "calendar")
-                stat("\(Int(totalVol)) kg", "Volumen total", "dumbbell.fill")
-            }
+            stat("\(sessionsThisWeek)", "Entrenos esta semana", "calendar")
         }
     }
 

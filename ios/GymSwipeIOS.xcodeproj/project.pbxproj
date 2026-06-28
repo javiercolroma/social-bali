@@ -16,6 +16,7 @@
 		46248B5DA3F8CE7CF349D01C /* GymScore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1250C29A42354C7EA62ADC58 /* GymScore.swift */; };
 		46EBB8712F3CB101DB8A4FED /* AppStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = D0B083763AEA6D7CE3C7B500 /* AppStore.swift */; };
 		5D87F9D09E700FC924A4C724 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B83B0B92285D78A53157123F /* Assets.xcassets */; };
+		60E08D8A66484353B6B96ADD /* TrainingCalendarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 54E87676E4306A9937FB7D0D /* TrainingCalendarView.swift */; };
 		6DE8E5E4E1967F84A6B8AF57 /* ActivityView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FDB8BD1E12E0FD517BCB9CF5 /* ActivityView.swift */; };
 		6F3B3519B39CCE8280492005 /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 29747A9B85AA4E6D8D9D3843 /* RootView.swift */; };
 		942CEB3E1BDC0BABD1CB038F /* Exercises.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC0D952E1A0BC084FD9FDB7C /* Exercises.swift */; };
@@ -44,6 +45,7 @@
 		45AAAB98E146869DA2747469 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		4B553BE8FEA6DE363E4659DB /* CommunityView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommunityView.swift; sourceTree = "<group>"; };
 		4FDBAEC8202622CA34A302EA /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
+		54E87676E4306A9937FB7D0D /* TrainingCalendarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrainingCalendarView.swift; sourceTree = "<group>"; };
 		5D321FCC3B325158C232F567 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		627A3AB04978CE24F42D32E8 /* SocialFeedView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SocialFeedView.swift; sourceTree = "<group>"; };
 		6323375755B5CE9680137707 /* SessionFX.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionFX.swift; sourceTree = "<group>"; };
@@ -109,6 +111,7 @@
 				627A3AB04978CE24F42D32E8 /* SocialFeedView.swift */,
 				A94209F7155C5A09DA6E950A /* SocialViews.swift */,
 				4FDBAEC8202622CA34A302EA /* Theme.swift */,
+				54E87676E4306A9937FB7D0D /* TrainingCalendarView.swift */,
 				D1DF8FC23C0BF2E64342C5D7 /* TrainView.swift */,
 			);
 			path = GymSwipeIOS;
@@ -205,6 +208,7 @@
 				B2BA2EDCA173DDEDD61FF8BD /* SocialViews.swift in Sources */,
 				388862FD824CE56B55EE672A /* Theme.swift in Sources */,
 				EF71FBCBDF30D20460C49750 /* TrainView.swift in Sources */,
+				60E08D8A66484353B6B96ADD /* TrainingCalendarView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
