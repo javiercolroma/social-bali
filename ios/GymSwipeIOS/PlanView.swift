@@ -186,7 +186,7 @@ struct CreateWorkoutView: View {
                         if !groupSuggestions.isEmpty { Divider() }
                     }
                     ForEach(Array(groupSuggestions.prefix(6).enumerated()), id: \.element) { idx, opt in
-                        groupRow(icon: "tag.fill", color: Brand.soft, title: opt, badge: store.customGroups.contains(opt) ? "tuyo" : nil) { commitGroup(opt) }
+                        groupRow(icon: "tag.fill", color: Brand.soft, title: opt, badge: nil) { commitGroup(opt) }
                         if idx < min(6, groupSuggestions.count) - 1 { Divider() }
                     }
                 }
