@@ -718,7 +718,9 @@ Ajustes aplicados:
 - Cada plan tiene un `ownerId` (la persona que lo propone).
 - Los planes que creas tienen `ownerId: 'me'`: salen con TU nombre (de la cuenta @), marcados como "Tu plan · Esperando compañero…", con boton Eliminar y SIN boton de aceptar (no puedes aceptar/chatear contigo mismo). Solo los planes de otros (demo) son aceptables.
 - Ya no se muestra el "Nivel"; cada plan muestra una puntuacion (`score`, el Gym Score del proponente; en tus planes es tu propio Gym Score).
+- Se eliminaron los campos auto-inventados (intensidad y objetivo): la tarjeta solo muestra lo que el usuario define (titulo/que, cuando, lugar, plazas) + score.
 - Cualquier plan que no te interese se puede descartar (boton Descartar en planes de otros, Eliminar en los tuyos); la lista se persiste, asi que no se perpetuan.
+- Mientras se crea un plan (formulario "Buscar compañero" abierto) se oculta la lista de planes.
 
 Aceptar entrenamiento (flujo actual):
 

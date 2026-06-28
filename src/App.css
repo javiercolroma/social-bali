@@ -4203,6 +4203,8 @@ input:focus-visible {
 }
 
 .conversation-top strong {
+  flex: 1;
+  min-width: 0;
   overflow: hidden;
   color: #171913;
   font-size: 0.94rem;
@@ -4218,6 +4220,8 @@ input:focus-visible {
 }
 
 .conversation-bottom span {
+  flex: 1;
+  min-width: 0;
   overflow: hidden;
   color: #71756d;
   font-size: 0.82rem;

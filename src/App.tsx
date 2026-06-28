@@ -1414,8 +1414,6 @@ type TrainingPlanCard = TrainingPlanDraft & {
   id: string
   title: string
   place: string
-  intensity: string
-  objective: string
   note: string
   ownerId: string
   score: number
@@ -1446,8 +1444,6 @@ const defaultTrainingPlans: TrainingPlanCard[] = [
     level: 'Similar al mío',
     spots: '1 persona',
     place: 'Basic-Fit Gran Vía',
-    intensity: 'Fuerte',
-    objective: 'Hipertrofia',
     note: '',
     ownerId: 'p-mika',
     score: 71,
@@ -1462,8 +1458,6 @@ const defaultTrainingPlans: TrainingPlanCard[] = [
     level: 'Cualquiera',
     spots: '2 personas',
     place: 'Zona cercana',
-    intensity: 'Media-alta',
-    objective: 'Fuerza + volumen',
     note: '',
     ownerId: 'p-sofia',
     score: 64,
@@ -1482,26 +1476,6 @@ function getPlanPlace(where: string[], profile: Profile) {
   return 'Zona cercana'
 }
 
-function getPlanObjective(workout: string) {
-  if (workout === 'Cardio') {
-    return 'Resistencia'
-  }
-
-  if (workout === 'Calistenia') {
-    return 'Control corporal'
-  }
-
-  if (workout === 'Pierna') {
-    return 'Fuerza + volumen'
-  }
-
-  return 'Hipertrofia'
-}
-
-function getPlanIntensity(level: string) {
-  return level === 'Más avanzado' ? 'Fuerte' : level === 'Principiante friendly' ? 'Moderada' : 'Media-alta'
-}
-
 function createTrainingPlan(draft: TrainingPlanDraft, profile: Profile, score: number): TrainingPlanCard {
   const title = draft.workout === 'Pecho' ? 'Pecho + tríceps' : draft.workout === 'Espalda' ? 'Espalda + bíceps' : draft.workout
   const when = draft.when === 'Fecha concreta' && draft.date ? new Date(`${draft.date}T12:00:00`).toLocaleDateString('es-ES', { day: '2-digit', month: 'short' }) : draft.when
@@ -1512,8 +1486,6 @@ function createTrainingPlan(draft: TrainingPlanDraft, profile: Profile, score: n
     title,
     when,
     place: getPlanPlace(draft.where, profile),
-    intensity: getPlanIntensity(draft.level),
-    objective: getPlanObjective(draft.workout),
     note: '',
     ownerId: 'me',
     score,
@@ -5130,6 +5102,7 @@ function PartnerView({
           </section>
         )}
 
+        {!showPlanCreator && (
         <div className="training-plan-list">
           {trainingPlans.map((plan) => {
             const isMine = plan.ownerId === 'me'
@@ -5154,8 +5127,6 @@ function PartnerView({
                 <div className="plan-card-tags">
                   <span className="plan-score-tag">Score {plan.score}</span>
                   <span>{plan.spots}</span>
-                  <span>{plan.intensity}</span>
-                  <span>{plan.objective}</span>
                 </div>
                 {isMine ? (
                   <div className="plan-card-mine-row">
@@ -5190,6 +5161,7 @@ function PartnerView({
             )
           })}
         </div>
+        )}
       </section>
     </section>
   )
