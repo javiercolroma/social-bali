@@ -155,14 +155,15 @@ struct CustomTabBar: View {
                 Image(systemName: item.icon)
                     .font(.system(size: 18, weight: active ? .heavy : .semibold))
                     .frame(width: 46, height: 30)
-                    .background(active ? Brand.greenSoft.opacity(0.55) : .clear)
+                    .background(active ? Brand.greenSoft : .clear)
                     .clipShape(Capsule())
                 Text(item.title).font(.system(size: 10, weight: .heavy))
             }
-            .foregroundColor(active ? accent : Brand.soft)
+            .foregroundStyle(active ? accent : Brand.soft)
             .frame(maxWidth: .infinity)
-            .animation(.easeOut(duration: 0.18), value: tab)
+            .contentShape(Rectangle())
         }
+        .buttonStyle(.plain)
     }
 
     private func centerButton(_ idx: Int, _ item: (title: String, icon: String)) -> some View {
@@ -170,18 +171,18 @@ struct CustomTabBar: View {
         return Button { tab = idx } label: {
             VStack(spacing: 4) {
                 Image(systemName: item.icon).font(.system(size: 20, weight: .heavy))
-                    .foregroundColor(active ? Color(hex: "10150a") : Brand.soft)
+                    .foregroundStyle(active ? Color(hex: "10150a") : Brand.soft)
                     .frame(width: 50, height: 50)
                     .background(active ? Brand.green : Color.white)
                     .clipShape(Circle())
                     .overlay(Circle().stroke(active ? Color.clear : Brand.line, lineWidth: 1))
                     .shadow(color: active ? Brand.green.opacity(0.4) : .black.opacity(0.06), radius: active ? 8 : 4, y: 3)
-                Text(item.title).font(.system(size: 10, weight: .heavy))
-                    .foregroundColor(active ? accent : Brand.soft)
+                Text(item.title).font(.system(size: 10, weight: .heavy)).foregroundStyle(active ? accent : Brand.soft)
             }
             .frame(maxWidth: .infinity)
             .offset(y: -8)
-            .animation(.spring(response: 0.3, dampingFraction: 0.75), value: tab)
+            .contentShape(Rectangle())
         }
+        .buttonStyle(.plain)
     }
 }
