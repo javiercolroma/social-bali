@@ -19,11 +19,16 @@ struct RootView: View {
         VStack(spacing: 0) {
             header
             TabView(selection: $tab) {
-                SocialFeedView(onOpenProfile: { profilePerson = IdString(id: $0) }).tag(0).toolbar(.hidden, for: .tabBar)
-                PlanView(onLoaded: { tab = 2 }).tag(1).toolbar(.hidden, for: .tabBar)
-                TrainView(onGoToPlan: { tab = 1 }).tag(2).toolbar(.hidden, for: .tabBar)
-                RankingView().tag(3).toolbar(.hidden, for: .tabBar)
-                PartnerView(onOpenChat: { chatPerson = IdString(id: $0) }).tag(4).toolbar(.hidden, for: .tabBar)
+                SocialFeedView(onOpenProfile: { profilePerson = IdString(id: $0) })
+                    .tag(0).tabItem { Label("Social", systemImage: "newspaper.fill") }.toolbar(.hidden, for: .tabBar)
+                PlanView(onLoaded: { tab = 2 })
+                    .tag(1).tabItem { Label("Plan", systemImage: "list.bullet.clipboard") }.toolbar(.hidden, for: .tabBar)
+                TrainView(onGoToPlan: { tab = 1 })
+                    .tag(2).tabItem { Label("Entreno", systemImage: "dumbbell.fill") }.toolbar(.hidden, for: .tabBar)
+                RankingView()
+                    .tag(3).tabItem { Label("Ranking", systemImage: "globe.europe.africa.fill") }.toolbar(.hidden, for: .tabBar)
+                PartnerView(onOpenChat: { chatPerson = IdString(id: $0) })
+                    .tag(4).tabItem { Label("Partner", systemImage: "person.2.fill") }.toolbar(.hidden, for: .tabBar)
             }
             .onChange(of: tab) { _ in FX.selection() }
 
