@@ -965,26 +965,26 @@ function getExercisePattern(name: string) {
   const normalized = normalizeSearchText(name)
 
   if (/sentadilla|prensa|zancada|pierna|gemelo/.test(normalized)) {
-    return { group: 'pierna', benchmark: 120, compound: 1.08 }
+    return { group: 'pierna', benchmark: 185, compound: 1.08 }
   }
 
   if (/peso muerto|rumano|hip thrust/.test(normalized)) {
-    return { group: 'bisagra', benchmark: 145, compound: 1.12 }
+    return { group: 'bisagra', benchmark: 220, compound: 1.12 }
   }
 
   if (/press banca|fondos|press inclinado|aperturas/.test(normalized)) {
-    return { group: 'empuje', benchmark: 92.5, compound: 1.05 }
+    return { group: 'empuje', benchmark: 140, compound: 1.05 }
   }
 
   if (/remo|dominada|jalon|pull/.test(normalized)) {
-    return { group: 'tiron', benchmark: 82.5, compound: 1.04 }
+    return { group: 'tiron', benchmark: 120, compound: 1.04 }
   }
 
   if (/core|plancha|abdominal|ruso|antirotacion|movilidad|spinning|sprint|sled/.test(normalized)) {
-    return { group: 'condicion', benchmark: 40, compound: 0.72 }
+    return { group: 'condicion', benchmark: 60, compound: 0.72 }
   }
 
-  return { group: 'accesorio', benchmark: 45, compound: 0.82 }
+  return { group: 'accesorio', benchmark: 70, compound: 0.82 }
 }
 
 function getEstimatedOneRepMax(entry: Pick<HistoryEntry, 'weight' | 'reps'>) {
@@ -1062,34 +1062,39 @@ function calculateGymScore(history: HistoryEntry[]): GymScore {
   const sessions = recentSessions.size
   const trainingDays = recentDays.size
 
-  // Strength: advanced benchmarks, capped, and penalised for training few patterns.
-  const strengthCoverage = clamp01(bestByGroup.size / 3)
+  // Every pillar is intentionally VERY demanding: elite targets + power curves
+  // so an average lifter lands low and 80+ needs sustained elite performance.
+
+  // Strength: elite e1RM benchmarks; needs 4+ trained patterns for full coverage;
+  // gamma curve so being near a benchmark still isn't enough.
+  const strengthCoverage = clamp01(bestByGroup.size / 4)
   const strengthBase = bestByGroup.size
-    ? Array.from(bestByGroup.values()).reduce((total, value) => total + Math.min(120, value), 0) / bestByGroup.size
+    ? Array.from(bestByGroup.values()).reduce((total, value) => total + Math.min(105, value), 0) / bestByGroup.size
     : 0
-  const strength = clampScore(strengthBase * strengthCoverage)
+  const strength = clampScore(Math.pow(clamp01((strengthBase * strengthCoverage) / 100), 1.3) * 100)
 
-  // Consistency: 5 sessions/week (15 in 3 weeks) = 100, 3/week ~ 55.
-  const consistency = clampScore((sessions / 15) * 100)
+  // Consistency: 6 sessions/week (18 in 3 weeks) = 100; 4/week ~ 49; 3/week ~ 28.
+  const consistency = clampScore(Math.pow(clamp01(sessions / 18), 1.35) * 100)
 
-  // Volume: log-scaled weekly tonnage vs a high benchmark.
-  const volume = clampScore((Math.log10(weightedVolume + 1) - 3.4) * 40)
+  // Volume: log-scaled tonnage vs a high benchmark, then curved.
+  const volume = clampScore(Math.pow(clamp01((Math.log10(weightedVolume + 1) - 3.6) / 2.4), 1.25) * 100)
 
-  // Progression: block-over-block trend; regressions punished harder, flat ~55.
+  // Progression: block-over-block trend; flat ~45, regressions punished hard,
+  // and you need big sustained gains (~+40%) to approach the top.
   const ratio = previousVolume > 0 ? (weightedVolume - previousVolume) / previousVolume : null
   const progression =
     ratio === null
       ? recentEntries.length
-        ? 45
+        ? 35
         : 0
-      : clampScore(55 + (ratio >= 0 ? ratio * 120 : ratio * 200))
+      : clampScore(48 + (ratio >= 0 ? ratio * 90 : ratio * 240))
 
-  // Variety: all 5 movement patterns for full marks (concave curve).
-  const variety = clampScore(Math.pow(clamp01(groups.size / 5), 1.3) * 100)
+  // Variety: all 5 movement patterns for full marks (steep concave curve).
+  const variety = clampScore(Math.pow(clamp01(groups.size / 5), 1.7) * 100)
 
-  // Quality: completion rate (skips punished via exponent).
+  // Quality: completion rate; skips punished hard via a steep exponent.
   const completionRate = recentEntries.length / Math.max(1, recentEntries.length + skippedRecent.length)
-  const quality = clampScore(Math.pow(completionRate, 1.5) * 100)
+  const quality = clampScore(Math.pow(completionRate, 2.4) * 100)
 
   const rawWeighted =
     strength * 0.3 +
@@ -1099,8 +1104,8 @@ function calculateGymScore(history: HistoryEntry[]): GymScore {
     quality * 0.1 +
     variety * 0.08
 
-  // Demanding curve (gamma > 1): compresses the top so 85+ is near-unattainable.
-  const potential = clampScore(100 * Math.pow(clamp01(rawWeighted / 100), 1.25))
+  // Final demanding curve (gamma > 1): compresses the top so 85+ is near-unattainable.
+  const potential = clampScore(100 * Math.pow(clamp01(rawWeighted / 100), 1.35))
 
   // Reliability: needs >= 3 weeks of span AND enough evidence within them.
   const firstEntry = history.reduce<number | null>((earliest, entry) => {

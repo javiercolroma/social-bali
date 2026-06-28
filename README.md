@@ -625,13 +625,14 @@ Gym Score (0-100, exigente):
 
 - Se calcula a partir del historial local, ventana movil de 3 semanas (21 dias).
 - Pilares y pesos: Fuerza 30%, Constancia 22%, Progreso 17%, Volumen 13%, Calidad 10%, Variedad 8%.
-- Disenado para ser exigente:
-  - Fuerza con benchmarks de nivel avanzado por patron (`getExercisePattern`) y penalizacion por entrenar pocos patrones (`coverage`).
-  - Constancia: 5 sesiones/semana (15 en 3 semanas) = 100; 3/semana ~ 55.
-  - Progreso: necesita ~+12% de volumen bloque-a-bloque para >70; las regresiones penalizan mas.
-  - Volumen: tonelaje log-escalado vs benchmark alto.
-  - Calidad y Variedad con curvas potencia (los skips y la falta de variedad castigan).
-  - Curva final gamma=1.25 que comprime la parte alta: 85+ es casi inalcanzable.
+- Disenado para ser MUY exigente (cada barra cuesta):
+  - Fuerza: benchmarks e1RM de nivel ELITE por patron (`getExercisePattern`: pierna 185, bisagra 220, empuje 140, tiron 120), requiere 4+ patrones (`coverage`) y curva gamma 1.3.
+  - Constancia: 6 sesiones/semana (18 en 3 semanas) = 100; 4/semana ~ 49; 3/semana ~ 28 (curva 1.35).
+  - Progreso: plano ~45; necesitas ganancias grandes y sostenidas (~+40% volumen bloque-a-bloque) para acercarte al top; las regresiones penalizan muy fuerte.
+  - Volumen: tonelaje log-escalado vs benchmark alto + curva 1.25.
+  - Variedad: los 5 patrones para nota alta (curva 1.7; 4/5 ~ 69, 3/5 ~ 43).
+  - Calidad: completitud con exponente 2.4 (los skips hunden la barra).
+  - Curva final gamma=1.35 sobre el total: 85+ es casi inalcanzable.
 - Niveles (tier): Iniciado (0), Constante (20), Competente (40), Avanzado (55), Élite (70), Legendario (85+).
 
 Fiabilidad (minimo 3 semanas):
