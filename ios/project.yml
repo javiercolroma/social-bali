@@ -14,8 +14,6 @@ targets:
     deploymentTarget: "16.0"
     sources:
       - path: GymSwipeIOS
-      - path: WebDist
-        type: folder
     info:
       path: GymSwipeIOS/Info.plist
       properties:

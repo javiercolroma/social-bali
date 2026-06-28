@@ -7,21 +7,43 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		2A369E47736FA626323CEF25 /* ProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E53E08D1A4CF0DE70074A344 /* ProfileView.swift */; };
+		2A71043ED4BBAF7A09523AFF /* Components.swift in Sources */ = {isa = PBXBuildFile; fileRef = A415A6402658DC75C3C37C3C /* Components.swift */; };
+		388862FD824CE56B55EE672A /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4FDBAEC8202622CA34A302EA /* Theme.swift */; };
 		44168B322E9C8DF64A6B35D2 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 5D321FCC3B325158C232F567 /* PrivacyInfo.xcprivacy */; };
-		4A594ECCD23FA6B2D8AD5C4D /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CAB52A046196FBC2A18158AF /* ContentView.swift */; };
+		46248B5DA3F8CE7CF349D01C /* GymScore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1250C29A42354C7EA62ADC58 /* GymScore.swift */; };
+		46EBB8712F3CB101DB8A4FED /* AppStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = D0B083763AEA6D7CE3C7B500 /* AppStore.swift */; };
 		5D87F9D09E700FC924A4C724 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B83B0B92285D78A53157123F /* Assets.xcassets */; };
-		97352B4FB2817E6C0CFFCBF7 /* WebDist in Resources */ = {isa = PBXBuildFile; fileRef = 55E0ADAC1161ECACA77B58D1 /* WebDist */; };
+		6F3B3519B39CCE8280492005 /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 29747A9B85AA4E6D8D9D3843 /* RootView.swift */; };
+		AEC40F20A484762912222BA0 /* LocationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F46519F370ACB4CE695F4928 /* LocationManager.swift */; };
+		B2BA2EDCA173DDEDD61FF8BD /* SocialViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = A94209F7155C5A09DA6E950A /* SocialViews.swift */; };
+		BEBB454C3035C16BFE9C0067 /* RankingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 351AF069FE04261E1DB0C543 /* RankingView.swift */; };
+		C96DA3E9AC38A13BD8D381B1 /* PartnerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C6E2A074351DB17430CAE561 /* PartnerView.swift */; };
+		CF3EFCE5F7B166F143B9B408 /* PlanView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EF5C837837CFA069C8F53AE4 /* PlanView.swift */; };
+		D1A51AF5DF1BCC6CDABBD42C /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1596E5BECE9666DDA76867A /* Models.swift */; };
+		EF71FBCBDF30D20460C49750 /* TrainView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1DF8FC23C0BF2E64342C5D7 /* TrainView.swift */; };
 		FBCDEE4F608FFD8E2591F44A /* GymSwipeIOSApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9CAC012CB53EB545C20ED468 /* GymSwipeIOSApp.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		1250C29A42354C7EA62ADC58 /* GymScore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GymScore.swift; sourceTree = "<group>"; };
+		29747A9B85AA4E6D8D9D3843 /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
+		351AF069FE04261E1DB0C543 /* RankingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RankingView.swift; sourceTree = "<group>"; };
 		43FB86BA08732C17FD45EDF6 /* GymSwipeIOS.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = GymSwipeIOS.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		45AAAB98E146869DA2747469 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
-		55E0ADAC1161ECACA77B58D1 /* WebDist */ = {isa = PBXFileReference; lastKnownFileType = folder; path = WebDist; sourceTree = SOURCE_ROOT; };
+		4FDBAEC8202622CA34A302EA /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
 		5D321FCC3B325158C232F567 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		9CAC012CB53EB545C20ED468 /* GymSwipeIOSApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GymSwipeIOSApp.swift; sourceTree = "<group>"; };
+		A415A6402658DC75C3C37C3C /* Components.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Components.swift; sourceTree = "<group>"; };
+		A94209F7155C5A09DA6E950A /* SocialViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SocialViews.swift; sourceTree = "<group>"; };
 		B83B0B92285D78A53157123F /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
-		CAB52A046196FBC2A18158AF /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		C6E2A074351DB17430CAE561 /* PartnerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PartnerView.swift; sourceTree = "<group>"; };
+		D0B083763AEA6D7CE3C7B500 /* AppStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppStore.swift; sourceTree = "<group>"; };
+		D1596E5BECE9666DDA76867A /* Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models.swift; sourceTree = "<group>"; };
+		D1DF8FC23C0BF2E64342C5D7 /* TrainView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrainView.swift; sourceTree = "<group>"; };
+		E53E08D1A4CF0DE70074A344 /* ProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileView.swift; sourceTree = "<group>"; };
+		EF5C837837CFA069C8F53AE4 /* PlanView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlanView.swift; sourceTree = "<group>"; };
+		F46519F370ACB4CE695F4928 /* LocationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationManager.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -36,7 +58,6 @@
 		9C4D981609085AAFB38BE24C = {
 			isa = PBXGroup;
 			children = (
-				55E0ADAC1161ECACA77B58D1 /* WebDist */,
 				DF4F6CA473D782953BF29753 /* GymSwipeIOS */,
 				38A6DA15457604A9A5986D64 /* Products */,
 			);
@@ -45,11 +66,23 @@
 		DF4F6CA473D782953BF29753 /* GymSwipeIOS */ = {
 			isa = PBXGroup;
 			children = (
+				D0B083763AEA6D7CE3C7B500 /* AppStore.swift */,
 				B83B0B92285D78A53157123F /* Assets.xcassets */,
-				CAB52A046196FBC2A18158AF /* ContentView.swift */,
+				A415A6402658DC75C3C37C3C /* Components.swift */,
+				1250C29A42354C7EA62ADC58 /* GymScore.swift */,
 				9CAC012CB53EB545C20ED468 /* GymSwipeIOSApp.swift */,
 				45AAAB98E146869DA2747469 /* Info.plist */,
+				F46519F370ACB4CE695F4928 /* LocationManager.swift */,
+				D1596E5BECE9666DDA76867A /* Models.swift */,
+				C6E2A074351DB17430CAE561 /* PartnerView.swift */,
+				EF5C837837CFA069C8F53AE4 /* PlanView.swift */,
 				5D321FCC3B325158C232F567 /* PrivacyInfo.xcprivacy */,
+				E53E08D1A4CF0DE70074A344 /* ProfileView.swift */,
+				351AF069FE04261E1DB0C543 /* RankingView.swift */,
+				29747A9B85AA4E6D8D9D3843 /* RootView.swift */,
+				A94209F7155C5A09DA6E950A /* SocialViews.swift */,
+				4FDBAEC8202622CA34A302EA /* Theme.swift */,
+				D1DF8FC23C0BF2E64342C5D7 /* TrainView.swift */,
 			);
 			path = GymSwipeIOS;
 			sourceTree = "<group>";
@@ -112,7 +145,6 @@
 			files = (
 				5D87F9D09E700FC924A4C724 /* Assets.xcassets in Resources */,
 				44168B322E9C8DF64A6B35D2 /* PrivacyInfo.xcprivacy in Resources */,
-				97352B4FB2817E6C0CFFCBF7 /* WebDist in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -123,8 +155,20 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				4A594ECCD23FA6B2D8AD5C4D /* ContentView.swift in Sources */,
+				46EBB8712F3CB101DB8A4FED /* AppStore.swift in Sources */,
+				2A71043ED4BBAF7A09523AFF /* Components.swift in Sources */,
+				46248B5DA3F8CE7CF349D01C /* GymScore.swift in Sources */,
 				FBCDEE4F608FFD8E2591F44A /* GymSwipeIOSApp.swift in Sources */,
+				AEC40F20A484762912222BA0 /* LocationManager.swift in Sources */,
+				D1A51AF5DF1BCC6CDABBD42C /* Models.swift in Sources */,
+				C96DA3E9AC38A13BD8D381B1 /* PartnerView.swift in Sources */,
+				CF3EFCE5F7B166F143B9B408 /* PlanView.swift in Sources */,
+				2A369E47736FA626323CEF25 /* ProfileView.swift in Sources */,
+				BEBB454C3035C16BFE9C0067 /* RankingView.swift in Sources */,
+				6F3B3519B39CCE8280492005 /* RootView.swift in Sources */,
+				B2BA2EDCA173DDEDD61FF8BD /* SocialViews.swift in Sources */,
+				388862FD824CE56B55EE672A /* Theme.swift in Sources */,
+				EF71FBCBDF30D20460C49750 /* TrainView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

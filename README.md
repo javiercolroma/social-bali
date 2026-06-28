@@ -2,6 +2,17 @@
 
 Ultima actualizacion: 2026-06-28
 
+> ⚠️ **MIGRACION A NATIVO (en curso).** La app iOS se esta reescribiendo a **SwiftUI 100% nativa** (Fase 1 completada). El antiguo enfoque web en `WKWebView` queda **deprecado**: el target iOS ya NO carga `WebDist` ni usa la web; ahora arranca `RootView` (SwiftUI). El codigo web en `src/` permanece en el repo pero **no lo usa la app**. La documentacion de abajo (secciones 1-24) describe la app WEB original y se conserva como referencia funcional/de producto mientras se porta a Swift.
+>
+> **App nativa (Swift) — archivos clave en `ios/GymSwipeIOS/`:** `GymSwipeIOSApp.swift` (entry), `AppStore.swift` (estado + persistencia en UserDefaults + acciones), `Models.swift`, `GymScore.swift` (logica de score), `LocationManager.swift` (CoreLocation nativo), `RootView.swift` (TabView nativo + cabecera + sheets), `TrainView/PlanView/RankingView/PartnerView/ProfileView.swift`, `SocialViews.swift` (mensajes, chat, amigos, notificaciones, perfil de amigo, alta de cuenta), `Components.swift`, `Theme.swift`.
+>
+> **Estado Fase 1:** compila y corre. Implementado nativo: alta de cuenta, Entreno (cargar/serie hecha-saltada/descanso/cronometro), Plan (biblioteca + preview + cargar), Ranking (Gym Score exigente + tabla + mapa MapKit con zoom + ubicacion real), Partner (planes, crear, aceptar→chat, descartar, tus planes con tu nombre), Perfil (nivel/XP/datos), Social completo (mensajes/chat/amigos/buscar/notificaciones/perfil de amigo). Persistencia en `UserDefaults` (clave `forge-native-v1`).
+>
+> **Pendiente de portar/afinar:** gesto de swipe del deck de entreno (ahora botones Hecho/Saltar), edicion inline de peso/reps, crear/editar rutinas propias, compartir entrenos, calendario de progreso, pulido visual.
+>
+> **Comandos nativos:** `npm run ios:generate` (xcodegen) tras añadir archivos Swift; build con `xcodebuild -project ios/GymSwipeIOS.xcodeproj -scheme GymSwipeIOS -destination 'platform=iOS Simulator,name=iPhone 17 Pro' build`. Ya NO hace falta `npm run ios:sync`.
+
+
 Este documento es la memoria viva del proyecto. Sirve para retomar el desarrollo aunque se pierda la sesion: contexto de producto, arquitectura, decisiones tecnicas, estado funcional, bugs conocidos, comandos de trabajo y siguientes pasos.
 
 ## 1. Resumen ejecutivo
