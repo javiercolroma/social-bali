@@ -312,17 +312,44 @@ final class AppStore: ObservableObject {
 
     // MARK: - Workouts (create / delete)
 
-    func addWorkout(name: String, exercises: [Exercise]) {
+    func addWorkout(name: String, group: String, exercises: [Exercise]) {
+        let g = group.trimmingCharacters(in: .whitespaces)
         let workout = WorkoutTemplate(
             id: newId("w"), name: name.isEmpty ? "Mi entreno" : name,
-            description: "\(exercises.count) ejercicios", block: "Mis entrenos", exercises: exercises)
+            description: "\(exercises.count) ejercicios", block: g.isEmpty ? "Mis entrenos" : g, exercises: exercises)
         savedWorkouts.insert(workout, at: 0)
         persist()
+    }
+
+    /// Custom groups created by the user (from saved workouts).
+    var customGroups: [String] {
+        var seen = Set<String>()
+        return savedWorkouts.map { $0.block }.filter { seen.insert($0).inserted }
     }
 
     func deleteWorkout(_ id: String) {
         savedWorkouts.removeAll { $0.id == id }
         persist()
+    }
+
+    func isSaved(_ id: String) -> Bool { savedWorkouts.contains { $0.id == id } }
+
+    /// Save edits. If it's a saved workout, update in place; if it's a built-in
+    /// template, create an editable copy in "Mis entrenos".
+    func updateWorkout(id: String, name: String, group: String, exercises: [Exercise]) {
+        let g = group.trimmingCharacters(in: .whitespaces)
+        let block = g.isEmpty ? "Mis entrenos" : g
+        if let idx = savedWorkouts.firstIndex(where: { $0.id == id }) {
+            var w = savedWorkouts[idx]
+            w.name = name.isEmpty ? "Mi entreno" : name
+            w.block = block
+            w.exercises = exercises
+            w.description = "\(exercises.count) ejercicios"
+            savedWorkouts[idx] = w
+            persist()
+        } else {
+            addWorkout(name: name, group: group, exercises: exercises)
+        }
     }
 
     private func newId(_ prefix: String) -> String { "\(prefix)-\(Int(Date().timeIntervalSince1970 * 1000))-\(Int.random(in: 0..<100000))" }

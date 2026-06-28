@@ -12,7 +12,11 @@ Ultima actualizacion: 2026-06-28
 >
 > **Entreno (flujo de sesion):** boton "Finalizar entrenamiento"; al terminar se muestra un RESUMEN tipo Strava (duracion, series, volumen, XP) con Guardar/Descartar (el historial/XP/racha se confirman solo al Guardar). Tras Guardar/Descartar se vuelve al estado de carga, que muestra "TUS MÁS FRECUENTES" (`AppStore.frequentWorkouts`, por sesiones pasadas) + boton "Otros entrenos" que cambia a la pestaña Plan (`onGoToPlan` → `tab = 1`).
 >
-> **Pendiente de portar/afinar:** gesto de swipe del deck de entreno (ahora botones Hecho/Saltar), edicion inline de peso/reps, editar rutinas guardadas, compartir entrenos, calendario de progreso, pulido visual.
+> **Plan / entrenos (nativo):** crear entreno con formulario mejorado (tarjetas de ejercicio con steppers redondos, boton "Añadir ejercicio" con borde discontinuo). Grupos personalizados: cada entreno tiene `block` como grupo (chips sugeridos + grupo nuevo escribible); Plan agrupa por grupos. Editar entrenos (boton Editar en el preview → reabre el formulario; los built-in se editan creando copia, los tuyos se actualizan in situ). Eliminar con papelera: menu contextual (long-press) en la fila + boton en el preview, ambos con confirmacion "¿Eliminar?".
+>
+> **Partner (nativo):** "Buscar compañero" abre el creador como POP-UP (sheet `CreatePlanView`) con Cuándo/Dónde/Qué/Plazas y opcion "Me adapto" en todos; flecha "Atrás" arriba-izquierda. Eliminar plan propio pide confirmacion.
+>
+> **Pendiente de portar/afinar:** gesto de swipe del deck de entreno (ahora botones Hecho/Saltar), edicion inline de peso/reps durante la sesion, compartir entrenos, calendario de progreso, pulido visual.
 >
 > **Futuro (autenticacion):** hoy la cuenta es LOCAL (nombre + @handle + foto en el dispositivo, sin login). Para multiusuario real hara falta backend con auth: email+contraseña y/o **Sign in with Apple** (OBLIGATORIO por Apple si se ofrece login de terceros). Requiere servidor (usuarios, sesiones, recuperacion de contraseña) — pendiente de decidir stack (p. ej. Supabase/Firebase para ir rapido).
 >
