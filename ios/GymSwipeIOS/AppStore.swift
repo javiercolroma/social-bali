@@ -197,13 +197,22 @@ final class AppStore: ObservableObject {
         persist()
     }
 
+    // Racha "de gimnasio": no exige entrenar a diario. Se mantiene mientras no
+    // pasen más de 3 días entre entrenos (y el último sea de los últimos 3 días).
+    // Cada día entrenado dentro de esa ventana suma +1.
     private func currentStreak() -> Int {
-        let doneDays = Set(history.filter { $0.status == .done }.map { dayKey($0.completedAt) })
-        var streak = 0
-        var cursor = Date()
-        while doneDays.contains(dayKey(cursor)) {
-            streak += 1
-            cursor = Calendar.current.date(byAdding: .day, value: -1, to: cursor) ?? cursor
+        let cal = Calendar.current
+        let trainedDays = Set(history.filter { $0.status == .done }
+            .map { cal.startOfDay(for: $0.completedAt) }).sorted(by: >)
+        guard let mostRecent = trainedDays.first else { return 0 }
+        let today = cal.startOfDay(for: Date())
+        let sinceLast = cal.dateComponents([.day], from: mostRecent, to: today).day ?? 0
+        if sinceLast > 3 { return 0 } // han pasado más de 3 días sin entrenar
+        var streak = 1
+        var prev = mostRecent
+        for day in trainedDays.dropFirst() {
+            let gap = cal.dateComponents([.day], from: day, to: prev).day ?? 0
+            if gap <= 3 { streak += 1; prev = day } else { break }
         }
         return streak
     }
