@@ -148,12 +148,18 @@ struct CreateWorkoutView: View {
     @State private var group = ""
     @State private var drafts: [DraftExercise] = [DraftExercise()]
     @State private var didLoad = false
+    @FocusState private var groupFocused: Bool
 
     private let suggestedGroups = ["Pierna", "Pecho", "Espalda", "Push", "Pull", "Full body", "Brazo", "Hombro", "Core"]
     private var groupOptions: [String] {
         var seen = Set<String>(); var out: [String] = []
         for g in store.customGroups + suggestedGroups where seen.insert(g).inserted { out.append(g) }
         return out
+    }
+    private var groupSuggestions: [String] {
+        let q = group.trimmingCharacters(in: .whitespaces)
+        if q.isEmpty { return groupOptions }
+        return groupOptions.filter { $0.localizedCaseInsensitiveContains(q) && $0.caseInsensitiveCompare(q) != .orderedSame }
     }
     private var canSave: Bool {
         !name.trimmingCharacters(in: .whitespaces).isEmpty &&
@@ -172,12 +178,36 @@ struct CreateWorkoutView: View {
                     }
 
                     labeled("GRUPO") {
-                        VStack(alignment: .leading, spacing: 8) {
-                            FlowChips(options: groupOptions, selection: $group)
-                            TextField("o escribe un grupo nuevo…", text: $group)
-                                .padding(.horizontal, 12).frame(height: 42).background(Color.white)
-                                .clipShape(RoundedRectangle(cornerRadius: 10))
+                        VStack(alignment: .leading, spacing: 0) {
+                            HStack(spacing: 8) {
+                                TextField("Pierna, Pecho, Pull…", text: $group).focused($groupFocused)
+                                if !group.isEmpty {
+                                    Button { group = "" } label: { Image(systemName: "xmark.circle.fill").foregroundColor(Brand.soft) }
+                                }
+                            }
+                            .padding(.horizontal, 12).frame(height: 46).background(Color.white)
+                            .clipShape(RoundedRectangle(cornerRadius: 10))
+                            .overlay(RoundedRectangle(cornerRadius: 10).stroke(groupFocused ? Brand.greenSoft : Brand.line, lineWidth: groupFocused ? 1.5 : 1))
+
+                            if groupFocused, !groupSuggestions.isEmpty {
+                                VStack(spacing: 0) {
+                                    ForEach(Array(groupSuggestions.prefix(6).enumerated()), id: \.element) { idx, opt in
+                                        Button { group = opt; groupFocused = false } label: {
+                                            HStack {
+                                                Text(opt).font(.system(size: 14, weight: .semibold)).foregroundColor(Brand.ink)
+                                                Spacer()
+                                                if store.customGroups.contains(opt) {
+                                                    Text("tuyo").font(.caption2).foregroundColor(Brand.soft)
+                                                }
+                                            }.padding(.horizontal, 12).frame(height: 42)
+                                        }
+                                        if idx < min(6, groupSuggestions.count) - 1 { Divider() }
+                                    }
+                                }
+                                .background(Color.white).clipShape(RoundedRectangle(cornerRadius: 10))
                                 .overlay(RoundedRectangle(cornerRadius: 10).stroke(Brand.line))
+                                .padding(.top, 6)
+                            }
                         }
                     }
 
