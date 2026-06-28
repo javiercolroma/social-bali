@@ -1,5 +1,6 @@
 import SwiftUI
 import MapKit
+import CoreLocation
 
 // MARK: - Dropdown styling helpers
 
@@ -74,6 +75,19 @@ final class CityCompleter: NSObject, ObservableObject, MKLocalSearchCompleterDel
         completer.pointOfInterestFilter = .excludingAll
     }
 
+    /// Bias the search to the chosen country so cities from other countries
+    /// don't show up.
+    func setCountry(_ name: String) {
+        guard !name.isEmpty else { return }
+        CLGeocoder().geocodeAddressString(name) { [weak self] placemarks, _ in
+            guard let coord = placemarks?.first?.location?.coordinate else { return }
+            DispatchQueue.main.async {
+                self?.completer.region = MKCoordinateRegion(
+                    center: coord, span: MKCoordinateSpan(latitudeDelta: 11, longitudeDelta: 11))
+            }
+        }
+    }
+
     func update(_ q: String) {
         let trimmed = q.trimmingCharacters(in: .whitespaces)
         if trimmed.isEmpty { results = []; return }
@@ -90,6 +104,7 @@ final class CityCompleter: NSObject, ObservableObject, MKLocalSearchCompleterDel
 struct CitySearchField: View {
     let label: String
     let selected: String
+    var country: String = ""
     var onSelect: (String) -> Void
     @StateObject private var completer = CityCompleter()
     @State private var query = ""
@@ -127,6 +142,11 @@ struct CitySearchField: View {
                 }
             }
         }
-        .onAppear { if query.isEmpty { query = selected } }
+        .onAppear { if query.isEmpty { query = selected }; completer.setCountry(country) }
+        .onChange(of: country) { newCountry in
+            completer.setCountry(newCountry)
+            query = ""; completer.update("")
+            onSelect("")
+        }
     }
 }

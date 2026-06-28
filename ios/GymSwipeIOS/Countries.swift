@@ -5,9 +5,9 @@ func flagEmoji(_ code: String) -> String {
     code.uppercased().unicodeScalars.compactMap { UnicodeScalar(127397 + $0.value).map(String.init) }.joined()
 }
 
-/// All countries from the OS (localized name + flag), built once.
+/// All countries from the OS, names forced to Spanish (+ flag), built once.
 let allCountries: [(name: String, flag: String)] = {
-    let loc = Locale.current
+    let loc = Locale(identifier: "es_ES")
     let codes = Locale.Region.isoRegions
         .map(\.identifier)
         .filter { $0.count == 2 && $0.allSatisfy { $0.isLetter } }

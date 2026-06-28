@@ -22,6 +22,24 @@ struct ProfileView: View {
         let level = getLevelProgress(store.player.xp)
         ScrollView {
             VStack(spacing: 14) {
+                HStack {
+                    Spacer()
+                    Menu {
+                        Label("Español", systemImage: "checkmark")
+                        Button { } label: { Text("English · próximamente") }.disabled(true)
+                        Button { } label: { Text("Français · próximamente") }.disabled(true)
+                    } label: {
+                        HStack(spacing: 6) {
+                            Text("🌐").font(.system(size: 16))
+                            Text("ES").font(.system(size: 13, weight: .heavy)).foregroundColor(Brand.ink)
+                            Image(systemName: "chevron.down").font(.system(size: 10, weight: .bold)).foregroundColor(Brand.soft)
+                        }
+                        .padding(.horizontal, 12).frame(height: 38)
+                        .background(Color.white).clipShape(Capsule())
+                        .overlay(Capsule().stroke(Brand.line))
+                    }
+                }
+
                 PanelCard {
                     HStack(spacing: 14) {
                         PhotoPickerLabel(item: $pickerItem, onPicked: { data in
@@ -91,7 +109,7 @@ struct ProfileView: View {
                         store.profile.country = $0; store.persist()
                     }
 
-                    CitySearchField(label: "Ciudad", selected: store.profile.city) {
+                    CitySearchField(label: "Ciudad", selected: store.profile.city, country: store.profile.country) {
                         store.profile.city = $0; store.persist()
                     }
 
