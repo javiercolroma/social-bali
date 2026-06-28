@@ -1,68 +1,179 @@
 # Memoria del proyecto: Gym Swipe iOS
 
-Ultima actualizacion: 2026-06-27
+Ultima actualizacion: 2026-06-28
 
-Este documento es la memoria viva del proyecto. Su objetivo es permitir retomar el desarrollo aunque se pierda la sesion de trabajo: contexto de producto, decisiones tecnicas, arquitectura actual, estado funcional, problemas conocidos y proximos pasos.
+Este documento es la memoria viva del proyecto. Sirve para retomar el desarrollo aunque se pierda la sesion: contexto de producto, arquitectura, decisiones tecnicas, estado funcional, bugs conocidos, comandos de trabajo y siguientes pasos.
 
 ## 1. Resumen ejecutivo
 
-Gym Swipe iOS es una app web movil construida con React, Vite y TypeScript. La experiencia esta pensada principalmente para iPhone, en formato app ligera instalable/probable PWA, aunque temporalmente se esta usando desde navegador y desplegada en Vercel.
+Gym Swipe iOS es una app de entrenamiento mobile-first construida con React, Vite y TypeScript, empaquetada tambien como app iOS nativa mediante un proyecto Xcode que carga la app web en un `WKWebView`.
 
-La idea inicial era una app simple para entrenar con tarjetas tipo swipe: cada ejercicio se presenta como una tarjeta y el usuario marca cada serie como hecha o saltada. El producto ha evolucionado hacia una app social/gamificada de entrenamiento, con:
+La experiencia principal es entrenar con tarjetas tipo swipe:
 
-- Entrenamientos creados desde la app.
-- Entrenamientos predefinidos por nivel.
-- Sesion de entrenamiento activa con cronometro, descanso, sonidos, mascota y animaciones.
-- Registro historico por series.
-- Perfil con datos basicos, foto y progresion.
-- Sistema de XP/nivel.
-- Calendario visual de entrenamientos.
-- Ranking global con mapa.
+- Cada ejercicio aparece como una tarjeta.
+- El usuario marca cada serie como hecha con check verde.
+- El usuario marca cada serie como saltada con X roja.
+- El ejercicio cambia cuando se completan o saltan todas sus series.
+- El entrenamiento finaliza automaticamente al cerrar el ultimo ejercicio.
+
+El producto ha evolucionado desde una app sencilla de tarjetas hacia una app social/gamificada de entrenamiento con:
+
+- Entrenamientos por defecto al instalar.
+- Entrenamientos creados por el usuario.
+- Bloques personalizables de entrenamientos, por ejemplo `Pierna`, `Push`, `Torso`, `Full body`.
+- Previsualizacion antes de cargar un entrenamiento.
+- Edicion y eliminacion de entrenamientos.
+- Sesion activa con cronometro, descansos, sonidos, mascota y feedback.
+- Historial local por serie.
+- Perfil con foto, datos basicos, XP, nivel y calendario.
+- Ranking simulado con mapa.
 - Partner/social para buscar companero de entreno.
-- Comparticion de entrenamientos mediante enlaces.
+- Comparticion de entrenamientos mediante enlace.
+- Proyecto Xcode listo para ejecutar en simulador o iPhone.
 
-El criterio de producto que ha guiado los cambios es: maxima sencillez visual, experiencia movil fluida y sensacion dinamica/adictiva tipo Duolingo, evitando textos explicativos largos dentro de la app.
+El criterio de producto actual es: experiencia movil directa, sencilla, tactil y dinamica. La app debe abrir en una pantalla usable, no en una landing. Se evitan textos explicativos largos dentro de la UI.
 
-## 2. Ubicacion y entorno
+## 2. Ubicacion, repo y estado Git
 
-Ruta local del proyecto:
+Ruta local real en el Mac:
 
 ```txt
-/home/jcolas/Documentos/gym-swipe-ios
+/Users/javiercolas/Documents/gym-swipe-ios
 ```
 
-Stack:
+Repositorio remoto:
+
+```txt
+git@github.com:javiercolroma/gym-swipe-ios.git
+```
+
+Rama principal:
+
+```txt
+main
+```
+
+Ultimo commit relevante subido:
+
+```txt
+357abd3 Add iOS wrapper and workout flow updates
+```
+
+Estado despues del ultimo push:
+
+```txt
+main...origin/main
+```
+
+Regla acordada con el usuario:
+
+- Cada vez que se hagan cambios de codigo o documentacion, hacer commit y push al repo.
+- No dejar cambios locales importantes sin subir.
+
+Comandos Git habituales:
+
+```bash
+git status --short --branch
+git add .
+git commit -m "Mensaje descriptivo"
+git push origin main
+```
+
+## 3. Stack tecnico
+
+Frontend:
 
 - React 19.
 - Vite 8.
 - TypeScript 6.
 - CSS manual en `src/App.css`.
 - Iconos con `lucide-react`.
-- Persistencia local con `localStorage`.
-- Despliegue en Vercel.
 
-Scripts principales:
+Persistencia:
+
+- `localStorage`.
+- No hay backend todavia.
+
+iOS:
+
+- Xcode completo instalado en `/Applications/Xcode.app`.
+- Proyecto Xcode generado en `ios/GymSwipeIOS.xcodeproj`.
+- Contenedor nativo SwiftUI con `WKWebView`.
+- La app web compilada se copia a `ios/WebDist`.
+- El `WKWebView` carga el `index.html` local.
+
+Herramientas:
+
+- Node instalado localmente.
+- XcodeGen usado para generar el proyecto desde `ios/project.yml`.
+- Runtime iOS Simulator 26.5 instalado.
+
+Nota importante de entorno:
+
+- `xcode-select` puede apuntar a Command Line Tools.
+- Para compilar desde terminal se usa:
 
 ```bash
+DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer xcodebuild ...
+```
+
+## 4. Scripts principales
+
+Desarrollo web:
+
+```bash
+npm install
 npm run dev
+```
+
+Validacion web:
+
+```bash
 npm run lint
 npm run build
-npm run preview
 ```
 
-URL de produccion actual:
+Sincronizar bundle web para iOS:
+
+```bash
+npm run ios:sync
+```
+
+Regenerar proyecto Xcode desde `project.yml`:
+
+```bash
+npm run ios:generate
+```
+
+Abrir Xcode:
+
+```bash
+open ios/GymSwipeIOS.xcodeproj
+```
+
+Compilar iOS en simulador:
+
+```bash
+DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer \
+xcodebuild -project ios/GymSwipeIOS.xcodeproj \
+  -scheme GymSwipeIOS \
+  -destination 'platform=iOS Simulator,name=iPhone 17' \
+  build
+```
+
+## 5. Archivos importantes
+
+Raiz:
 
 ```txt
-https://gym-swipe-ios.vercel.app
+README.md
+MEMORIA_PROYECTO.md
+package.json
+vite.config.ts
+.gitignore
 ```
 
-Estado Git actual:
-
-- El directorio aun no esta inicializado como repositorio Git.
-- Hay `.gitignore`, pero no hay carpeta `.git`.
-- Es correcto si se quiere crear un repositorio separado del Git de trabajo.
-
-## 3. Archivos importantes
+App React:
 
 ```txt
 src/App.tsx
@@ -70,419 +181,59 @@ src/App.css
 src/index.css
 src/main.tsx
 src/exerciseCatalog.ts
+```
+
+PWA/public:
+
+```txt
 public/sw.js
 public/manifest.webmanifest
-package.json
-vite.config.ts
+public/icon-512.png
+public/apple-touch-icon.png
 ```
 
-Descripcion:
-
-- `src/App.tsx`: contiene practicamente toda la logica de producto y vistas principales.
-- `src/App.css`: contiene casi todo el diseno visual, responsive, animaciones y layout movil.
-- `src/index.css`: estilos globales base.
-- `src/main.tsx`: monta React y actualmente fuerza limpieza de service workers/caches.
-- `src/exerciseCatalog.ts`: catalogo de ejercicios traducido/normalizado para autocompletado.
-- `public/sw.js`: service worker actualmente desactivado/limpiador para evitar versiones antiguas en iPhone.
-- `public/manifest.webmanifest`: configuracion PWA.
-
-## 4. Evolucion funcional
-
-### 4.1 Version inicial
-
-La app empezo como una pantalla de entrenamiento con tarjetas:
-
-- Ejercicio activo.
-- Swipe a la derecha para marcar hecho.
-- Swipe a la izquierda para saltar.
-- Edicion basica de peso/reps/series.
-- Historial local.
-- Plantillas.
-- Export/import JSON.
-- PRs automaticos.
-- PWA con manifest y service worker.
-
-### 4.2 Entrenamiento por series
-
-Se corrigio el modelo mental principal: un ejercicio no se completa entero de golpe. Cada ejercicio tiene varias series.
-
-Ahora:
-
-- Cada accion de check marca una serie como hecha.
-- Cada accion de X marca una serie como saltada.
-- El ejercicio solo se cierra cuando se han completado o saltado todas sus series.
-- Se guarda un `HistoryEntry` por serie, no solo por ejercicio.
-- El entrenamiento guarda metadatos por serie:
-  - `setIndex`
-  - `totalSetsInExercise`
-  - `setDurationSeconds`
-  - `restBeforeSeconds`
-  - `exerciseRestSeconds`
-  - `sessionElapsedSeconds`
-  - `sessionId`
-  - `workoutName`
-
-Esto permite construir historico, calendario, resumen de entrenos y ranking futuro con mas precision.
-
-### 4.3 Sesion activa de entrenamiento
-
-Se separo la pantalla de Entreno del resto de la app para que sea la vista mas importante.
-
-Comportamiento:
-
-- Si no hay entrenamiento seleccionado, aparece "Seleccionar entreno" y envia a Plan.
-- Si hay entrenamiento seleccionado pero no iniciado, aparece un overlay elegante con boton grande "Iniciar entreno".
-- Al iniciar, se ve claramente que la sesion esta activa.
-- Hay cronometro de entrenamiento.
-- Hay boton "Finalizar".
-- Al finalizar, se marcan como no hechas todas las series restantes.
-- Al terminar se muestra estado final y boton para elegir otro entrenamiento.
-
-Se eliminaron de Entreno elementos que distraian:
-
-- Nivel.
-- Racha.
-- Porcentaje redundante.
-- Textos descriptivos innecesarios.
-
-### 4.4 Barra de acciones de entrenamiento
-
-La barra de acciones tiene:
-
-- Deshacer.
-- X roja para saltar serie.
-- Check verde para marcar serie hecha.
-
-Problemas corregidos:
-
-- Swipe a la izquierda no salia completamente.
-- Texto "Luego" eliminado.
-- Barra de acciones mal colocada en movil.
-- La barra ahora se ha convertido en control flotante fijo sobre el menu inferior, respetando safe area de iPhone.
-
-Ultimo ajuste aplicado:
-
-- `action-dock` paso de `position: sticky` a `position: fixed`.
-- `view-train` reserva espacio inferior adicional.
-- Botones tienen ancho/altura estable.
-
-### 4.5 Sonidos y animaciones
-
-Se anadio feedback tipo Duolingo:
-
-- Sonidos Web Audio API sin archivos externos.
-- Sonido de serie completada.
-- Sonido distinto cuando se completa el ejercicio y se pasa a otra tarjeta.
-- Sonido de saltar serie.
-- Sonido de inicio/final.
-- Animaciones de popups y recompensas.
-- Mascota tipo gym que acompana y reacciona.
-
-Problema importante ya tratado:
-
-- El sonido de cambio de ejercicio solo se respetaba en el primer cambio. Se reviso la logica para diferenciar `set` y `exercise`.
-
-### 4.6 Mascota
-
-Se creo una mascota gym animada, inspirada en el rol de acompanamiento de Duolingo pero sin copiar el personaje.
-
-Estados/moods:
-
-- `ready`
-- `active`
-- `rest`
-- `finished`
-- `cheer`
-- `miss`
-- `pr`
-
-La mascota reacciona cuando:
-
-- Se inicia un entrenamiento.
-- Se completa una serie.
-- Se salta una serie.
-- Se completa un ejercicio.
-- Se finaliza la sesion.
-
-### 4.7 Plan / Entrenamientos
-
-La pestaña Plan evoluciono bastante.
-
-Decisiones:
-
-- Se elimino "Plan actual".
-- Se elimino importacion de plan externo.
-- La app consume entrenamientos creados dentro de la app o predefinidos.
-- "Plantillas" paso a llamarse "Entrenamientos".
-- Los entrenamientos propios aparecen primero.
-- Predefinidos agrupados por nivel:
-  - Iniciacion.
-  - Intermedio.
-  - Avanzado.
-  - Propios.
-
-Creacion de entrenamiento:
-
-- La creacion esta escondida de inicio.
-- Boton "Crear entrenamiento" abre una pantalla/seccion separada.
-- Se introduce nombre del entrenamiento.
-- Luego se anaden ejercicios.
-- Se elimino el campo dia.
-- Cada ejercicio tiene:
-  - nombre
-  - series
-  - reps
-  - peso
-
-Guardar:
-
-- El boton "Usar entrenamiento" paso a ser "Guardar entrenamiento".
-- Al guardar, el entrenamiento aparece en "Entrenamientos".
-
-Edicion:
-
-- Se puede editar un entrenamiento existente.
-- Se pueden anadir ejercicios.
-- Se pueden eliminar ejercicios.
-- Se pueden editar series, reps y peso.
-
-Previsualizacion:
-
-- Al tocar un entrenamiento no entra directamente en Entreno.
-- Primero aparece una previsualizacion de ejercicios y series.
-- Desde ahi se puede usar, editar o compartir.
-
-Eliminacion:
-
-- Eliminar entrenamiento se hace arrastrando la tarjeta a una papelera.
-- La papelera es una franja rectangular de extremo a extremo.
-- Siempre aparece en rojo apagado.
-- Se intensifica al arrastrar.
-- Se trabajo para que la tarjeta arrastrada quede visualmente bajo el dedo en movil.
-- Se redujo el long press para que sea mas comodo.
-- Se desactivo seleccion de texto durante el drag.
-
-### 4.8 Catalogo de ejercicios
-
-Se anadio autocompletado al escribir el nombre del ejercicio.
-
-Fuente conceptual:
+iOS:
 
 ```txt
-https://github.com/yuhonas/free-exercise-db/blob/main/dist/exercises.json
+ios/project.yml
+ios/GymSwipeIOS.xcodeproj
+ios/GymSwipeIOS/GymSwipeIOSApp.swift
+ios/GymSwipeIOS/ContentView.swift
+ios/GymSwipeIOS/Info.plist
+ios/GymSwipeIOS/Assets.xcassets
+ios/WebDist
+ios/README.md
 ```
 
-Decisiones:
-
-- Los nombres se tradujeron al espanol.
-- Se deduplicaron nombres.
-- Se detecto el caso "press banca" repetido y se corrigio.
-- No es obligatorio seleccionar del desplegable.
-- Si el usuario quiere escribir un ejercicio libre, la interaccion debe ser amable.
-- La fuente de inputs debe ser coherente con Peso/Reps y sin negrita excesiva.
-
-Archivo:
+Scripts:
 
 ```txt
-src/exerciseCatalog.ts
+scripts/prepare-ios-webdist.mjs
 ```
 
-### 4.9 Perfil y Logros
+Descripcion rapida:
 
-Se unieron Logros y Perfil en una sola pestaña llamada Perfil.
+- `src/App.tsx`: contiene la mayor parte de logica, tipos, estado y vistas.
+- `src/App.css`: layout, responsive, animaciones, estilos de entrenamiento, plan, perfil, ranking y partner.
+- `src/exerciseCatalog.ts`: catalogo local de ejercicios para autocompletado.
+- `scripts/prepare-ios-webdist.mjs`: adapta el `index.html` de Vite para que funcione en `WKWebView` con archivos locales.
+- `ios/project.yml`: fuente declarativa para regenerar el proyecto Xcode.
+- `ios/WebDist`: bundle web compilado para iOS.
 
-Contenido actual:
+## 6. Arquitectura actual
 
-- Foto de perfil.
-- Selector basico/crop de foto para ajustar la parte visible dentro del circulo.
-- Nivel debajo de la foto.
-- Sexo.
-- Edad.
-- Pais.
-- Ciudad.
-- Gimnasio.
-- Sistema de nivel y XP.
-- Barra de progreso de nivel.
-- Calendario de entrenamientos.
-- Resumen de entrenamiento seleccionado.
-
-Se elimino:
-
-- Exportar/importar.
-- Preferencias.
-- Mantenimiento.
-- Records temporalmente.
-- Copas, estrellas y checks decorativos.
-- Series seguidas.
-- Recuadros innecesarios de descanso/serie en resumen.
-
-Sistema XP/nivel:
-
-- Existe una base de XP por serie.
-- Hay reglas para completar series, cerrar ejercicio, PRs y consistencia.
-- Los niveles cada vez requieren mas XP.
-- La barra de progreso debe sentirse suave y dinamica, sin parpadeos bruscos.
-
-Calendario:
-
-- Visual por semanas/dias.
-- Dias entrenados en verde.
-- Animacion tipo latido/llama.
-- Dias futuros o fuera de mes en gris.
-- Los dias verdes deben tener entrenamientos linkados.
-- Se generaron entrenos demo previos para que el calendario parezca vivo.
-
-Resumen de entreno:
-
-- Series hechas en verde.
-- Series saltadas/no hechas en rojo.
-- Si se finaliza a mitad, las series restantes se guardan como no hechas.
-- Se quito kilos movidos.
-- Tiempo de entreno no debe duplicarse.
-- Descansos se muestran en minutos y segundos, no solo segundos.
-
-### 4.10 Ranking
-
-Se creo una pestaña nueva Ranking.
-
-Objetivo estrategico:
-
-- Ranking global y segmentable por geografia.
-- Base para descubrir usuarios compatibles.
-- Base futura para comunidades, retos y matching.
-
-Puntuacion Gym Score:
-
-Debe reflejar las ultimas 3 semanas de entrenamiento, con criterios:
-
-- fuerza
-- constancia
-- volumen
-- intensidad relativa
-- progresion reciente
-- variedad
-- calidad/completitud
-
-Implementacion actual:
-
-- Calcula score a partir del historial local.
-- Usa ultimos 21 dias.
-- Distingue grupos de ejercicios.
-- Aplica benchmarks aproximados.
-- Penaliza falta de datos mediante `reliability`.
-- Ranking mock con usuarios simulados.
-
-Mapa:
-
-- Se implemento mapa real con tiles de OpenStreetMap.
-- El mapa se puede mover/arrastrar para explorar zonas.
-- Se muestran usuarios aproximados, no ubicacion exacta.
-- Se agrupan puntos: si hay varios usuarios cercanos aparece un cluster con numero.
-- Filtros de ranking:
-  - global
-  - pais
-  - ciudad
-  - zona cercana
-
-Privacidad:
-
-- No se muestra localizacion exacta.
-- El enfoque futuro debe ser zona aproximada.
-
-Ranking visual:
-
-- Foto de perfil a la izquierda.
-- Bandera del pais en parte inferior derecha.
-
-### 4.11 Partner / Buscar companero
-
-Se creo pestaña independiente Partner.
-
-La feature no es un muro libre, sino tarjetas de planes de entreno.
-
-Una tarjeta representa algo como:
-
-```txt
-Pecho + triceps
-Manana · 19:30
-Basic-Fit Gran Via
-Nivel: intermedio
-Busco 1-2 personas
-Intensidad: fuerte
-Objetivo: hipertrofia
-```
-
-Flujo de creacion:
-
-- Boton "Buscar companero".
-- Formulario rapido:
-  - cuando
-  - donde
-  - que vas a entrenar
-  - nivel buscado
-  - plazas
-
-Ajustes ya pedidos/aplicados:
-
-- No mostrar hora si el usuario no ha configurado hora.
-- "Donde" debe ser multiseleccion.
-- Plazas incluye una opcion tipo "Me adapto".
-- "Mi gimnasio" usa el gimnasio configurado en Perfil.
-- Quitar descripciones generadas que el usuario no ha escrito.
-- Se puede aceptar un plan/solicitud de otro usuario.
-- Al aceptar, lleva a un chat basico.
-
-Futuro:
-
-- Sistema real de seguidores/seguidos.
-- Chat persistente.
-- Solicitudes.
-- Usuarios verificados.
-
-### 4.12 Social y comparticion
-
-Se anadio comparticion de entrenamientos.
-
-Objetivo:
-
-- Que los entrenamientos creados circulen fuera y dentro de la app.
-- Viralidad por WhatsApp, Instagram, enlaces externos, perfiles.
-
-Implementacion actual:
-
-- Se genera payload JSON del entrenamiento.
-- Se codifica en base64url.
-- Se mete en hash URL `#workout=...`.
-- Al abrir un enlace, la app intenta importar ese entrenamiento.
-
-Funciones relevantes:
-
-- `createSharedWorkoutPayload`
-- `createWorkoutShareUrl`
-- `getSharedWorkoutFromHash`
-- `createWorkoutFromShare`
-
-## 5. Arquitectura de datos
-
-Todo esta en localStorage. No hay backend todavia.
-
-Storage actual:
-
-```ts
-const storageKey = 'gym-swipe-ios-state-v2'
-const marketStorageKey = 'gym-swipe-ios-state-v3'
-```
+La app sigue concentrada principalmente en `src/App.tsx`. Es una decision pragmatica para iterar rapido, pero ya es uno de los mayores riesgos de mantenimiento.
 
 Estado principal:
 
 ```ts
 type WorkoutState = {
-  schemaVersion: number
+  schemaVersion: 3
   exercises: Exercise[]
   player: Player
-  lastAction: LastAction | null
+  lastAction: string
   history: HistoryEntry[]
-  prs: Record<string, PR>
+  prs: Record<string, PersonalRecord>
   preferences: Preferences
   profile: Profile
   savedWorkouts: WorkoutTemplate[]
@@ -491,370 +242,700 @@ type WorkoutState = {
 }
 ```
 
-Entidades relevantes:
+Entrenamiento:
 
-- `Exercise`
-- `HistoryEntry`
-- `WorkoutTemplate`
-- `Player`
-- `Profile`
-- `TrainingPlan`
-- `GymScore`
+```ts
+type WorkoutTemplate = {
+  name: string
+  description: string
+  block?: string
+  workout?: string
+  exercises?: Exercise[]
+}
+```
 
-Advertencia:
+Puntos importantes:
 
-El proyecto esta creciendo mucho dentro de `src/App.tsx`. Para una siguiente fase seria recomendable separar por modulos:
+- `savedWorkouts` guarda los entrenamientos creados por el usuario.
+- `hiddenWorkoutIds` oculta entrenamientos por defecto eliminados.
+- `block` agrupa entrenamientos en bloques personalizados.
+- Si un entrenamiento por defecto no tiene bloque, se muestra en `Por defecto`.
+- Si un entrenamiento creado no tiene bloque, se muestra en `Mis entrenos`.
+
+Storage actual:
+
+```ts
+const storageKey = 'gym-swipe-ios-state-v2'
+const marketStorageKey = 'gym-swipe-ios-state-v3'
+const legacyStorageKey = 'gym-swipe-ios-state-v1'
+```
+
+No hay migraciones complejas todavia. `loadState` normaliza datos antiguos y rellena campos nuevos cuando faltan.
+
+## 7. Flujo de entrenamiento
+
+### Estado de sesion
+
+La sesion tiene estos estados:
+
+```ts
+type SessionStatus = 'ready' | 'active' | 'finished'
+```
+
+Comportamiento:
+
+- `ready`: hay entrenamiento cargado pero no iniciado, o se pide seleccionar uno.
+- `active`: el usuario ha pulsado iniciar y los botones check/X estan activos.
+- `finished`: entrenamiento terminado.
+
+### Series
+
+La unidad real de progreso es la serie, no el ejercicio completo.
+
+- Cada check verde suma una serie completada.
+- Cada X roja suma una serie saltada.
+- El ejercicio se cierra al llegar a `sets`.
+- Se crea un `HistoryEntry` por serie.
+
+Metadatos guardados por serie:
+
+- `setIndex`
+- `totalSetsInExercise`
+- `setDurationSeconds`
+- `restBeforeSeconds`
+- `exerciseRestSeconds`
+- `sessionElapsedSeconds`
+- `sessionId`
+- `workoutName`
+
+### Finalizacion automatica
+
+Cambio reciente:
+
+- Si el usuario cierra el ultimo ejercicio del entrenamiento, la app finaliza automaticamente.
+- Ya no debe quedarse en el estado visual anterior de `Entreno cerrado` con boton `Reiniciar`.
+- Al terminar se muestra `Entreno finalizado`.
+- El boton final ofrece elegir otro entrenamiento.
+
+Esto se implemento en `completeExercise`, detectando:
+
+```ts
+const finishesWorkout = closesExercise && pending.length === 1
+```
+
+Cuando `finishesWorkout` es verdadero:
+
+- Se limpia el descanso.
+- Se actualiza el tiempo final.
+- `sessionStatus` pasa a `finished`.
+- El feedback usa sonido de final.
+- `lastAction` pasa a `Entreno finalizado`.
+
+## 8. Barra check / X / deshacer
+
+La barra de acciones de entrenamiento contiene:
+
+- Deshacer.
+- X roja para saltar serie.
+- Check verde para completar serie.
+
+Problemas tratados:
+
+- En iPhone la barra quedaba demasiado arriba.
+- Luego quedaba demasiado abajo al cambiar al segundo ejercicio.
+- El menu inferior podia taparla.
+- `position: sticky` no era fiable dentro del layout movil.
+- Animaciones con `transform` en contenedores podian interferir con `position: fixed`.
+
+Estado actual:
+
+- `.action-dock` usa `position: fixed` en movil.
+- Se situa por encima del menu inferior.
+- Usa `env(safe-area-inset-bottom)`.
+- `view-train` reserva espacio inferior.
+- Se eliminaron transforms de `@keyframes view-enter` para evitar que elementos fijos queden atrapados en un stacking context transformado.
+
+CSS relevante:
+
+```css
+@media (max-width: 520px) {
+  .action-dock {
+    position: fixed;
+    left: 12px;
+    right: 12px;
+    bottom: max(92px, calc(env(safe-area-inset-bottom) + 86px));
+  }
+}
+```
+
+Pendiente de validar siempre en iPhone real:
+
+- Que no tape reps/peso.
+- Que no tape el menu inferior.
+- Que siga correctamente centrada al pasar de un ejercicio a otro.
+
+## 9. Plan / Entrenamientos
+
+### Estado anterior
+
+Antes habia grupos por nivel:
+
+- Iniciacion.
+- Intermedio.
+- Avanzado.
+- Propios.
+
+Esto se elimino por peticion del usuario.
+
+### Estado actual
+
+La pantalla `Plan` ahora es una biblioteca unica de entrenamientos agrupada por bloques.
+
+Bloques:
+
+- `Por defecto`: entrenamientos que vienen con la app.
+- `Mis entrenos`: fallback para entrenamientos creados por el usuario.
+- Bloques personalizados escritos por el usuario, por ejemplo:
+  - `Pierna`
+  - `Push`
+  - `Pull`
+  - `Torso`
+  - `Full body`
+
+Crear un bloque:
+
+- No hay una pantalla separada de gestion de bloques.
+- El bloque se crea automaticamente escribiendo el nombre en el campo `Bloque` al crear o editar un entrenamiento.
+- Al guardar, ese entrenamiento aparece agrupado bajo ese bloque.
+
+Esto mantiene la UI simple y evita gestion extra de categorias vacias.
+
+### Crear entrenamiento
+
+Flujo actual:
+
+1. Entrar en `Plan`.
+2. Pulsar `Crear entrenamiento`.
+3. Escribir `Nombre`.
+4. Escribir `Bloque`.
+5. Anadir ejercicios.
+6. Ajustar series, reps y peso.
+7. Guardar.
+
+Cada ejercicio creado incluye:
+
+- nombre
+- series
+- reps
+- peso
+
+El campo `dia` se elimino de la UI. Internamente se usa el nombre del entrenamiento como `day`.
+
+### Editar entrenamiento
+
+Al editar:
+
+- Se carga el nombre.
+- Se carga el bloque.
+- Se cargan ejercicios existentes.
+- Se pueden cambiar series, reps y peso.
+- Al guardar se sustituye la version previa.
+
+Si se edita un entrenamiento por defecto:
+
+- Se guarda como entrenamiento propio.
+- Se oculta el original mediante `hiddenWorkoutIds`.
+
+### Previsualizacion
+
+Cambio importante restaurado:
+
+- Al tocar un entrenamiento no se carga directamente.
+- Primero aparece una vista previa.
+- Desde la vista previa se puede:
+  - Cargar entreno.
+  - Compartir.
+  - Editar.
+  - Eliminar.
+
+En movil, la vista previa es flotante por encima del menu inferior y tiene scroll interno para la lista de ejercicios.
+
+### Eliminacion / papelera
+
+Antes la eliminacion dependia del drag largo a una papelera.
+
+Estado actual:
+
+- Se mantiene el drag a papelera.
+- Se anadio un boton `Eliminar` dentro de la vista previa.
+
+Motivo:
+
+- En movil, el drag largo puede fallar o sentirse poco fiable.
+- El boton directo hace que la eliminacion sea clara y usable.
+
+Comportamiento:
+
+- Si el entrenamiento es creado por el usuario, se elimina de `savedWorkouts`.
+- Si el entrenamiento es por defecto, se oculta con `hiddenWorkoutIds`.
+- Se evita duplicar IDs ocultos.
+
+## 10. Comparticion de entrenamientos
+
+La app puede compartir entrenamientos mediante enlace.
+
+Implementacion:
+
+- Se genera un payload JSON.
+- Se codifica en base64url.
+- Se coloca en el hash de la URL:
 
 ```txt
-src/domain/workouts.ts
-src/domain/scoring.ts
-src/domain/history.ts
-src/components/train/
-src/components/plan/
-src/components/profile/
-src/components/ranking/
-src/components/partner/
-src/storage/localState.ts
+#workout=...
 ```
 
-## 6. Diseno y UX
+Funciones relevantes:
 
-Principios acordados:
+- `createSharedWorkoutPayload`
+- `createWorkoutShareUrl`
+- `getSharedWorkoutFromHash`
+- `createWorkoutFromShare`
 
-- Mobile-first.
-- Minimalista y profesional.
-- Sencillez por encima de densidad.
-- Evitar textos descriptivos dentro de la app.
-- No usar landing page.
-- La primera pantalla debe ser funcional.
-- Entreno es la seccion principal y debe sentirse especial.
-- Botones principales grandes, claros y tactiles.
-- Animaciones cortas, con feedback, no decoracion excesiva.
-- Inspiracion tipo Duolingo: feedback, recompensa, mascota, sonidos, progreso.
+El payload compartido ahora incluye tambien:
 
-Paleta:
-
-- Base clara: blanco roto / crema suave.
-- Verde energetico para accion positiva.
-- Rojo apagado para eliminar/saltar.
-- Negro/verde oscuro para contraste.
-- Se ha intentado evitar una UI caotica o con textos que se salen.
-
-Problemas recurrentes en movil:
-
-- iPhone/Safari cachea agresivamente PWA/service worker.
-- El bottom nav puede tapar elementos.
-- `position: sticky` dentro de contenedores con scroll puede comportarse mal.
-- Drag en tarjetas puede interferir con scroll vertical.
-
-Soluciones aplicadas:
-
-- Barra inferior fija.
-- Safe area con `env(safe-area-inset-bottom)`.
-- Limpieza/desactivacion de service worker durante iteracion.
-- Long press en Plan para iniciar drag, para no bloquear scroll.
-
-## 7. PWA, cache y movil
-
-Hubo problemas de que el movil parecia cargar versiones antiguas.
-
-Decision temporal:
-
-- Desactivar service worker y limpiar caches mientras se itera rapido.
-
-`src/main.tsx`:
-
-- Al cargar, desregistra service workers.
-- Borra caches.
-
-`public/sw.js`:
-
-- Borra caches.
-- Hace unregister.
-- Fetch pasa a red.
-
-Esto evita que iPhone mantenga una version anterior. Cuando la app este mas estable, se puede reintroducir PWA offline con versionado correcto.
-
-## 8. Despliegue
-
-Proyecto desplegado en Vercel.
-
-Comando usado:
-
-```bash
-npx --yes vercel deploy --prod --yes
+```ts
+block?: string
 ```
 
-URL estable:
+Si llega un entrenamiento compartido sin bloque, se guarda en:
 
 ```txt
-https://gym-swipe-ios.vercel.app
+Compartidos
 ```
 
-Para probar evitando cache:
+## 11. iOS / Xcode
+
+El proyecto iOS ya existe y compila.
+
+Estructura:
 
 ```txt
-https://gym-swipe-ios.vercel.app/?v=alguna-version
+ios/GymSwipeIOS.xcodeproj
+ios/GymSwipeIOS/GymSwipeIOSApp.swift
+ios/GymSwipeIOS/ContentView.swift
+ios/GymSwipeIOS/Info.plist
+ios/WebDist
+ios/project.yml
 ```
 
-Antes de desplegar, se suele ejecutar:
+Funcionamiento:
+
+- SwiftUI arranca una vista nativa.
+- `ContentView.swift` muestra un `WKWebView`.
+- El `WKWebView` carga `ios/WebDist/index.html`.
+- `ios/WebDist` sale de `npm run ios:sync`.
+
+Problema corregido:
+
+- Vite genera scripts con `type="module"` y `crossorigin`.
+- En `WKWebView` cargando desde `file://`, esto puede dejar la pantalla en blanco.
+- `scripts/prepare-ios-webdist.mjs` convierte el script principal a `defer` y elimina atributos problematicos.
+
+Flujo correcto despues de cambiar React/CSS:
 
 ```bash
 npm run lint
 npm run build
+npm run ios:sync
+DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer xcodebuild -project ios/GymSwipeIOS.xcodeproj -scheme GymSwipeIOS -destination 'platform=iOS Simulator,name=iPhone 17' build
 ```
 
-## 9. Estado actual por pantalla
+Para usar en iPhone real:
 
-### Entreno
+1. Abrir `ios/GymSwipeIOS.xcodeproj` en Xcode.
+2. Conectar el iPhone al Mac por cable o configurarlo para ejecucion inalambrica desde Xcode.
+3. Elegir el iPhone como destino.
+4. Revisar `Signing & Capabilities`.
+5. Pulsar Run.
 
-Funciona:
+Nota:
 
-- Seleccionar entreno.
-- Iniciar sesion.
-- Cronometro.
-- Serie hecha/saltada.
-- Swipe.
-- Editar peso/reps durante sesion.
-- Descanso.
-- Finalizar entrenamiento.
-- Guardado de series restantes como no hechas.
-- Sonidos y mascota.
+- La primera configuracion normalmente requiere cable.
+- Despues se puede usar wireless debugging si Xcode y el iPhone quedan emparejados.
 
-Ultimo bug tratado:
+## 12. Perfil y progreso
 
-- Barra de check verde / X roja no se veia bien en movil.
-- Se corrigio `action-dock`.
-
-Pendiente de validar en iPhone:
-
-- Que la barra flote correctamente.
-- Que no tape contenido ni menu.
-- Que el swipe izquierdo siga completo.
-
-### Plan
+La pestana `Perfil` agrupa informacion personal y progreso.
 
 Funciona:
 
-- Entrenamientos propios primero.
-- Grupos por nivel.
-- Crear entrenamiento.
-- Editar entrenamiento.
-- Previsualizar entrenamiento.
-- Guardar.
-- Compartir.
-- Arrastrar a papelera para eliminar.
-- Autocompletado de ejercicios.
+- Foto de perfil.
+- Ajuste basico/crop dentro del circulo.
+- Nivel.
+- Sexo.
+- Edad.
+- Pais.
+- Ciudad.
+- Gimnasio.
+- XP.
+- Barra de progreso de nivel.
+- Calendario visual de entrenamientos.
+- Resumen de entrenamiento seleccionado.
+
+Calendario:
+
+- Dias entrenados en verde.
+- Dias futuros o fuera de mes en gris.
+- Los dias verdes se pueden vincular a sesiones.
+- Hay datos demo para que el calendario parezca vivo en entornos sin historial real.
+
+Resumen:
+
+- Series hechas en verde.
+- Series saltadas/no hechas en rojo.
+- Si se finaliza a mitad, las series pendientes se guardan como saltadas.
+- Descansos se muestran en minutos y segundos.
 
 Pendiente:
 
-- Pulir aun mas legibilidad si hay muchos entrenamientos.
-- Separar mejor componentes.
+- Crop real mas preciso si se necesita.
+- Backend/autenticacion.
+- Separar datos demo de datos reales.
 
-### Ranking
+## 13. Ranking
 
-Funciona:
+La pestana `Ranking` existe y funciona como MVP local/mock.
 
-- Score local.
-- Ranking simulado.
-- Mapa real OpenStreetMap.
-- Clusters.
-- Filtros.
-- Mapa arrastrable.
-- Foto + bandera.
+Objetivo:
+
+- Ranking global y segmentable por geografia.
+- Base futura para comunidades, retos y matching.
+
+Gym Score:
+
+- Calcula puntuacion a partir del historial local.
+- Usa las ultimas 3 semanas.
+- Tiene en cuenta:
+  - fuerza
+  - constancia
+  - volumen
+  - progresion
+  - variedad
+  - calidad/completitud
+  - fiabilidad de datos
+
+Mapa:
+
+- Usa tiles de OpenStreetMap.
+- Se puede mover/arrastrar.
+- Muestra usuarios aproximados, no ubicacion exacta.
+- Agrupa puntos cercanos en clusters.
+
+Filtros:
+
+- global
+- pais
+- ciudad
+- zona cercana
 
 Pendiente:
 
 - Backend real.
 - Usuarios reales.
-- Geolocalizacion aproximada persistida.
-- Segmentacion real por pais/ciudad/area.
+- Persistencia de ubicacion aproximada.
+- Privacidad configurable.
+- Calculo de ranking en servidor.
 
-### Partner
+## 14. Partner / Buscar companero
 
-Funciona:
+La pestana `Partner` permite crear o aceptar planes de entreno.
 
-- Crear plan de entreno.
-- Multiseleccion de donde.
-- Mi gimnasio desde perfil.
-- Opcion flexible de plazas.
-- Aceptar plan.
-- Chat basico.
+Concepto:
 
-Pendiente:
-
-- Persistencia real de chats.
-- Seguidores/seguidos.
-- Solicitudes reales.
-- Backend.
-
-### Perfil
-
-Funciona:
-
-- Foto.
-- Ajuste/crop basico.
-- Nivel.
-- Datos basicos.
-- Calendario.
-- Resumen.
-- XP.
-
-Pendiente:
-
-- Mejor crop real de imagen si se quiere precision total.
-- Backend/autenticacion.
-
-## 10. Bugs o riesgos conocidos
-
-1. App demasiado concentrada en `src/App.tsx`.
-   - Riesgo: mantenimiento dificil.
-   - Solucion: modularizar por dominios.
-
-2. Sin backend.
-   - Todo es localStorage.
-   - Si se comparte enlace con amigos, cada uno tiene datos locales separados solo por navegador/dispositivo.
-   - Para ranking/social real hace falta auth + base de datos.
-
-3. PWA desactivada temporalmente.
-   - Bueno para iterar.
-   - Malo para offline real.
-   - Reintroducir con versionado cuando estabilice.
-
-4. Mapa usa tiles externos de OpenStreetMap.
-   - Correcto para MVP.
-   - Revisar terminos/limites si crece.
-
-5. No hay tests automatizados.
-   - Solo lint/build.
-   - Recomendable anadir tests unitarios para scoring, historial y normalizacion.
-
-6. Datos mock mezclados con datos reales.
-   - El calendario y ranking usan datos simulados para dar vida.
-   - Cuando haya backend, separar claramente seed/demo/real.
-
-## 11. Proximos pasos recomendados
-
-### Corto plazo
-
-1. Validar en iPhone la barra de Entreno.
-2. Ajustar pequenos bugs visuales de movil.
-3. Inicializar Git separado.
-4. Crear primer commit estable.
-5. Subir a repo remoto privado/personal.
-
-### Medio plazo
-
-1. Modularizar `App.tsx`.
-2. Crear backend minimo:
-   - usuario
-   - perfil
-   - entrenamientos
-   - sesiones
-   - ranking
-   - partner plans
-   - chats
-3. Anadir autenticacion.
-4. Migrar localStorage a API + cache local.
-5. Reintroducir PWA offline con versionado.
-
-### Ranking/social real
-
-1. Definir modelo de usuario.
-2. Guardar sesiones reales.
-3. Calcular Gym Score en backend.
-4. Guardar ubicacion aproximada, nunca exacta.
-5. Crear filtros por global/pais/ciudad/area.
-6. Crear visibilidad voluntaria en mapa.
-7. Crear solicitudes y chat.
-
-## 12. Credenciales y Git
-
-Para subir este proyecto a Git no necesito tu password.
-
-Opciones recomendadas:
-
-### Opcion A: GitHub CLI ya autenticado
-
-Si tienes `gh` instalado y autenticado:
-
-```bash
-gh auth status
-```
-
-Solo necesito que me digas:
-
-- nombre del repo
-- si lo quieres publico o privado
-- organizacion/cuenta donde crearlo
+- No es un muro libre.
+- Son tarjetas de planes.
 
 Ejemplo:
 
 ```txt
-Repo: gym-swipe-ios
-Visibilidad: privado
-Cuenta: tu usuario personal de GitHub
+Pecho + triceps
+Manana
+Basic-Fit Gran Via
+Nivel: intermedio
+Busco 1-2 personas
+Intensidad: fuerte
+Objetivo: hipertrofia
 ```
 
-### Opcion B: repo remoto ya creado
+Flujo:
 
-Tu creas el repo en GitHub/GitLab/Bitbucket y me pasas la URL remota:
+- Boton `Buscar companero`.
+- Formulario rapido:
+  - cuando
+  - donde
+  - que vas a entrenar
+  - nivel buscado
+  - plazas
+
+Ajustes aplicados:
+
+- No mostrar hora si no se configuro.
+- `Donde` es multiseleccion.
+- `Mi gimnasio` usa el gimnasio configurado en Perfil.
+- Plazas incluye opcion flexible.
+- No se generan descripciones que el usuario no escribio.
+- Se puede aceptar un plan.
+- Al aceptar, lleva a un chat basico.
+
+Pendiente:
+
+- Persistencia real de chats.
+- Solicitudes reales.
+- Usuarios reales.
+- Seguidores/seguidos.
+- Backend.
+
+## 15. PWA, cache y movil
+
+Hubo problemas con iPhone cargando versiones antiguas.
+
+Decision actual:
+
+- Service worker desactivado/limpiador durante iteracion.
+- Se limpian caches para evitar versiones viejas.
+
+Archivos relevantes:
 
 ```txt
-git@github.com:usuario/gym-swipe-ios.git
+src/main.tsx
+public/sw.js
 ```
 
-o
+Motivo:
+
+- iOS/Safari cachea agresivamente PWAs y service workers.
+- Durante desarrollo rapido es mejor evitar offline cacheado.
+
+Futuro:
+
+- Reintroducir PWA offline solo cuando haya versionado estable.
+- Implementar estrategia clara de cache busting.
+
+## 16. Diseno y UX
+
+Principios:
+
+- Mobile-first.
+- App funcional desde la primera pantalla.
+- Sin landing.
+- Controles grandes y tactiles.
+- Pocos textos explicativos.
+- Feedback inmediato.
+- Animaciones cortas.
+- Sensacion tipo Duolingo en recompensas, sonidos, mascota y progreso.
+- Visual profesional, no sobrecargado.
+
+Paleta:
+
+- Base clara.
+- Verde para accion positiva.
+- Rojo para saltar/eliminar.
+- Contraste oscuro para texto principal.
+
+Restricciones aprendidas:
+
+- Safe area de iPhone siempre importa.
+- Bottom nav puede tapar controles.
+- `position: sticky` es fragil en layouts con scroll.
+- `transform` en ancestros puede afectar elementos `fixed`.
+- Drag en movil debe convivir con scroll vertical.
+
+## 17. Despliegue web
+
+URL de produccion conocida:
 
 ```txt
-https://github.com/usuario/gym-swipe-ios.git
+https://gym-swipe-ios.vercel.app
 ```
 
-Con eso yo puedo:
+Comando de despliegue usado anteriormente:
 
 ```bash
-git init
-git add .
-git commit -m "Initial app version"
-git branch -M main
-git remote add origin <url>
-git push -u origin main
+npx --yes vercel deploy --prod --yes
 ```
 
-### Opcion C: token personal
-
-No es la opcion preferida dentro del chat.
-
-Si no tienes `gh` autenticado ni SSH configurado, lo mejor es que autentiques tu maquina localmente con:
+Antes de desplegar:
 
 ```bash
-gh auth login
-```
-
-o configures SSH. Evitar pegar tokens en la conversacion.
-
-## 13. Instruccion para futuras sesiones
-
-Si se pierde la sesion, empezar por:
-
-```bash
-cd /home/jcolas/Documentos/gym-swipe-ios
 npm run lint
 npm run build
-sed -n '1580,2705p' src/App.tsx
-sed -n '2707,4184p' src/App.tsx
-sed -n '360,1485p' src/App.css
 ```
 
-Leer tambien:
+Para evitar cache al probar:
+
+```txt
+https://gym-swipe-ios.vercel.app/?v=alguna-version
+```
+
+Nota:
+
+- El trabajo actual se ha centrado en Xcode/iOS y GitHub.
+- No desplegar a Vercel salvo que se pida explicitamente o toque actualizar produccion web.
+
+## 18. Validaciones recientes
+
+Validado el 2026-06-28:
+
+```bash
+npm run lint
+npm run build
+npm run ios:sync
+DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer xcodebuild -project ios/GymSwipeIOS.xcodeproj -scheme GymSwipeIOS -destination 'platform=iOS Simulator,name=iPhone 17' build
+```
+
+Resultado:
+
+- Lint correcto.
+- Build web correcto.
+- Bundle iOS sincronizado.
+- Build Xcode correcto.
+
+## 19. Bugs y riesgos conocidos
+
+1. `src/App.tsx` es demasiado grande.
+   - Riesgo: mantenimiento dificil.
+   - Recomendacion: modularizar por dominio.
+
+2. No hay backend.
+   - Todo vive en `localStorage`.
+   - Ranking/social/partner no pueden ser reales sin servidor.
+
+3. PWA offline desactivada.
+   - Bueno para iterar.
+   - Malo para offline real.
+
+4. Datos demo mezclados con experiencia real.
+   - Calendario y ranking usan mocks.
+   - Separar seed/demo/real cuando haya backend.
+
+5. No hay tests automatizados.
+   - Solo lint/build.
+   - Recomendable anadir tests para scoring, historial, normalizacion y workouts.
+
+6. Layout movil requiere validacion constante.
+   - Especialmente iPhone real con safe area.
+   - Revisar action dock, preview flotante y bottom nav tras cambios.
+
+7. Xcode signing en iPhone real puede requerir ajuste manual.
+   - Bundle id actual: `com.javiercolroma.gymswipeios`.
+   - Revisar equipo de firma en Xcode si falla al instalar en dispositivo.
+
+## 20. Proximos pasos recomendados
+
+### Corto plazo
+
+1. Probar en iPhone real:
+   - iniciar entreno
+   - completar ultimo ejercicio
+   - verificar finalizacion automatica
+   - abrir Plan
+   - previsualizar entreno
+   - crear entreno con bloque `Pierna`
+   - eliminar entreno desde vista previa
+
+2. Ajustar si hace falta:
+   - posicion check/X
+   - altura de preview
+   - scroll de biblioteca
+
+3. Confirmar firma Xcode en iPhone real.
+
+4. Mantener commit y push por cada cambio cerrado.
+
+### Medio plazo
+
+1. Modularizar `src/App.tsx`.
+2. Separar dominio:
+
+```txt
+src/domain/workouts.ts
+src/domain/history.ts
+src/domain/scoring.ts
+src/domain/sharing.ts
+src/storage/localState.ts
+```
+
+3. Separar componentes:
+
+```txt
+src/components/train/
+src/components/plan/
+src/components/profile/
+src/components/ranking/
+src/components/partner/
+```
+
+4. Anadir tests unitarios.
+5. Preparar backend minimo:
+   - usuarios
+   - perfiles
+   - entrenamientos
+   - sesiones
+   - ranking
+   - planes partner
+   - chats
+
+### Largo plazo
+
+1. Auth.
+2. Backend para sesiones reales.
+3. Ranking real.
+4. Matching de partners.
+5. Chat persistente.
+6. PWA offline versionada.
+7. Publicacion TestFlight/App Store.
+
+## 21. Instruccion para futuras sesiones
+
+Al retomar:
+
+```bash
+cd /Users/javiercolas/Documents/gym-swipe-ios
+git status --short --branch
+npm run lint
+npm run build
+```
+
+Si se va a tocar iOS:
+
+```bash
+npm run ios:sync
+DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer xcodebuild -project ios/GymSwipeIOS.xcodeproj -scheme GymSwipeIOS -destination 'platform=iOS Simulator,name=iPhone 17' build
+```
+
+Leer:
 
 ```txt
 MEMORIA_PROYECTO.md
+README.md
+ios/README.md
 ```
 
-Regla de mantenimiento:
+Zonas clave de codigo:
 
-- Cada vez que se haga una feature relevante, actualizar este archivo.
-- Cada vez que se corrija un bug importante, anadirlo en "Bugs o riesgos conocidos" o "Estado actual".
-- Cada cambio de arquitectura debe quedar reflejado en "Arquitectura de datos" o "Proximos pasos".
+```txt
+src/App.tsx
+src/App.css
+scripts/prepare-ios-webdist.mjs
+ios/GymSwipeIOS/ContentView.swift
+ios/project.yml
+```
 
+Reglas de mantenimiento:
+
+- Actualizar esta memoria tras features relevantes.
+- Actualizar esta memoria tras bugs importantes.
+- Ejecutar lint/build antes de cerrar.
+- Si cambia la app web usada por iOS, ejecutar `npm run ios:sync`.
+- Si cambia estructura iOS declarativa, ejecutar `npm run ios:generate`.
+- Hacer commit y push al terminar.
