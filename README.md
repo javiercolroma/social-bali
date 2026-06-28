@@ -20,6 +20,8 @@ Ultima actualizacion: 2026-06-28
 >
 > **Entreno (edición en vivo + descanso):** reps y peso EDITABLES durante la sesión con steppers − / + (peso en pasos de 2.5 kg; icono mancuerna en vez de báscula). El descanso por defecto es 2 min, se muestra en mm:ss y NO tiene botón de saltar; al agotarse NO para: sigue contando en "overtime" (color ámbar, "+m:ss", "Te estás pasando · llevas X descansando") para llevar la cuenta. Se quitó el stat fijo de descanso de la tarjeta.
 >
+> **Feedback global (`FX` en SessionFX.swift):** háptica en toda la app (cambio de pestaña = selection, taps, success al aceptar/crear/guardar, warning al borrar) respetando los toggles Sonidos/Vibración. Sonidos SOLO en momentos clave para no cansar: aceptar amistad, aceptar entrenamiento y crear cuenta (además de los sonidos propios de la sesión de entreno). `FX.tap/selection/success(sound:)/warning`.
+>
 > **Perfil:** edad por FECHA DE NACIMIENTO (DatePicker) con edad calculada; pickers de país (sistema) y ciudad (MapKit).
 >
 > **Pendiente de portar/afinar:** gesto de swipe opcional del deck, edicion inline de peso/reps durante la sesion, compartir entrenos, calendario de progreso.

@@ -173,16 +173,16 @@ struct FriendsContent: View {
             Spacer()
             switch status {
             case .incoming:
-                Button { store.acceptFriendRequest(person.id) } label: { Image(systemName: "checkmark").foregroundColor(Color(hex: "10150a")) }
+                Button { FX.success(sound: true); store.acceptFriendRequest(person.id) } label: { Image(systemName: "checkmark").foregroundColor(Color(hex: "10150a")) }
                     .frame(width: 36, height: 36).background(Brand.green).clipShape(RoundedRectangle(cornerRadius: 10))
-                Button { store.rejectFriendRequest(person.id) } label: { Image(systemName: "xmark").foregroundColor(Color(hex: "a73232")) }
+                Button { FX.warning(); store.rejectFriendRequest(person.id) } label: { Image(systemName: "xmark").foregroundColor(Color(hex: "a73232")) }
                     .frame(width: 36, height: 36).background(Brand.redSoft).clipShape(RoundedRectangle(cornerRadius: 10))
             case .friends:
-                Button { onOpenChat(person.id) } label: { Label("Mensaje", systemImage: "message.fill").font(.system(size: 12, weight: .heavy)) }
+                Button { FX.tap(); onOpenChat(person.id) } label: { Label("Mensaje", systemImage: "message.fill").font(.system(size: 12, weight: .heavy)) }
             case .outgoing:
                 Text("Enviada").font(.system(size: 12, weight: .heavy)).foregroundColor(Brand.soft)
             case .none:
-                Button { store.sendFriendRequest(person.id) } label: { Label("Añadir", systemImage: "person.badge.plus").font(.system(size: 12, weight: .heavy)) }
+                Button { FX.tap(); store.sendFriendRequest(person.id) } label: { Label("Añadir", systemImage: "person.badge.plus").font(.system(size: 12, weight: .heavy)) }
             }
         }
         .padding(10).background(Brand.panel).clipShape(RoundedRectangle(cornerRadius: 12))
@@ -253,6 +253,8 @@ struct ChatView: View {
     }
 
     private func send() {
+        guard !draft.trimmingCharacters(in: .whitespaces).isEmpty else { return }
+        FX.tap()
         store.sendMessage(personId, draft, activeConversation: conversationId(personId))
         draft = ""
     }
@@ -467,6 +469,7 @@ struct AccountSetupView: View {
                     acc.name = name.trimmingCharacters(in: .whitespaces)
                     acc.handle = normalized
                     if let photoData { acc.photoData = photoData }
+                    FX.success(sound: true)
                     store.saveAccount(acc)
                     onCancel()
                 } label: { Text(store.account == nil ? "Empezar" : "Guardar") }

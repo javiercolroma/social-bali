@@ -6,6 +6,26 @@ enum Haptics {
     static func soft() { UIImpactFeedbackGenerator(style: .soft).impactOccurred() }
     static func rigid() { UIImpactFeedbackGenerator(style: .rigid).impactOccurred() }
     static func success() { UINotificationFeedbackGenerator().notificationOccurred(.success) }
+    static func warning() { UINotificationFeedbackGenerator().notificationOccurred(.warning) }
+    static func selection() { UISelectionFeedbackGenerator().selectionChanged() }
+}
+
+/// App-wide feedback helper that respects the user's Sonidos/Vibración toggles.
+enum FX {
+    static var hapticsOn: Bool { UserDefaults.standard.object(forKey: "fxHaptics") as? Bool ?? true }
+    static var soundOn: Bool { UserDefaults.standard.object(forKey: "fxSound") as? Bool ?? true }
+
+    /// Light feedback for routine taps (navigation, toggles, minor actions).
+    static func tap() { if hapticsOn { Haptics.soft() } }
+    /// Selection change (tab switch, segmented control).
+    static func selection() { if hapticsOn { Haptics.selection() } }
+    /// Meaningful positive moment. Plays a sound only when `sound` is true.
+    static func success(sound: Bool = false) {
+        if hapticsOn { Haptics.success() }
+        if sound && soundOn { SoundFX.play(SoundFX.done) }
+    }
+    /// Destructive / cautionary action.
+    static func warning() { if hapticsOn { Haptics.warning() } }
 }
 
 enum SoundFX {

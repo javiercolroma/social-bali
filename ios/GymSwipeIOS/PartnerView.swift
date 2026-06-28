@@ -31,7 +31,7 @@ struct PartnerView: View {
         .background(Brand.bg)
         .sheet(isPresented: $showCreator) { CreatePlanView().environmentObject(store) }
         .confirmationDialog("¿Eliminar este plan?", isPresented: Binding(get: { pendingDelete != nil }, set: { if !$0 { pendingDelete = nil } }), titleVisibility: .visible) {
-            Button("Eliminar", role: .destructive) { if let p = pendingDelete { store.deletePlan(p.id) }; pendingDelete = nil }
+            Button("Eliminar", role: .destructive) { FX.warning(); if let p = pendingDelete { store.deletePlan(p.id) }; pendingDelete = nil }
             Button("Cancelar", role: .cancel) { pendingDelete = nil }
         }
     }
@@ -68,11 +68,12 @@ struct PartnerView: View {
             } else {
                 HStack(spacing: 10) {
                     Button {
+                        FX.success(sound: true)
                         store.acceptTrainingPlan(plan.ownerId, "He aceptado tu entrenamiento. ¿Cuándo te viene bien quedar?")
                         onOpenChat(plan.ownerId)
                     } label: { Text("Aceptar entrenamiento").font(.system(size: 14, weight: .heavy)).frame(maxWidth: .infinity) }
                         .buttonStyle(PrimaryButtonStyle())
-                    Button { store.deletePlan(plan.id) } label: {
+                    Button { FX.warning(); store.deletePlan(plan.id) } label: {
                         Image(systemName: "xmark").font(.system(size: 14, weight: .heavy)).foregroundColor(Color(hex: "a73232"))
                             .frame(width: 50, height: 50).background(Brand.redSoft).clipShape(RoundedRectangle(cornerRadius: 12))
                     }
@@ -120,6 +121,7 @@ struct CreatePlanView: View {
                     }
 
                     Button {
+                        FX.success()
                         store.addPlan(title: planTitle, when: planWhen, place: planPlace, spots: planSpots, score: store.gymScore.total)
                         dismiss()
                     } label: { Label("Publicar y buscar", systemImage: "magnifyingglass") }

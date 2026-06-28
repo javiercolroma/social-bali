@@ -24,6 +24,7 @@ struct RootView: View {
                 PartnerView(onOpenChat: { chatPerson = IdString(id: $0) }).tag(3).tabItem { Label("Partner", systemImage: "person.2.fill") }
                 ProfileView().tag(4).tabItem { Label("Perfil", systemImage: "person.crop.circle") }
             }
+            .onChange(of: tab) { _ in FX.selection() }
         }
         .background(Brand.bg.ignoresSafeArea())
         .sheet(isPresented: $showMessages) {
@@ -63,8 +64,8 @@ struct RootView: View {
                 Text(titles[tab]).font(.system(size: 30, weight: .heavy)).foregroundColor(Brand.ink)
             }
             Spacer()
-            headerButton(system: "envelope.fill", badge: store.unreadMessages) { messagesTab = 0; showMessages = true }
-            headerButton(system: "bell.fill", badge: store.unreadNotifications) { showNotifications = true }
+            headerButton(system: "envelope.fill", badge: store.unreadMessages) { FX.tap(); messagesTab = 0; showMessages = true }
+            headerButton(system: "bell.fill", badge: store.unreadNotifications) { FX.tap(); showNotifications = true }
         }
         .padding(.horizontal, 18)
         .padding(.top, 8)

@@ -49,7 +49,7 @@ struct PlanView: View {
         .sheet(item: $preview) { WorkoutPreview(workoutId: $0.id, onLoaded: onLoaded).environmentObject(store) }
         .sheet(isPresented: $creating) { CreateWorkoutView().environmentObject(store) }
         .confirmationDialog("¿Eliminar “\(pendingDelete?.name ?? "")”?", isPresented: Binding(get: { pendingDelete != nil }, set: { if !$0 { pendingDelete = nil } }), titleVisibility: .visible) {
-            Button("Eliminar", role: .destructive) { if let w = pendingDelete { store.deleteWorkout(w.id) }; pendingDelete = nil }
+            Button("Eliminar", role: .destructive) { FX.warning(); if let w = pendingDelete { store.deleteWorkout(w.id) }; pendingDelete = nil }
             Button("Cancelar", role: .cancel) { pendingDelete = nil }
         }
     }
@@ -98,7 +98,7 @@ struct WorkoutPreview: View {
                                 .padding(12).background(Brand.panel).clipShape(RoundedRectangle(cornerRadius: 10))
                                 .overlay(RoundedRectangle(cornerRadius: 10).stroke(Brand.line))
                             }
-                            Button { store.loadWorkout(workout); dismiss(); onLoaded() } label: { Label("Cargar entreno", systemImage: "dumbbell.fill") }
+                            Button { FX.tap(); store.loadWorkout(workout); dismiss(); onLoaded() } label: { Label("Cargar entreno", systemImage: "dumbbell.fill") }
                                 .buttonStyle(PrimaryButtonStyle()).padding(.top, 8)
                             Button { showEditor = true } label: {
                                 Label("Editar", systemImage: "pencil").font(.system(size: 15, weight: .heavy)).foregroundColor(Brand.ink)
@@ -123,7 +123,7 @@ struct WorkoutPreview: View {
                 if let workout { CreateWorkoutView(editing: workout).environmentObject(store) }
             }
             .confirmationDialog("¿Eliminar este entreno?", isPresented: $confirmDelete, titleVisibility: .visible) {
-                Button("Eliminar", role: .destructive) { store.deleteWorkout(workoutId); dismiss() }
+                Button("Eliminar", role: .destructive) { FX.warning(); store.deleteWorkout(workoutId); dismiss() }
                 Button("Cancelar", role: .cancel) {}
             }
         }
@@ -313,6 +313,7 @@ struct CreateWorkoutView: View {
     }
 
     private func save() {
+        FX.success()
         let exercises = drafts
             .filter { !$0.name.trimmingCharacters(in: .whitespaces).isEmpty }
             .map { d in AppStore.makeExercise(name.isEmpty ? "Mi entreno" : name, d.name, d.sets, d.reps, d.weight) }
