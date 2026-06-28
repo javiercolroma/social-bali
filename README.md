@@ -716,6 +716,7 @@ Ajustes aplicados:
 - Plazas incluye opcion flexible.
 - No se generan descripciones que el usuario no escribio.
 - Cada plan tiene un `ownerId` (la persona que lo propone).
+- Los planes que creas tienen `ownerId: 'me'`: salen con TU nombre, marcados como "Tu plan · Esperando compañero…", con boton Eliminar y SIN boton de aceptar (no puedes aceptar/chatear contigo mismo). Solo los planes de otros (demo) son aceptables.
 
 Aceptar entrenamiento (flujo actual):
 

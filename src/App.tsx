@@ -1513,7 +1513,7 @@ function createTrainingPlan(draft: TrainingPlanDraft, profile: Profile): Trainin
     intensity: getPlanIntensity(draft.level),
     objective: getPlanObjective(draft.workout),
     note: '',
-    ownerId: demoPlanOwnerIds[Date.now() % demoPlanOwnerIds.length],
+    ownerId: 'me',
   }
 }
 
@@ -2240,6 +2240,9 @@ function App() {
   }
 
   function acceptPlan(plan: TrainingPlanCard) {
+    if (plan.ownerId === 'me') {
+      return
+    }
     const message = 'He aceptado tu entrenamiento. ¿Cuándo te viene bien quedar?'
     social.acceptTrainingPlan(plan.ownerId, message)
     setActiveConversationPersonId(plan.ownerId)
@@ -3064,7 +3067,12 @@ function App() {
           )}
 
           {activeTab === 'partner' && (
-            <PartnerView profile={state.profile} people={social.social.people} onAcceptPlan={acceptPlan} />
+            <PartnerView
+              profile={state.profile}
+              account={social.social.account}
+              people={social.social.people}
+              onAcceptPlan={acceptPlan}
+            />
           )}
 
           {activeTab === 'profile' && (
@@ -5056,10 +5064,12 @@ function NotificationsOverlay({
 
 function PartnerView({
   profile,
+  account,
   people,
   onAcceptPlan,
 }: {
   profile: Profile
+  account: Account | null
   people: SocialPerson[]
   onAcceptPlan: (plan: TrainingPlanCard) => void
 }) {
@@ -5076,6 +5086,10 @@ function PartnerView({
     setTrainingPlans((current) => [nextPlan, ...current].slice(0, 8))
     setPlanDraft(defaultTrainingPlanDraft)
     setShowPlanCreator(false)
+  }
+
+  function deletePlan(planId: string) {
+    setTrainingPlans((current) => current.filter((plan) => plan.id !== planId))
   }
 
   return (
@@ -5146,22 +5160,21 @@ function PartnerView({
 
         <div className="training-plan-list">
           {trainingPlans.map((plan) => {
+            const isMine = plan.ownerId === 'me'
             const owner = people.find((person) => person.id === plan.ownerId)
 
             return (
-              <article className="training-plan-card" key={plan.id}>
+              <article className={`training-plan-card ${isMine ? 'mine' : ''}`} key={plan.id}>
                 <div className="plan-card-main">
                   <strong>{plan.title}</strong>
                   <span>{plan.when}</span>
                 </div>
-                {owner && (
-                  <div className="plan-card-owner">
-                    <span className="social-avatar small" aria-hidden="true">
-                      {owner.avatar}
-                    </span>
-                    <span>Propuesto por {owner.name}</span>
-                  </div>
-                )}
+                <div className="plan-card-owner">
+                  <span className="social-avatar small" aria-hidden="true">
+                    {isMine ? '🙂' : owner?.avatar ?? '👤'}
+                  </span>
+                  <span>{isMine ? `Tu plan · ${account?.name ?? 'Tú'}` : `Propuesto por ${owner?.name ?? 'Compañero'}`}</span>
+                </div>
                 <div className="plan-card-place">
                   <MapPin size={15} />
                   <span>{plan.place}</span>
@@ -5172,9 +5185,24 @@ function PartnerView({
                   <span>{plan.intensity}</span>
                   <span>{plan.objective}</span>
                 </div>
-                <button className="accept-plan-button" type="button" onClick={() => onAcceptPlan(plan)}>
-                  Aceptar entrenamiento
-                </button>
+                {isMine ? (
+                  <div className="plan-card-mine-row">
+                    <span className="plan-mine-tag">Esperando compañero…</span>
+                    <button
+                      className="plan-delete-button"
+                      type="button"
+                      onClick={() => deletePlan(plan.id)}
+                      aria-label="Eliminar plan"
+                    >
+                      <Trash2 size={15} />
+                      Eliminar
+                    </button>
+                  </div>
+                ) : (
+                  <button className="accept-plan-button" type="button" onClick={() => onAcceptPlan(plan)}>
+                    Aceptar entrenamiento
+                  </button>
+                )}
               </article>
             )
           })}
