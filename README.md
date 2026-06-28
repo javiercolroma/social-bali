@@ -985,6 +985,7 @@ Pendiente:
 - Zoom de mapa en Ranking (ver seccion 13).
 - Geolocalizacion real en iOS via puente nativo (ver seccion 11).
 - Segmento Chats/Amigos que ocupaba toda la pantalla: el overlay usaba grid de 2 filas con 3 hijos; se paso a flexbox.
+- Cabeceras de overlays (Mensajes/Chat/Notificaciones) colisionaban con la barra de estado del iPhone (reloj) y la flecha de volver no era pulsable: se anadio `env(safe-area-inset-top)` al padding superior. Ademas, al abrir un chat desde la lista, el overlay de Mensajes queda debajo para que "atras" vuelva a la lista de conversaciones.
 
 ## 23. Instruccion para futuras sesiones
 

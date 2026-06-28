@@ -3018,10 +3018,7 @@ function App() {
             social={social.social}
             initialTab={messagesInitialTab}
             onClose={() => setActiveOverlay(null)}
-            onOpenChat={(personId) => {
-              setActiveOverlay(null)
-              openChat(personId)
-            }}
+            onOpenChat={(personId) => openChat(personId)}
             onSendFriendRequest={social.sendFriendRequest}
             onAcceptFriendRequest={social.acceptFriendRequest}
             onRejectFriendRequest={social.rejectFriendRequest}
