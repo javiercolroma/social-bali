@@ -16,7 +16,11 @@ Ultima actualizacion: 2026-06-28
 >
 > **Partner (nativo):** "Buscar compañero" abre el creador como POP-UP (sheet `CreatePlanView`) con Cuándo/Dónde/Qué/Plazas y opcion "Me adapto" en todos; flecha "Atrás" arriba-izquierda. Eliminar plan propio pide confirmacion.
 >
-> **Pendiente de portar/afinar:** gesto de swipe del deck de entreno (ahora botones Hecho/Saltar), edicion inline de peso/reps durante la sesion, compartir entrenos, calendario de progreso, pulido visual.
+> **Pantalla de entreno (pulida):** cabecera con nombre del entreno + barra de progreso animada; tarjeta de ejercicio con "SERIE X DE Y", nombre grande, dots de serie animados (spring), stats con iconos; botones Hecho/Saltar grandes con háptica + sonido (`SessionFX.swift`: `Haptics`, `SoundFX`); transicion deslizante entre ejercicios; banner de DESCANSO con anillo circular countdown (+15s / saltar) y aviso al terminar; resumen final con CONFETI (`ConfettiView`). Sonidos/Vibración con toggles en Perfil (`@AppStorage fxSound/fxHaptics`).
+>
+> **Perfil:** edad por FECHA DE NACIMIENTO (DatePicker) con edad calculada; pickers de país (sistema) y ciudad (MapKit).
+>
+> **Pendiente de portar/afinar:** gesto de swipe opcional del deck, edicion inline de peso/reps durante la sesion, compartir entrenos, calendario de progreso.
 >
 > **Futuro (autenticacion):** hoy la cuenta es LOCAL (nombre + @handle + foto en el dispositivo, sin login). Para multiusuario real hara falta backend con auth: email+contraseña y/o **Sign in with Apple** (OBLIGATORIO por Apple si se ofrece login de terceros). Requiere servidor (usuarios, sesiones, recuperacion de contraseña) — pendiente de decidir stack (p. ej. Supabase/Firebase para ir rapido).
 >

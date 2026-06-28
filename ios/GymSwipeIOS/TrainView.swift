@@ -4,9 +4,14 @@ struct TrainView: View {
     @EnvironmentObject var store: AppStore
     var onGoToPlan: () -> Void = {}
     @State private var sessionStart: Date?
-    @State private var restUntil: Date?
     @State private var showSummary = false
     @State private var previewWorkout: WorkoutTemplate?
+    @State private var restRemaining = 0
+    @State private var restTotal = 0
+    @AppStorage("fxSound") private var soundOn = true
+    @AppStorage("fxHaptics") private var hapticsOn = true
+
+    private let ticker = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
 
     private var totalSets: Int { store.exercises.reduce(0) { $0 + $1.sets } }
     private var closedSets: Int { store.exercises.reduce(0) { $0 + $1.completedSets + $1.skippedSets } }
@@ -16,7 +21,6 @@ struct TrainView: View {
     private var sessionXP: Int { store.exercises.reduce(0) { $0 + $1.completedSets * 12 + ($1.completedSets > 0 ? 18 : 0) } }
     private var exercisesDone: Int { store.exercises.filter { $0.completedSets > 0 }.count }
     private var elapsedSeconds: Int { sessionStart.map { max(0, Int(-$0.timeIntervalSinceNow)) } ?? 0 }
-
     private var finished: Bool { store.activeExercise == nil && !store.exercises.isEmpty }
 
     var body: some View {
@@ -28,25 +32,26 @@ struct TrainView: View {
                     summary
                 } else if let ex = store.activeExercise {
                     sessionHeader
+                    if restRemaining > 0 { restBanner }
                     activeCard(ex)
-                    Button {
-                        showSummary = true
-                    } label: {
-                        Label("Finalizar entrenamiento", systemImage: "flag.checkered")
-                            .font(.system(size: 15, weight: .heavy)).foregroundColor(Brand.ink)
-                            .frame(maxWidth: .infinity).frame(minHeight: 48)
-                            .background(Brand.chip).clipShape(RoundedRectangle(cornerRadius: 12))
-                    }
+                        .id(ex.id)
+                        .transition(.asymmetric(
+                            insertion: .move(edge: .trailing).combined(with: .opacity),
+                            removal: .move(edge: .leading).combined(with: .opacity)))
+                    finishButton
                 }
             }
             .padding(.horizontal, 14).padding(.vertical, 12)
+            .animation(.spring(response: 0.4, dampingFraction: 0.82), value: store.activeExercise?.id)
         }
         .background(Brand.bg)
-        .sheet(item: $previewWorkout) { w in
-            WorkoutPreview(workoutId: w.id).environmentObject(store)
-        }
-        .onChange(of: store.exercises.isEmpty) { empty in
-            if !empty { resetLocal() }
+        .sheet(item: $previewWorkout) { WorkoutPreview(workoutId: $0.id).environmentObject(store) }
+        .onChange(of: store.exercises.isEmpty) { if !$0 { resetLocal() } }
+        .onReceive(ticker) { _ in
+            if restRemaining > 0 {
+                restRemaining -= 1
+                if restRemaining == 0 { fxRest() }
+            }
         }
     }
 
@@ -56,93 +61,141 @@ struct TrainView: View {
         PanelCard {
             HStack {
                 VStack(alignment: .leading, spacing: 3) {
-                    Text("PROGRESO").font(.caption2).fontWeight(.heavy).foregroundColor(Brand.muted)
+                    Text(workoutName.uppercased()).font(.caption2).fontWeight(.heavy).foregroundColor(Brand.muted)
                     Text("\(closedSets) / \(totalSets) series").font(.system(size: 18, weight: .heavy)).foregroundColor(Brand.ink)
                 }
                 Spacer()
                 if let start = sessionStart {
                     TimelineView(.periodic(from: .now, by: 1)) { _ in
-                        Text(timeString(max(0, Int(-start.timeIntervalSinceNow)))).font(.system(size: 18, weight: .heavy)).monospacedDigit().foregroundColor(Brand.ink)
+                        Label(timeString(max(0, Int(-start.timeIntervalSinceNow))), systemImage: "clock")
+                            .font(.system(size: 15, weight: .heavy)).monospacedDigit().foregroundColor(Brand.ink)
                     }
                 }
             }
-            ProgressView(value: Double(closedSets), total: Double(max(1, totalSets))).tint(Brand.green)
-            if let until = restUntil {
-                TimelineView(.periodic(from: .now, by: 1)) { _ in
-                    let remaining = max(0, Int(until.timeIntervalSinceNow))
-                    if remaining > 0 {
-                        HStack {
-                            Image(systemName: "timer"); Text("Descanso \(remaining)s").fontWeight(.bold)
-                            Spacer(); Button("Saltar") { restUntil = nil }.font(.system(size: 13, weight: .heavy))
-                        }.font(.system(size: 14)).foregroundColor(Color(hex: "4b6211"))
-                    } else { Color.clear.frame(height: 0).onAppear { restUntil = nil } }
+            GeometryReader { geo in
+                ZStack(alignment: .leading) {
+                    Capsule().fill(Brand.chip)
+                    Capsule().fill(Brand.green)
+                        .frame(width: max(6, geo.size.width * CGFloat(closedSets) / CGFloat(max(1, totalSets))))
+                        .animation(.spring(response: 0.4, dampingFraction: 0.8), value: closedSets)
                 }
+            }.frame(height: 10)
+        }
+    }
+
+    private var restBanner: some View {
+        PanelCard {
+            HStack(spacing: 14) {
+                ZStack {
+                    Circle().stroke(Brand.chip, lineWidth: 7)
+                    Circle().trim(from: 0, to: CGFloat(restRemaining) / CGFloat(max(1, restTotal)))
+                        .stroke(Brand.green, style: StrokeStyle(lineWidth: 7, lineCap: .round))
+                        .rotationEffect(.degrees(-90))
+                        .animation(.linear(duration: 1), value: restRemaining)
+                    Text("\(restRemaining)").font(.system(size: 20, weight: .heavy)).monospacedDigit().foregroundColor(Brand.ink)
+                }.frame(width: 64, height: 64)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Descanso").font(.system(size: 16, weight: .heavy)).foregroundColor(Brand.ink)
+                    Text("Recupera para la próxima serie").font(.caption).foregroundColor(Brand.muted)
+                }
+                Spacer()
+                VStack(spacing: 6) {
+                    Button { restRemaining += 15; restTotal += 15; Haptics.soft() } label: {
+                        Text("+15s").font(.system(size: 13, weight: .heavy)).foregroundColor(Brand.ink)
+                            .padding(.horizontal, 12).frame(height: 32).background(Brand.chip).clipShape(Capsule())
+                    }
+                    Button { restRemaining = 0 } label: {
+                        Text("Saltar").font(.system(size: 13, weight: .heavy)).foregroundColor(Color(hex: "4b6211"))
+                    }
+                }
+            }
+        }
+        .transition(.move(edge: .top).combined(with: .opacity))
+    }
+
+    private func activeCard(_ ex: Exercise) -> some View {
+        let current = min(ex.sets, ex.completedSets + ex.skippedSets + 1)
+        return PanelCard {
+            HStack {
+                Text(ex.day.uppercased()).font(.caption2).fontWeight(.heavy).foregroundColor(Brand.muted)
+                Spacer()
+                Text("SERIE \(current) DE \(ex.sets)").font(.caption2).fontWeight(.heavy).foregroundColor(Color(hex: "4b6211"))
+            }
+            Text(ex.name).font(.system(size: 28, weight: .heavy)).foregroundColor(Brand.ink).lineLimit(2)
+            HStack(spacing: 7) {
+                ForEach(0..<ex.sets, id: \.self) { i in
+                    Circle().fill(dotColor(ex, i))
+                        .frame(width: 13, height: 13)
+                        .scaleEffect(i == ex.completedSets + ex.skippedSets - 1 ? 1.25 : 1)
+                        .animation(.spring(response: 0.3, dampingFraction: 0.5), value: ex.completedSets + ex.skippedSets)
+                }
+            }
+            HStack(spacing: 14) {
+                bigStat("\(ex.reps)", "reps", "repeat")
+                bigStat(weightText(ex.weight), "kg", "scalemass")
+                bigStat("\(ex.rest)s", "descanso", "timer")
+            }.padding(.vertical, 6)
+            HStack(spacing: 10) {
+                Button { register(ex, done: false) } label: {
+                    Label("Saltar", systemImage: "xmark").font(.system(size: 16, weight: .heavy))
+                        .foregroundColor(Color(hex: "a73232")).frame(maxWidth: .infinity).frame(minHeight: 56)
+                        .background(Brand.redSoft).clipShape(RoundedRectangle(cornerRadius: 14))
+                }.buttonStyle(PressableButtonStyle())
+                Button { register(ex, done: true) } label: {
+                    Label("Hecho", systemImage: "checkmark").font(.system(size: 17, weight: .heavy))
+                        .foregroundColor(Color(hex: "10150a")).frame(maxWidth: .infinity).frame(minHeight: 56)
+                        .background(Brand.green).clipShape(RoundedRectangle(cornerRadius: 14))
+                        .shadow(color: Brand.green.opacity(0.45), radius: 12, y: 6)
+                }.buttonStyle(PressableButtonStyle())
             }
         }
     }
 
-    private func activeCard(_ ex: Exercise) -> some View {
-        PanelCard {
-            Text(ex.day.uppercased()).font(.caption2).fontWeight(.heavy).foregroundColor(Brand.muted)
-            Text(ex.name).font(.system(size: 26, weight: .heavy)).foregroundColor(Brand.ink)
-            HStack(spacing: 6) {
-                ForEach(0..<ex.sets, id: \.self) { i in Circle().fill(dotColor(ex, i)).frame(width: 12, height: 12) }
-            }
-            HStack(spacing: 16) {
-                stat("\(ex.reps)", "reps"); stat(weightText(ex.weight), "kg"); stat("\(ex.rest)s", "descanso")
-            }.padding(.vertical, 4)
-            HStack(spacing: 10) {
-                Button { register(ex, done: false) } label: {
-                    Label("Saltar", systemImage: "xmark").font(.system(size: 15, weight: .heavy))
-                        .foregroundColor(Color(hex: "a73232")).frame(maxWidth: .infinity).frame(minHeight: 50)
-                        .background(Brand.redSoft).clipShape(RoundedRectangle(cornerRadius: 12))
-                }
-                Button {
-                    register(ex, done: true)
-                    restUntil = Date().addingTimeInterval(Double(ex.rest))
-                } label: {
-                    Label("Hecho", systemImage: "checkmark").font(.system(size: 15, weight: .heavy))
-                        .foregroundColor(Color(hex: "10150a")).frame(maxWidth: .infinity).frame(minHeight: 50)
-                        .background(Brand.green).clipShape(RoundedRectangle(cornerRadius: 12))
-                }
-            }
+    private var finishButton: some View {
+        Button { withAnimation { showSummary = true } } label: {
+            Label("Finalizar entrenamiento", systemImage: "flag.checkered")
+                .font(.system(size: 15, weight: .heavy)).foregroundColor(Brand.ink)
+                .frame(maxWidth: .infinity).frame(minHeight: 48)
+                .background(Brand.chip).clipShape(RoundedRectangle(cornerRadius: 12))
         }
     }
 
     private func register(_ ex: Exercise, done: Bool) {
         if sessionStart == nil { sessionStart = Date() }
-        store.registerSet(ex.id, done: done)
+        if done { fxDone(); restTotal = ex.rest; restRemaining = ex.rest } else { fxSkip(); restRemaining = 0 }
+        withAnimation(.spring(response: 0.4, dampingFraction: 0.82)) { store.registerSet(ex.id, done: done) }
     }
 
-    // MARK: - Summary (Strava-style)
+    // MARK: - Summary
 
     private var summary: some View {
-        PanelCard {
-            HStack { Spacer(); Text("🏁").font(.system(size: 44)); Spacer() }
-            Text("Resumen del entreno").font(.system(size: 20, weight: .heavy)).foregroundColor(Brand.ink)
-                .frame(maxWidth: .infinity, alignment: .center)
-            Text(workoutName).font(.footnote).foregroundColor(Brand.muted)
-                .frame(maxWidth: .infinity, alignment: .center)
-
-            HStack(spacing: 10) {
-                summaryStat(timeString(elapsedSeconds), "Duración", "clock")
-                summaryStat("\(completedSets)", "Series", "checkmark.circle")
-            }
-            HStack(spacing: 10) {
-                summaryStat("\(Int(sessionVolume)) kg", "Volumen", "scalemass")
-                summaryStat("+\(sessionXP)", "XP", "bolt.fill")
-            }
-            if skippedSets > 0 {
-                Text("\(skippedSets) series saltadas · \(exercisesDone) ejercicios").font(.caption).foregroundColor(Brand.soft)
+        ZStack(alignment: .top) {
+            PanelCard {
+                HStack { Spacer(); Text("🏁").font(.system(size: 46)); Spacer() }
+                Text("¡Buen trabajo!").font(.system(size: 22, weight: .heavy)).foregroundColor(Brand.ink)
                     .frame(maxWidth: .infinity, alignment: .center)
+                Text(workoutName).font(.footnote).foregroundColor(Brand.muted).frame(maxWidth: .infinity, alignment: .center)
+                HStack(spacing: 10) {
+                    summaryStat(timeString(elapsedSeconds), "Duración", "clock")
+                    summaryStat("\(completedSets)", "Series", "checkmark.circle")
+                }
+                HStack(spacing: 10) {
+                    summaryStat("\(Int(sessionVolume)) kg", "Volumen", "scalemass")
+                    summaryStat("+\(sessionXP)", "XP", "bolt.fill")
+                }
+                if skippedSets > 0 {
+                    Text("\(skippedSets) series saltadas · \(exercisesDone) ejercicios").font(.caption).foregroundColor(Brand.soft)
+                        .frame(maxWidth: .infinity, alignment: .center)
+                }
+                Button { fxFinish(); store.saveSession(); resetLocal() } label: { Label("Guardar entrenamiento", systemImage: "checkmark") }
+                    .buttonStyle(PrimaryButtonStyle())
+                Button(role: .destructive) { store.discardSession(); resetLocal() } label: {
+                    Label("Descartar", systemImage: "trash").frame(maxWidth: .infinity)
+                }.padding(.top, 2)
             }
-
-            Button { store.saveSession(); resetLocal() } label: { Label("Guardar entrenamiento", systemImage: "checkmark") }
-                .buttonStyle(PrimaryButtonStyle())
-            Button(role: .destructive) { store.discardSession(); resetLocal() } label: {
-                Label("Descartar", systemImage: "trash").frame(maxWidth: .infinity)
-            }.padding(.top, 2)
+            ConfettiView().frame(height: 320).allowsHitTesting(false)
         }
+        .onAppear { fxFinish() }
     }
 
     private func summaryStat(_ value: String, _ label: String, _ icon: String) -> some View {
@@ -156,8 +209,7 @@ struct TrainView: View {
     }
 
     private var workoutName: String { store.exercises.first?.day ?? "Entreno" }
-
-    private func resetLocal() { sessionStart = nil; restUntil = nil; showSummary = false }
+    private func resetLocal() { sessionStart = nil; restRemaining = 0; restTotal = 0; showSummary = false }
 
     // MARK: - Empty
 
@@ -166,8 +218,7 @@ struct TrainView: View {
             HStack { Spacer(); Text("🏋️").font(.system(size: 44)); Spacer() }
             Text("¿Qué entrenamos hoy?").font(.system(size: 20, weight: .heavy)).foregroundColor(Brand.ink)
                 .frame(maxWidth: .infinity, alignment: .center)
-            Text("TUS MÁS FRECUENTES").font(.caption2).fontWeight(.heavy).foregroundColor(Brand.muted)
-                .padding(.top, 4)
+            Text("TUS MÁS FRECUENTES").font(.caption2).fontWeight(.heavy).foregroundColor(Brand.muted).padding(.top, 4)
             ForEach(store.frequentWorkouts) { t in
                 Button { previewWorkout = t } label: {
                     HStack {
@@ -178,8 +229,7 @@ struct TrainView: View {
                         }
                         Spacer()
                         Image(systemName: "chevron.right").font(.system(size: 13, weight: .bold)).opacity(0.6)
-                    }
-                    .padding(.horizontal, 4)
+                    }.padding(.horizontal, 4)
                 }.buttonStyle(PrimaryButtonStyle())
             }
             Button { onGoToPlan() } label: {
@@ -191,13 +241,21 @@ struct TrainView: View {
         }
     }
 
+    // MARK: - FX
+
+    private func fxDone() { if hapticsOn { Haptics.success() }; if soundOn { SoundFX.play(SoundFX.done) } }
+    private func fxSkip() { if hapticsOn { Haptics.soft() }; if soundOn { SoundFX.play(SoundFX.skip) } }
+    private func fxRest() { if hapticsOn { Haptics.rigid() }; if soundOn { SoundFX.play(SoundFX.rest) } }
+    private func fxFinish() { if hapticsOn { Haptics.success() }; if soundOn { SoundFX.play(SoundFX.finish) } }
+
     // MARK: - Helpers
 
-    private func stat(_ value: String, _ label: String) -> some View {
-        VStack(spacing: 2) {
+    private func bigStat(_ value: String, _ label: String, _ icon: String) -> some View {
+        VStack(spacing: 3) {
+            Image(systemName: icon).font(.system(size: 13)).foregroundColor(Color(hex: "6ea300"))
             Text(value).font(.system(size: 20, weight: .heavy)).foregroundColor(Brand.ink)
             Text(label).font(.caption2).fontWeight(.bold).foregroundColor(Brand.muted)
-        }
+        }.frame(maxWidth: .infinity)
     }
 
     private func dotColor(_ ex: Exercise, _ i: Int) -> Color {

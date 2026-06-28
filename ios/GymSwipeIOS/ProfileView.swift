@@ -7,8 +7,16 @@ struct ProfileView: View {
     @State private var pickerItem: PhotosPickerItem?
     @State private var editingData: Data?
     @State private var showEditor = false
-    @State private var showAgePicker = false
-    @State private var ageSelection = 25
+    @State private var showBirthPicker = false
+    @State private var birthSelection = Calendar.current.date(byAdding: .year, value: -25, to: Date()) ?? Date()
+    @AppStorage("fxSound") private var soundOn = true
+    @AppStorage("fxHaptics") private var hapticsOn = true
+
+    private var ageText: String {
+        guard let b = store.profile.birthdate else { return "" }
+        let years = Calendar.current.dateComponents([.year], from: b, to: Date()).year ?? 0
+        return "\(years)"
+    }
 
     var body: some View {
         let level = getLevelProgress(store.player.xp)
@@ -65,13 +73,13 @@ struct ProfileView: View {
                     }
 
                     VStack(alignment: .leading, spacing: 5) {
-                        Text("EDAD").font(.caption2).fontWeight(.heavy).foregroundColor(Brand.muted)
-                        Button { showAgePicker = true } label: {
+                        Text("FECHA DE NACIMIENTO").font(.caption2).fontWeight(.heavy).foregroundColor(Brand.muted)
+                        Button { birthSelection = store.profile.birthdate ?? birthSelection; showBirthPicker = true } label: {
                             HStack {
-                                Text(store.profile.age.isEmpty ? "Elegir" : "\(store.profile.age) años")
-                                    .foregroundColor(store.profile.age.isEmpty ? Brand.soft : Brand.ink)
+                                Text(birthLabel).foregroundColor(store.profile.birthdate == nil ? Brand.soft : Brand.ink)
                                 Spacer()
-                                Image(systemName: "chevron.up.chevron.down").font(.caption).foregroundColor(Brand.soft)
+                                if !ageText.isEmpty { Text("\(ageText) años").font(.caption).fontWeight(.heavy).foregroundColor(Color(hex: "4b6211")) }
+                                Image(systemName: "calendar").font(.caption).foregroundColor(Brand.soft)
                             }
                             .font(.system(size: 15, weight: .semibold))
                             .padding(.horizontal, 12).frame(height: 44).background(Brand.surface)
@@ -91,6 +99,14 @@ struct ProfileView: View {
 
                     field("Gimnasio", binding: Binding(get: { store.profile.gym }, set: { store.profile.gym = $0; store.persist() }))
                 }
+
+                PanelCard {
+                    Text("AJUSTES").font(.caption2).fontWeight(.heavy).foregroundColor(Brand.muted)
+                    Toggle(isOn: $soundOn) { Label("Sonidos", systemImage: "speaker.wave.2.fill") }
+                        .tint(Brand.green)
+                    Toggle(isOn: $hapticsOn) { Label("Vibración", systemImage: "iphone.radiowaves.left.and.right") }
+                        .tint(Brand.green)
+                }
             }
             .padding(.horizontal, 14)
             .padding(.vertical, 12)
@@ -99,25 +115,31 @@ struct ProfileView: View {
         .sheet(isPresented: $showEditor) {
             if let d = editingData { PhotoEditorView(data: d).environmentObject(store) }
         }
-        .sheet(isPresented: $showAgePicker) {
+        .sheet(isPresented: $showBirthPicker) {
             NavigationStack {
                 VStack {
-                    Picker("Edad", selection: $ageSelection) {
-                        ForEach(1...100, id: \.self) { Text("\($0) años").tag($0) }
-                    }.pickerStyle(.wheel)
+                    DatePicker("Fecha de nacimiento", selection: $birthSelection, in: minBirth...Date(), displayedComponents: .date)
+                        .datePickerStyle(.wheel).labelsHidden().padding()
+                    Spacer()
                 }
                 .background(Brand.bg)
-                .navigationTitle("Edad").navigationBarTitleDisplayMode(.inline)
+                .navigationTitle("Fecha de nacimiento").navigationBarTitleDisplayMode(.inline)
                 .toolbar {
-                    ToolbarItem(placement: .topBarLeading) { Button("Cancelar") { showAgePicker = false } }
+                    ToolbarItem(placement: .topBarLeading) { Button("Cancelar") { showBirthPicker = false } }
                     ToolbarItem(placement: .topBarTrailing) {
-                        Button("Listo") { store.profile.age = "\(ageSelection)"; store.persist(); showAgePicker = false }.fontWeight(.heavy)
+                        Button("Listo") { store.profile.birthdate = birthSelection; store.persist(); showBirthPicker = false }.fontWeight(.heavy)
                     }
                 }
             }
-            .presentationDetents([.height(300)])
-            .onAppear { ageSelection = Int(store.profile.age) ?? 25 }
+            .presentationDetents([.height(360)])
         }
+    }
+
+    private var minBirth: Date { Calendar.current.date(byAdding: .year, value: -100, to: Date()) ?? Date() }
+    private var birthLabel: String {
+        guard let b = store.profile.birthdate else { return "Elegir fecha" }
+        let f = DateFormatter(); f.locale = Locale(identifier: "es_ES"); f.dateStyle = .long
+        return f.string(from: b)
     }
 
     private func metric(_ value: String, _ label: String) -> some View {
