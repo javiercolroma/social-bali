@@ -22,7 +22,9 @@ Ultima actualizacion: 2026-06-28
 >
 > **Feedback global (`FX` en SessionFX.swift):** háptica en toda la app (cambio de pestaña = selection, taps, success al aceptar/crear/guardar, warning al borrar) respetando los toggles Sonidos/Vibración. Sonidos SOLO en momentos clave para no cansar: aceptar amistad, aceptar entrenamiento y crear cuenta (además de los sonidos propios de la sesión de entreno). `FX.tap/selection/success(sound:)/warning`.
 >
-> **Perfil:** edad por FECHA DE NACIMIENTO (DatePicker) con edad calculada; pickers de país (sistema) y ciudad (MapKit).
+> **Navegación:** Perfil se movió de la tab bar al header (avatar arriba a la derecha junto a Mensajes/Notificaciones → abre ProfileView en sheet). La tab bar ahora es Entreno · Plan · Ranking · Social · Partner. Nueva pestaña **Social** (`SocialFeedView`): muro con los entrenos recientes de tus amigos (título por grupo dominante, ejercicios/series/volumen, aplausos/kudos, tap → perfil del amigo). Ranking → mapa con usuarios demo cerca de tu ubicación, pin tocable → ficha (`MapUserSheet`) con perfil y añadir amigo.
+>
+> **Perfil:** selector de idioma (🌐, solo Español activo); edad por FECHA DE NACIMIENTO (DatePicker) con edad calculada; país (lista del sistema en español) y ciudad (búsqueda MapKit sesgada al país). Catálogo de ejercicios con autocompletado en crear/editar entreno (`Exercises.swift`); grupos personalizados con desplegable y "Crear «X»".
 >
 > **Pendiente de portar/afinar:** gesto de swipe opcional del deck, edicion inline de peso/reps durante la sesion, compartir entrenos, calendario de progreso.
 >

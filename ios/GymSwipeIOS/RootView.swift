@@ -11,8 +11,9 @@ struct RootView: View {
     @State private var editingAccount = false
     @State private var chatPerson: IdString?
     @State private var profilePerson: IdString?
+    @State private var showProfile = false
 
-    private let titles = ["Entreno", "Plan", "Ranking", "Partner", "Perfil"]
+    private let titles = ["Entreno", "Plan", "Ranking", "Social", "Partner"]
 
     var body: some View {
         VStack(spacing: 0) {
@@ -21,8 +22,8 @@ struct RootView: View {
                 TrainView(onGoToPlan: { tab = 1 }).tag(0).tabItem { Label("Entreno", systemImage: "dumbbell.fill") }
                 PlanView(onLoaded: { tab = 0 }).tag(1).tabItem { Label("Plan", systemImage: "list.bullet.clipboard") }
                 RankingView().tag(2).tabItem { Label("Ranking", systemImage: "globe.europe.africa.fill") }
-                PartnerView(onOpenChat: { chatPerson = IdString(id: $0) }).tag(3).tabItem { Label("Partner", systemImage: "person.2.fill") }
-                ProfileView().tag(4).tabItem { Label("Perfil", systemImage: "person.crop.circle") }
+                SocialFeedView(onOpenProfile: { profilePerson = IdString(id: $0) }).tag(3).tabItem { Label("Social", systemImage: "newspaper.fill") }
+                PartnerView(onOpenChat: { chatPerson = IdString(id: $0) }).tag(4).tabItem { Label("Partner", systemImage: "person.2.fill") }
             }
             .onChange(of: tab) { _ in FX.selection() }
         }
@@ -48,6 +49,14 @@ struct RootView: View {
                 FriendProfileView(person: person).environmentObject(store)
             }
         }
+        .sheet(isPresented: $showProfile) {
+            NavigationStack {
+                ProfileView()
+                    .environmentObject(store)
+                    .navigationTitle("Perfil").navigationBarTitleDisplayMode(.inline)
+                    .toolbar { ToolbarItem(placement: .topBarTrailing) { Button("Cerrar") { showProfile = false } } }
+            }
+        }
         .fullScreenCover(isPresented: Binding(
             get: { store.account == nil || editingAccount },
             set: { if !$0 { editingAccount = false } }
@@ -66,7 +75,12 @@ struct RootView: View {
             Spacer()
             headerButton(system: "envelope.fill", badge: store.unreadMessages) { FX.tap(); messagesTab = 0; showMessages = true }
             headerButton(system: "bell.fill", badge: store.unreadNotifications) { FX.tap(); showNotifications = true }
-        }
+            Button { FX.tap(); showProfile = true } label: {
+                MeAvatar(account: store.account, size: 44)
+                    .overlay(Circle().stroke(Brand.line))
+            }
+            .accessibilityLabel("Perfil")
+}
         .padding(.horizontal, 18)
         .padding(.top, 8)
         .padding(.bottom, 10)
