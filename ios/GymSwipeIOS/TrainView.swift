@@ -226,7 +226,7 @@ struct TrainView: View {
                 Divider().padding(.vertical, 2)
 
                 summaryLabel("NOMBRE DEL ENTRENO")
-                TextField(workoutName, text: $sessionName)
+                TextField(defaultSessionName, text: $sessionName)
                     .font(.system(size: 15, weight: .semibold))
                     .padding(.horizontal, 12).frame(height: 44).background(Brand.surface)
                     .clipShape(RoundedRectangle(cornerRadius: 10))
@@ -283,7 +283,7 @@ struct TrainView: View {
             }
             ConfettiView().frame(height: 320).allowsHitTesting(false)
         }
-        .onAppear { fxFinish(); if sessionName.isEmpty { sessionName = workoutName } }
+        .onAppear { fxFinish(); if sessionName.isEmpty { sessionName = defaultSessionName } }
     }
 
     private func summaryLabel(_ text: String) -> some View {
@@ -302,6 +302,18 @@ struct TrainView: View {
     }
 
     private var workoutName: String { store.exercises.first?.day ?? "Entreno" }
+
+    /// Strava-style default with a gym twist: "<grupo> de <franja>" (e.g. "Pierna de tarde").
+    private var defaultSessionName: String {
+        let hour = Calendar.current.component(.hour, from: Date())
+        let time = hour < 12 ? "de mañana" : (hour < 21 ? "de tarde" : "de noche")
+        var counts: [String: Int] = [:]
+        for e in store.exercises { counts[GymScoreEngine.pattern(for: e.exerciseName).group, default: 0] += 1 }
+        let top = counts.max { $0.value < $1.value }?.key ?? ""
+        let labels = ["pierna": "Pierna", "bisagra": "Posterior", "empuje": "Empuje",
+                      "tiron": "Tirón", "condicion": "Cardio", "accesorio": "Full body"]
+        return "\(labels[top] ?? "Entreno") \(time)"
+    }
     private func resetLocal() {
         sessionStart = nil; restActive = false; restElapsed = 0; restTotal = 0; showSummary = false
         sessionName = ""; sessionNote = ""; sessionPhoto = nil; sessionPickerItem = nil; visibility = .all
