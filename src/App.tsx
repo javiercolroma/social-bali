@@ -3004,14 +3004,6 @@ function App() {
           </div>
         </header>
 
-        <nav className="tab-bar" aria-label="Vistas">
-          <TabButton active={activeTab === 'train'} icon={<Dumbbell size={16} />} label="Entreno" onClick={() => selectTab('train')} />
-          <TabButton active={activeTab === 'plan'} icon={<ListChecks size={16} />} label="Plan" onClick={() => selectTab('plan')} />
-          <TabButton active={activeTab === 'ranking'} icon={<Globe2 size={16} />} label="Ranking" onClick={() => selectTab('ranking')} />
-          <TabButton active={activeTab === 'partner'} icon={<Users size={16} />} label="Partner" onClick={() => selectTab('partner')} />
-          <TabButton active={activeTab === 'profile'} icon={<UserRound size={16} />} label="Perfil" onClick={() => selectTab('profile')} />
-        </nav>
-
         <section key={activeTab} className={`screen-body view-${activeTab}`}>
           {activeTab === 'train' && (
             <TrainView
@@ -3080,6 +3072,14 @@ function App() {
             />
           )}
         </section>
+
+        <nav className="tab-bar" aria-label="Vistas">
+          <TabButton active={activeTab === 'train'} icon={<Dumbbell size={16} />} label="Entreno" onClick={() => selectTab('train')} />
+          <TabButton active={activeTab === 'plan'} icon={<ListChecks size={16} />} label="Plan" onClick={() => selectTab('plan')} />
+          <TabButton active={activeTab === 'ranking'} icon={<Globe2 size={16} />} label="Ranking" onClick={() => selectTab('ranking')} />
+          <TabButton active={activeTab === 'partner'} icon={<Users size={16} />} label="Partner" onClick={() => selectTab('partner')} />
+          <TabButton active={activeTab === 'profile'} icon={<UserRound size={16} />} label="Perfil" onClick={() => selectTab('profile')} />
+        </nav>
 
         {activeOverlay === 'messages' && (
           <MessagesOverlay
@@ -5082,8 +5082,8 @@ function PartnerView({
             <span>{trainingPlans.length} activos</span>
           </div>
           <button type="button" onClick={() => setShowPlanCreator((current) => !current)}>
-            <Users size={15} />
-            Buscar compañero
+            {showPlanCreator ? <X size={15} /> : <Users size={15} />}
+            {showPlanCreator ? 'Cerrar' : 'Buscar compañero'}
           </button>
         </div>
 
@@ -5132,6 +5132,9 @@ function PartnerView({
             <button className="primary-button" type="button" onClick={saveTrainingPlan}>
               <Plus size={17} />
               Crear plan
+            </button>
+            <button className="secondary-button" type="button" onClick={() => setShowPlanCreator(false)}>
+              Cancelar
             </button>
           </section>
         )}
