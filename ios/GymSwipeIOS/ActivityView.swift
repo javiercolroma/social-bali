@@ -201,14 +201,17 @@ struct ActivityView: View {
             HStack(spacing: 16) {
                 ZStack {
                     Image(systemName: "flame.fill")
-                        .font(.system(size: 70))
-                        .foregroundStyle(LinearGradient(colors: [Color(hex: "ffb33b"), Color(hex: "f0560a")],
+                        .font(.system(size: 82))
+                        .foregroundStyle(LinearGradient(colors: [Color(hex: "ffc24d"), Color(hex: "f0560a")],
                                                         startPoint: .top, endPoint: .bottom))
+                    // El dígito va en la "barriga" (parte ancha) de la llama.
                     Text("\(store.player.streak)")
-                        .font(.system(size: 24, weight: .heavy)).foregroundColor(.white)
-                        .offset(y: 9)
+                        .font(.system(size: 26, weight: .black))
+                        .foregroundColor(.white)
+                        .shadow(color: Color(hex: "b23b00").opacity(0.55), radius: 1, y: 1)
+                        .offset(y: 13)
                 }
-                .frame(width: 70, height: 70)
+                .frame(width: 82, height: 82)
                 VStack(alignment: .leading, spacing: 3) {
                     Text(store.player.streak == 0 ? "Empieza tu racha" : "¡En racha!")
                         .font(.system(size: 19, weight: .heavy)).foregroundColor(Brand.ink)
