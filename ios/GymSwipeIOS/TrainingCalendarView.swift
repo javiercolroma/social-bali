@@ -26,7 +26,7 @@ struct TrainingCalendarView: View {
     let sessions: [WorkoutSession]
     var onSelectDay: (Date, [WorkoutSession]) -> Void
 
-    @State private var weekAnchor = Calendar.current.startOfDay(for: Date())
+    @State private var monthAnchor = Calendar.current.startOfDay(for: Date())
 
     private var cal: Calendar {
         var c = Calendar(identifier: .gregorian)
@@ -40,10 +40,23 @@ struct TrainingCalendarView: View {
     var body: some View {
         PanelCard {
             header
-            HStack(spacing: 6) {
-                ForEach(Array(days.enumerated()), id: \.offset) { i, date in
-                    cell(date, letter: weekdays[i])
+            HStack(spacing: 0) {
+                ForEach(weekdays, id: \.self) { d in
+                    Text(d).font(.system(size: 11, weight: .heavy)).foregroundColor(Brand.muted)
+                        .frame(maxWidth: .infinity)
                 }
+            }
+            .padding(.top, 2)
+            LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 4), count: 7), spacing: 6) {
+                ForEach(Array(cells.enumerated()), id: \.offset) { _, date in
+                    cell(date)
+                }
+            }
+            HStack(spacing: 8) {
+                Circle().fill(Brand.green).frame(width: 10, height: 10)
+                Text("Día entrenado").font(.caption2).foregroundColor(Brand.soft)
+                Spacer()
+                Text("\(trainedThisMonth) este mes").font(.caption2).fontWeight(.heavy).foregroundColor(Color(hex: "4b6211"))
             }
             .padding(.top, 2)
         }
@@ -51,11 +64,7 @@ struct TrainingCalendarView: View {
 
     private var header: some View {
         HStack {
-            VStack(alignment: .leading, spacing: 1) {
-                Text(weekTitle).font(.system(size: 15, weight: .heavy)).foregroundColor(Brand.ink)
-                Text("\(trainedThisWeek) \(trainedThisWeek == 1 ? "entreno" : "entrenos")")
-                    .font(.caption2).fontWeight(.heavy).foregroundColor(Color(hex: "4b6211"))
-            }
+            Text(monthTitle).font(.system(size: 16, weight: .heavy)).foregroundColor(Brand.ink)
             Spacer()
             Button { shift(-1) } label: { navIcon("chevron.left") }
             Button { shift(1) } label: { navIcon("chevron.right") }
@@ -64,23 +73,23 @@ struct TrainingCalendarView: View {
 
     private func navIcon(_ name: String) -> some View {
         Image(systemName: name).font(.system(size: 13, weight: .heavy)).foregroundColor(Brand.ink)
-            .frame(width: 32, height: 32).background(Brand.chip).clipShape(RoundedRectangle(cornerRadius: 10))
+            .frame(width: 34, height: 34).background(Brand.chip).clipShape(RoundedRectangle(cornerRadius: 10))
     }
 
-    private func cell(_ date: Date, letter: String) -> some View {
-        let day = cal.component(.day, from: date)
-        let daySessions = byDay[cal.startOfDay(for: date)] ?? []
-        let trained = !daySessions.isEmpty
-        let isToday = cal.isDateInToday(date)
-        return Button {
-            if trained { FX.tap(); onSelectDay(date, daySessions) }
-        } label: {
-            VStack(spacing: 5) {
-                Text(letter).font(.system(size: 10, weight: .heavy)).foregroundColor(Brand.muted)
+    @ViewBuilder
+    private func cell(_ date: Date?) -> some View {
+        if let date = date {
+            let day = cal.component(.day, from: date)
+            let daySessions = byDay[cal.startOfDay(for: date)] ?? []
+            let trained = !daySessions.isEmpty
+            let isToday = cal.isDateInToday(date)
+            Button {
+                if trained { FX.tap(); onSelectDay(date, daySessions) }
+            } label: {
                 Text("\(day)")
                     .font(.system(size: 14, weight: trained ? .heavy : .semibold))
                     .foregroundColor(trained ? Color(hex: "10150a") : (isToday ? Brand.ink : Brand.soft))
-                    .frame(width: 34, height: 34)
+                    .frame(width: 38, height: 38)
                     .background(Circle().fill(trained ? Brand.green : Color.clear))
                     .overlay(Circle().stroke(isToday && !trained ? Brand.green : Color.clear, lineWidth: 2))
                     .overlay(alignment: .bottom) {
@@ -89,47 +98,59 @@ struct TrainingCalendarView: View {
                                 .foregroundColor(.white).padding(2).background(Circle().fill(Brand.ink)).offset(y: 3)
                         }
                     }
+                    .frame(maxWidth: .infinity)
             }
-            .frame(maxWidth: .infinity)
+            .buttonStyle(.plain)
+            .disabled(!trained)
+        } else {
+            // Hueco vacío para los días del mes anterior/siguiente (no se muestran).
+            Color.clear.frame(height: 38).frame(maxWidth: .infinity)
         }
-        .buttonStyle(.plain)
-        .disabled(!trained)
     }
 
     // MARK: - Cálculo
 
-    private var weekStart: Date {
-        cal.dateInterval(of: .weekOfYear, for: weekAnchor)?.start ?? weekAnchor
+    private var monthStart: Date {
+        cal.date(from: cal.dateComponents([.year, .month], from: monthAnchor)) ?? monthAnchor
     }
 
-    private var days: [Date] {
-        (0..<7).compactMap { cal.date(byAdding: .day, value: $0, to: weekStart) }
+    private var daysInMonth: Int {
+        cal.range(of: .day, in: .month, for: monthStart)?.count ?? 30
+    }
+
+    private var leadingBlanks: Int {
+        let wd = cal.component(.weekday, from: monthStart)
+        return (wd - cal.firstWeekday + 7) % 7
+    }
+
+    /// Solo los días de este mes: huecos vacíos (nil) al principio, sin días del mes anterior/siguiente.
+    private var cells: [Date?] {
+        var arr: [Date?] = Array(repeating: nil, count: leadingBlanks)
+        for d in 0..<daysInMonth {
+            arr.append(cal.date(byAdding: .day, value: d, to: monthStart))
+        }
+        return arr
     }
 
     private var byDay: [Date: [WorkoutSession]] {
         Dictionary(grouping: sessions) { cal.startOfDay(for: $0.date) }
     }
 
-    private var trainedThisWeek: Int {
-        let keys = Set(days.map { cal.startOfDay(for: $0) })
-        return byDay.keys.filter { keys.contains($0) }.count
+    private var trainedThisMonth: Int {
+        byDay.keys.filter { cal.isDate($0, equalTo: monthStart, toGranularity: .month) }.count
     }
 
-    private var weekTitle: String {
-        if cal.isDate(weekAnchor, equalTo: Date(), toGranularity: .weekOfYear) { return "Esta semana" }
-        let end = cal.date(byAdding: .day, value: 6, to: weekStart) ?? weekStart
+    private var monthTitle: String {
         let f = DateFormatter()
         f.locale = Locale(identifier: "es_ES")
-        let sameMonth = cal.isDate(weekStart, equalTo: end, toGranularity: .month)
-        f.dateFormat = "d MMM"
-        let startStr = sameMonth ? "\(cal.component(.day, from: weekStart))" : f.string(from: weekStart)
-        return "\(startStr) – \(f.string(from: end))"
+        f.dateFormat = "LLLL yyyy"
+        return f.string(from: monthStart).capitalized
     }
 
-    private func shift(_ weeks: Int) {
+    private func shift(_ months: Int) {
         FX.selection()
-        if let d = cal.date(byAdding: .weekOfYear, value: weeks, to: weekAnchor) {
-            weekAnchor = d
+        if let d = cal.date(byAdding: .month, value: months, to: monthAnchor) {
+            monthAnchor = d
         }
     }
 }

@@ -57,10 +57,14 @@ struct ActivityView: View {
 
     @ViewBuilder
     private var progressContent: some View {
+        summaryCard
+        TrainingCalendarView(sessions: sessions) { date, daySessions in
+            daySheet = DayPayload(id: date, date: date, sessions: daySessions)
+        }
         if store.sessions.isEmpty {
-            emptyState(icon: "chart.line.uptrend.xyaxis",
-                       title: "Aún no hay progreso",
-                       msg: "Completa y guarda entrenos para medir tu evolución de carga y volumen.")
+            Text("Completa y guarda entrenos para medir tu evolución de carga.")
+                .font(.footnote).foregroundColor(Brand.muted)
+                .frame(maxWidth: .infinity, alignment: .center).padding(.top, 6)
         } else {
             trendCard
             strengthCard
@@ -170,20 +174,11 @@ struct ActivityView: View {
 
     @ViewBuilder
     private var historyContent: some View {
-        summaryCard
         if sessions.isEmpty {
             emptyState(icon: "clock.arrow.circlepath",
                        title: "Aún no tienes actividad",
                        msg: "Completa y guarda un entreno para ver aquí tu historial.")
         } else {
-            TrainingCalendarView(sessions: sessions) { date, daySessions in
-                daySheet = DayPayload(id: date, date: date, sessions: daySessions)
-            }
-            HStack {
-                Text("TU HISTORIAL").font(.caption2).fontWeight(.heavy).foregroundColor(Brand.muted)
-                Spacer()
-                Text("\(sessions.count)").font(.caption2).fontWeight(.heavy).foregroundColor(Brand.soft)
-            }.padding(.horizontal, 4).padding(.top, 2)
             ForEach(sessions) { s in sessionCard(s) }
         }
     }
