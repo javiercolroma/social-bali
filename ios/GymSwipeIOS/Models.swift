@@ -38,6 +38,7 @@ struct Profile: Codable {
     var country: String
     var city: String
     var gym: String
+    var region: String? = nil
 }
 
 struct HistoryEntry: Identifiable, Codable {

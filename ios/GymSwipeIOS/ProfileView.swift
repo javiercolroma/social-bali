@@ -7,6 +7,8 @@ struct ProfileView: View {
     @State private var pickerItem: PhotosPickerItem?
     @State private var editingData: Data?
     @State private var showEditor = false
+    @State private var showAgePicker = false
+    @State private var ageSelection = 25
 
     var body: some View {
         let level = getLevelProgress(store.player.xp)
@@ -55,10 +57,44 @@ struct ProfileView: View {
 
                 PanelCard {
                     Text("DATOS").font(.caption2).fontWeight(.heavy).foregroundColor(Brand.muted)
-                    field("Sexo", binding: Binding(get: { store.profile.sex }, set: { store.profile.sex = $0; store.persist() }))
-                    field("Edad", binding: Binding(get: { store.profile.age }, set: { store.profile.age = $0; store.persist() }), keyboard: .numberPad)
-                    field("País", binding: Binding(get: { store.profile.country }, set: { store.profile.country = $0; store.persist() }))
-                    field("Ciudad", binding: Binding(get: { store.profile.city }, set: { store.profile.city = $0; store.persist() }))
+
+                    MenuField(label: "Sexo", placeholder: "Elegir",
+                              selected: store.profile.sex,
+                              options: ["Hombre", "Mujer", "Otro"].map { ($0, $0) }) {
+                        store.profile.sex = $0; store.persist()
+                    }
+
+                    VStack(alignment: .leading, spacing: 5) {
+                        Text("EDAD").font(.caption2).fontWeight(.heavy).foregroundColor(Brand.muted)
+                        Button { showAgePicker = true } label: {
+                            HStack {
+                                Text(store.profile.age.isEmpty ? "Elegir" : "\(store.profile.age) años")
+                                    .foregroundColor(store.profile.age.isEmpty ? Brand.soft : Brand.ink)
+                                Spacer()
+                                Image(systemName: "chevron.up.chevron.down").font(.caption).foregroundColor(Brand.soft)
+                            }
+                            .font(.system(size: 15, weight: .semibold))
+                            .padding(.horizontal, 12).frame(height: 44).background(Brand.surface)
+                            .clipShape(RoundedRectangle(cornerRadius: 10))
+                        }
+                    }
+
+                    MenuField(label: "País", placeholder: "Elegir país",
+                              selected: store.profile.country,
+                              options: countries.map { ("\($0.flag) \($0.name)", $0.name) }) { value in
+                        store.profile.country = value
+                        if !cities(for: value).contains(store.profile.city) { store.profile.city = "" }
+                        store.persist()
+                    }
+
+                    MenuField(label: "Ciudad", placeholder: "Elegir ciudad",
+                              selected: store.profile.city,
+                              options: cities(for: store.profile.country).map { ($0, $0) }) {
+                        store.profile.city = $0; store.persist()
+                    }
+
+                    field("Zona / barrio (opcional)", binding: Binding(get: { store.profile.region ?? "" }, set: { store.profile.region = $0; store.persist() }))
+
                     field("Gimnasio", binding: Binding(get: { store.profile.gym }, set: { store.profile.gym = $0; store.persist() }))
                 }
             }
@@ -68,6 +104,25 @@ struct ProfileView: View {
         .background(Brand.bg)
         .sheet(isPresented: $showEditor) {
             if let d = editingData { PhotoEditorView(data: d).environmentObject(store) }
+        }
+        .sheet(isPresented: $showAgePicker) {
+            NavigationStack {
+                VStack {
+                    Picker("Edad", selection: $ageSelection) {
+                        ForEach(1...100, id: \.self) { Text("\($0) años").tag($0) }
+                    }.pickerStyle(.wheel)
+                }
+                .background(Brand.bg)
+                .navigationTitle("Edad").navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    ToolbarItem(placement: .topBarLeading) { Button("Cancelar") { showAgePicker = false } }
+                    ToolbarItem(placement: .topBarTrailing) {
+                        Button("Listo") { store.profile.age = "\(ageSelection)"; store.persist(); showAgePicker = false }.fontWeight(.heavy)
+                    }
+                }
+            }
+            .presentationDetents([.height(300)])
+            .onAppear { ageSelection = Int(store.profile.age) ?? 25 }
         }
     }
 
@@ -85,6 +140,39 @@ struct ProfileView: View {
                 .keyboardType(keyboard)
                 .padding(.horizontal, 12).frame(height: 44)
                 .background(Brand.surface).clipShape(RoundedRectangle(cornerRadius: 10))
+        }
+    }
+}
+
+struct MenuField: View {
+    let label: String
+    let placeholder: String
+    let selected: String
+    let options: [(display: String, value: String)]
+    var onSelect: (String) -> Void
+
+    private var currentDisplay: String? { options.first { $0.value == selected }?.display }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 5) {
+            Text(label.uppercased()).font(.caption2).fontWeight(.heavy).foregroundColor(Brand.muted)
+            Menu {
+                ForEach(options, id: \.value) { opt in
+                    Button { onSelect(opt.value) } label: {
+                        if opt.value == selected { Label(opt.display, systemImage: "checkmark") } else { Text(opt.display) }
+                    }
+                }
+            } label: {
+                HStack {
+                    Text(currentDisplay ?? placeholder)
+                        .foregroundColor(currentDisplay == nil ? Brand.soft : Brand.ink)
+                    Spacer()
+                    Image(systemName: "chevron.up.chevron.down").font(.caption).foregroundColor(Brand.soft)
+                }
+                .font(.system(size: 15, weight: .semibold))
+                .padding(.horizontal, 12).frame(height: 44)
+                .background(Brand.surface).clipShape(RoundedRectangle(cornerRadius: 10))
+            }
         }
     }
 }

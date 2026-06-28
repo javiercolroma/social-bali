@@ -95,32 +95,51 @@ struct CreatePlanView: View {
     var body: some View {
         NavigationStack {
             ScrollView {
-                VStack(alignment: .leading, spacing: 14) {
-                    choice("Cuándo", options: whenOptions, selection: $draftWhen)
-                    choice("Dónde", options: whereOptions, selection: $draftWhere)
-                    choice("Qué", options: workouts, selection: $draftWorkout)
-                    choice("Plazas", options: spotsOptions, selection: $draftSpots)
+                VStack(alignment: .leading, spacing: 16) {
+                    VStack(alignment: .leading, spacing: 10) {
+                        ZStack {
+                            Circle().fill(Brand.greenSoft).frame(width: 52, height: 52)
+                            Image(systemName: "person.2.fill").font(.system(size: 22, weight: .bold)).foregroundColor(Color(hex: "10150a"))
+                        }
+                        Text("Encuentra con quién entrenar").font(.system(size: 22, weight: .heavy)).foregroundColor(Brand.ink)
+                        Text("Publica tu plan y recibe compañeros con tu nivel cerca de ti.")
+                            .font(.footnote).foregroundColor(Brand.muted)
+                    }
+
+                    PanelCard {
+                        choice("Cuándo", "calendar", options: whenOptions, selection: $draftWhen)
+                        Divider().background(Brand.line)
+                        choice("Dónde", "mappin.and.ellipse", options: whereOptions, selection: $draftWhere)
+                        Divider().background(Brand.line)
+                        choice("Qué", "dumbbell.fill", options: workouts, selection: $draftWorkout)
+                        Divider().background(Brand.line)
+                        choice("Plazas", "person.3.fill", options: spotsOptions, selection: $draftSpots)
+                    }
+
                     Button {
                         store.addPlan(title: planTitle, when: draftWhen, place: planPlace, spots: draftSpots, score: store.gymScore.total)
                         dismiss()
-                    } label: { Label("Crear plan", systemImage: "plus") }
+                    } label: { Label("Publicar y buscar", systemImage: "magnifyingglass") }
                         .buttonStyle(PrimaryButtonStyle())
                 }
                 .padding(16)
             }
             .background(Brand.bg)
-            .navigationTitle("Nuevo plan").navigationBarTitleDisplayMode(.inline)
+            .navigationTitle("Buscar compañero").navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
-                    Button { dismiss() } label: { Label("Atrás", systemImage: "chevron.left") }
+                    Button { dismiss() } label: { Image(systemName: "chevron.left").fontWeight(.semibold) }
                 }
             }
         }
     }
 
-    private func choice(_ label: String, options: [String], selection: Binding<String>) -> some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Text(label.uppercased()).font(.caption2).fontWeight(.heavy).foregroundColor(Brand.muted)
+    private func choice(_ label: String, _ icon: String, options: [String], selection: Binding<String>) -> some View {
+        VStack(alignment: .leading, spacing: 7) {
+            HStack(spacing: 6) {
+                Image(systemName: icon).font(.system(size: 12, weight: .bold)).foregroundColor(Color(hex: "6ea300"))
+                Text(label.uppercased()).font(.caption2).fontWeight(.heavy).foregroundColor(Brand.muted)
+            }
             FlowChips(options: options, selection: selection)
         }
     }
