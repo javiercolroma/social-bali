@@ -1011,7 +1011,27 @@ Pendiente:
 - Tab-bar que seguia desapareciendo (incl. al iniciar/seleccionar entreno): `position: fixed` es fragil en WKWebView (se desvanece durante animaciones de cambio de vista). Solucion final y a prueba de balas: el tab-bar es SIEMPRE una fila EN FLUJO del grid de 3 filas del `phone-stage` (`auto minmax(0,1fr) auto`), sin `position: fixed` ni `backdrop-filter`. Como `phone-stage` ocupa 100svh, la fila queda fija al fondo de la pantalla y nunca puede recortarse/desaparecer. El `<nav class="tab-bar">` va en el JSX despues de `.screen-body`.
 - Formulario "Buscar compañero" (Partner): ahora se puede cerrar siempre (el boton de cabecera alterna a "Cerrar" y hay un boton "Cancelar"), sin necesidad de crear un plan.
 
-## 23. Instruccion para futuras sesiones
+## 23. Publicacion en App Store
+
+Ajustes ya hechos en el repo para poder subir la app:
+
+- `ITSAppUsesNonExemptEncryption: false` (evita la pregunta de cifrado en cada subida) y `LSApplicationCategoryType: public.app-category.healthcare-fitness` en `ios/project.yml` (se generan al Info.plist con xcodegen).
+- Manifiesto de privacidad `ios/GymSwipeIOS/PrivacyInfo.xcprivacy` (sin tracking, sin recopilacion de datos, sin APIs de motivo requerido). Se incluye en el bundle al generar/compilar.
+- Permiso de ubicacion `NSLocationWhenInUseUsageDescription` (ya estaba).
+- Paginas para GitHub Pages en `docs/` (`index.html`, `privacy.html`, `support.html`) → URLs de privacidad/soporte que pide App Store. Activar en GitHub: Settings → Pages → Source `Deploy from a branch` → `main`/`docs`.
+- `STORE.md` (raiz): nombre, subtitulo, descripcion, keywords, categoria, clasificacion por edad, respuestas de App Privacy y NOTAS PARA EL REVISOR (importante: explicar que es local-first con web empaquetada y que lo social es simulado, para mitigar la guia 4.2).
+
+Pasos de subida (resumen, detalle en `STORE.md`):
+
+1. `npm run ios:sync` (sincroniza WebDist) y, si cambio `project.yml`, `npm run ios:generate`.
+2. Xcode → Signing & Capabilities → Team (cuenta del Apple Developer Program, 99 €/año).
+3. Destino: `Any iOS Device (arm64)` → Product → Archive.
+4. Organizer → Distribute App → App Store Connect → Upload.
+5. App Store Connect: crear app, rellenar con `STORE.md`, subir capturas (>= iPhone 6.9"), seleccionar build y enviar a revision.
+
+Pendiente (manual, requiere navegar la app): capturas de pantalla finales para la ficha.
+
+## 24. Instruccion para futuras sesiones
 
 Al retomar:
 

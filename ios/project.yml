@@ -20,6 +20,8 @@ targets:
       path: GymSwipeIOS/Info.plist
       properties:
         CFBundleDisplayName: Forge Loop
+        ITSAppUsesNonExemptEncryption: false
+        LSApplicationCategoryType: public.app-category.healthcare-fitness
         NSLocationWhenInUseUsageDescription: Forge Loop usa tu ubicación para mostrarte el ranking y los compañeros de entreno cercanos.
         UILaunchScreen:
           UIColorName: LaunchBackground

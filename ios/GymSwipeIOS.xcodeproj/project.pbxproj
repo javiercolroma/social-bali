@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		44168B322E9C8DF64A6B35D2 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 5D321FCC3B325158C232F567 /* PrivacyInfo.xcprivacy */; };
 		4A594ECCD23FA6B2D8AD5C4D /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CAB52A046196FBC2A18158AF /* ContentView.swift */; };
 		5D87F9D09E700FC924A4C724 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B83B0B92285D78A53157123F /* Assets.xcassets */; };
 		97352B4FB2817E6C0CFFCBF7 /* WebDist in Resources */ = {isa = PBXBuildFile; fileRef = 55E0ADAC1161ECACA77B58D1 /* WebDist */; };
@@ -17,6 +18,7 @@
 		43FB86BA08732C17FD45EDF6 /* GymSwipeIOS.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = GymSwipeIOS.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		45AAAB98E146869DA2747469 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		55E0ADAC1161ECACA77B58D1 /* WebDist */ = {isa = PBXFileReference; lastKnownFileType = folder; path = WebDist; sourceTree = SOURCE_ROOT; };
+		5D321FCC3B325158C232F567 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		9CAC012CB53EB545C20ED468 /* GymSwipeIOSApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GymSwipeIOSApp.swift; sourceTree = "<group>"; };
 		B83B0B92285D78A53157123F /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		CAB52A046196FBC2A18158AF /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
@@ -47,6 +49,7 @@
 				CAB52A046196FBC2A18158AF /* ContentView.swift */,
 				9CAC012CB53EB545C20ED468 /* GymSwipeIOSApp.swift */,
 				45AAAB98E146869DA2747469 /* Info.plist */,
+				5D321FCC3B325158C232F567 /* PrivacyInfo.xcprivacy */,
 			);
 			path = GymSwipeIOS;
 			sourceTree = "<group>";
@@ -108,6 +111,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				5D87F9D09E700FC924A4C724 /* Assets.xcassets in Resources */,
+				44168B322E9C8DF64A6B35D2 /* PrivacyInfo.xcprivacy in Resources */,
 				97352B4FB2817E6C0CFFCBF7 /* WebDist in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
