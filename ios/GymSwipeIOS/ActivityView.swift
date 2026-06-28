@@ -10,6 +10,7 @@ struct ActivityView: View {
     @State private var section = 0
     @State private var detail: WorkoutSession?
     @State private var daySheet: DayPayload?
+    @State private var showEpleyInfo = false
 
     private let tabs: [(title: String, icon: String)] = [
         ("Progreso", "chart.line.uptrend.xyaxis"),
@@ -115,6 +116,11 @@ struct ActivityView: View {
                     Text("1RM estimado (fórmula de Epley)").font(.caption2).foregroundColor(Brand.soft)
                 }
                 Spacer()
+                Button { FX.tap(); showEpleyInfo = true } label: {
+                    Image(systemName: "info.circle").font(.system(size: 19)).foregroundColor(Brand.soft)
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Qué es el 1RM estimado")
             }
             if liftProgress.isEmpty {
                 Text("Registra series con peso y repeticiones para estimar tu 1RM.")
@@ -127,6 +133,11 @@ struct ActivityView: View {
                     }
                 }
             }
+        }
+        .alert("1RM estimado (Epley)", isPresented: $showEpleyInfo) {
+            Button("Entendido", role: .cancel) {}
+        } message: {
+            Text("Tu 1RM es el peso máximo que podrías levantar una sola vez. Medirlo de verdad es arriesgado, así que se estima a partir de una serie normal con la fórmula de Epley:\n\n1RM ≈ peso × (1 + repeticiones / 30)\n\nTomamos tu mejor serie de cada entreno, de modo que el progreso refleja tu fuerza real y no solo el volumen total. Es más fiable en series de 1 a 12 repeticiones.")
         }
     }
 
