@@ -79,9 +79,15 @@ struct ActivityDetailView: View {
                             ForEach(Array(item.items.enumerated()), id: \.offset) { idx, ex in
                                 HStack(spacing: 12) {
                                     Text("\(idx + 1)").font(.system(size: 14, weight: .heavy)).foregroundColor(Brand.muted).frame(width: 22)
-                                    VStack(alignment: .leading, spacing: 2) {
+                                    VStack(alignment: .leading, spacing: 6) {
                                         Text(ex.name).font(.system(size: 15, weight: .bold)).foregroundColor(Brand.ink)
-                                        Text("\(ex.sets)×\(ex.reps) · \(weightText(ex.weight)) kg").font(.footnote).foregroundColor(Brand.muted)
+                                        HStack(spacing: 5) {
+                                            ForEach(0..<max(1, ex.sets), id: \.self) { _ in
+                                                Circle().fill(Brand.green).frame(width: 11, height: 11)
+                                            }
+                                            Text("·  \(ex.reps) reps · \(weightText(ex.weight)) kg")
+                                                .font(.footnote).foregroundColor(Brand.muted)
+                                        }
                                     }
                                     Spacer()
                                 }
