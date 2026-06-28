@@ -12,14 +12,15 @@ private struct RankRow {
 private struct MapPlace: Identifiable {
     let id: String
     let coordinate: CLLocationCoordinate2D
-    let label: String
     let isMe: Bool
+    let person: SocialPerson?
 }
 
 struct RankingView: View {
     @EnvironmentObject var store: AppStore
     @StateObject private var location = LocationManager()
     @State private var scope = 0 // 0 amigos,1 global,2 país,3 ciudad,4 zona
+    @State private var selectedMapPerson: SocialPerson?
     @State private var region = MKCoordinateRegion(
         center: CLLocationCoordinate2D(latitude: 40.4168, longitude: -3.7038),
         span: MKCoordinateSpan(latitudeDelta: 0.08, longitudeDelta: 0.08))
@@ -136,28 +137,44 @@ struct RankingView: View {
             }
             Map(coordinateRegion: $region, showsUserLocation: true, annotationItems: places) { place in
                 MapAnnotation(coordinate: place.coordinate) {
-                    Text(place.isMe ? "Tú" : "•")
-                        .font(.system(size: place.isMe ? 11 : 22, weight: .heavy))
-                        .foregroundColor(place.isMe ? .white : Brand.green)
-                        .padding(.horizontal, place.isMe ? 8 : 0).padding(.vertical, place.isMe ? 4 : 0)
-                        .background(place.isMe ? Brand.ink : Color.clear).clipShape(Capsule())
+                    if place.isMe {
+                        Text("Tú").font(.system(size: 11, weight: .heavy)).foregroundColor(.white)
+                            .padding(.horizontal, 8).padding(.vertical, 4).background(Brand.ink).clipShape(Capsule())
+                    } else if let person = place.person {
+                        Button { FX.tap(); selectedMapPerson = person } label: {
+                            Text(person.avatar).font(.system(size: 20))
+                                .frame(width: 40, height: 40).background(Color.white).clipShape(Circle())
+                                .overlay(Circle().stroke(Brand.green, lineWidth: 2))
+                                .shadow(color: .black.opacity(0.18), radius: 3, y: 2)
+                        }
+                    }
                 }
             }
             .frame(height: 300).clipShape(RoundedRectangle(cornerRadius: 12))
-            Text("Pellizca para hacer zoom. Usuarios aproximados, no ubicación exacta.")
+            Text("Toca un usuario para ver su perfil. Ubicaciones aproximadas.")
                 .font(.caption2).foregroundColor(Brand.soft)
         }
+        .sheet(item: $selectedMapPerson) { MapUserSheet(person: $0).environmentObject(store) }
+    }
+
+    private var anchor: CLLocationCoordinate2D {
+        location.coordinate ?? CLLocationCoordinate2D(latitude: 40.4168, longitude: -3.7038)
     }
 
     private var places: [MapPlace] {
-        var list: [MapPlace] = [
-            MapPlace(id: "u1", coordinate: .init(latitude: 40.43, longitude: -3.70), label: "Chamberí", isMe: false),
-            MapPlace(id: "u2", coordinate: .init(latitude: 40.41, longitude: -3.68), label: "Retiro", isMe: false),
-            MapPlace(id: "u3", coordinate: .init(latitude: 40.43, longitude: -3.71), label: "Malasaña", isMe: false),
-            MapPlace(id: "u4", coordinate: .init(latitude: 40.42, longitude: -3.69), label: "Centro", isMe: false),
-        ]
-        if let c = location.coordinate {
-            list.append(MapPlace(id: "me", coordinate: c, label: "Tú", isMe: true))
+        var list = store.people.prefix(6).map { p -> MapPlace in
+            var seed: UInt64 = 0
+            for ch in p.id.unicodeScalars { seed = seed &* 31 &+ UInt64(ch.value) }
+            let r1 = Double(seed % 1000) / 1000.0
+            let r2 = Double((seed / 1000) % 1000) / 1000.0
+            return MapPlace(
+                id: p.id,
+                coordinate: .init(latitude: anchor.latitude + (r1 - 0.5) * 0.02,
+                                  longitude: anchor.longitude + (r2 - 0.5) * 0.02),
+                isMe: false, person: p)
+        }
+        if location.coordinate != nil {
+            list.append(MapPlace(id: "me", coordinate: anchor, isMe: true, person: nil))
         }
         return list
     }
@@ -191,5 +208,68 @@ struct RankingView: View {
             let flag = scope == 1 ? globalFlags[idx % globalFlags.count] : "🇪🇸"
             return RankRow(name: name, score: max(0, min(100, base + off)), isMe: false, emoji: emojis[idx % emojis.count], flag: flag)
         }.sorted { $0.score > $1.score }
+    }
+}
+
+struct MapUserSheet: View {
+    @EnvironmentObject var store: AppStore
+    @Environment(\.dismiss) private var dismiss
+    let person: SocialPerson
+    @State private var showProfile = false
+
+    var body: some View {
+        let status = store.relationship(person.id)
+        let score = GymScoreEngine.calculate(buildFriendHistory(person)).total
+        return NavigationStack {
+            VStack(spacing: 16) {
+                ZStack(alignment: .bottomTrailing) {
+                    Avatar(emoji: person.avatar, size: 80)
+                    Text(person.flag).font(.system(size: 16)).frame(width: 24, height: 24)
+                        .background(Circle().fill(.white)).overlay(Circle().stroke(Brand.line)).offset(x: 4, y: 4)
+                }
+                VStack(spacing: 3) {
+                    Text(person.name).font(.system(size: 22, weight: .heavy)).foregroundColor(Brand.ink)
+                    Text("@\(person.handle)").font(.subheadline).foregroundColor(Brand.muted)
+                }
+                HStack(spacing: 6) {
+                    Image(systemName: "mappin.circle.fill").foregroundColor(Color(hex: "6ea300"))
+                    Text(person.gym).font(.system(size: 14, weight: .semibold)).foregroundColor(Color(hex: "3f4837"))
+                }
+                Text("Gym Score \(score)").font(.system(size: 13, weight: .heavy)).foregroundColor(Color(hex: "10150a"))
+                    .padding(.horizontal, 12).padding(.vertical, 5).background(Brand.greenSoft).clipShape(Capsule())
+
+                Button { showProfile = true } label: { Label("Ver perfil", systemImage: "person.crop.circle") }
+                    .buttonStyle(PrimaryButtonStyle())
+
+                friendAction(status)
+                Spacer()
+            }
+            .padding(20)
+            .background(Brand.bg)
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar { ToolbarItem(placement: .topBarTrailing) { Button("Cerrar") { dismiss() } } }
+            .sheet(isPresented: $showProfile) { FriendProfileView(person: person).environmentObject(store) }
+        }
+        .presentationDetents([.medium, .large])
+    }
+
+    @ViewBuilder
+    private func friendAction(_ status: RelationshipStatus) -> some View {
+        switch status {
+        case .none:
+            Button { FX.tap(); store.sendFriendRequest(person.id) } label: {
+                Label("Añadir amigo", systemImage: "person.badge.plus").font(.system(size: 15, weight: .heavy)).foregroundColor(Brand.ink)
+                    .frame(maxWidth: .infinity).frame(minHeight: 48).background(Brand.chip).clipShape(RoundedRectangle(cornerRadius: 12))
+            }
+        case .outgoing:
+            Text("Solicitud enviada").font(.system(size: 14, weight: .heavy)).foregroundColor(Brand.soft)
+        case .incoming:
+            Button { FX.success(sound: true); store.acceptFriendRequest(person.id) } label: {
+                Label("Aceptar solicitud", systemImage: "checkmark").font(.system(size: 15, weight: .heavy)).foregroundColor(Brand.ink)
+                    .frame(maxWidth: .infinity).frame(minHeight: 48).background(Brand.greenSoft).clipShape(RoundedRectangle(cornerRadius: 12))
+            }
+        case .friends:
+            Label("Ya sois amigos", systemImage: "checkmark.seal.fill").font(.system(size: 14, weight: .heavy)).foregroundColor(Color(hex: "4b8a1f"))
+        }
     }
 }
