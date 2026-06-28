@@ -70,8 +70,13 @@ struct TrainView: View {
                 Spacer()
                 if let start = sessionStart {
                     TimelineView(.periodic(from: .now, by: 1)) { _ in
-                        Label(timeString(max(0, Int(-start.timeIntervalSinceNow))), systemImage: "clock")
-                            .font(.system(size: 15, weight: .heavy)).monospacedDigit().foregroundColor(Brand.ink)
+                        HStack(spacing: 5) {
+                            Image(systemName: "clock.fill").font(.system(size: 13)).foregroundColor(Color(hex: "6ea300"))
+                            Text(timeString(max(0, Int(-start.timeIntervalSinceNow))))
+                                .font(.system(size: 21, weight: .heavy)).monospacedDigit().foregroundColor(Brand.ink)
+                        }
+                        .padding(.horizontal, 10).padding(.vertical, 5)
+                        .background(Brand.surface).clipShape(Capsule())
                     }
                 }
             }
@@ -264,11 +269,11 @@ struct TrainView: View {
 
     // MARK: - FX
 
-    private func fxDone() { if hapticsOn { Haptics.success() }; if soundOn { SoundFX.play(SoundFX.done) } }
-    private func fxSkip() { if hapticsOn { Haptics.soft() }; if soundOn { SoundFX.play(SoundFX.skip) } }
-    private func fxExercise() { if hapticsOn { Haptics.success() }; if soundOn { SoundFX.play(SoundFX.exercise) } }
-    private func fxRest() { if hapticsOn { Haptics.rigid() }; if soundOn { SoundFX.play(SoundFX.rest) } }
-    private func fxFinish() { if hapticsOn { Haptics.success() }; if soundOn { SoundFX.play(SoundFX.finish) } }
+    private func fxDone() { if hapticsOn { Haptics.success() }; if soundOn { Synth.shared.done() } }
+    private func fxSkip() { if hapticsOn { Haptics.soft() }; if soundOn { Synth.shared.skip() } }
+    private func fxExercise() { if hapticsOn { Haptics.success() }; if soundOn { Synth.shared.exercise() } }
+    private func fxRest() { if hapticsOn { Haptics.rigid() }; if soundOn { Synth.shared.rest() } }
+    private func fxFinish() { if hapticsOn { Haptics.success() }; if soundOn { Synth.shared.finish() } }
 
     // MARK: - Helpers
 
