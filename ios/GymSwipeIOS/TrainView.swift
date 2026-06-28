@@ -322,31 +322,24 @@ struct TrainView: View {
     // MARK: - Empty
 
     private var emptyState: some View {
-        PanelCard {
-            HStack { Spacer(); Text("🏋️").font(.system(size: 44)); Spacer() }
-            Text("¿Qué entrenamos hoy?").font(.system(size: 20, weight: .heavy)).foregroundColor(Brand.ink)
-                .frame(maxWidth: .infinity, alignment: .center)
-            Text("TUS MÁS FRECUENTES").font(.caption2).fontWeight(.heavy).foregroundColor(Brand.muted).padding(.top, 4)
-            ForEach(store.frequentWorkouts) { t in
-                Button { previewWorkout = t } label: {
-                    HStack {
-                        Image(systemName: "bolt.fill")
-                        VStack(alignment: .leading, spacing: 1) {
-                            Text(t.name).font(.system(size: 15, weight: .heavy))
-                            Text("\(t.exercises.count) ejercicios").font(.caption2).fontWeight(.bold).opacity(0.7)
-                        }
-                        Spacer()
-                        Image(systemName: "chevron.right").font(.system(size: 13, weight: .bold)).opacity(0.6)
-                    }.padding(.horizontal, 4)
-                }.buttonStyle(PrimaryButtonStyle())
+        VStack(spacing: 18) {
+            Spacer(minLength: 40)
+            ZStack {
+                Circle().fill(Brand.greenSoft).frame(width: 96, height: 96)
+                Image(systemName: "dumbbell.fill").font(.system(size: 40, weight: .heavy)).foregroundColor(Color(hex: "10150a"))
             }
-            Button { onGoToPlan() } label: {
-                HStack { Image(systemName: "square.grid.2x2"); Text("Otros entrenos"); Spacer(); Image(systemName: "chevron.right") }
-                    .font(.system(size: 15, weight: .heavy)).foregroundColor(Brand.ink)
-                    .padding(.horizontal, 14).frame(maxWidth: .infinity).frame(minHeight: 50)
-                    .background(Brand.chip).clipShape(RoundedRectangle(cornerRadius: 12))
+            VStack(spacing: 6) {
+                Text("¿Qué entrenamos hoy?").font(.system(size: 22, weight: .heavy)).foregroundColor(Brand.ink)
+                Text("Elige un entreno para empezar tu sesión.")
+                    .font(.subheadline).foregroundColor(Brand.muted).multilineTextAlignment(.center)
             }
+            Button { onGoToPlan() } label: { Label("Elegir entreno", systemImage: "square.grid.2x2") }
+                .buttonStyle(PrimaryButtonStyle())
+                .padding(.horizontal, 24)
+            Spacer()
         }
+        .frame(maxWidth: .infinity)
+        .padding(.top, 20)
     }
 
     // MARK: - FX

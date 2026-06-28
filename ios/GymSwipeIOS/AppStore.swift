@@ -39,6 +39,11 @@ final class AppStore: ObservableObject {
             notifications = snap.notifications
             trainingPlans = snap.trainingPlans
             sessions = snap.sessions ?? []
+            // Migrate old "Mis entrenos" group to "Otros"
+            savedWorkouts = savedWorkouts.map { w in
+                guard w.block == "Mis entrenos" else { return w }
+                var c = w; c.block = "Otros"; return c
+            }
         } else {
             seedDemo()
         }

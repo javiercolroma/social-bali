@@ -12,7 +12,7 @@ Ultima actualizacion: 2026-06-28
 >
 > **Resumen del entreno (al guardar):** nombre editable (con default = nombre del entreno), campo "¿Qué tal te ha ido?" (notas), foto opcional (PhotosPicker) y visibilidad (Todos / Seguidores / Solo yo). Se guarda como `WorkoutSession` (modelo nuevo, persistido en `store.sessions`) además del historial/XP. Pendiente: mostrar las sesiones propias en el muro Social.
 >
-> **Entreno (flujo de sesion):** boton "Finalizar entrenamiento"; al terminar se muestra un RESUMEN tipo Strava (duracion, series, volumen, XP) con Guardar/Descartar (el historial/XP/racha se confirman solo al Guardar). Tras Guardar/Descartar se vuelve al estado de carga, que muestra "TUS MÁS FRECUENTES" (`AppStore.frequentWorkouts`, por sesiones pasadas) + boton "Otros entrenos" que cambia a la pestaña Plan (`onGoToPlan` → `tab = 1`).
+> **Entreno (flujo de sesion):** boton "Finalizar entrenamiento"; al terminar se muestra un RESUMEN tipo Strava (duracion, series, volumen, XP) con Guardar/Descartar (el historial/XP/racha se confirman solo al Guardar). Tras Guardar/Descartar se vuelve al estado de carga, que ahora muestra un único estado vacío limpio y centrado (icono mancuerna en círculo verde, "¿Qué entrenamos hoy?" + un solo botón primario "Elegir entreno") que cambia a la pestaña Plan (`onGoToPlan` → `tab = 1`). Se quitaron la lista "TUS MÁS FRECUENTES" y el botón "Otros entrenos".
 >
 > **Plan / entrenos (nativo):** crear entreno con formulario mejorado (tarjetas de ejercicio con steppers redondos, boton "Añadir ejercicio" con borde discontinuo). Grupos personalizados: cada entreno tiene `block` como grupo (chips sugeridos + grupo nuevo escribible); Plan agrupa por grupos. Editar entrenos (boton Editar en el preview → reabre el formulario; los built-in se editan creando copia, los tuyos se actualizan in situ). Eliminar con papelera: menu contextual (long-press) en la fila + boton en el preview, ambos con confirmacion "¿Eliminar?".
 >
@@ -292,7 +292,7 @@ Puntos importantes:
 - `hiddenWorkoutIds` oculta entrenamientos por defecto eliminados.
 - `block` agrupa entrenamientos en bloques personalizados.
 - Si un entrenamiento por defecto no tiene bloque, se muestra en `Por defecto`.
-- Si un entrenamiento creado no tiene bloque, se muestra en `Mis entrenos`.
+- Si un entrenamiento creado no tiene bloque, se muestra en `Otros` (antes `Mis entrenos`; hay migración automática en `AppStore.init` que reasigna los antiguos `Mis entrenos` → `Otros`).
 
 Storage actual:
 
@@ -429,7 +429,7 @@ La pantalla `Plan` ahora es una biblioteca unica de entrenamientos agrupada por 
 Bloques:
 
 - `Por defecto`: entrenamientos que vienen con la app.
-- `Mis entrenos`: fallback para entrenamientos creados por el usuario.
+- `Otros`: fallback para entrenamientos creados por el usuario sin grupo (antes `Mis entrenos`).
 - Bloques personalizados escritos por el usuario, por ejemplo:
   - `Pierna`
   - `Push`
