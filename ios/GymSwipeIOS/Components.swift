@@ -80,10 +80,14 @@ func shortTime(_ date: Date) -> String {
 }
 
 func relativeTime(_ date: Date) -> String {
-    let mins = Int(-date.timeIntervalSinceNow / 60)
-    if mins < 1 { return "Ahora" }
-    if mins < 60 { return "Hace \(mins) min" }
-    let h = mins / 60
-    if h < 24 { return "Hace \(h) h" }
-    return shortTime(date)
+    if Calendar.current.isDateInToday(date) {
+        let mins = max(0, Int(-date.timeIntervalSinceNow / 60))
+        if mins < 1 { return "Ahora" }
+        if mins < 60 { return "Hace \(mins) min" }
+        return "Hace \(mins / 60) h"
+    }
+    let f = DateFormatter()
+    f.locale = Locale(identifier: "es_ES")
+    f.dateFormat = "d MMM, HH:mm"
+    return f.string(from: date)
 }
