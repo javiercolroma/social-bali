@@ -439,28 +439,64 @@ final class AppStore: ObservableObject {
     }
 
     static let builtinTemplates: [WorkoutTemplate] = [
-        WorkoutTemplate(id: "t-torso", name: "Torso A", description: "Empuje, tirón y hombro", block: "Por defecto", exercises: [
-            makeExercise("Torso A", "Press banca", 4, 6, 70),
-            makeExercise("Torso A", "Remo con barra", 4, 8, 65),
-            makeExercise("Torso A", "Press militar", 3, 8, 42.5),
-            makeExercise("Torso A", "Dominadas", 4, 6, 0),
-            makeExercise("Torso A", "Elevación lateral", 3, 14, 10),
+        template("t-pecho", "Pecho", [
+            ("Press banca", 4, 8, 60),
+            ("Press inclinado con mancuernas", 4, 10, 24),
+            ("Aperturas en polea", 3, 12, 12.5),
+            ("Fondos en paralelas", 3, 10, 0),
+            ("Press de pecho en máquina", 3, 12, 45),
         ]),
-        WorkoutTemplate(id: "t-pierna", name: "Pierna A", description: "Sentadilla, bisagra y glúteo", block: "Por defecto", exercises: [
-            makeExercise("Pierna A", "Sentadilla trasera", 5, 5, 90),
-            makeExercise("Pierna A", "Peso muerto rumano", 4, 8, 80),
-            makeExercise("Pierna A", "Prensa de piernas", 3, 10, 140),
-            makeExercise("Pierna A", "Hip thrust", 4, 8, 110),
-            makeExercise("Pierna A", "Elevación de gemelos", 4, 14, 60),
+        template("t-espalda", "Espalda", [
+            ("Dominadas", 4, 8, 0),
+            ("Remo con barra", 4, 10, 50),
+            ("Jalón al pecho", 3, 12, 50),
+            ("Remo con mancuerna", 3, 12, 24),
+            ("Face pull", 3, 15, 20),
         ]),
-        WorkoutTemplate(id: "t-full", name: "Full body", description: "Sesión completa rápida", block: "Por defecto", exercises: [
-            makeExercise("Full body", "Sentadilla goblet", 3, 10, 32),
-            makeExercise("Full body", "Press banca", 3, 8, 65),
-            makeExercise("Full body", "Remo mancuerna", 3, 10, 30),
-            makeExercise("Full body", "Press militar", 3, 8, 40),
-            makeExercise("Full body", "Plancha", 3, 40, 0),
+        template("t-pierna", "Pierna", [
+            ("Sentadilla trasera", 4, 8, 70),
+            ("Prensa de piernas", 4, 12, 120),
+            ("Peso muerto rumano", 3, 10, 60),
+            ("Curl femoral tumbado", 3, 12, 35),
+            ("Extensión de cuádriceps", 3, 15, 40),
+            ("Elevación de gemelos", 4, 15, 50),
+        ]),
+        template("t-hombro", "Hombro", [
+            ("Press militar", 4, 8, 35),
+            ("Elevaciones laterales", 4, 15, 8),
+            ("Press Arnold", 3, 10, 16),
+            ("Pájaros (deltoide posterior)", 3, 15, 8),
+            ("Elevaciones frontales", 3, 12, 8),
+        ]),
+        template("t-brazo", "Brazo", [
+            ("Curl de bíceps con barra", 4, 10, 25),
+            ("Curl martillo", 3, 12, 12),
+            ("Press francés", 4, 10, 25),
+            ("Extensión de tríceps en polea", 3, 12, 20),
+            ("Curl predicador", 3, 12, 20),
+            ("Fondos de tríceps en banco", 3, 12, 0),
+        ]),
+        template("t-core", "Abdomen", [
+            ("Plancha", 3, 45, 0),
+            ("Crunch", 4, 20, 0),
+            ("Elevación de piernas colgado", 3, 12, 0),
+            ("Rueda abdominal", 3, 10, 0),
+            ("Russian twist", 3, 20, 0),
+        ]),
+        template("t-full", "Full body", [
+            ("Sentadilla goblet", 3, 10, 28),
+            ("Press banca", 3, 8, 55),
+            ("Remo con mancuerna", 3, 10, 24),
+            ("Press militar", 3, 10, 30),
+            ("Peso muerto rumano", 3, 10, 60),
+            ("Plancha", 3, 40, 0),
         ]),
     ]
+
+    private static func template(_ id: String, _ name: String, _ exercises: [(String, Int, Int, Double)]) -> WorkoutTemplate {
+        let exs = exercises.map { makeExercise(name, $0.0, $0.1, $0.2, $0.3) }
+        return WorkoutTemplate(id: id, name: name, description: summary(of: exs), block: "Por defecto", exercises: exs)
+    }
 }
 
 // Deterministic demo training history for a friend profile.
