@@ -49,7 +49,11 @@ struct TrainView: View {
         }
         .background(Brand.bg)
         .sheet(item: $previewWorkout) { WorkoutPreview(workoutId: $0.id).environmentObject(store) }
-        .onChange(of: store.exercises.isEmpty) { if !$0 { resetLocal() } }
+        .onAppear { if !store.exercises.isEmpty && sessionStart == nil { sessionStart = Date() } }
+        .onChange(of: store.exercises.isEmpty) { empty in
+            if empty { resetLocal() }
+            else { sessionStart = Date(); restActive = false; restElapsed = 0; showSummary = false }
+        }
         .onReceive(ticker) { _ in
             if restActive && restElapsed < restTotal {
                 restElapsed += 1
