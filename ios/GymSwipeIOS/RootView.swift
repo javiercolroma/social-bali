@@ -161,20 +161,19 @@ struct CustomTabBar: View {
         let active = tab == idx
         return Button { tab = idx } label: {
             VStack(spacing: 4) {
-                Image(systemName: item.icon).font(.system(size: 24, weight: .heavy))
-                    .foregroundColor(Color(hex: "10150a"))
-                    .frame(width: 58, height: 58)
-                    .background(active ? Brand.green : Brand.greenSoft)
+                Image(systemName: item.icon).font(.system(size: 20, weight: .heavy))
+                    .foregroundColor(active ? Color(hex: "10150a") : Brand.soft)
+                    .frame(width: 50, height: 50)
+                    .background(active ? Brand.green : Color.white)
                     .clipShape(Circle())
-                    .overlay(Circle().stroke(Brand.bg, lineWidth: 4))
-                    .shadow(color: Brand.green.opacity(active ? 0.55 : 0.25), radius: active ? 12 : 6, y: 4)
-                    .scaleEffect(active ? 1 : 0.94)
+                    .overlay(Circle().stroke(active ? Color.clear : Brand.line, lineWidth: 1))
+                    .shadow(color: active ? Brand.green.opacity(0.4) : .black.opacity(0.06), radius: active ? 8 : 4, y: 3)
                 Text(item.title).font(.system(size: 10, weight: .heavy))
                     .foregroundColor(active ? accent : Brand.soft)
             }
             .frame(maxWidth: .infinity)
-            .offset(y: -14)
-            .animation(.spring(response: 0.3, dampingFraction: 0.7), value: tab)
+            .offset(y: -8)
+            .animation(.spring(response: 0.3, dampingFraction: 0.75), value: tab)
         }
     }
 }
