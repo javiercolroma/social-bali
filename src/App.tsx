@@ -1,5 +1,6 @@
 import {
   ArrowLeft,
+  Bell,
   Camera,
   Check,
   ChevronLeft,
@@ -7,23 +8,29 @@ import {
   Dumbbell,
   Flame,
   Globe2,
+  Inbox,
   ListChecks,
+  Mail,
   MapPin,
+  MessageSquare,
   Minus,
   Pencil,
   Plus,
   Save,
+  Send,
   Share2,
   Target,
   Trash2,
   Undo2,
+  UserCheck,
+  UserPlus,
   Users,
   UserRound,
   X,
 } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import type { PointerEvent, TransitionEvent } from 'react'
+import type { MutableRefObject, PointerEvent, TransitionEvent } from 'react'
 import './App.css'
 import { exerciseCatalog } from './exerciseCatalog'
 
@@ -1334,6 +1341,7 @@ type TrainingPlanCard = TrainingPlanDraft & {
   intensity: string
   objective: string
   note: string
+  ownerId: string
 }
 
 const trainingPlansStorageKey = 'gym-swipe-training-plans-v1'
@@ -1365,6 +1373,7 @@ const defaultTrainingPlans: TrainingPlanCard[] = [
     intensity: 'Fuerte',
     objective: 'Hipertrofia',
     note: '',
+    ownerId: 'p-mika',
   },
   {
     id: 'plan-demo-legs',
@@ -1379,6 +1388,7 @@ const defaultTrainingPlans: TrainingPlanCard[] = [
     intensity: 'Media-alta',
     objective: 'Fuerza + volumen',
     note: '',
+    ownerId: 'p-sofia',
   },
 ]
 
@@ -1427,6 +1437,7 @@ function createTrainingPlan(draft: TrainingPlanDraft, profile: Profile): Trainin
     intensity: getPlanIntensity(draft.level),
     objective: getPlanObjective(draft.workout),
     note: '',
+    ownerId: demoPlanOwnerIds[Date.now() % demoPlanOwnerIds.length],
   }
 }
 
@@ -1439,13 +1450,495 @@ function loadTrainingPlans() {
 
     const parsed = JSON.parse(raw) as TrainingPlanCard[]
     return Array.isArray(parsed)
-      ? parsed.map((plan) => ({ ...plan, where: Array.isArray(plan.where) ? plan.where : [String(plan.where)] }))
+      ? parsed.map((plan, index) => ({
+          ...plan,
+          where: Array.isArray(plan.where) ? plan.where : [String(plan.where)],
+          ownerId: plan.ownerId || demoPlanOwnerIds[index % demoPlanOwnerIds.length],
+        }))
       : defaultTrainingPlans
   } catch {
     return defaultTrainingPlans
   }
 }
 
+
+type RelationshipStatus = 'none' | 'outgoing' | 'incoming' | 'friends'
+
+type SocialPerson = {
+  id: string
+  name: string
+  avatar: string
+  gym: string
+}
+
+type ChatMessage = {
+  id: string
+  fromMe: boolean
+  text: string
+  at: string
+}
+
+type Conversation = {
+  id: string
+  personId: string
+  messages: ChatMessage[]
+  unread: number
+  lastAt: string
+}
+
+type NotificationType = 'friend_request' | 'friend_accepted' | 'message' | 'training_accepted'
+
+type AppNotification = {
+  id: string
+  type: NotificationType
+  title: string
+  body: string
+  at: string
+  read: boolean
+  personId?: string
+  conversationId?: string
+}
+
+type SocialState = {
+  people: SocialPerson[]
+  relationships: Record<string, RelationshipStatus>
+  conversations: Conversation[]
+  notifications: AppNotification[]
+}
+
+const socialStorageKey = 'gym-swipe-social-v1'
+
+const socialPeople: SocialPerson[] = [
+  { id: 'p-mika', name: 'Mika', avatar: '🦊', gym: 'Basic-Fit Gran Vía' },
+  { id: 'p-leo', name: 'Leo', avatar: '🐻', gym: 'McFit Chamberí' },
+  { id: 'p-sofia', name: 'Sofía', avatar: '🦅', gym: 'Altafit Retiro' },
+  { id: 'p-dani', name: 'Dani', avatar: '🐺', gym: 'Basic-Fit Sol' },
+  { id: 'p-vera', name: 'Vera', avatar: '🦌', gym: 'VivaGym Malasaña' },
+  { id: 'p-iker', name: 'Iker', avatar: '🦁', gym: 'Synergym Salamanca' },
+]
+
+const demoPlanOwnerIds = ['p-sofia', 'p-vera', 'p-dani', 'p-iker']
+
+const partnerReplies = [
+  '¡Genial! Me viene bien mañana por la tarde.',
+  'Perfecto, ¿a qué hora te pasa mejor?',
+  'Hecho. Nos vemos en el gym 💪',
+  'Vale, te confirmo el sitio luego.',
+  '¡Vamos! Llevo tiempo queriendo entrenar contigo.',
+]
+
+function conversationId(personId: string) {
+  return `conv-${personId}`
+}
+
+function getDefaultSocialState(): SocialState {
+  const now = Date.now()
+  const minute = 60 * 1000
+
+  return {
+    people: socialPeople,
+    relationships: {
+      'p-mika': 'friends',
+      'p-leo': 'incoming',
+    },
+    conversations: [
+      {
+        id: conversationId('p-mika'),
+        personId: 'p-mika',
+        unread: 1,
+        lastAt: new Date(now - 8 * minute).toISOString(),
+        messages: [
+          {
+            id: 'seed-mika-1',
+            fromMe: false,
+            text: '¡Buen entreno el otro día!',
+            at: new Date(now - 26 * 60 * minute).toISOString(),
+          },
+          {
+            id: 'seed-mika-2',
+            fromMe: true,
+            text: 'Gracias! ¿Repetimos esta semana?',
+            at: new Date(now - 25 * 60 * minute).toISOString(),
+          },
+          {
+            id: 'seed-mika-3',
+            fromMe: false,
+            text: '¿Entrenamos mañana pecho?',
+            at: new Date(now - 8 * minute).toISOString(),
+          },
+        ],
+      },
+    ],
+    notifications: [
+      {
+        id: 'seed-notif-leo',
+        type: 'friend_request',
+        title: 'Nueva solicitud de amistad',
+        body: 'Leo quiere ser tu compañero de entreno.',
+        at: new Date(now - 40 * minute).toISOString(),
+        read: false,
+        personId: 'p-leo',
+      },
+      {
+        id: 'seed-notif-mika',
+        type: 'message',
+        title: 'Nuevo mensaje de Mika',
+        body: '¿Entrenamos mañana pecho?',
+        at: new Date(now - 8 * minute).toISOString(),
+        read: false,
+        personId: 'p-mika',
+        conversationId: conversationId('p-mika'),
+      },
+    ],
+  }
+}
+
+function loadSocialState(): SocialState {
+  try {
+    const raw = localStorage.getItem(socialStorageKey)
+    if (!raw) {
+      return getDefaultSocialState()
+    }
+
+    const parsed = JSON.parse(raw) as Partial<SocialState>
+    return {
+      people: socialPeople,
+      relationships: parsed.relationships ?? {},
+      conversations: Array.isArray(parsed.conversations) ? parsed.conversations : [],
+      notifications: Array.isArray(parsed.notifications) ? parsed.notifications : [],
+    }
+  } catch {
+    return getDefaultSocialState()
+  }
+}
+
+function getRelationship(social: SocialState, personId: string): RelationshipStatus {
+  return social.relationships[personId] ?? 'none'
+}
+
+function getPerson(social: SocialState, personId: string): SocialPerson | undefined {
+  return social.people.find((person) => person.id === personId)
+}
+
+function getLastMessage(conversation: Conversation): ChatMessage | undefined {
+  return conversation.messages[conversation.messages.length - 1]
+}
+
+function formatShortTime(iso: string) {
+  const date = new Date(iso)
+  const now = new Date()
+  const sameDay = date.toDateString() === now.toDateString()
+
+  if (sameDay) {
+    return date.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })
+  }
+
+  const yesterday = new Date(now)
+  yesterday.setDate(now.getDate() - 1)
+  if (date.toDateString() === yesterday.toDateString()) {
+    return 'Ayer'
+  }
+
+  return date.toLocaleDateString('es-ES', { day: '2-digit', month: 'short' })
+}
+
+function formatRelativeTime(iso: string) {
+  const diff = Date.now() - new Date(iso).getTime()
+  const minutes = Math.round(diff / 60000)
+
+  if (minutes < 1) {
+    return 'Ahora'
+  }
+  if (minutes < 60) {
+    return `Hace ${minutes} min`
+  }
+  const hours = Math.round(minutes / 60)
+  if (hours < 24) {
+    return `Hace ${hours} h`
+  }
+  return formatShortTime(iso)
+}
+
+function createMessage(fromMe: boolean, text: string): ChatMessage {
+  return {
+    id: `msg-${Date.now()}-${Math.round(Math.random() * 1e6)}`,
+    fromMe,
+    text,
+    at: new Date().toISOString(),
+  }
+}
+
+function appendMessageToConversations(
+  conversations: Conversation[],
+  personId: string,
+  message: ChatMessage,
+  markRead: boolean,
+): Conversation[] {
+  const existing = conversations.find((conversation) => conversation.personId === personId)
+
+  if (!existing) {
+    return [
+      {
+        id: conversationId(personId),
+        personId,
+        messages: [message],
+        unread: markRead || message.fromMe ? 0 : 1,
+        lastAt: message.at,
+      },
+      ...conversations,
+    ]
+  }
+
+  return conversations.map((conversation) =>
+    conversation.personId === personId
+      ? {
+          ...conversation,
+          messages: [...conversation.messages, message],
+          lastAt: message.at,
+          unread: markRead || message.fromMe ? 0 : conversation.unread + 1,
+        }
+      : conversation,
+  )
+}
+
+type SocialActions = {
+  social: SocialState
+  unreadMessages: number
+  unreadNotifications: number
+  sendFriendRequest: (personId: string) => void
+  acceptFriendRequest: (personId: string) => void
+  rejectFriendRequest: (personId: string) => void
+  ensureConversation: (personId: string) => string
+  openConversation: (personId: string) => string
+  sendMessage: (personId: string, text: string) => void
+  markConversationRead: (personId: string) => void
+  markNotificationRead: (id: string) => void
+  markAllNotificationsRead: () => void
+  acceptTrainingPlan: (personId: string, text: string) => string
+}
+
+function useSocial(activeConversationRef: MutableRefObject<string | null>): SocialActions {
+  const [social, setSocial] = useState<SocialState>(loadSocialState)
+
+  useEffect(() => {
+    localStorage.setItem(socialStorageKey, JSON.stringify(social))
+  }, [social])
+
+  const unreadMessages = social.conversations.reduce((total, conversation) => total + conversation.unread, 0)
+  const unreadNotifications = social.notifications.filter((notification) => !notification.read).length
+
+  function addNotification(notification: AppNotification) {
+    setSocial((current) => ({
+      ...current,
+      notifications: [notification, ...current.notifications],
+    }))
+  }
+
+  function scheduleReply(personId: string) {
+    const person = getPerson(social, personId)
+    if (!person) {
+      return
+    }
+
+    window.setTimeout(() => {
+      const text = partnerReplies[Math.floor(Math.random() * partnerReplies.length)]
+      const isOpen = activeConversationRef.current === conversationId(personId)
+      const reply = createMessage(false, text)
+
+      setSocial((current) => ({
+        ...current,
+        conversations: appendMessageToConversations(current.conversations, personId, reply, isOpen),
+      }))
+
+      if (!isOpen) {
+        addNotification({
+          id: `notif-${Date.now()}-${Math.round(Math.random() * 1e6)}`,
+          type: 'message',
+          title: `Nuevo mensaje de ${person.name}`,
+          body: text,
+          at: new Date().toISOString(),
+          read: false,
+          personId,
+          conversationId: conversationId(personId),
+        })
+      }
+    }, 2600)
+  }
+
+  function sendFriendRequest(personId: string) {
+    setSocial((current) => ({
+      ...current,
+      relationships: { ...current.relationships, [personId]: 'outgoing' },
+    }))
+
+    const person = getPerson(social, personId)
+    window.setTimeout(() => {
+      setSocial((current) => {
+        if (current.relationships[personId] !== 'outgoing') {
+          return current
+        }
+
+        return {
+          ...current,
+          relationships: { ...current.relationships, [personId]: 'friends' },
+          notifications: [
+            {
+              id: `notif-${Date.now()}-${Math.round(Math.random() * 1e6)}`,
+              type: 'friend_accepted',
+              title: 'Solicitud aceptada',
+              body: `${person?.name ?? 'Tu compañero'} ha aceptado tu solicitud de amistad.`,
+              at: new Date().toISOString(),
+              read: false,
+              personId,
+            },
+            ...current.notifications,
+          ],
+        }
+      })
+    }, 4200)
+  }
+
+  function acceptFriendRequest(personId: string) {
+    const person = getPerson(social, personId)
+    setSocial((current) => ({
+      ...current,
+      relationships: { ...current.relationships, [personId]: 'friends' },
+      notifications: [
+        {
+          id: `notif-${Date.now()}-${Math.round(Math.random() * 1e6)}`,
+          type: 'friend_accepted',
+          title: 'Nuevo amigo',
+          body: `Ahora tú y ${person?.name ?? 'tu compañero'} sois amigos.`,
+          at: new Date().toISOString(),
+          read: false,
+          personId,
+        },
+        ...current.notifications.map((notification) =>
+          notification.personId === personId && notification.type === 'friend_request'
+            ? { ...notification, read: true }
+            : notification,
+        ),
+      ],
+    }))
+  }
+
+  function rejectFriendRequest(personId: string) {
+    setSocial((current) => ({
+      ...current,
+      relationships: { ...current.relationships, [personId]: 'none' },
+      notifications: current.notifications.map((notification) =>
+        notification.personId === personId && notification.type === 'friend_request'
+          ? { ...notification, read: true }
+          : notification,
+      ),
+    }))
+  }
+
+  function ensureConversation(personId: string) {
+    setSocial((current) => {
+      if (current.conversations.some((conversation) => conversation.personId === personId)) {
+        return current
+      }
+
+      return {
+        ...current,
+        conversations: [
+          { id: conversationId(personId), personId, messages: [], unread: 0, lastAt: new Date().toISOString() },
+          ...current.conversations,
+        ],
+      }
+    })
+
+    return conversationId(personId)
+  }
+
+  function markConversationRead(personId: string) {
+    setSocial((current) => ({
+      ...current,
+      conversations: current.conversations.map((conversation) =>
+        conversation.personId === personId ? { ...conversation, unread: 0 } : conversation,
+      ),
+    }))
+  }
+
+  function openConversation(personId: string) {
+    ensureConversation(personId)
+    markConversationRead(personId)
+    return conversationId(personId)
+  }
+
+  function sendMessage(personId: string, text: string) {
+    const trimmed = text.trim()
+    if (!trimmed) {
+      return
+    }
+
+    setSocial((current) => ({
+      ...current,
+      conversations: appendMessageToConversations(current.conversations, personId, createMessage(true, trimmed), true),
+    }))
+
+    scheduleReply(personId)
+  }
+
+  function markNotificationRead(id: string) {
+    setSocial((current) => ({
+      ...current,
+      notifications: current.notifications.map((notification) =>
+        notification.id === id ? { ...notification, read: true } : notification,
+      ),
+    }))
+  }
+
+  function markAllNotificationsRead() {
+    setSocial((current) => ({
+      ...current,
+      notifications: current.notifications.map((notification) => ({ ...notification, read: true })),
+    }))
+  }
+
+  function acceptTrainingPlan(personId: string, text: string) {
+    const person = getPerson(social, personId)
+    const id = conversationId(personId)
+
+    setSocial((current) => ({
+      ...current,
+      conversations: appendMessageToConversations(current.conversations, personId, createMessage(true, text), true),
+      notifications: [
+        {
+          id: `notif-${Date.now()}-${Math.round(Math.random() * 1e6)}`,
+          type: 'training_accepted',
+          title: 'Entrenamiento aceptado',
+          body: `Has aceptado el entreno de ${person?.name ?? 'tu compañero'}.`,
+          at: new Date().toISOString(),
+          read: false,
+          personId,
+          conversationId: id,
+        },
+        ...current.notifications,
+      ],
+    }))
+
+    scheduleReply(personId)
+    return id
+  }
+
+  return {
+    social,
+    unreadMessages,
+    unreadNotifications,
+    sendFriendRequest,
+    acceptFriendRequest,
+    rejectFriendRequest,
+    ensureConversation,
+    openConversation,
+    sendMessage,
+    markConversationRead,
+    markNotificationRead,
+    markAllNotificationsRead,
+    acceptTrainingPlan,
+  }
+}
 
 function getXpForLevel(level: number) {
   if (level <= 1) {
@@ -1602,6 +2095,41 @@ function App() {
   const setStartedAtRef = useRef(Date.now())
   const lastSetClosedAtRef = useRef<number | null>(null)
   const importedShareRef = useRef('')
+  const [activeOverlay, setActiveOverlay] = useState<'messages' | 'notifications' | null>(null)
+  const [messagesInitialTab, setMessagesInitialTab] = useState<'chats' | 'friends'>('chats')
+  const [activeConversationPersonId, setActiveConversationPersonId] = useState<string | null>(null)
+  const activeConversationRef = useRef<string | null>(null)
+  const social = useSocial(activeConversationRef)
+
+  useEffect(() => {
+    activeConversationRef.current = activeConversationPersonId ? conversationId(activeConversationPersonId) : null
+  }, [activeConversationPersonId])
+
+  function openChat(personId: string) {
+    social.openConversation(personId)
+    setActiveConversationPersonId(personId)
+  }
+
+  function openNotification(notification: AppNotification) {
+    social.markNotificationRead(notification.id)
+
+    if (notification.conversationId && notification.personId) {
+      setActiveOverlay(null)
+      openChat(notification.personId)
+      return
+    }
+
+    if (notification.type === 'friend_request') {
+      setMessagesInitialTab('friends')
+      setActiveOverlay('messages')
+    }
+  }
+
+  function acceptPlan(plan: TrainingPlanCard) {
+    const message = 'He aceptado tu entrenamiento. ¿Cuándo te viene bien quedar?'
+    social.acceptTrainingPlan(plan.ownerId, message)
+    setActiveConversationPersonId(plan.ownerId)
+  }
 
   const pending = useMemo(
     () => state.exercises.filter((exercise) => exercise.status === 'pending'),
@@ -2342,6 +2870,29 @@ function App() {
                     : 'Perfil'}
             </h1>
           </div>
+          <div className="top-bar-actions">
+            <button
+              type="button"
+              className="icon-button has-badge"
+              aria-label="Mensajes"
+              onClick={() => {
+                setMessagesInitialTab('chats')
+                setActiveOverlay('messages')
+              }}
+            >
+              <Mail size={18} />
+              {social.unreadMessages > 0 && <span className="notif-badge">{social.unreadMessages}</span>}
+            </button>
+            <button
+              type="button"
+              className="icon-button has-badge"
+              aria-label="Notificaciones"
+              onClick={() => setActiveOverlay('notifications')}
+            >
+              <Bell size={18} />
+              {social.unreadNotifications > 0 && <span className="notif-badge">{social.unreadNotifications}</span>}
+            </button>
+          </div>
         </header>
 
         <nav className="tab-bar" aria-label="Vistas">
@@ -2407,7 +2958,7 @@ function App() {
           )}
 
           {activeTab === 'partner' && (
-            <PartnerView profile={state.profile} />
+            <PartnerView profile={state.profile} people={social.social.people} onAcceptPlan={acceptPlan} />
           )}
 
           {activeTab === 'profile' && (
@@ -2420,6 +2971,43 @@ function App() {
             />
           )}
         </section>
+
+        {activeOverlay === 'messages' && (
+          <MessagesOverlay
+            social={social.social}
+            initialTab={messagesInitialTab}
+            onClose={() => setActiveOverlay(null)}
+            onOpenChat={(personId) => {
+              setActiveOverlay(null)
+              openChat(personId)
+            }}
+            onSendFriendRequest={social.sendFriendRequest}
+            onAcceptFriendRequest={social.acceptFriendRequest}
+            onRejectFriendRequest={social.rejectFriendRequest}
+          />
+        )}
+
+        {activeOverlay === 'notifications' && (
+          <NotificationsOverlay
+            notifications={social.social.notifications}
+            onClose={() => setActiveOverlay(null)}
+            onOpen={openNotification}
+            onMarkAllRead={social.markAllNotificationsRead}
+          />
+        )}
+
+        {activeConversationPersonId && (
+          <ChatScreen
+            person={getPerson(social.social, activeConversationPersonId)}
+            conversation={social.social.conversations.find(
+              (conversation) => conversation.personId === activeConversationPersonId,
+            )}
+            relationship={getRelationship(social.social, activeConversationPersonId)}
+            onClose={() => setActiveConversationPersonId(null)}
+            onSend={(text) => social.sendMessage(activeConversationPersonId, text)}
+            onMarkRead={() => social.markConversationRead(activeConversationPersonId)}
+          />
+        )}
       </section>
     </main>
   )
@@ -3729,12 +4317,397 @@ function RankingView({ history, profile }: { history: HistoryEntry[]; profile: P
 
 
 
-function PartnerView({ profile }: { profile: Profile }) {
+function SocialAvatar({ person, size = 'md' }: { person?: SocialPerson; size?: 'sm' | 'md' | 'lg' }) {
+  return (
+    <span className={`social-avatar ${size}`} aria-hidden="true">
+      {person?.avatar ?? '👤'}
+    </span>
+  )
+}
+
+function MessagesOverlay({
+  social,
+  initialTab = 'chats',
+  onClose,
+  onOpenChat,
+  onSendFriendRequest,
+  onAcceptFriendRequest,
+  onRejectFriendRequest,
+}: {
+  social: SocialState
+  initialTab?: 'chats' | 'friends'
+  onClose: () => void
+  onOpenChat: (personId: string) => void
+  onSendFriendRequest: (personId: string) => void
+  onAcceptFriendRequest: (personId: string) => void
+  onRejectFriendRequest: (personId: string) => void
+}) {
+  const [tab, setTab] = useState<'chats' | 'friends'>(initialTab)
+
+  const conversations = [...social.conversations].sort(
+    (first, second) => new Date(second.lastAt).getTime() - new Date(first.lastAt).getTime(),
+  )
+  const incomingRequests = social.people.filter((person) => getRelationship(social, person.id) === 'incoming')
+
+  return (
+    <section className="social-overlay" aria-label="Mensajes">
+      <header className="social-overlay-head">
+        <div>
+          <p className="eyebrow">Social</p>
+          <h2>Mensajes</h2>
+        </div>
+        <button type="button" className="social-close" onClick={onClose} aria-label="Cerrar">
+          <X size={18} />
+        </button>
+      </header>
+
+      <div className="social-segment" role="tablist">
+        <button type="button" className={tab === 'chats' ? 'active' : ''} onClick={() => setTab('chats')}>
+          Chats
+        </button>
+        <button type="button" className={tab === 'friends' ? 'active' : ''} onClick={() => setTab('friends')}>
+          Amigos
+          {incomingRequests.length > 0 && <span className="segment-badge">{incomingRequests.length}</span>}
+        </button>
+      </div>
+
+      <div className="social-overlay-body">
+        {tab === 'chats' ? (
+          conversations.length === 0 ? (
+            <div className="social-empty">
+              <Inbox size={26} />
+              <strong>Sin conversaciones</strong>
+              <p className="empty-copy">Acepta un entrenamiento o escribe a un amigo para empezar a chatear.</p>
+            </div>
+          ) : (
+            <ul className="conversation-list">
+              {conversations.map((conversation) => {
+                const person = getPerson(social, conversation.personId)
+                const lastMessage = getLastMessage(conversation)
+
+                return (
+                  <li key={conversation.id}>
+                    <button type="button" onClick={() => onOpenChat(conversation.personId)}>
+                      <SocialAvatar person={person} />
+                      <div className="conversation-main">
+                        <div className="conversation-top">
+                          <strong>{person?.name ?? 'Compañero'}</strong>
+                          <span>{lastMessage ? formatShortTime(lastMessage.at) : ''}</span>
+                        </div>
+                        <div className="conversation-bottom">
+                          <span className={conversation.unread > 0 ? 'unread' : ''}>
+                            {lastMessage
+                              ? `${lastMessage.fromMe ? 'Tú: ' : ''}${lastMessage.text}`
+                              : 'Sin mensajes todavía'}
+                          </span>
+                          {conversation.unread > 0 && <em className="unread-dot">{conversation.unread}</em>}
+                        </div>
+                      </div>
+                    </button>
+                  </li>
+                )
+              })}
+            </ul>
+          )
+        ) : (
+          <FriendsView
+            social={social}
+            onOpenChat={onOpenChat}
+            onSendFriendRequest={onSendFriendRequest}
+            onAcceptFriendRequest={onAcceptFriendRequest}
+            onRejectFriendRequest={onRejectFriendRequest}
+          />
+        )}
+      </div>
+    </section>
+  )
+}
+
+function FriendsView({
+  social,
+  onOpenChat,
+  onSendFriendRequest,
+  onAcceptFriendRequest,
+  onRejectFriendRequest,
+}: {
+  social: SocialState
+  onOpenChat: (personId: string) => void
+  onSendFriendRequest: (personId: string) => void
+  onAcceptFriendRequest: (personId: string) => void
+  onRejectFriendRequest: (personId: string) => void
+}) {
+  const incoming = social.people.filter((person) => getRelationship(social, person.id) === 'incoming')
+  const friends = social.people.filter((person) => getRelationship(social, person.id) === 'friends')
+  const discover = social.people.filter((person) =>
+    ['none', 'outgoing'].includes(getRelationship(social, person.id)),
+  )
+
+  return (
+    <div className="friends-view">
+      <section className="friends-section">
+        <h3>Solicitudes recibidas</h3>
+        {incoming.length === 0 ? (
+          <p className="empty-copy">Sin solicitudes pendientes.</p>
+        ) : (
+          <ul className="friends-list">
+            {incoming.map((person) => (
+              <li key={person.id}>
+                <SocialAvatar person={person} />
+                <div className="friend-main">
+                  <strong>{person.name}</strong>
+                  <span>{person.gym}</span>
+                </div>
+                <div className="friend-actions">
+                  <button type="button" className="friend-accept" onClick={() => onAcceptFriendRequest(person.id)}>
+                    <Check size={15} />
+                  </button>
+                  <button type="button" className="friend-reject" onClick={() => onRejectFriendRequest(person.id)}>
+                    <X size={15} />
+                  </button>
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+
+      <section className="friends-section">
+        <h3>Tus amigos</h3>
+        {friends.length === 0 ? (
+          <p className="empty-copy">Aún no tienes amigos. Envía una solicitud abajo.</p>
+        ) : (
+          <ul className="friends-list">
+            {friends.map((person) => (
+              <li key={person.id}>
+                <SocialAvatar person={person} />
+                <div className="friend-main">
+                  <strong>{person.name}</strong>
+                  <span>{person.gym}</span>
+                </div>
+                <button type="button" className="friend-message" onClick={() => onOpenChat(person.id)}>
+                  <MessageSquare size={14} />
+                  Mensaje
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+
+      <section className="friends-section">
+        <h3>Descubre compañeros</h3>
+        {discover.length === 0 ? (
+          <p className="empty-copy">Ya estás conectado con todos los compañeros cercanos.</p>
+        ) : (
+          <ul className="friends-list">
+            {discover.map((person) => {
+              const status = getRelationship(social, person.id)
+
+              return (
+                <li key={person.id}>
+                  <SocialAvatar person={person} />
+                  <div className="friend-main">
+                    <strong>{person.name}</strong>
+                    <span>{person.gym}</span>
+                  </div>
+                  {status === 'outgoing' ? (
+                    <span className="friend-status">Solicitud enviada</span>
+                  ) : (
+                    <button type="button" className="friend-add" onClick={() => onSendFriendRequest(person.id)}>
+                      <UserPlus size={14} />
+                      Añadir
+                    </button>
+                  )}
+                </li>
+              )
+            })}
+          </ul>
+        )}
+      </section>
+    </div>
+  )
+}
+
+function ChatScreen({
+  person,
+  conversation,
+  relationship,
+  onClose,
+  onSend,
+  onMarkRead,
+}: {
+  person?: SocialPerson
+  conversation?: Conversation
+  relationship: RelationshipStatus
+  onClose: () => void
+  onSend: (text: string) => void
+  onMarkRead: () => void
+}) {
+  const [draft, setDraft] = useState('')
+  const bodyRef = useRef<HTMLDivElement>(null)
+  const messages = conversation?.messages ?? []
+  const messageCount = messages.length
+
+  useEffect(() => {
+    onMarkRead()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [messageCount])
+
+  useEffect(() => {
+    if (bodyRef.current) {
+      bodyRef.current.scrollTop = bodyRef.current.scrollHeight
+    }
+  }, [messageCount])
+
+  function submit() {
+    const trimmed = draft.trim()
+    if (!trimmed) {
+      return
+    }
+    onSend(trimmed)
+    setDraft('')
+  }
+
+  return (
+    <section className="chat-screen" aria-label={`Chat con ${person?.name ?? 'compañero'}`}>
+      <header className="chat-head">
+        <button type="button" className="chat-back" onClick={onClose} aria-label="Volver">
+          <ArrowLeft size={18} />
+        </button>
+        <SocialAvatar person={person} />
+        <div className="chat-head-main">
+          <strong>{person?.name ?? 'Compañero'}</strong>
+          <span>{relationship === 'friends' ? `Amigo · ${person?.gym ?? ''}` : person?.gym ?? 'Compañero de entreno'}</span>
+        </div>
+      </header>
+
+      <div className="chat-body" ref={bodyRef}>
+        {messages.length === 0 ? (
+          <div className="social-empty">
+            <MessageSquare size={24} />
+            <strong>Sin mensajes</strong>
+            <p className="empty-copy">Escribe el primer mensaje para empezar.</p>
+          </div>
+        ) : (
+          messages.map((message) => (
+            <div key={message.id} className={`chat-bubble ${message.fromMe ? 'mine' : 'theirs'}`}>
+              <p>{message.text}</p>
+              <time>{formatShortTime(message.at)}</time>
+            </div>
+          ))
+        )}
+      </div>
+
+      <form
+        className="chat-form"
+        onSubmit={(event) => {
+          event.preventDefault()
+          submit()
+        }}
+      >
+        <input
+          value={draft}
+          onChange={(event) => setDraft(event.target.value)}
+          placeholder="Escribe un mensaje"
+          aria-label="Mensaje"
+        />
+        <button type="submit" aria-label="Enviar" disabled={!draft.trim()}>
+          <Send size={18} />
+        </button>
+      </form>
+    </section>
+  )
+}
+
+const notificationIcons: Record<NotificationType, React.ReactNode> = {
+  friend_request: <UserPlus size={16} />,
+  friend_accepted: <UserCheck size={16} />,
+  message: <MessageSquare size={16} />,
+  training_accepted: <Dumbbell size={16} />,
+}
+
+function NotificationsOverlay({
+  notifications,
+  onClose,
+  onOpen,
+  onMarkAllRead,
+}: {
+  notifications: AppNotification[]
+  onClose: () => void
+  onOpen: (notification: AppNotification) => void
+  onMarkAllRead: () => void
+}) {
+  const hasUnread = notifications.some((notification) => !notification.read)
+  const sorted = [...notifications].sort(
+    (first, second) => new Date(second.at).getTime() - new Date(first.at).getTime(),
+  )
+
+  return (
+    <section className="social-overlay" aria-label="Notificaciones">
+      <header className="social-overlay-head">
+        <div>
+          <p className="eyebrow">Social</p>
+          <h2>Notificaciones</h2>
+        </div>
+        <div className="social-head-actions">
+          {hasUnread && (
+            <button type="button" className="social-text-action" onClick={onMarkAllRead}>
+              Marcar leído
+            </button>
+          )}
+          <button type="button" className="social-close" onClick={onClose} aria-label="Cerrar">
+            <X size={18} />
+          </button>
+        </div>
+      </header>
+
+      <div className="social-overlay-body">
+        {sorted.length === 0 ? (
+          <div className="social-empty">
+            <Bell size={26} />
+            <strong>Sin notificaciones</strong>
+            <p className="empty-copy">Aquí verás solicitudes, mensajes y entrenamientos aceptados.</p>
+          </div>
+        ) : (
+          <ul className="notification-list">
+            {sorted.map((notification) => (
+              <li key={notification.id}>
+                <button
+                  type="button"
+                  className={notification.read ? 'read' : 'unread'}
+                  onClick={() => onOpen(notification)}
+                >
+                  <span className={`notif-icon ${notification.type}`}>{notificationIcons[notification.type]}</span>
+                  <div className="notif-main">
+                    <div className="notif-top">
+                      <strong>{notification.title}</strong>
+                      <span>{formatRelativeTime(notification.at)}</span>
+                    </div>
+                    <p>{notification.body}</p>
+                  </div>
+                  {!notification.read && <em className="unread-dot small" aria-hidden="true" />}
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+    </section>
+  )
+}
+
+function PartnerView({
+  profile,
+  people,
+  onAcceptPlan,
+}: {
+  profile: Profile
+  people: SocialPerson[]
+  onAcceptPlan: (plan: TrainingPlanCard) => void
+}) {
   const [trainingPlans, setTrainingPlans] = useState<TrainingPlanCard[]>(loadTrainingPlans)
   const [showPlanCreator, setShowPlanCreator] = useState(false)
   const [planDraft, setPlanDraft] = useState<TrainingPlanDraft>(defaultTrainingPlanDraft)
-  const [activeChatPlan, setActiveChatPlan] = useState<TrainingPlanCard | null>(null)
-  const [chatDraft, setChatDraft] = useState('')
 
   useEffect(() => {
     localStorage.setItem(trainingPlansStorageKey, JSON.stringify(trainingPlans))
@@ -3811,57 +4784,41 @@ function PartnerView({ profile }: { profile: Profile }) {
         )}
 
         <div className="training-plan-list">
-          {trainingPlans.map((plan) => (
-            <article className="training-plan-card" key={plan.id}>
-              <div className="plan-card-main">
-                <strong>{plan.title}</strong>
-                <span>{plan.when}</span>
-              </div>
-              <div className="plan-card-place">
-                <MapPin size={15} />
-                <span>{plan.place}</span>
-              </div>
-              <div className="plan-card-tags">
-                <span>{plan.level}</span>
-                <span>{plan.spots}</span>
-                <span>{plan.intensity}</span>
-                <span>{plan.objective}</span>
-              </div>
-              <button className="accept-plan-button" type="button" onClick={() => setActiveChatPlan(plan)}>
-                Aceptar plan
-              </button>
-            </article>
-          ))}
+          {trainingPlans.map((plan) => {
+            const owner = people.find((person) => person.id === plan.ownerId)
+
+            return (
+              <article className="training-plan-card" key={plan.id}>
+                <div className="plan-card-main">
+                  <strong>{plan.title}</strong>
+                  <span>{plan.when}</span>
+                </div>
+                {owner && (
+                  <div className="plan-card-owner">
+                    <span className="social-avatar small" aria-hidden="true">
+                      {owner.avatar}
+                    </span>
+                    <span>Propuesto por {owner.name}</span>
+                  </div>
+                )}
+                <div className="plan-card-place">
+                  <MapPin size={15} />
+                  <span>{plan.place}</span>
+                </div>
+                <div className="plan-card-tags">
+                  <span>{plan.level}</span>
+                  <span>{plan.spots}</span>
+                  <span>{plan.intensity}</span>
+                  <span>{plan.objective}</span>
+                </div>
+                <button className="accept-plan-button" type="button" onClick={() => onAcceptPlan(plan)}>
+                  Aceptar entrenamiento
+                </button>
+              </article>
+            )
+          })}
         </div>
       </section>
-
-      {activeChatPlan && (
-        <section className="partner-chat-panel" aria-label="Chat de partner">
-          <div className="partner-chat-head">
-            <div>
-              <strong>{activeChatPlan.title}</strong>
-              <span>{activeChatPlan.place}</span>
-            </div>
-            <button type="button" onClick={() => setActiveChatPlan(null)} aria-label="Cerrar chat">
-              <X size={15} />
-            </button>
-          </div>
-          <div className="partner-chat-body">
-            <p>Plan aceptado. Empieza el chat para coordinar.</p>
-            <p className="mine">Me interesa entrenar contigo.</p>
-          </div>
-          <form
-            className="partner-chat-form"
-            onSubmit={(event) => {
-              event.preventDefault()
-              setChatDraft('')
-            }}
-          >
-            <input value={chatDraft} onChange={(event) => setChatDraft(event.target.value)} placeholder="Escribe un mensaje" />
-            <button type="submit">Enviar</button>
-          </form>
-        </section>
-      )}
     </section>
   )
 }
