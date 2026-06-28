@@ -995,7 +995,7 @@ Pendiente:
 - Geolocalizacion real en iOS via puente nativo (ver seccion 11).
 - Segmento Chats/Amigos que ocupaba toda la pantalla: el overlay usaba grid de 2 filas con 3 hijos; se paso a flexbox.
 - Cabeceras de overlays (Mensajes/Chat/Notificaciones) colisionaban con la barra de estado del iPhone (reloj) y la flecha de volver no era pulsable: se anadio `env(safe-area-inset-top)` al padding superior. Ademas, al abrir un chat desde la lista, el overlay de Mensajes queda debajo para que "atras" vuelva a la lista de conversaciones.
-- Tab-bar que seguia desapareciendo (p. ej. al abrir "Buscar compañero"): el posicionamiento `absolute`/`fixed` resultaba fragil en WKWebView. Solucion definitiva: el `phone-stage` ahora es un grid de 3 filas (`auto minmax(0,1fr) auto`) y el tab-bar es la 3ª fila EN FLUJO (sin position absolute/fixed), por lo que no puede recortarse ni desaparecer. El `<nav class="tab-bar">` se movio en el JSX a despues de `.screen-body`.
+- Tab-bar que seguia desapareciendo (p. ej. al abrir "Buscar compañero"): el `backdrop-filter` del tab-bar lo hacia desvanecerse en WKWebView. Se quito el `backdrop-filter` y se dejo fondo solido. Layout: `phone-stage` es un grid de 3 filas (`auto minmax(0,1fr) auto`); en escritorio el tab-bar es la 3ª fila EN FLUJO (al fondo de la tarjeta) y en MOVIL es `position: fixed` anclado al fondo del viewport (siempre visible). El `<nav class="tab-bar">` se movio en el JSX a despues de `.screen-body`.
 - Formulario "Buscar compañero" (Partner): ahora se puede cerrar siempre (el boton de cabecera alterna a "Cerrar" y hay un boton "Cancelar"), sin necesidad de crear un plan.
 
 ## 23. Instruccion para futuras sesiones

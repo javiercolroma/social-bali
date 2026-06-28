@@ -3193,8 +3193,16 @@ input:focus-visible {
     padding-top: max(20px, env(safe-area-inset-top));
   }
 
+  .tab-bar {
+    position: fixed;
+    left: 12px;
+    right: 12px;
+    bottom: max(10px, env(safe-area-inset-bottom));
+    margin: 0;
+  }
+
   .screen-body {
-    padding-bottom: 16px;
+    padding-bottom: max(92px, calc(env(safe-area-inset-bottom) + 84px));
   }
 
   .view-train {
