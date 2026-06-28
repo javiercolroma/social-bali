@@ -56,6 +56,30 @@ struct HistoryEntry: Identifiable, Codable {
     var sessionId: String?
 }
 
+enum WorkoutVisibility: String, Codable, CaseIterable {
+    case all, followers, onlyMe
+    var label: String {
+        switch self { case .all: return "Todos"; case .followers: return "Seguidores"; case .onlyMe: return "Solo yo" }
+    }
+    var icon: String {
+        switch self { case .all: return "globe"; case .followers: return "person.2.fill"; case .onlyMe: return "lock.fill" }
+    }
+}
+
+struct WorkoutSession: Identifiable, Codable {
+    var id: String
+    var name: String
+    var note: String
+    var date: Date
+    var elapsed: Int
+    var exercises: Int
+    var sets: Int
+    var volume: Double
+    var xp: Int
+    var photoData: Data?
+    var visibility: WorkoutVisibility
+}
+
 struct WorkoutTemplate: Identifiable, Codable, Hashable {
     var id: String
     var name: String

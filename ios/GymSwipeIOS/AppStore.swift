@@ -10,6 +10,7 @@ final class AppStore: ObservableObject {
     @Published var history: [HistoryEntry] = []
     @Published var profile = Profile(sex: "", age: "", country: "España", city: "Madrid", gym: "Mi gimnasio")
     @Published var savedWorkouts: [WorkoutTemplate] = []
+    @Published var sessions: [WorkoutSession] = []
     @Published var lastAction = "Listo para empezar"
 
     @Published var account: Account?
@@ -37,6 +38,7 @@ final class AppStore: ObservableObject {
             conversations = snap.conversations
             notifications = snap.notifications
             trainingPlans = snap.trainingPlans
+            sessions = snap.sessions ?? []
         } else {
             seedDemo()
         }
@@ -56,6 +58,7 @@ final class AppStore: ObservableObject {
         var conversations: [Conversation]
         var notifications: [AppNotification]
         var trainingPlans: [TrainingPlan]
+        var sessions: [WorkoutSession]?
     }
 
     func persist() {
@@ -63,7 +66,8 @@ final class AppStore: ObservableObject {
         let snap = Persisted(
             exercises: exercises, player: player, history: history, profile: profile,
             savedWorkouts: savedWorkouts, account: account, relationships: relationships,
-            conversations: conversations, notifications: notifications, trainingPlans: trainingPlans
+            conversations: conversations, notifications: notifications, trainingPlans: trainingPlans,
+            sessions: sessions
         )
         if let data = try? JSONEncoder().encode(snap) {
             UserDefaults.standard.set(data, forKey: storeKey)
@@ -137,14 +141,20 @@ final class AppStore: ObservableObject {
         persist()
     }
 
-    // Commit the session: write history + XP, then clear the loaded workout.
-    func saveSession() {
+    // Commit the session: write history + XP + a session record, then clear the workout.
+    func saveSession(name: String, note: String, photoData: Data?, visibility: WorkoutVisibility, elapsed: Int) {
         let sid = "session-\(Int(Date().timeIntervalSince1970))"
         var gained = 0
+        var doneExercises = 0
+        var totalSets = 0
+        var totalVolume = 0.0
         for ex in exercises where (ex.completedSets + ex.skippedSets) > 0 {
             let status: ExerciseStatus = ex.completedSets > 0 ? .done : .skipped
             let xp = ex.completedSets * 12 + (status == .done ? 18 : 0)
             gained += xp
+            if ex.completedSets > 0 { doneExercises += 1 }
+            totalSets += ex.completedSets
+            totalVolume += Double(ex.completedSets) * Double(ex.reps) * ex.weight
             history.insert(HistoryEntry(
                 id: "h-\(ex.id)-\(Int(Date().timeIntervalSince1970 * 1000))-\(Int.random(in: 0..<9999))",
                 exerciseName: ex.name, day: ex.day, status: status,
@@ -152,6 +162,12 @@ final class AppStore: ObservableObject {
                 volume: Double(ex.completedSets) * Double(ex.reps) * ex.weight,
                 xp: xp, completedAt: Date(), sessionId: sid), at: 0)
         }
+        let trimmed = name.trimmingCharacters(in: .whitespaces)
+        sessions.insert(WorkoutSession(
+            id: sid, name: trimmed.isEmpty ? (exercises.first?.day ?? "Entreno") : trimmed,
+            note: note.trimmingCharacters(in: .whitespaces), date: Date(), elapsed: elapsed,
+            exercises: doneExercises, sets: totalSets, volume: totalVolume, xp: gained,
+            photoData: photoData, visibility: visibility), at: 0)
         player.xp += gained
         player.streak = currentStreak()
         exercises = []

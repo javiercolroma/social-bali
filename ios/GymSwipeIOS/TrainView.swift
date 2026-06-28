@@ -1,4 +1,5 @@
 import SwiftUI
+import PhotosUI
 
 struct TrainView: View {
     @EnvironmentObject var store: AppStore
@@ -6,6 +7,11 @@ struct TrainView: View {
     @State private var sessionStart: Date?
     @State private var showSummary = false
     @State private var previewWorkout: WorkoutTemplate?
+    @State private var sessionName = ""
+    @State private var sessionNote = ""
+    @State private var sessionPhoto: Data?
+    @State private var sessionPickerItem: PhotosPickerItem?
+    @State private var visibility: WorkoutVisibility = .all
     @State private var restActive = false
     @State private var restElapsed = 0
     @State private var restTotal = 0
@@ -204,28 +210,85 @@ struct TrainView: View {
                 HStack { Spacer(); Text("🏁").font(.system(size: 46)); Spacer() }
                 Text("¡Buen trabajo!").font(.system(size: 22, weight: .heavy)).foregroundColor(Brand.ink)
                     .frame(maxWidth: .infinity, alignment: .center)
-                Text(workoutName).font(.footnote).foregroundColor(Brand.muted).frame(maxWidth: .infinity, alignment: .center)
                 HStack(spacing: 10) {
                     summaryStat(timeString(elapsedSeconds), "Duración", "clock")
                     summaryStat("\(completedSets)", "Series", "checkmark.circle")
                 }
                 HStack(spacing: 10) {
-                    summaryStat("\(Int(sessionVolume)) kg", "Volumen", "scalemass")
+                    summaryStat("\(Int(sessionVolume)) kg", "Volumen", "dumbbell.fill")
                     summaryStat("+\(sessionXP)", "XP", "bolt.fill")
                 }
                 if skippedSets > 0 {
                     Text("\(skippedSets) series saltadas · \(exercisesDone) ejercicios").font(.caption).foregroundColor(Brand.soft)
                         .frame(maxWidth: .infinity, alignment: .center)
                 }
-                Button { fxFinish(); store.saveSession(); resetLocal() } label: { Label("Guardar entrenamiento", systemImage: "checkmark") }
-                    .buttonStyle(PrimaryButtonStyle())
+
+                Divider().padding(.vertical, 2)
+
+                summaryLabel("NOMBRE DEL ENTRENO")
+                TextField(workoutName, text: $sessionName)
+                    .font(.system(size: 15, weight: .semibold))
+                    .padding(.horizontal, 12).frame(height: 44).background(Brand.surface)
+                    .clipShape(RoundedRectangle(cornerRadius: 10))
+
+                summaryLabel("¿QUÉ TAL TE HA IDO?")
+                TextField("Cómo te has sentido, sensaciones…", text: $sessionNote, axis: .vertical)
+                    .font(.system(size: 15))
+                    .lineLimit(2...4)
+                    .padding(.horizontal, 12).padding(.vertical, 10).background(Brand.surface)
+                    .clipShape(RoundedRectangle(cornerRadius: 10))
+
+                summaryLabel("FOTO DEL ENTRENO (OPCIONAL)")
+                PhotoPickerLabel(item: $sessionPickerItem, onPicked: { sessionPhoto = $0 }) {
+                    if let data = sessionPhoto, let ui = UIImage(data: data) {
+                        Image(uiImage: ui).resizable().scaledToFill()
+                            .frame(height: 120).frame(maxWidth: .infinity).clipped()
+                            .clipShape(RoundedRectangle(cornerRadius: 10))
+                            .overlay(alignment: .bottomTrailing) {
+                                Image(systemName: "pencil.circle.fill").font(.system(size: 24)).foregroundColor(.white).padding(6)
+                            }
+                    } else {
+                        HStack(spacing: 8) { Image(systemName: "camera.fill"); Text("Añadir foto") }
+                            .font(.system(size: 15, weight: .heavy)).foregroundColor(Color(hex: "4b6211"))
+                            .frame(maxWidth: .infinity).frame(minHeight: 52)
+                            .background(Brand.greenSoft.opacity(0.22)).clipShape(RoundedRectangle(cornerRadius: 10))
+                            .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(Color(hex: "9ec85a"), style: StrokeStyle(lineWidth: 1.5, dash: [6])))
+                    }
+                }
+
+                summaryLabel("¿QUIÉN PUEDE VERLO?")
+                HStack(spacing: 8) {
+                    ForEach(WorkoutVisibility.allCases, id: \.self) { v in
+                        Button { FX.tap(); visibility = v } label: {
+                            HStack(spacing: 5) {
+                                Image(systemName: v.icon).font(.system(size: 11, weight: .bold))
+                                Text(v.label).font(.system(size: 12, weight: .heavy))
+                            }
+                            .frame(maxWidth: .infinity).frame(height: 38)
+                            .background(visibility == v ? Brand.greenSoft : Brand.chip)
+                            .foregroundColor(Brand.ink).clipShape(Capsule())
+                        }
+                    }
+                }
+
+                Button {
+                    fxFinish()
+                    store.saveSession(name: sessionName, note: sessionNote, photoData: sessionPhoto, visibility: visibility, elapsed: elapsedSeconds)
+                    resetLocal()
+                } label: { Label("Guardar entrenamiento", systemImage: "checkmark") }
+                    .buttonStyle(PrimaryButtonStyle()).padding(.top, 4)
                 Button(role: .destructive) { store.discardSession(); resetLocal() } label: {
                     Label("Descartar", systemImage: "trash").frame(maxWidth: .infinity)
                 }.padding(.top, 2)
             }
             ConfettiView().frame(height: 320).allowsHitTesting(false)
         }
-        .onAppear { fxFinish() }
+        .onAppear { fxFinish(); if sessionName.isEmpty { sessionName = workoutName } }
+    }
+
+    private func summaryLabel(_ text: String) -> some View {
+        Text(text).font(.caption2).fontWeight(.heavy).foregroundColor(Brand.muted)
+            .frame(maxWidth: .infinity, alignment: .leading).padding(.top, 2)
     }
 
     private func summaryStat(_ value: String, _ label: String, _ icon: String) -> some View {
@@ -239,7 +302,10 @@ struct TrainView: View {
     }
 
     private var workoutName: String { store.exercises.first?.day ?? "Entreno" }
-    private func resetLocal() { sessionStart = nil; restActive = false; restElapsed = 0; restTotal = 0; showSummary = false }
+    private func resetLocal() {
+        sessionStart = nil; restActive = false; restElapsed = 0; restTotal = 0; showSummary = false
+        sessionName = ""; sessionNote = ""; sessionPhoto = nil; sessionPickerItem = nil; visibility = .all
+    }
 
     // MARK: - Empty
 
