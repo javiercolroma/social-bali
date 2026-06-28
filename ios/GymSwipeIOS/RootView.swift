@@ -77,7 +77,12 @@ struct RootView: View {
     }
 
     private var header: some View {
-        HStack(alignment: .center) {
+        HStack(alignment: .center, spacing: 12) {
+            Button { FX.tap(); showProfile = true } label: {
+                MeAvatar(account: store.account, size: 44)
+                    .overlay(Circle().stroke(Brand.line))
+            }
+            .accessibilityLabel("Perfil")
             VStack(alignment: .leading, spacing: 2) {
                 Text("FORGE LOOP").font(.caption2).fontWeight(.heavy).kerning(1.4).foregroundColor(Color(hex: "4b6211"))
                 Text(titles[tab]).font(.system(size: 30, weight: .heavy)).foregroundColor(Brand.ink)
@@ -85,11 +90,6 @@ struct RootView: View {
             Spacer()
             headerButton(system: "envelope.fill", badge: store.unreadMessages) { FX.tap(); messagesTab = 0; showMessages = true }
             headerButton(system: "bell.fill", badge: store.unreadNotifications) { FX.tap(); showNotifications = true }
-            Button { FX.tap(); showProfile = true } label: {
-                MeAvatar(account: store.account, size: 44)
-                    .overlay(Circle().stroke(Brand.line))
-            }
-            .accessibilityLabel("Perfil")
 }
         .padding(.horizontal, 18)
         .padding(.top, 8)
