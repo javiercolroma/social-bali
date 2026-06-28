@@ -1,6 +1,14 @@
 import SwiftUI
 import MapKit
 
+private struct RankRow {
+    let name: String
+    let score: Int
+    let isMe: Bool
+    let emoji: String
+    let flag: String
+}
+
 private struct MapPlace: Identifiable {
     let id: String
     let coordinate: CLLocationCoordinate2D
@@ -91,13 +99,20 @@ struct RankingView: View {
                 Text("Añade amigos para ver vuestro ranking.").font(.footnote).foregroundColor(Brand.muted)
             }
             ForEach(Array(rankingRows.enumerated()), id: \.offset) { idx, row in
-                HStack {
-                    Text("\(idx + 1)").font(.system(size: 13, weight: .heavy)).foregroundColor(Brand.muted).frame(width: 22)
+                HStack(spacing: 10) {
+                    Text("\(idx + 1)").font(.system(size: 13, weight: .heavy)).foregroundColor(Brand.muted).frame(width: 20)
+                    ZStack(alignment: .bottomTrailing) {
+                        if row.isMe { MeAvatar(account: store.account, size: 34) } else { Avatar(emoji: row.emoji, size: 34) }
+                        Text(row.flag).font(.system(size: 11))
+                            .frame(width: 17, height: 17).background(Circle().fill(.white))
+                            .overlay(Circle().stroke(Brand.line))
+                            .offset(x: 3, y: 3)
+                    }
                     Text(row.name).font(.system(size: 14, weight: row.isMe ? .heavy : .semibold)).foregroundColor(Brand.ink)
                     Spacer()
-                    Text("\(row.score)").font(.system(size: 14, weight: .heavy)).foregroundColor(Brand.ink)
+                    Text("\(row.score)").font(.system(size: 15, weight: .heavy)).foregroundColor(Brand.ink)
                 }
-                .padding(.vertical, 6)
+                .padding(.vertical, 5)
                 .padding(.horizontal, 8)
                 .background(row.isMe ? Brand.greenSoft.opacity(0.4) : Color.clear)
                 .clipShape(RoundedRectangle(cornerRadius: 8))
@@ -147,16 +162,20 @@ struct RankingView: View {
         return list
     }
 
-    private var friendsRanking: [(name: String, score: Int, isMe: Bool)] {
-        let friends = store.people.filter { store.relationship($0.id) == .friends }
-        var rows: [(String, Int, Bool)] = friends.map { p in
-            (p.name, GymScoreEngine.calculate(buildFriendHistory(p)).total, false)
-        }
-        rows.append(("Tú", store.gymScore.total, true))
-        return rows.sorted { $0.1 > $1.1 }
+    private var meRow: RankRow {
+        RankRow(name: "Tú", score: store.gymScore.total, isMe: true, emoji: "🙂", flag: countryFlag(store.profile.country))
     }
 
-    private var rankingRows: [(name: String, score: Int, isMe: Bool)] {
+    private var friendsRanking: [RankRow] {
+        let friends = store.people.filter { store.relationship($0.id) == .friends }
+        var rows = friends.map { p in
+            RankRow(name: p.name, score: GymScoreEngine.calculate(buildFriendHistory(p)).total, isMe: false, emoji: p.avatar, flag: p.flag)
+        }
+        rows.append(meRow)
+        return rows.sorted { $0.score > $1.score }
+    }
+
+    private var rankingRows: [RankRow] {
         if scope == 0 { return friendsRanking }
         let base = store.gymScore.total == 0 ? 42 : store.gymScore.total
         let names = [["Mika", "Leo", "Sofía", "Tú", "Alex", "Nora"],
@@ -164,8 +183,13 @@ struct RankingView: View {
                      ["Rafa", "Tú", "Julia", "Adri", "Vera", "Noa"],
                      ["Tú", "Pablo", "Marta", "Hugo", "Laia", "Enzo"]][scope - 1]
         let offsets = [[24, 16, 9, 0, -4, -11], [13, 6, 0, -5, -9, -14], [8, 0, -3, -7, -12, -16], [0, -2, -6, -10, -13, -18]][scope - 1]
-        return zip(names, offsets).map { (name, off) in
-            (name, max(0, min(100, base + off)), name == "Tú")
-        }.sorted { $0.1 > $1.1 }
+        let emojis = ["🦊", "🐻", "🦅", "🐺", "🦌", "🦁"]
+        let globalFlags = ["🇺🇸", "🇲🇽", "🇬🇧", "🇫🇷", "🇩🇪", "🇮🇹"]
+        return zip(names, offsets).enumerated().map { idx, pair in
+            let (name, off) = pair
+            if name == "Tú" { return RankRow(name: "Tú", score: max(0, min(100, base + off)), isMe: true, emoji: "🙂", flag: countryFlag(store.profile.country)) }
+            let flag = scope == 1 ? globalFlags[idx % globalFlags.count] : "🇪🇸"
+            return RankRow(name: name, score: max(0, min(100, base + off)), isMe: false, emoji: emojis[idx % emojis.count], flag: flag)
+        }.sorted { $0.score > $1.score }
     }
 }

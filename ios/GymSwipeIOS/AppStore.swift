@@ -378,13 +378,13 @@ final class AppStore: ObservableObject {
     }
 
     static let demoPeople: [SocialPerson] = [
-        SocialPerson(id: "p-mika", name: "Mika", handle: "mika", avatar: "🦊", gym: "Basic-Fit Gran Vía"),
-        SocialPerson(id: "p-leo", name: "Leo", handle: "leo_lifts", avatar: "🐻", gym: "McFit Chamberí"),
-        SocialPerson(id: "p-sofia", name: "Sofía", handle: "sofia_fit", avatar: "🦅", gym: "Altafit Retiro"),
-        SocialPerson(id: "p-dani", name: "Dani", handle: "dani", avatar: "🐺", gym: "Basic-Fit Sol"),
-        SocialPerson(id: "p-vera", name: "Vera", handle: "vera_strong", avatar: "🦌", gym: "VivaGym Malasaña"),
-        SocialPerson(id: "p-iker", name: "Iker", handle: "iker", avatar: "🦁", gym: "Synergym Salamanca"),
-        SocialPerson(id: "p-noa", name: "Noa", handle: "noa_gym", avatar: "🐯", gym: "Basic-Fit Atocha"),
+        SocialPerson(id: "p-mika", name: "Mika", handle: "mika", avatar: "🦊", gym: "Basic-Fit Gran Vía", flag: "🇪🇸"),
+        SocialPerson(id: "p-leo", name: "Leo", handle: "leo_lifts", avatar: "🐻", gym: "McFit Chamberí", flag: "🇪🇸"),
+        SocialPerson(id: "p-sofia", name: "Sofía", handle: "sofia_fit", avatar: "🦅", gym: "Altafit Retiro", flag: "🇲🇽"),
+        SocialPerson(id: "p-dani", name: "Dani", handle: "dani", avatar: "🐺", gym: "Basic-Fit Sol", flag: "🇦🇷"),
+        SocialPerson(id: "p-vera", name: "Vera", handle: "vera_strong", avatar: "🦌", gym: "VivaGym Malasaña", flag: "🇫🇷"),
+        SocialPerson(id: "p-iker", name: "Iker", handle: "iker", avatar: "🦁", gym: "Synergym Salamanca", flag: "🇪🇸"),
+        SocialPerson(id: "p-noa", name: "Noa", handle: "noa_gym", avatar: "🐯", gym: "Basic-Fit Atocha", flag: "🇨🇴"),
     ]
 
     static func makeExercise(_ day: String, _ name: String, _ sets: Int, _ reps: Int, _ weight: Double, _ rest: Int = 120) -> Exercise {

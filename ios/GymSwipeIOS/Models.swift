@@ -96,6 +96,7 @@ struct SocialPerson: Identifiable, Codable, Hashable {
     var handle: String
     var avatar: String
     var gym: String
+    var flag: String = "🇪🇸"
 }
 
 struct ChatMessage: Identifiable, Codable, Hashable {
