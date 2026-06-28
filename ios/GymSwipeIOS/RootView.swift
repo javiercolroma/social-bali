@@ -18,18 +18,14 @@ struct RootView: View {
     var body: some View {
         VStack(spacing: 0) {
             header
-            TabView(selection: $tab) {
-                SocialFeedView(onOpenProfile: { profilePerson = IdString(id: $0) })
-                    .tag(0).tabItem { Label("Social", systemImage: "newspaper.fill") }.toolbar(.hidden, for: .tabBar)
-                PlanView(onLoaded: { tab = 2 })
-                    .tag(1).tabItem { Label("Plan", systemImage: "list.bullet.clipboard") }.toolbar(.hidden, for: .tabBar)
-                TrainView(onGoToPlan: { tab = 1 })
-                    .tag(2).tabItem { Label("Entreno", systemImage: "dumbbell.fill") }.toolbar(.hidden, for: .tabBar)
-                RankingView()
-                    .tag(3).tabItem { Label("Ranking", systemImage: "globe.europe.africa.fill") }.toolbar(.hidden, for: .tabBar)
-                PartnerView(onOpenChat: { chatPerson = IdString(id: $0) })
-                    .tag(4).tabItem { Label("Partner", systemImage: "person.2.fill") }.toolbar(.hidden, for: .tabBar)
+            ZStack {
+                screen(0) { SocialFeedView(onOpenProfile: { profilePerson = IdString(id: $0) }) }
+                screen(1) { PlanView(onLoaded: { tab = 2 }) }
+                screen(2) { TrainView(onGoToPlan: { tab = 1 }) }
+                screen(3) { RankingView() }
+                screen(4) { PartnerView(onOpenChat: { chatPerson = IdString(id: $0) }) }
             }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
             .onChange(of: tab) { _ in FX.selection() }
 
             CustomTabBar(tab: $tab)
@@ -71,6 +67,13 @@ struct RootView: View {
             AccountSetupView(allowCancel: store.account != nil, onCancel: { editingAccount = false })
                 .environmentObject(store)
         }
+    }
+
+    @ViewBuilder
+    private func screen<Content: View>(_ index: Int, @ViewBuilder content: () -> Content) -> some View {
+        content()
+            .opacity(tab == index ? 1 : 0)
+            .allowsHitTesting(tab == index)
     }
 
     private var header: some View {

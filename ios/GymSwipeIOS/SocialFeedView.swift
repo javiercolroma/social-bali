@@ -199,7 +199,13 @@ struct SocialFeedView: View {
                     photo: nil, elapsed: entries.count * 240 + sets * 40,
                     exercises: entries.count, sets: sets,
                     volume: entries.reduce(0) { $0 + $1.volume },
-                    items: entries.map { SessionExercise(name: $0.exerciseName, sets: $0.sets, reps: $0.reps, weight: $0.weight) }))
+                    items: entries.map { e in
+                        // build per-set logs with a small weight ramp for realism
+                        let logs = (0..<max(1, e.sets)).map { i in
+                            SetLog(reps: e.reps, weight: max(0, e.weight + Double(i) * 2.5 - Double(max(0, e.sets - 1)) * 1.25))
+                        }
+                        return SessionExercise(name: e.exerciseName, sets: e.sets, reps: e.reps, weight: e.weight, logs: logs)
+                    }))
             }
         }
         return items
