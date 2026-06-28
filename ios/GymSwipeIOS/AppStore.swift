@@ -476,21 +476,6 @@ final class AppStore: ObservableObject {
             ("Curl predicador", 3, 12, 20),
             ("Fondos de tríceps en banco", 3, 12, 0),
         ]),
-        template("t-core", "Abdomen", [
-            ("Plancha", 3, 45, 0),
-            ("Crunch", 4, 20, 0),
-            ("Elevación de piernas colgado", 3, 12, 0),
-            ("Rueda abdominal", 3, 10, 0),
-            ("Russian twist", 3, 20, 0),
-        ]),
-        template("t-full", "Full body", [
-            ("Sentadilla goblet", 3, 10, 28),
-            ("Press banca", 3, 8, 55),
-            ("Remo con mancuerna", 3, 10, 24),
-            ("Press militar", 3, 10, 30),
-            ("Peso muerto rumano", 3, 10, 60),
-            ("Plancha", 3, 40, 0),
-        ]),
     ]
 
     private static func template(_ id: String, _ name: String, _ exercises: [(String, Int, Int, Double)]) -> WorkoutTemplate {
