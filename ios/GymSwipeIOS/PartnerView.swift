@@ -43,7 +43,10 @@ struct PartnerView: View {
             HStack {
                 Text(plan.title).font(.system(size: 16, weight: .heavy)).foregroundColor(Brand.ink)
                 Spacer()
-                Text(plan.when).font(.system(size: 13, weight: .heavy)).foregroundColor(Brand.muted)
+                HStack(spacing: 4) {
+                    Image(systemName: "calendar").font(.system(size: 11, weight: .bold))
+                    Text(plan.when).font(.system(size: 13, weight: .heavy))
+                }.foregroundColor(Brand.muted)
             }
             HStack(spacing: 7) {
                 Avatar(emoji: isMine ? "🙂" : (owner?.avatar ?? "👤"), size: 24)
@@ -117,7 +120,7 @@ struct CreatePlanView: View {
                     }
 
                     Button {
-                        store.addPlan(title: planTitle, when: draftWhen, place: planPlace, spots: draftSpots, score: store.gymScore.total)
+                        store.addPlan(title: planTitle, when: planWhen, place: planPlace, spots: planSpots, score: store.gymScore.total)
                         dismiss()
                     } label: { Label("Publicar y buscar", systemImage: "magnifyingglass") }
                         .buttonStyle(PrimaryButtonStyle())
@@ -152,6 +155,9 @@ struct CreatePlanView: View {
         default: return draftWorkout
         }
     }
+
+    private var planWhen: String { draftWhen == "Me adapto" ? "Cualquier día" : draftWhen }
+    private var planSpots: String { draftSpots == "Me adapto" ? "Plazas flexibles" : draftSpots }
 
     private var planPlace: String {
         switch draftWhere {

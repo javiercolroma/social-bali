@@ -79,17 +79,11 @@ struct ProfileView: View {
                         }
                     }
 
-                    MenuField(label: "País", placeholder: "Elegir país",
-                              selected: store.profile.country,
-                              options: countries.map { ("\($0.flag) \($0.name)", $0.name) }) { value in
-                        store.profile.country = value
-                        if !cities(for: value).contains(store.profile.city) { store.profile.city = "" }
-                        store.persist()
+                    CountryField(label: "País", selected: store.profile.country) {
+                        store.profile.country = $0; store.persist()
                     }
 
-                    MenuField(label: "Ciudad", placeholder: "Elegir ciudad",
-                              selected: store.profile.city,
-                              options: cities(for: store.profile.country).map { ($0, $0) }) {
+                    CitySearchField(label: "Ciudad", selected: store.profile.city) {
                         store.profile.city = $0; store.persist()
                     }
 
