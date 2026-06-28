@@ -6,6 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
+    "ios:sync": "npm run build && rm -rf ios/WebDist && cp -R dist ios/WebDist && node scripts/prepare-ios-webdist.mjs",
+    "ios:generate": "cd ios && xcodegen generate",
     "lint": "eslint .",
     "preview": "vite preview"
   },

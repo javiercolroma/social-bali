@@ -12,7 +12,6 @@ import {
   Minus,
   Pencil,
   Plus,
-  RotateCcw,
   Save,
   Share2,
   Target,
@@ -145,6 +144,7 @@ type DraftExercise = NewExercise & {
 type WorkoutTemplate = {
   name: string
   description: string
+  block?: string
   workout?: string
   exercises?: Exercise[]
 }
@@ -185,6 +185,7 @@ type SharedWorkoutPayload = {
   v: 1
   name: string
   description: string
+  block?: string
   exercises: Array<Pick<Exercise, 'name' | 'sets' | 'reps' | 'weight' | 'rest'>>
 }
 
@@ -648,30 +649,14 @@ function getExerciseSuggestionKey(name: string) {
   return normalizeSearchText(name.replace(/\s*\([^)]*\)/g, '').replace(/\s+-\s+.*/, '').trim())
 }
 
-function getWorkoutLevel(workout: WorkoutLibraryItem): 'iniciacion' | 'intermedio' | 'avanzado' | 'propios' | 'oculto' {
-  if (workout.source === 'saved') {
-    return 'propios'
+function getWorkoutBlock(workout: Pick<WorkoutTemplate, 'block'> & { source?: WorkoutLibraryItem['source'] }) {
+  const block = workout.block?.trim()
+
+  if (block) {
+    return block
   }
 
-  const name = normalizeSearchText(workout.name)
-
-  if (name.includes('full body 2') || name.includes('full body rapido')) {
-    return 'iniciacion'
-  }
-
-  if (name.includes('fuerza 3') || name.includes('torso')) {
-    return 'intermedio'
-  }
-
-  if (name.includes('rugby 7') || name.includes('pierna explosiva')) {
-    return 'avanzado'
-  }
-
-  if (name.includes('hipertrofia limpia') || name.includes('pierna a') || name.includes('push compacto') || name.includes('pull compacto') || name.includes('potencia rugby') || name.includes('acondicionamiento')) {
-    return 'oculto'
-  }
-
-  return 'oculto'
+  return workout.source === 'template' ? 'Por defecto' : 'Mis entrenos'
 }
 
 function cloneExercises(exercises: Exercise[]) {
@@ -713,6 +698,7 @@ function createSharedWorkoutPayload(workout: WorkoutTemplate): SharedWorkoutPayl
     v: 1,
     name: workout.name,
     description: workout.description,
+    block: workout.block,
     exercises: getExercisesFromWorkout(workout).map((exercise) => ({
       name: exercise.name,
       sets: exercise.sets,
@@ -727,6 +713,7 @@ function createWorkoutFromShare(payload: SharedWorkoutPayload): WorkoutTemplate 
   return {
     name: payload.name || 'Entrenamiento compartido',
     description: payload.description || `${payload.exercises.length} ejercicios`,
+    block: payload.block || 'Compartidos',
     exercises: payload.exercises.map((exercise, index) =>
       makeExercise({
         ...exercise,
@@ -1592,6 +1579,7 @@ function App() {
   const [elapsedSeconds, setElapsedSeconds] = useState(0)
   const [sessionStatus, setSessionStatus] = useState<SessionStatus>('ready')
   const [draftWorkoutName, setDraftWorkoutName] = useState('Mi entrenamiento')
+  const [draftWorkoutBlock, setDraftWorkoutBlock] = useState('Mis entrenos')
   const [draftExercises, setDraftExercises] = useState<DraftExercise[]>([])
   const [newExercise, setNewExercise] = useState<NewExercise>({
     name: '',
@@ -1629,12 +1617,14 @@ function App() {
     () => [
       ...templates.map((workout, index) => ({
         ...workout,
+        block: workout.block ?? 'Por defecto',
         libraryId: `template-${createId(workout.name)}-${index}`,
         source: 'template' as const,
         removable: true,
       })),
       ...state.savedWorkouts.map((workout, index) => ({
         ...workout,
+        block: workout.block ?? 'Mis entrenos',
         libraryId: `saved-${createId(workout.name)}-${index}`,
         source: 'saved' as const,
         removable: true,
@@ -1815,6 +1805,7 @@ function App() {
     const nextCompletedSets = active.completedSets + (status === 'done' ? 1 : 0)
     const nextSkippedSets = active.skippedSets + (status === 'skipped' ? 1 : 0)
     const closesExercise = nextCompletedSets + nextSkippedSets >= active.sets
+    const finishesWorkout = closesExercise && pending.length === 1
     const completedVolume = getSetVolume(active) * nextCompletedSets
     const willBePr =
       status === 'done' &&
@@ -1822,19 +1813,21 @@ function App() {
       nextCompletedSets === active.sets &&
       (!state.prs[active.name] || completedVolume > state.prs[active.name].volume)
 
-    if (status === 'done') {
+    if (status === 'done' && !finishesWorkout) {
       setRestRemaining(active.rest)
     }
 
     triggerFeedback(
-      status === 'done' ? (willBePr ? 'pr' : 'done') : 'skipped',
-      willBePr
+      finishesWorkout ? 'done' : status === 'done' ? (willBePr ? 'pr' : 'done') : 'skipped',
+      finishesWorkout
+        ? 'Entreno finalizado'
+        : willBePr
         ? `Nuevo PR: ${active.name}`
         : status === 'done'
           ? `Serie ${nextCompletedSets + active.skippedSets}/${active.sets}: ${active.name}`
           : `Serie ${active.completedSets + nextSkippedSets}/${active.sets} saltada`,
       status === 'done' ? `+${xpRules.set} XP` : undefined,
-      closesExercise ? 'exercise' : status === 'done' ? 'set' : 'skipped',
+      finishesWorkout ? 'finish' : closesExercise ? 'exercise' : status === 'done' ? 'set' : 'skipped',
     )
 
     setState((current) => {
@@ -1927,7 +1920,9 @@ function App() {
               }
             : current.prs,
         lastAction:
-          status === 'done'
+          finishesWorkout
+            ? 'Entreno finalizado'
+            : status === 'done'
             ? isPr
               ? `Nuevo PR en ${currentActive.name}`
               : nextExercise.status === 'done'
@@ -1939,6 +1934,11 @@ function App() {
         undoStack: withUndo(current),
       }
     })
+    if (finishesWorkout) {
+      setRestRemaining(0)
+      setElapsedSeconds(Math.max(0, Math.floor((Date.now() - sessionStartedAt) / 1000)))
+      setSessionStatus('finished')
+    }
     dragXRef.current = 0
     setDragX(0)
     setDragging(false)
@@ -2028,33 +2028,6 @@ function App() {
 
     window.location.hash = tab === 'train' ? '' : tab
     setActiveTab(tab)
-  }
-
-  function resetWeek() {
-    playFeedback('tap')
-    setState((current) => ({
-      ...current,
-      exercises: current.exercises.map((exercise) => ({
-        ...exercise,
-        completedSets: 0,
-        skippedSets: 0,
-        status: 'pending',
-      })),
-      player: {
-        ...current.player,
-        hearts: 3,
-        focus: Math.max(70, current.player.focus),
-      },
-      lastAction: 'Semana reiniciada',
-      undoStack: withUndo(current),
-    }))
-    setRestRemaining(0)
-    sessionIdRef.current = `session-${Date.now()}`
-    setStartedAtRef.current = Date.now()
-    lastSetClosedAtRef.current = null
-    setSessionStartedAt(Date.now())
-    setElapsedSeconds(0)
-    setSessionStatus('ready')
   }
 
   function startSession() {
@@ -2168,6 +2141,7 @@ function App() {
     }
 
     const workoutName = draftWorkoutName.trim() || 'Entrenamiento'
+    const workoutBlock = draftWorkoutBlock.trim() || 'Mis entrenos'
     const exercises = draftExercises.map((exercise, index) =>
       makeExercise({
         ...exercise,
@@ -2178,6 +2152,7 @@ function App() {
     const savedWorkout: WorkoutTemplate = {
       name: workoutName,
       description: `${draftExercises.length} ejercicios`,
+      block: workoutBlock,
       exercises,
     }
 
@@ -2198,6 +2173,7 @@ function App() {
     playFeedback('finish')
     setDraftExercises([])
     setDraftWorkoutName('Mi entrenamiento')
+    setDraftWorkoutBlock('Mis entrenos')
     setNewExercise({
       name: '',
       sets: 3,
@@ -2215,7 +2191,7 @@ function App() {
           ? current.savedWorkouts.filter((savedWorkout) => savedWorkout.name !== workout.name)
           : current.savedWorkouts,
       hiddenWorkoutIds:
-        workout.source === 'template'
+        workout.source === 'template' && !current.hiddenWorkoutIds.includes(workout.libraryId)
           ? [...current.hiddenWorkoutIds, workout.libraryId]
           : current.hiddenWorkoutIds,
       lastAction: `${workout.name} eliminado`,
@@ -2399,7 +2375,6 @@ function App() {
               onUpdateActive={updateActive}
               onComplete={completeExercise}
               onUndo={undoLastAction}
-              onReset={resetWeek}
               onStart={startSession}
               onFinish={finishSession}
               onSelectWorkout={() => selectTab('plan')}
@@ -2412,6 +2387,8 @@ function App() {
             <PlanView
               draftWorkoutName={draftWorkoutName}
               setDraftWorkoutName={setDraftWorkoutName}
+              draftWorkoutBlock={draftWorkoutBlock}
+              setDraftWorkoutBlock={setDraftWorkoutBlock}
               draftExercises={draftExercises}
               setDraftExercises={setDraftExercises}
               newExercise={newExercise}
@@ -2469,7 +2446,6 @@ function TrainView({
   onUpdateActive,
   onComplete,
   onUndo,
-  onReset,
   onStart,
   onFinish,
   onSelectWorkout,
@@ -2496,7 +2472,6 @@ function TrainView({
   onUpdateActive: (patch: Partial<Exercise>) => void
   onComplete: (status: Exclude<ExerciseStatus, 'pending'>) => void
   onUndo: () => void
-  onReset: () => void
   onStart: () => void
   onFinish: () => void
   onSelectWorkout: () => void
@@ -2535,7 +2510,7 @@ function TrainView({
             <span style={{ width: `${progress}%` }} />
           </div>
         </div>
-        {sessionStatus !== 'ready' && (
+        {sessionStatus === 'active' && (
           <button className="finish-session-button" type="button" onClick={onFinish} disabled={!isSessionActive}>
             Finalizar
           </button>
@@ -2629,10 +2604,10 @@ function TrainView({
         ) : hasWorkout ? (
           <article className="complete-state">
             <p className="eyebrow">Terminado</p>
-            <h2>Entreno cerrado</h2>
-            <button className="primary-button" type="button" onClick={onReset}>
-              <RotateCcw size={17} />
-              Reiniciar
+            <h2>Entreno finalizado</h2>
+            <button className="primary-button" type="button" onClick={onSelectWorkout}>
+              <ListChecks size={17} />
+              Elegir otro entreno
             </button>
           </article>
         ) : (
@@ -2707,6 +2682,8 @@ function TrainView({
 function PlanView({
   draftWorkoutName,
   setDraftWorkoutName,
+  draftWorkoutBlock,
+  setDraftWorkoutBlock,
   draftExercises,
   setDraftExercises,
   newExercise,
@@ -2720,6 +2697,8 @@ function PlanView({
 }: {
   draftWorkoutName: string
   setDraftWorkoutName: React.Dispatch<React.SetStateAction<string>>
+  draftWorkoutBlock: string
+  setDraftWorkoutBlock: React.Dispatch<React.SetStateAction<string>>
   draftExercises: DraftExercise[]
   setDraftExercises: React.Dispatch<React.SetStateAction<DraftExercise[]>>
   newExercise: NewExercise
@@ -2789,36 +2768,21 @@ function PlanView({
       })
       .slice(0, 8)
   }, [newExercise.name])
-  const workoutGroups = useMemo(
-    () =>
-      [
-        {
-          id: 'propios',
-          label: 'Propios',
-          tag: 'Guardados',
-          workouts: workouts.filter((workout) => getWorkoutLevel(workout) === 'propios'),
-        },
-        {
-          id: 'iniciacion',
-          label: 'Iniciación',
-          tag: 'Base',
-          workouts: workouts.filter((workout) => getWorkoutLevel(workout) === 'iniciacion'),
-        },
-        {
-          id: 'intermedio',
-          label: 'Intermedio',
-          tag: 'Progresión',
-          workouts: workouts.filter((workout) => getWorkoutLevel(workout) === 'intermedio'),
-        },
-        {
-          id: 'avanzado',
-          label: 'Avanzado',
-          tag: 'Rendimiento',
-          workouts: workouts.filter((workout) => getWorkoutLevel(workout) === 'avanzado'),
-        },
-      ] as const,
-    [workouts],
-  )
+  const workoutGroups = useMemo(() => {
+    const groups = new Map<string, WorkoutLibraryItem[]>()
+
+    workouts.forEach((workout) => {
+      const block = getWorkoutBlock(workout)
+      groups.set(block, [...(groups.get(block) ?? []), workout])
+    })
+
+    return Array.from(groups.entries()).map(([label, groupWorkouts]) => ({
+      id: createId(label) || 'bloque',
+      label,
+      tag: `${groupWorkouts.length} entrenos`,
+      workouts: groupWorkouts,
+    }))
+  }, [workouts])
 
   function startWorkoutDrag(event: PointerEvent<HTMLButtonElement>, workout: WorkoutLibraryItem) {
     if (!workout.removable) {
@@ -2955,6 +2919,7 @@ function PlanView({
     const exercises = workout.exercises ?? parseWorkout(workout.workout ?? '')
 
     setDraftWorkoutName(workout.name)
+    setDraftWorkoutBlock(getWorkoutBlock(workout))
     setDraftExercises(
       exercises.map((exercise, index) => ({
         id: `${workout.libraryId}-edit-${index}`,
@@ -3000,6 +2965,7 @@ function PlanView({
               type="button"
               onClick={() => {
                 setEditingWorkout(null)
+                setDraftWorkoutBlock('Mis entrenos')
                 setPlanMode('library')
               }}
               aria-label="Volver a entrenamientos"
@@ -3018,6 +2984,14 @@ function PlanView({
               value={draftWorkoutName}
               placeholder="Push fuerza"
               onChange={(event) => setDraftWorkoutName(event.target.value)}
+            />
+          </label>
+          <label className="workout-name-field">
+            Bloque
+            <input
+              value={draftWorkoutBlock}
+              placeholder="Pierna"
+              onChange={(event) => setDraftWorkoutBlock(event.target.value)}
             />
           </label>
           <div className="field-row">
@@ -3178,6 +3152,7 @@ function PlanView({
             type="button"
             onClick={() => {
               setPreviewWorkout(null)
+              setDraftWorkoutBlock('Mis entrenos')
               setPlanMode('create')
             }}
           >
@@ -3187,7 +3162,7 @@ function PlanView({
         </div>
         <div className="workout-levels" aria-label="Entrenamientos">
           {workoutGroups.map((group) => (
-            <section className={`workout-level level-${group.id}`} key={group.id}>
+            <section className="workout-level" key={group.id}>
               <div className="workout-level-head">
                 <strong>{group.label}</strong>
                 <span>{group.tag}</span>
@@ -3285,6 +3260,17 @@ function PlanView({
             <button className="secondary-button" type="button" onClick={() => editWorkout(previewWorkout)}>
               <Pencil size={17} />
               Editar
+            </button>
+            <button
+              className="danger-button"
+              type="button"
+              onClick={() => {
+                onDeleteWorkout(previewWorkout)
+                setPreviewWorkout(null)
+              }}
+            >
+              <Trash2 size={17} />
+              Eliminar
             </button>
             {shareNotice && <span className="share-feedback">{shareNotice}</span>}
           </section>

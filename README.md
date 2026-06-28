@@ -16,6 +16,18 @@ npm run lint
 npm run build
 ```
 
+## Xcode / iOS
+
+El proyecto iOS esta en `ios/GymSwipeIOS.xcodeproj`. Empaqueta la app web en un `WKWebView` nativo.
+
+```bash
+npm run ios:sync
+npm run ios:generate
+open ios/GymSwipeIOS.xcodeproj
+```
+
+Para compilar o ejecutar en simulador hace falta Xcode completo, no solo Command Line Tools.
+
 ## Memoria del proyecto
 
 La memoria viva del producto, decisiones tecnicas, evolucion y siguientes pasos esta en:

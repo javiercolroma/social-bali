@@ -397,11 +397,9 @@ input:focus-visible {
 @keyframes view-enter {
   from {
     opacity: 0;
-    transform: translateY(8px);
   }
   to {
     opacity: 1;
-    transform: translateY(0);
   }
 }
 
@@ -1619,26 +1617,6 @@ input:focus-visible {
   font-weight: 950;
   background: #e7eadf;
   text-transform: uppercase;
-}
-
-.level-iniciacion .workout-level-head span {
-  color: #26410f;
-  background: #dcefc2;
-}
-
-.level-intermedio .workout-level-head span {
-  color: #16423f;
-  background: #cfeee9;
-}
-
-.level-avanzado .workout-level-head span {
-  color: #4d3510;
-  background: #f2dfb2;
-}
-
-.level-propios .workout-level-head span {
-  color: #4f3030;
-  background: #f2d8d6;
 }
 
 .template-strip button {
@@ -3227,18 +3205,55 @@ input:focus-visible {
   }
 
   .screen-body {
-    padding-bottom: max(86px, calc(env(safe-area-inset-bottom) + 76px));
+    padding-bottom: max(132px, calc(env(safe-area-inset-bottom) + 122px));
   }
 
   .view-train {
-    --train-action-bottom: max(72px, calc(env(safe-area-inset-bottom) + 58px));
+    --train-action-bottom: max(24px, calc(env(safe-area-inset-bottom) + 18px));
     max-height: calc(100svh - 104px);
+    padding-bottom: 170px;
   }
 
   .action-dock {
+    position: fixed;
     left: 12px;
     right: 12px;
+    bottom: max(92px, calc(env(safe-area-inset-bottom) + 86px));
     max-width: none;
+    margin: 0 auto;
+    grid-template-columns: 50px minmax(62px, 0.42fr) minmax(106px, 1fr);
+    gap: 8px;
+    padding: 8px;
+    border-radius: 14px;
+    transform: none;
+  }
+
+  .dock-button {
+    height: 50px;
+    border-radius: 10px;
+  }
+
+  .workout-preview {
+    position: fixed;
+    left: 12px;
+    right: 12px;
+    bottom: max(84px, calc(env(safe-area-inset-bottom) + 74px));
+    z-index: 20;
+    max-height: min(46svh, 430px);
+    margin: 0;
+    padding: 12px;
+    overflow: hidden;
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.96);
+    box-shadow: 0 22px 54px rgba(23, 25, 19, 0.22);
+    backdrop-filter: blur(18px);
+  }
+
+  .preview-exercise-list {
+    max-height: min(25svh, 230px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
   }
 }
 
