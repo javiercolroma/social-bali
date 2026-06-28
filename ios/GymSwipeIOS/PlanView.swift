@@ -59,11 +59,10 @@ struct PlanView: View {
             HStack {
                 VStack(alignment: .leading, spacing: 3) {
                     Text(workout.name).font(.system(size: 16, weight: .heavy)).foregroundColor(Brand.ink)
-                    Text(workout.description).font(.footnote).foregroundColor(Brand.muted)
+                    Text(workout.description).font(.footnote).foregroundColor(Brand.muted).lineLimit(1)
                 }
                 Spacer()
-                Text("\(workout.exercises.count)").font(.system(size: 20, weight: .heavy)).foregroundColor(Brand.ink)
-                Text("ej.").font(.caption2).foregroundColor(Brand.muted)
+                Image(systemName: "chevron.right").font(.system(size: 13, weight: .bold)).foregroundColor(Brand.soft)
             }
         }
     }
@@ -149,6 +148,7 @@ struct CreateWorkoutView: View {
     @State private var drafts: [DraftExercise] = [DraftExercise()]
     @State private var didLoad = false
     @FocusState private var groupFocused: Bool
+    @FocusState private var focusedExercise: UUID?
 
     private let suggestedGroups = ["Pierna", "Pecho", "Espalda", "Push", "Pull", "Full body", "Brazo", "Hombro", "Core"]
     private var groupOptions: [String] {
@@ -161,6 +161,58 @@ struct CreateWorkoutView: View {
         if q.isEmpty { return groupOptions }
         return groupOptions.filter { $0.localizedCaseInsensitiveContains(q) && $0.caseInsensitiveCompare(q) != .orderedSame }
     }
+    private var groupQuery: String { group.trimmingCharacters(in: .whitespaces) }
+    private var canCreateGroup: Bool {
+        !groupQuery.isEmpty && !groupOptions.contains { $0.caseInsensitiveCompare(groupQuery) == .orderedSame }
+    }
+
+    private var groupField: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            HStack(spacing: 8) {
+                Image(systemName: "folder.fill").font(.system(size: 13)).foregroundColor(Brand.soft)
+                TextField("Pierna, Pecho, Pull…", text: $group).focused($groupFocused)
+                if !group.isEmpty {
+                    Button { group = "" } label: { Image(systemName: "xmark.circle.fill").foregroundColor(Brand.soft) }
+                }
+            }
+            .padding(.horizontal, 12).frame(height: 46).background(Color.white)
+            .clipShape(RoundedRectangle(cornerRadius: 10))
+            .overlay(RoundedRectangle(cornerRadius: 10).stroke(groupFocused ? Brand.greenSoft : Brand.line, lineWidth: groupFocused ? 1.5 : 1))
+
+            if groupFocused {
+                VStack(spacing: 0) {
+                    if canCreateGroup {
+                        groupRow(icon: "plus.circle.fill", color: Color(hex: "4b6211"), title: "Crear “\(groupQuery)”", badge: "nuevo") { commitGroup(groupQuery) }
+                        if !groupSuggestions.isEmpty { Divider() }
+                    }
+                    ForEach(Array(groupSuggestions.prefix(6).enumerated()), id: \.element) { idx, opt in
+                        groupRow(icon: "tag.fill", color: Brand.soft, title: opt, badge: store.customGroups.contains(opt) ? "tuyo" : nil) { commitGroup(opt) }
+                        if idx < min(6, groupSuggestions.count) - 1 { Divider() }
+                    }
+                }
+                .background(Color.white).clipShape(RoundedRectangle(cornerRadius: 12))
+                .overlay(RoundedRectangle(cornerRadius: 12).stroke(Brand.line))
+                .shadow(color: .black.opacity(0.06), radius: 8, y: 4)
+                .padding(.top, 6)
+            }
+        }
+    }
+
+    private func groupRow(icon: String, color: Color, title: String, badge: String?, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            HStack(spacing: 10) {
+                Image(systemName: icon).font(.system(size: 14)).foregroundColor(color).frame(width: 18)
+                Text(title).font(.system(size: 14, weight: .semibold)).foregroundColor(Brand.ink)
+                Spacer()
+                if let badge {
+                    Text(badge).font(.system(size: 10, weight: .heavy)).foregroundColor(Brand.soft)
+                        .padding(.horizontal, 7).padding(.vertical, 3).background(Brand.chip).clipShape(Capsule())
+                }
+            }.padding(.horizontal, 12).frame(height: 46)
+        }
+    }
+
+    private func commitGroup(_ value: String) { group = value; groupFocused = false }
     private var canSave: Bool {
         !name.trimmingCharacters(in: .whitespaces).isEmpty &&
         drafts.contains { !$0.name.trimmingCharacters(in: .whitespaces).isEmpty }
@@ -177,39 +229,7 @@ struct CreateWorkoutView: View {
                             .overlay(RoundedRectangle(cornerRadius: 10).stroke(Brand.line))
                     }
 
-                    labeled("GRUPO") {
-                        VStack(alignment: .leading, spacing: 0) {
-                            HStack(spacing: 8) {
-                                TextField("Pierna, Pecho, Pull…", text: $group).focused($groupFocused)
-                                if !group.isEmpty {
-                                    Button { group = "" } label: { Image(systemName: "xmark.circle.fill").foregroundColor(Brand.soft) }
-                                }
-                            }
-                            .padding(.horizontal, 12).frame(height: 46).background(Color.white)
-                            .clipShape(RoundedRectangle(cornerRadius: 10))
-                            .overlay(RoundedRectangle(cornerRadius: 10).stroke(groupFocused ? Brand.greenSoft : Brand.line, lineWidth: groupFocused ? 1.5 : 1))
-
-                            if groupFocused, !groupSuggestions.isEmpty {
-                                VStack(spacing: 0) {
-                                    ForEach(Array(groupSuggestions.prefix(6).enumerated()), id: \.element) { idx, opt in
-                                        Button { group = opt; groupFocused = false } label: {
-                                            HStack {
-                                                Text(opt).font(.system(size: 14, weight: .semibold)).foregroundColor(Brand.ink)
-                                                Spacer()
-                                                if store.customGroups.contains(opt) {
-                                                    Text("tuyo").font(.caption2).foregroundColor(Brand.soft)
-                                                }
-                                            }.padding(.horizontal, 12).frame(height: 42)
-                                        }
-                                        if idx < min(6, groupSuggestions.count) - 1 { Divider() }
-                                    }
-                                }
-                                .background(Color.white).clipShape(RoundedRectangle(cornerRadius: 10))
-                                .overlay(RoundedRectangle(cornerRadius: 10).stroke(Brand.line))
-                                .padding(.top, 6)
-                            }
-                        }
-                    }
+                    labeled("GRUPO") { groupField }
 
                     labeled("EJERCICIOS") {
                         VStack(spacing: 10) {
@@ -247,18 +267,38 @@ struct CreateWorkoutView: View {
     }
 
     private func exerciseCard(_ draft: Binding<DraftExercise>) -> some View {
-        VStack(spacing: 12) {
+        let id = draft.wrappedValue.id
+        let suggestions = focusedExercise == id ? searchExercises(draft.wrappedValue.name) : []
+        return VStack(spacing: 12) {
             HStack(spacing: 8) {
                 TextField("Nombre del ejercicio", text: draft.name)
                     .font(.system(size: 15, weight: .semibold))
+                    .focused($focusedExercise, equals: id)
                     .padding(.horizontal, 12).frame(height: 44).background(Brand.surface)
                     .clipShape(RoundedRectangle(cornerRadius: 10))
                 if drafts.count > 1 {
-                    Button { drafts.removeAll { $0.id == draft.wrappedValue.id } } label: {
+                    Button { drafts.removeAll { $0.id == id } } label: {
                         Image(systemName: "trash").font(.system(size: 15)).foregroundColor(Brand.red)
                             .frame(width: 44, height: 44).background(Brand.redSoft).clipShape(RoundedRectangle(cornerRadius: 10))
                     }
                 }
+            }
+            if !suggestions.isEmpty {
+                VStack(spacing: 0) {
+                    ForEach(Array(suggestions.prefix(6).enumerated()), id: \.element) { idx, name in
+                        Button { draft.wrappedValue.name = name; focusedExercise = nil } label: {
+                            HStack(spacing: 10) {
+                                Image(systemName: "dumbbell.fill").font(.system(size: 12)).foregroundColor(Brand.soft).frame(width: 18)
+                                Text(name).font(.system(size: 14, weight: .semibold)).foregroundColor(Brand.ink)
+                                Spacer()
+                            }.padding(.horizontal, 12).frame(height: 44)
+                        }
+                        if idx < min(6, suggestions.count) - 1 { Divider() }
+                    }
+                }
+                .background(Color.white).clipShape(RoundedRectangle(cornerRadius: 12))
+                .overlay(RoundedRectangle(cornerRadius: 12).stroke(Brand.line))
+                .shadow(color: .black.opacity(0.06), radius: 8, y: 4)
             }
             HStack(spacing: 8) {
                 stepperBox("SERIES", text: "\(draft.wrappedValue.sets)",

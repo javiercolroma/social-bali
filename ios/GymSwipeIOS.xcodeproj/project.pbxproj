@@ -16,6 +16,7 @@
 		46EBB8712F3CB101DB8A4FED /* AppStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = D0B083763AEA6D7CE3C7B500 /* AppStore.swift */; };
 		5D87F9D09E700FC924A4C724 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B83B0B92285D78A53157123F /* Assets.xcassets */; };
 		6F3B3519B39CCE8280492005 /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 29747A9B85AA4E6D8D9D3843 /* RootView.swift */; };
+		942CEB3E1BDC0BABD1CB038F /* Exercises.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC0D952E1A0BC084FD9FDB7C /* Exercises.swift */; };
 		96BF0657964B419B9F01B3EB /* SearchFields.swift in Sources */ = {isa = PBXBuildFile; fileRef = A13A6C62B64C684CF0D535E4 /* SearchFields.swift */; };
 		AEC40F20A484762912222BA0 /* LocationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F46519F370ACB4CE695F4928 /* LocationManager.swift */; };
 		B2BA2EDCA173DDEDD61FF8BD /* SocialViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = A94209F7155C5A09DA6E950A /* SocialViews.swift */; };
@@ -44,6 +45,7 @@
 		A13A6C62B64C684CF0D535E4 /* SearchFields.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SearchFields.swift; sourceTree = "<group>"; };
 		A415A6402658DC75C3C37C3C /* Components.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Components.swift; sourceTree = "<group>"; };
 		A94209F7155C5A09DA6E950A /* SocialViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SocialViews.swift; sourceTree = "<group>"; };
+		AC0D952E1A0BC084FD9FDB7C /* Exercises.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Exercises.swift; sourceTree = "<group>"; };
 		B83B0B92285D78A53157123F /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		C6E2A074351DB17430CAE561 /* PartnerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PartnerView.swift; sourceTree = "<group>"; };
 		D0B083763AEA6D7CE3C7B500 /* AppStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppStore.swift; sourceTree = "<group>"; };
@@ -78,6 +80,7 @@
 				B83B0B92285D78A53157123F /* Assets.xcassets */,
 				A415A6402658DC75C3C37C3C /* Components.swift */,
 				1D19B1F26226F79DC0669B52 /* Countries.swift */,
+				AC0D952E1A0BC084FD9FDB7C /* Exercises.swift */,
 				1250C29A42354C7EA62ADC58 /* GymScore.swift */,
 				9CAC012CB53EB545C20ED468 /* GymSwipeIOSApp.swift */,
 				45AAAB98E146869DA2747469 /* Info.plist */,
@@ -170,6 +173,7 @@
 				46EBB8712F3CB101DB8A4FED /* AppStore.swift in Sources */,
 				2A71043ED4BBAF7A09523AFF /* Components.swift in Sources */,
 				FF1D8080F80F010C04EB3609 /* Countries.swift in Sources */,
+				942CEB3E1BDC0BABD1CB038F /* Exercises.swift in Sources */,
 				46248B5DA3F8CE7CF349D01C /* GymScore.swift in Sources */,
 				FBCDEE4F608FFD8E2591F44A /* GymSwipeIOSApp.swift in Sources */,
 				AEC40F20A484762912222BA0 /* LocationManager.swift in Sources */,

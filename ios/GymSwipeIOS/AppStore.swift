@@ -325,11 +325,17 @@ final class AppStore: ObservableObject {
 
     // MARK: - Workouts (create / delete)
 
+    static func summary(of exercises: [Exercise]) -> String {
+        if exercises.isEmpty { return "Sin ejercicios" }
+        let names = exercises.prefix(3).map { $0.name }.joined(separator: " · ")
+        return exercises.count > 3 ? "\(names)…" : names
+    }
+
     func addWorkout(name: String, group: String, exercises: [Exercise]) {
         let g = group.trimmingCharacters(in: .whitespaces)
         let workout = WorkoutTemplate(
             id: newId("w"), name: name.isEmpty ? "Mi entreno" : name,
-            description: "\(exercises.count) ejercicios", block: g.isEmpty ? "Mis entrenos" : g, exercises: exercises)
+            description: AppStore.summary(of: exercises), block: g.isEmpty ? "Mis entrenos" : g, exercises: exercises)
         savedWorkouts.insert(workout, at: 0)
         persist()
     }
@@ -357,7 +363,7 @@ final class AppStore: ObservableObject {
             w.name = name.isEmpty ? "Mi entreno" : name
             w.block = block
             w.exercises = exercises
-            w.description = "\(exercises.count) ejercicios"
+            w.description = AppStore.summary(of: exercises)
             savedWorkouts[idx] = w
             persist()
         } else {
