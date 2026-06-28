@@ -210,15 +210,24 @@ struct ActivityView: View {
                 }
                 .frame(width: 70, height: 70)
                 VStack(alignment: .leading, spacing: 3) {
-                    Text(store.player.streak == 1 ? "1 día en racha" : "\(store.player.streak) días en racha")
+                    Text(store.player.streak == 0 ? "Empieza tu racha" : "¡En racha!")
                         .font(.system(size: 19, weight: .heavy)).foregroundColor(Brand.ink)
-                    Text("\(sessionsThisWeek) \(sessionsThisWeek == 1 ? "entreno" : "entrenos") esta semana")
+                    Text(streakSubtitle)
                         .font(.system(size: 13, weight: .bold)).foregroundColor(Brand.soft)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
                 Spacer()
             }
             .frame(maxWidth: .infinity)
         }
+    }
+
+    /// La racha NO son días consecutivos: cuenta los entrenos encadenados
+    /// mientras no pasen más de 3 días entre uno y otro.
+    private var streakSubtitle: String {
+        let s = store.player.streak
+        if s == 0 { return "Entrena cada 3 días para mantenerla" }
+        return "\(s) \(s == 1 ? "entreno" : "entrenos") encadenados · máx. 3 días de descanso"
     }
 
     /// Gym Score igual que en Comunidad: puntuación + tier + fiabilidad + barras de pilares.
@@ -258,11 +267,6 @@ struct ActivityView: View {
         }
     }
 
-    private var sessionsThisWeek: Int {
-        let cal = Calendar.current
-        let weekAgo = cal.date(byAdding: .day, value: -7, to: Date()) ?? Date()
-        return sessions.filter { $0.date >= weekAgo }.count
-    }
 
     private func stat(_ value: String, _ label: String, _ icon: String) -> some View {
         VStack(spacing: 4) {
