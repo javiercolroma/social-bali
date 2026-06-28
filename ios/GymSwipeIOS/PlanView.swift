@@ -2,6 +2,7 @@ import SwiftUI
 
 struct PlanView: View {
     @EnvironmentObject var store: AppStore
+    var onLoaded: () -> Void = {}
     @State private var preview: WorkoutTemplate?
     @State private var creating = false
     @State private var pendingDelete: WorkoutTemplate?
@@ -45,7 +46,7 @@ struct PlanView: View {
             .padding(.horizontal, 14).padding(.vertical, 12)
         }
         .background(Brand.bg)
-        .sheet(item: $preview) { WorkoutPreview(workoutId: $0.id).environmentObject(store) }
+        .sheet(item: $preview) { WorkoutPreview(workoutId: $0.id, onLoaded: onLoaded).environmentObject(store) }
         .sheet(isPresented: $creating) { CreateWorkoutView().environmentObject(store) }
         .confirmationDialog("¿Eliminar “\(pendingDelete?.name ?? "")”?", isPresented: Binding(get: { pendingDelete != nil }, set: { if !$0 { pendingDelete = nil } }), titleVisibility: .visible) {
             Button("Eliminar", role: .destructive) { if let w = pendingDelete { store.deleteWorkout(w.id) }; pendingDelete = nil }
@@ -72,6 +73,7 @@ struct WorkoutPreview: View {
     @EnvironmentObject var store: AppStore
     @Environment(\.dismiss) private var dismiss
     let workoutId: String
+    var onLoaded: () -> Void = {}
     @State private var showEditor = false
     @State private var confirmDelete = false
 
@@ -96,7 +98,7 @@ struct WorkoutPreview: View {
                                 .padding(12).background(Brand.panel).clipShape(RoundedRectangle(cornerRadius: 10))
                                 .overlay(RoundedRectangle(cornerRadius: 10).stroke(Brand.line))
                             }
-                            Button { store.loadWorkout(workout); dismiss() } label: { Label("Cargar entreno", systemImage: "dumbbell.fill") }
+                            Button { store.loadWorkout(workout); dismiss(); onLoaded() } label: { Label("Cargar entreno", systemImage: "dumbbell.fill") }
                                 .buttonStyle(PrimaryButtonStyle()).padding(.top, 8)
                             Button { showEditor = true } label: {
                                 Label("Editar", systemImage: "pencil").font(.system(size: 15, weight: .heavy)).foregroundColor(Brand.ink)

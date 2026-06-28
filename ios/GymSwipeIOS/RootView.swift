@@ -19,7 +19,7 @@ struct RootView: View {
             header
             TabView(selection: $tab) {
                 TrainView(onGoToPlan: { tab = 1 }).tag(0).tabItem { Label("Entreno", systemImage: "dumbbell.fill") }
-                PlanView().tag(1).tabItem { Label("Plan", systemImage: "list.bullet.clipboard") }
+                PlanView(onLoaded: { tab = 0 }).tag(1).tabItem { Label("Plan", systemImage: "list.bullet.clipboard") }
                 RankingView().tag(2).tabItem { Label("Ranking", systemImage: "globe.europe.africa.fill") }
                 PartnerView(onOpenChat: { chatPerson = IdString(id: $0) }).tag(3).tabItem { Label("Partner", systemImage: "person.2.fill") }
                 ProfileView().tag(4).tabItem { Label("Perfil", systemImage: "person.crop.circle") }
