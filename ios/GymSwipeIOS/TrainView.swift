@@ -308,7 +308,7 @@ struct TrainView: View {
         let hour = Calendar.current.component(.hour, from: Date())
         let time = hour < 12 ? "de mañana" : (hour < 21 ? "de tarde" : "de noche")
         var counts: [String: Int] = [:]
-        for e in store.exercises { counts[GymScoreEngine.pattern(for: e.exerciseName).group, default: 0] += 1 }
+        for e in store.exercises { counts[GymScoreEngine.pattern(for: e.name).group, default: 0] += 1 }
         let top = counts.max { $0.value < $1.value }?.key ?? ""
         let labels = ["pierna": "Pierna", "bisagra": "Posterior", "empuje": "Empuje",
                       "tiron": "Tirón", "condicion": "Cardio", "accesorio": "Full body"]
