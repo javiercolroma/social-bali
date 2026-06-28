@@ -2,13 +2,20 @@ import SwiftUI
 
 private struct FeedItem: Identifiable {
     let id: String
-    let person: SocialPerson
+    let personId: String?       // nil => me
+    let authorName: String
+    let avatarPhoto: Data?
+    let avatarEmoji: String
+    let flag: String
+    let location: String
     let date: Date
     let title: String
+    let note: String
+    let photo: Data?
+    let elapsed: Int
     let exercises: Int
     let sets: Int
     let volume: Double
-    let names: [String]
 }
 
 struct SocialFeedView: View {
@@ -21,7 +28,7 @@ struct SocialFeedView: View {
     var body: some View {
         ScrollView {
             VStack(spacing: 12) {
-                if friends.isEmpty {
+                if feed.isEmpty {
                     emptyState
                 } else {
                     ForEach(feed) { item in card(item) }
@@ -35,41 +42,61 @@ struct SocialFeedView: View {
     private var emptyState: some View {
         PanelCard {
             HStack { Spacer(); Text("👥").font(.system(size: 44)); Spacer() }
-            Text("Aún no sigues a nadie").font(.system(size: 18, weight: .heavy)).foregroundColor(Brand.ink)
+            Text("Tu muro está vacío").font(.system(size: 18, weight: .heavy)).foregroundColor(Brand.ink)
                 .frame(maxWidth: .infinity, alignment: .center)
-            Text("Cuando tengas amigos, aquí verás sus entrenos y estadísticas.")
+            Text("Guarda un entreno o hazte amigo de alguien para ver actividad aquí.")
                 .font(.footnote).foregroundColor(Brand.muted).multilineTextAlignment(.center).frame(maxWidth: .infinity)
         }
     }
 
     private func card(_ item: FeedItem) -> some View {
         PanelCard {
-            Button { onOpenProfile(item.person.id) } label: {
+            // Header: avatar, name, time, location
+            Button { if let pid = item.personId { onOpenProfile(pid) } } label: {
                 HStack(spacing: 11) {
                     ZStack(alignment: .bottomTrailing) {
-                        Avatar(emoji: item.person.avatar, size: 42)
-                        Text(item.person.flag).font(.system(size: 11)).frame(width: 17, height: 17)
+                        authorAvatar(item)
+                        Text(item.flag).font(.system(size: 11)).frame(width: 17, height: 17)
                             .background(Circle().fill(.white)).overlay(Circle().stroke(Brand.line)).offset(x: 3, y: 3)
                     }
                     VStack(alignment: .leading, spacing: 2) {
-                        Text(item.person.name).font(.system(size: 15, weight: .heavy)).foregroundColor(Brand.ink)
-                        Text(relativeTime(item.date)).font(.caption2).foregroundColor(Brand.soft)
+                        Text(item.authorName).font(.system(size: 15, weight: .heavy)).foregroundColor(Brand.ink)
+                        HStack(spacing: 5) {
+                            Text(relativeTime(item.date))
+                            if !item.location.isEmpty {
+                                Text("·"); Image(systemName: "mappin.and.ellipse").font(.system(size: 9)); Text(item.location)
+                            }
+                        }.font(.caption2).foregroundColor(Brand.soft)
                     }
                     Spacer()
-                    Image(systemName: "chevron.right").font(.system(size: 12, weight: .bold)).foregroundColor(Brand.soft)
+                    if item.personId != nil { Image(systemName: "chevron.right").font(.system(size: 12, weight: .bold)).foregroundColor(Brand.soft) }
                 }
-            }.buttonStyle(.plain)
+            }.buttonStyle(.plain).disabled(item.personId == nil)
 
+            // Title
             HStack(spacing: 8) {
                 Image(systemName: "dumbbell.fill").font(.system(size: 13)).foregroundColor(Color(hex: "6ea300"))
                 Text(item.title).font(.system(size: 16, weight: .heavy)).foregroundColor(Brand.ink)
             }
-            Text(item.names.joined(separator: " · ")).font(.footnote).foregroundColor(Brand.muted).lineLimit(1)
 
-            HStack(spacing: 10) {
-                stat("\(item.exercises)", "ejercicios")
-                stat("\(item.sets)", "series")
-                stat("\(Int(item.volume)) kg", "volumen")
+            // Comment / note
+            if !item.note.isEmpty {
+                Text(item.note).font(.system(size: 14)).foregroundColor(Color(hex: "2c3127")).fixedSize(horizontal: false, vertical: true)
+            }
+
+            // Photo
+            if let data = item.photo, let ui = UIImage(data: data) {
+                Image(uiImage: ui).resizable().scaledToFill()
+                    .frame(maxWidth: .infinity).frame(height: 180).clipped()
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
+            }
+
+            // Metrics
+            HStack(spacing: 8) {
+                stat(durationText(item.elapsed), "Tiempo", "clock")
+                stat("\(item.sets)", "Series", "checkmark.circle")
+                stat("\(Int(item.volume))", "kg vol.", "dumbbell.fill")
+                stat("\(item.exercises)", "Ejerc.", "list.bullet")
             }
 
             Button {
@@ -89,11 +116,26 @@ struct SocialFeedView: View {
         }
     }
 
-    private func stat(_ value: String, _ label: String) -> some View {
+    @ViewBuilder
+    private func authorAvatar(_ item: FeedItem) -> some View {
+        if let d = item.avatarPhoto, let ui = UIImage(data: d) {
+            Image(uiImage: ui).resizable().scaledToFill().frame(width: 42, height: 42).clipShape(Circle())
+        } else {
+            Avatar(emoji: item.avatarEmoji, size: 42)
+        }
+    }
+
+    private func stat(_ value: String, _ label: String, _ icon: String) -> some View {
         VStack(spacing: 2) {
-            Text(value).font(.system(size: 17, weight: .heavy)).foregroundColor(Brand.ink)
-            Text(label).font(.caption2).fontWeight(.bold).foregroundColor(Brand.muted)
+            Text(value).font(.system(size: 15, weight: .heavy)).foregroundColor(Brand.ink)
+            Text(label).font(.system(size: 9, weight: .bold)).foregroundColor(Brand.muted)
         }.frame(maxWidth: .infinity).padding(.vertical, 8).background(Brand.surface).clipShape(RoundedRectangle(cornerRadius: 10))
+    }
+
+    private func durationText(_ s: Int) -> String {
+        let m = s / 60
+        if m >= 60 { return "\(m / 60)h \(m % 60)m" }
+        return "\(max(1, m)) min"
     }
 
     private func kudos(_ item: FeedItem) -> Int {
@@ -102,7 +144,27 @@ struct SocialFeedView: View {
         return 3 + Int(seed % 22)
     }
 
+    // MARK: - Feed sources
+
     private var feed: [FeedItem] {
+        (myItems + friendItems).sorted { $0.date > $1.date }
+    }
+
+    private var myItems: [FeedItem] {
+        let loc = [store.profile.city, store.profile.country].filter { !$0.isEmpty }.joined(separator: ", ")
+        return store.sessions.map { s in
+            FeedItem(
+                id: s.id, personId: nil, authorName: store.account?.name ?? "Tú",
+                avatarPhoto: store.account?.photoData, avatarEmoji: "🙂",
+                flag: countryFlag(store.profile.country), location: loc,
+                date: s.date, title: s.name, note: s.note, photo: s.photoData,
+                elapsed: s.elapsed, exercises: s.exercises, sets: s.sets, volume: s.volume)
+        }
+    }
+
+    private let friendNotes = ["", "Buenas sensaciones hoy 💪", "", "PR en el último ejercicio 🔥", "", "Día duro pero hecho ✅"]
+
+    private var friendItems: [FeedItem] {
         var items: [FeedItem] = []
         for p in friends {
             let history = buildFriendHistory(p)
@@ -112,15 +174,21 @@ struct SocialFeedView: View {
                 .prefix(2)
             for entries in recent {
                 let date = entries.map { $0.completedAt }.max() ?? Date()
+                let sets = entries.reduce(0) { $0 + $1.sets }
+                let sid = entries.first?.sessionId ?? UUID().uuidString
+                var seed: UInt64 = 0
+                for ch in sid.unicodeScalars { seed = seed &* 31 &+ UInt64(ch.value) }
                 items.append(FeedItem(
-                    id: entries.first?.sessionId ?? UUID().uuidString,
-                    person: p, date: date, title: Self.title(for: entries),
-                    exercises: entries.count, sets: entries.reduce(0) { $0 + $1.sets },
-                    volume: entries.reduce(0) { $0 + $1.volume },
-                    names: entries.prefix(3).map { $0.exerciseName }))
+                    id: sid, personId: p.id, authorName: p.name,
+                    avatarPhoto: nil, avatarEmoji: p.avatar, flag: p.flag,
+                    location: "\(p.city), \(p.country)", date: date,
+                    title: Self.title(for: entries), note: friendNotes[Int(seed % UInt64(friendNotes.count))],
+                    photo: nil, elapsed: entries.count * 240 + sets * 40,
+                    exercises: entries.count, sets: sets,
+                    volume: entries.reduce(0) { $0 + $1.volume }))
             }
         }
-        return items.sorted { $0.date > $1.date }
+        return items
     }
 
     private static func title(for entries: [HistoryEntry]) -> String {

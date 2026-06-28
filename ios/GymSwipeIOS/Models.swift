@@ -122,6 +122,8 @@ struct SocialPerson: Identifiable, Codable, Hashable {
     var avatar: String
     var gym: String
     var flag: String = "🇪🇸"
+    var city: String = "Madrid"
+    var country: String = "España"
 }
 
 struct ChatMessage: Identifiable, Codable, Hashable {
