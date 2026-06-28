@@ -17,6 +17,7 @@ import {
   Pencil,
   Plus,
   Save,
+  Search,
   Send,
   Share2,
   Target,
@@ -1469,8 +1470,14 @@ type RelationshipStatus = 'none' | 'outgoing' | 'incoming' | 'friends'
 type SocialPerson = {
   id: string
   name: string
+  handle: string
   avatar: string
   gym: string
+}
+
+type Account = {
+  name: string
+  handle: string
 }
 
 type ChatMessage = {
@@ -1502,6 +1509,7 @@ type AppNotification = {
 }
 
 type SocialState = {
+  account: Account | null
   people: SocialPerson[]
   relationships: Record<string, RelationshipStatus>
   conversations: Conversation[]
@@ -1511,13 +1519,35 @@ type SocialState = {
 const socialStorageKey = 'gym-swipe-social-v1'
 
 const socialPeople: SocialPerson[] = [
-  { id: 'p-mika', name: 'Mika', avatar: '🦊', gym: 'Basic-Fit Gran Vía' },
-  { id: 'p-leo', name: 'Leo', avatar: '🐻', gym: 'McFit Chamberí' },
-  { id: 'p-sofia', name: 'Sofía', avatar: '🦅', gym: 'Altafit Retiro' },
-  { id: 'p-dani', name: 'Dani', avatar: '🐺', gym: 'Basic-Fit Sol' },
-  { id: 'p-vera', name: 'Vera', avatar: '🦌', gym: 'VivaGym Malasaña' },
-  { id: 'p-iker', name: 'Iker', avatar: '🦁', gym: 'Synergym Salamanca' },
+  { id: 'p-mika', name: 'Mika', handle: 'mika', avatar: '🦊', gym: 'Basic-Fit Gran Vía' },
+  { id: 'p-leo', name: 'Leo', handle: 'leo_lifts', avatar: '🐻', gym: 'McFit Chamberí' },
+  { id: 'p-sofia', name: 'Sofía', handle: 'sofia_fit', avatar: '🦅', gym: 'Altafit Retiro' },
+  { id: 'p-dani', name: 'Dani', handle: 'dani', avatar: '🐺', gym: 'Basic-Fit Sol' },
+  { id: 'p-vera', name: 'Vera', handle: 'vera_strong', avatar: '🦌', gym: 'VivaGym Malasaña' },
+  { id: 'p-iker', name: 'Iker', handle: 'iker', avatar: '🦁', gym: 'Synergym Salamanca' },
+  { id: 'p-noa', name: 'Noa', handle: 'noa_gym', avatar: '🐯', gym: 'Basic-Fit Atocha' },
+  { id: 'p-bruno', name: 'Bruno', handle: 'bruno_pr', avatar: '🐗', gym: 'McFit Chamartín' },
+  { id: 'p-carla', name: 'Carla', handle: 'carla_lift', avatar: '🦓', gym: 'Altafit Bernabéu' },
 ]
+
+function normalizeHandle(value: string) {
+  return value
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .replace(/[^a-z0-9_]/g, '')
+    .slice(0, 20)
+}
+
+function getHandleError(handle: string, takenHandles: string[]) {
+  if (handle.length < 3) {
+    return 'Mínimo 3 caracteres'
+  }
+  if (takenHandles.includes(handle)) {
+    return 'Ese usuario ya existe'
+  }
+  return ''
+}
 
 const demoPlanOwnerIds = ['p-sofia', 'p-vera', 'p-dani', 'p-iker']
 
@@ -1538,6 +1568,7 @@ function getDefaultSocialState(): SocialState {
   const minute = 60 * 1000
 
   return {
+    account: null,
     people: socialPeople,
     relationships: {
       'p-mika': 'friends',
@@ -1604,6 +1635,7 @@ function loadSocialState(): SocialState {
 
     const parsed = JSON.parse(raw) as Partial<SocialState>
     return {
+      account: parsed.account ?? null,
       people: socialPeople,
       relationships: parsed.relationships ?? {},
       conversations: Array.isArray(parsed.conversations) ? parsed.conversations : [],
@@ -1717,6 +1749,7 @@ type SocialActions = {
   markNotificationRead: (id: string) => void
   markAllNotificationsRead: () => void
   acceptTrainingPlan: (personId: string, text: string) => string
+  saveAccount: (account: Account) => void
 }
 
 function useSocial(activeConversationRef: MutableRefObject<string | null>): SocialActions {
@@ -1925,6 +1958,10 @@ function useSocial(activeConversationRef: MutableRefObject<string | null>): Soci
     return id
   }
 
+  function saveAccount(account: Account) {
+    setSocial((current) => ({ ...current, account }))
+  }
+
   return {
     social,
     unreadMessages,
@@ -1939,6 +1976,7 @@ function useSocial(activeConversationRef: MutableRefObject<string | null>): Soci
     markNotificationRead,
     markAllNotificationsRead,
     acceptTrainingPlan,
+    saveAccount,
   }
 }
 
@@ -2100,6 +2138,7 @@ function App() {
   const [activeOverlay, setActiveOverlay] = useState<'messages' | 'notifications' | null>(null)
   const [messagesInitialTab, setMessagesInitialTab] = useState<'chats' | 'friends'>('chats')
   const [activeConversationPersonId, setActiveConversationPersonId] = useState<string | null>(null)
+  const [editingAccount, setEditingAccount] = useState(false)
   const activeConversationRef = useRef<string | null>(null)
   const social = useSocial(activeConversationRef)
 
@@ -2986,6 +3025,7 @@ function App() {
             onSendFriendRequest={social.sendFriendRequest}
             onAcceptFriendRequest={social.acceptFriendRequest}
             onRejectFriendRequest={social.rejectFriendRequest}
+            onEditAccount={() => setEditingAccount(true)}
           />
         )}
 
@@ -3008,6 +3048,19 @@ function App() {
             onClose={() => setActiveConversationPersonId(null)}
             onSend={(text) => social.sendMessage(activeConversationPersonId, text)}
             onMarkRead={() => social.markConversationRead(activeConversationPersonId)}
+          />
+        )}
+
+        {(!social.social.account || editingAccount) && (
+          <AccountSetup
+            initial={social.social.account}
+            takenHandles={social.social.people.map((person) => person.handle)}
+            allowCancel={Boolean(social.social.account)}
+            onSubmit={(account) => {
+              social.saveAccount(account)
+              setEditingAccount(false)
+            }}
+            onCancel={() => setEditingAccount(false)}
           />
         )}
       </section>
@@ -4429,6 +4482,7 @@ function MessagesOverlay({
   onSendFriendRequest,
   onAcceptFriendRequest,
   onRejectFriendRequest,
+  onEditAccount,
 }: {
   social: SocialState
   initialTab?: 'chats' | 'friends'
@@ -4437,6 +4491,7 @@ function MessagesOverlay({
   onSendFriendRequest: (personId: string) => void
   onAcceptFriendRequest: (personId: string) => void
   onRejectFriendRequest: (personId: string) => void
+  onEditAccount: () => void
 }) {
   const [tab, setTab] = useState<'chats' | 'friends'>(initialTab)
 
@@ -4512,6 +4567,7 @@ function MessagesOverlay({
             onSendFriendRequest={onSendFriendRequest}
             onAcceptFriendRequest={onAcceptFriendRequest}
             onRejectFriendRequest={onRejectFriendRequest}
+            onEditAccount={onEditAccount}
           />
         )}
       </div>
@@ -4525,102 +4581,220 @@ function FriendsView({
   onSendFriendRequest,
   onAcceptFriendRequest,
   onRejectFriendRequest,
+  onEditAccount,
 }: {
   social: SocialState
   onOpenChat: (personId: string) => void
   onSendFriendRequest: (personId: string) => void
   onAcceptFriendRequest: (personId: string) => void
   onRejectFriendRequest: (personId: string) => void
+  onEditAccount: () => void
 }) {
+  const [query, setQuery] = useState('')
   const incoming = social.people.filter((person) => getRelationship(social, person.id) === 'incoming')
   const friends = social.people.filter((person) => getRelationship(social, person.id) === 'friends')
   const discover = social.people.filter((person) =>
     ['none', 'outgoing'].includes(getRelationship(social, person.id)),
   )
 
+  const normalizedQuery = normalizeSearchText(query.trim().replace(/^@/, ''))
+  const searchResults = normalizedQuery
+    ? social.people.filter(
+        (person) =>
+          normalizeSearchText(person.name).includes(normalizedQuery) ||
+          person.handle.includes(normalizedQuery),
+      )
+    : []
+
+  function personRow(person: SocialPerson) {
+    const status = getRelationship(social, person.id)
+
+    return (
+      <li key={person.id}>
+        <SocialAvatar person={person} />
+        <div className="friend-main">
+          <strong>{person.name}</strong>
+          <span>@{person.handle}</span>
+        </div>
+        {status === 'incoming' ? (
+          <div className="friend-actions">
+            <button type="button" className="friend-accept" onClick={() => onAcceptFriendRequest(person.id)} aria-label="Aceptar">
+              <Check size={15} />
+            </button>
+            <button type="button" className="friend-reject" onClick={() => onRejectFriendRequest(person.id)} aria-label="Rechazar">
+              <X size={15} />
+            </button>
+          </div>
+        ) : status === 'friends' ? (
+          <button type="button" className="friend-message" onClick={() => onOpenChat(person.id)}>
+            <MessageSquare size={14} />
+            Mensaje
+          </button>
+        ) : status === 'outgoing' ? (
+          <span className="friend-status">Enviada</span>
+        ) : (
+          <button type="button" className="friend-add" onClick={() => onSendFriendRequest(person.id)}>
+            <UserPlus size={14} />
+            Añadir
+          </button>
+        )}
+      </li>
+    )
+  }
+
   return (
     <div className="friends-view">
-      <section className="friends-section">
-        <h3>Solicitudes recibidas</h3>
-        {incoming.length === 0 ? (
-          <p className="empty-copy">Sin solicitudes pendientes.</p>
-        ) : (
-          <ul className="friends-list">
-            {incoming.map((person) => (
-              <li key={person.id}>
-                <SocialAvatar person={person} />
-                <div className="friend-main">
-                  <strong>{person.name}</strong>
-                  <span>{person.gym}</span>
-                </div>
-                <div className="friend-actions">
-                  <button type="button" className="friend-accept" onClick={() => onAcceptFriendRequest(person.id)}>
-                    <Check size={15} />
-                  </button>
-                  <button type="button" className="friend-reject" onClick={() => onRejectFriendRequest(person.id)}>
-                    <X size={15} />
-                  </button>
-                </div>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
+      {social.account && (
+        <div className="account-chip">
+          <SocialAvatar size="sm" />
+          <div className="friend-main">
+            <strong>{social.account.name}</strong>
+            <span>@{social.account.handle}</span>
+          </div>
+          <button type="button" className="friend-status-edit" onClick={onEditAccount}>
+            <Pencil size={13} />
+            Editar
+          </button>
+        </div>
+      )}
 
-      <section className="friends-section">
-        <h3>Tus amigos</h3>
-        {friends.length === 0 ? (
-          <p className="empty-copy">Aún no tienes amigos. Envía una solicitud abajo.</p>
-        ) : (
-          <ul className="friends-list">
-            {friends.map((person) => (
-              <li key={person.id}>
-                <SocialAvatar person={person} />
-                <div className="friend-main">
-                  <strong>{person.name}</strong>
-                  <span>{person.gym}</span>
-                </div>
-                <button type="button" className="friend-message" onClick={() => onOpenChat(person.id)}>
-                  <MessageSquare size={14} />
-                  Mensaje
-                </button>
-              </li>
-            ))}
-          </ul>
+      <label className="friend-search">
+        <Search size={16} />
+        <input
+          value={query}
+          onChange={(event) => setQuery(event.target.value)}
+          placeholder="Buscar por nombre o @usuario"
+          autoCapitalize="none"
+          autoCorrect="off"
+          spellCheck={false}
+          aria-label="Buscar amigos"
+        />
+        {query && (
+          <button type="button" onClick={() => setQuery('')} aria-label="Limpiar búsqueda">
+            <X size={15} />
+          </button>
         )}
-      </section>
+      </label>
 
-      <section className="friends-section">
-        <h3>Descubre compañeros</h3>
-        {discover.length === 0 ? (
-          <p className="empty-copy">Ya estás conectado con todos los compañeros cercanos.</p>
-        ) : (
-          <ul className="friends-list">
-            {discover.map((person) => {
-              const status = getRelationship(social, person.id)
+      {normalizedQuery ? (
+        <section className="friends-section">
+          <h3>Resultados</h3>
+          {searchResults.length === 0 ? (
+            <p className="empty-copy">Nadie coincide con “{query}”.</p>
+          ) : (
+            <ul className="friends-list">{searchResults.map(personRow)}</ul>
+          )}
+        </section>
+      ) : (
+        <>
+          <section className="friends-section">
+            <h3>Solicitudes recibidas</h3>
+            {incoming.length === 0 ? (
+              <p className="empty-copy">Sin solicitudes pendientes.</p>
+            ) : (
+              <ul className="friends-list">{incoming.map(personRow)}</ul>
+            )}
+          </section>
 
-              return (
-                <li key={person.id}>
-                  <SocialAvatar person={person} />
-                  <div className="friend-main">
-                    <strong>{person.name}</strong>
-                    <span>{person.gym}</span>
-                  </div>
-                  {status === 'outgoing' ? (
-                    <span className="friend-status">Solicitud enviada</span>
-                  ) : (
-                    <button type="button" className="friend-add" onClick={() => onSendFriendRequest(person.id)}>
-                      <UserPlus size={14} />
-                      Añadir
-                    </button>
-                  )}
-                </li>
-              )
-            })}
-          </ul>
-        )}
-      </section>
+          <section className="friends-section">
+            <h3>Tus amigos</h3>
+            {friends.length === 0 ? (
+              <p className="empty-copy">Aún no tienes amigos. Busca arriba o envía una solicitud.</p>
+            ) : (
+              <ul className="friends-list">{friends.map(personRow)}</ul>
+            )}
+          </section>
+
+          <section className="friends-section">
+            <h3>Descubre compañeros</h3>
+            {discover.length === 0 ? (
+              <p className="empty-copy">Ya estás conectado con todos los compañeros cercanos.</p>
+            ) : (
+              <ul className="friends-list">{discover.map(personRow)}</ul>
+            )}
+          </section>
+        </>
+      )}
     </div>
+  )
+}
+
+function AccountSetup({
+  initial,
+  takenHandles,
+  allowCancel,
+  onSubmit,
+  onCancel,
+}: {
+  initial: Account | null
+  takenHandles: string[]
+  allowCancel: boolean
+  onSubmit: (account: Account) => void
+  onCancel: () => void
+}) {
+  const [name, setName] = useState(initial?.name ?? '')
+  const [handle, setHandle] = useState(initial?.handle ?? '')
+  const trimmedName = name.trim()
+  const normalized = normalizeHandle(handle)
+  const otherHandles = takenHandles.filter((item) => item !== initial?.handle)
+  const handleError = getHandleError(normalized, otherHandles)
+  const nameError = trimmedName.length < 2 ? 'Escribe tu nombre' : ''
+  const canSubmit = !nameError && !handleError
+
+  return (
+    <section className="account-overlay" aria-label="Tu cuenta">
+      <div className="account-card">
+        <div className="account-card-head">
+          <p className="eyebrow">Forge Loop</p>
+          <h2>{initial ? 'Editar cuenta' : 'Crea tu cuenta'}</h2>
+          <p className="empty-copy">Elige tu nombre y un @usuario único para que tus amigos te encuentren.</p>
+        </div>
+
+        <label className="account-field">
+          <span>Nombre</span>
+          <input
+            value={name}
+            onChange={(event) => setName(event.target.value)}
+            placeholder="Tu nombre"
+            maxLength={24}
+          />
+        </label>
+
+        <label className="account-field">
+          <span>Usuario</span>
+          <div className="handle-input">
+            <i>@</i>
+            <input
+              value={normalized}
+              onChange={(event) => setHandle(event.target.value)}
+              placeholder="tu_usuario"
+              autoCapitalize="none"
+              autoCorrect="off"
+              spellCheck={false}
+            />
+          </div>
+          {normalized && handleError ? (
+            <small className="field-error">{handleError}</small>
+          ) : normalized ? (
+            <small className="field-ok">@{normalized} disponible</small>
+          ) : null}
+        </label>
+
+        <button
+          className="primary-button"
+          type="button"
+          disabled={!canSubmit}
+          onClick={() => onSubmit({ name: trimmedName, handle: normalized })}
+        >
+          {initial ? 'Guardar' : 'Empezar'}
+        </button>
+        {allowCancel && (
+          <button className="secondary-button" type="button" onClick={onCancel}>
+            Cancelar
+          </button>
+        )}
+      </div>
+    </section>
   )
 }
 

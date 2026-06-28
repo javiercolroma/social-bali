@@ -4575,3 +4575,164 @@ input:focus-visible {
   font-size: 0.78rem;
   font-weight: 850;
 }
+
+/* ===== Account setup + friend search ===== */
+.account-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 50;
+  display: grid;
+  place-items: center;
+  padding: 22px;
+  background: rgba(17, 20, 14, 0.55);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  animation: overlay-rise 200ms ease both;
+}
+
+.account-card {
+  display: grid;
+  gap: 12px;
+  width: min(100%, 340px);
+  padding: 20px;
+  border: 1px solid rgba(19, 22, 18, 0.08);
+  border-radius: 18px;
+  background: #fbfcf7;
+  box-shadow: 0 30px 70px rgba(20, 24, 18, 0.3);
+}
+
+.account-card-head {
+  display: grid;
+  gap: 5px;
+}
+
+.account-card-head h2 {
+  color: #11140e;
+  font-size: 1.5rem;
+  line-height: 1.05;
+}
+
+.account-field {
+  display: grid;
+  gap: 6px;
+  color: #6d7068;
+  font-size: 0.72rem;
+  font-weight: 950;
+  text-transform: uppercase;
+}
+
+.account-field > input {
+  min-height: 46px;
+  border: 1px solid rgba(19, 22, 18, 0.12);
+  border-radius: 10px;
+  padding: 0 12px;
+  color: #171913;
+  font: inherit;
+  font-size: 0.95rem;
+  font-weight: 700;
+  background: #ffffff;
+}
+
+.handle-input {
+  display: grid;
+  grid-template-columns: 26px 1fr;
+  align-items: center;
+  border: 1px solid rgba(19, 22, 18, 0.12);
+  border-radius: 10px;
+  padding-left: 10px;
+  background: #ffffff;
+}
+
+.handle-input i {
+  color: #8a8f82;
+  font-style: normal;
+  font-size: 1rem;
+  font-weight: 900;
+}
+
+.handle-input input {
+  min-width: 0;
+  min-height: 46px;
+  border: 0;
+  padding: 0 12px 0 2px;
+  color: #171913;
+  font: inherit;
+  font-size: 0.95rem;
+  font-weight: 700;
+  background: transparent;
+}
+
+.field-error,
+.field-ok {
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: none;
+}
+
+.field-error {
+  color: #c14b46;
+}
+
+.field-ok {
+  color: #4b8a1f;
+}
+
+.account-chip {
+  display: grid;
+  grid-template-columns: 24px 1fr auto;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid rgba(137, 214, 24, 0.3);
+  border-radius: 12px;
+  background: #f4f9e8;
+}
+
+.friend-status-edit {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 30px;
+  border: 0;
+  border-radius: 999px;
+  padding: 0 10px;
+  color: #3f4837;
+  font-size: 0.72rem;
+  font-weight: 900;
+  background: rgba(255, 255, 255, 0.7);
+}
+
+.friend-search {
+  display: grid;
+  grid-template-columns: 18px 1fr auto;
+  align-items: center;
+  gap: 8px;
+  margin-top: 2px;
+  padding: 0 12px;
+  border: 1px solid rgba(19, 22, 18, 0.12);
+  border-radius: 999px;
+  color: #8a8f82;
+  background: #ffffff;
+}
+
+.friend-search input {
+  min-width: 0;
+  min-height: 44px;
+  border: 0;
+  color: #171913;
+  font: inherit;
+  font-size: 0.88rem;
+  font-weight: 650;
+  background: transparent;
+}
+
+.friend-search button {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border: 0;
+  border-radius: 50%;
+  color: #5b6154;
+  background: #ece9df;
+}

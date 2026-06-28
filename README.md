@@ -949,11 +949,20 @@ Chat individual:
 - El otro usuario responde automaticamente (~2.6 s) — SIMULADO (no hay backend).
 - Marca la conversacion como leida al entrar.
 
+Cuenta de usuario:
+
+- En el primer arranque (sin cuenta) aparece `AccountSetup` (modal bloqueante).
+- Pide nombre + `@usuario` unico (normalizado: minusculas, `a-z0-9_`, 3-20 chars).
+- La unicidad se valida contra los handles de las personas demo.
+- Se persiste en `social.account`. Editable desde la pestana Amigos (chip "Editar").
+
 Amigos:
 
+- Buscador por nombre o `@usuario` arriba (filtra todas las personas).
 - Solicitudes recibidas (aceptar/rechazar).
 - Tus amigos (con boton Mensaje).
 - Descubre companeros (enviar solicitud).
+- Cada persona tiene `handle` (`@...`); las filas muestran nombre + @handle.
 - Estados de relacion: `none`, `outgoing` (solicitud enviada), `incoming`, `friends`.
 - Al enviar solicitud se simula su aceptacion a los ~4.2 s.
 
@@ -966,7 +975,8 @@ Notificaciones (overlay):
 Pendiente:
 
 - Backend real (las respuestas y aceptaciones estan simuladas con temporizadores).
-- Cuenta de usuario con nombre + @ unico y busqueda de amigos por nombre/@.
+- Usuarios reales (ahora la busqueda es sobre personas demo locales).
+- Unicidad de @usuario validada en servidor.
 
 ## 22. Correcciones recientes (sesion actual)
 
