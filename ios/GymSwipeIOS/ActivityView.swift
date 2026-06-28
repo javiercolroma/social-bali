@@ -58,7 +58,8 @@ struct ActivityView: View {
 
     @ViewBuilder
     private var progressContent: some View {
-        summaryCard
+        rachaCard
+        gymScoreCard
         TrainingCalendarView(sessions: sessions) { date, daySessions in
             daySheet = DayPayload(id: date, date: date, sessions: daySessions)
         }
@@ -194,33 +195,66 @@ struct ActivityView: View {
         }
     }
 
-    private var summaryCard: some View {
-        let score = store.gymScore
-        return PanelCard {
-            HStack(spacing: 12) {
-                // Racha (métrica destacada)
+    /// Racha en horizontal, de extremo a extremo, con el número dentro de una llama.
+    private var rachaCard: some View {
+        PanelCard {
+            HStack(spacing: 16) {
+                ZStack {
+                    Image(systemName: "flame.fill")
+                        .font(.system(size: 70))
+                        .foregroundStyle(LinearGradient(colors: [Color(hex: "ffb33b"), Color(hex: "f0560a")],
+                                                        startPoint: .top, endPoint: .bottom))
+                    Text("\(store.player.streak)")
+                        .font(.system(size: 24, weight: .heavy)).foregroundColor(.white)
+                        .offset(y: 9)
+                }
+                .frame(width: 70, height: 70)
                 VStack(alignment: .leading, spacing: 3) {
-                    HStack(spacing: 5) {
-                        Image(systemName: "flame.fill").font(.system(size: 12, weight: .heavy)).foregroundColor(Color(hex: "e8820c"))
-                        Text("RACHA").font(.caption2).fontWeight(.heavy).foregroundColor(Brand.muted)
-                    }
-                    Text("\(store.player.streak)").font(.system(size: 48, weight: .heavy)).foregroundColor(Brand.ink)
-                    Text(store.player.streak == 1 ? "día en racha" : "días en racha")
-                        .font(.system(size: 12, weight: .bold)).foregroundColor(Brand.soft)
+                    Text(store.player.streak == 1 ? "1 día en racha" : "\(store.player.streak) días en racha")
+                        .font(.system(size: 19, weight: .heavy)).foregroundColor(Brand.ink)
+                    Text("\(sessionsThisWeek) \(sessionsThisWeek == 1 ? "entreno" : "entrenos") esta semana")
+                        .font(.system(size: 13, weight: .bold)).foregroundColor(Brand.soft)
                 }
                 Spacer()
-                // Gym Score con presencia (bloque verde)
-                VStack(spacing: 4) {
-                    Text("GYM SCORE").font(.caption2).fontWeight(.heavy).foregroundColor(Color(hex: "1c2b08"))
-                    Text("\(score.total)").font(.system(size: 46, weight: .heavy)).foregroundColor(Color(hex: "10150a"))
-                    Text(score.tier).font(.system(size: 12, weight: .heavy)).foregroundColor(Color(hex: "10150a"))
-                        .padding(.horizontal, 10).padding(.vertical, 4)
-                        .background(Color.white.opacity(0.7)).clipShape(Capsule())
-                }
-                .padding(.horizontal, 18).padding(.vertical, 14)
-                .background(Brand.green).clipShape(RoundedRectangle(cornerRadius: 18))
             }
-            stat("\(sessionsThisWeek)", "Entrenos esta semana", "calendar")
+            .frame(maxWidth: .infinity)
+        }
+    }
+
+    /// Gym Score igual que en Comunidad: puntuación + tier + fiabilidad + barras de pilares.
+    private var gymScoreCard: some View {
+        let s = store.gymScore
+        return PanelCard {
+            HStack(alignment: .top) {
+                VStack(alignment: .leading, spacing: 3) {
+                    Text("GYM SCORE").font(.caption2).fontWeight(.heavy).foregroundColor(Brand.muted)
+                    Text("\(s.total)").font(.system(size: 48, weight: .heavy)).foregroundColor(Brand.ink)
+                    Text(s.tier).font(.system(size: 12, weight: .heavy)).foregroundColor(Color(hex: "10150a"))
+                        .padding(.horizontal, 10).padding(.vertical, 3).background(Brand.greenSoft).clipShape(Capsule())
+                }
+                Spacer()
+                VStack(alignment: .trailing, spacing: 4) {
+                    Text(s.reliable ? "Fiable · \(s.reliability)%" : "Provisional")
+                        .font(.system(size: 11, weight: .heavy)).foregroundColor(s.reliable ? Color(hex: "18320d") : Color(hex: "7a4d00"))
+                        .padding(.horizontal, 10).padding(.vertical, 5)
+                        .background(s.reliable ? Color(hex: "dff0bf") : Color(hex: "ffe2a3")).clipShape(Capsule())
+                    if !s.reliable {
+                        Text("Faltan \(s.daysUntilReliable) días").font(.caption2).foregroundColor(Brand.soft)
+                    }
+                }
+            }
+            if !s.reliable {
+                Text("Entrena 3 semanas para tu score real (potencial \(s.potential)).")
+                    .font(.footnote).foregroundColor(Brand.muted)
+            }
+            VStack(spacing: 8) {
+                ScoreBarView(label: "Fuerza", value: s.strength)
+                ScoreBarView(label: "Constancia", value: s.consistency)
+                ScoreBarView(label: "Progreso", value: s.progression)
+                ScoreBarView(label: "Volumen", value: s.volume)
+                ScoreBarView(label: "Calidad", value: s.quality)
+                ScoreBarView(label: "Variedad", value: s.variety)
+            }
         }
     }
 

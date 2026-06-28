@@ -31,7 +31,6 @@ struct RankingView: View {
     var body: some View {
         ScrollView {
             VStack(spacing: 12) {
-                gymScoreCard
                 rankingCard
                 mapCard
             }
@@ -40,42 +39,6 @@ struct RankingView: View {
         .background(Brand.bg)
         .onReceive(location.$coordinate.compactMap { $0 }) { coord in
             region = MKCoordinateRegion(center: coord, span: MKCoordinateSpan(latitudeDelta: 0.05, longitudeDelta: 0.05))
-        }
-    }
-
-    private var gymScoreCard: some View {
-        let s = store.gymScore
-        return PanelCard {
-            HStack(alignment: .top) {
-                VStack(alignment: .leading, spacing: 3) {
-                    Text("GYM SCORE").font(.caption2).fontWeight(.heavy).foregroundColor(Brand.muted)
-                    Text("\(s.total)").font(.system(size: 48, weight: .heavy)).foregroundColor(Brand.ink)
-                    Text(s.tier).font(.system(size: 12, weight: .heavy)).foregroundColor(Color(hex: "10150a"))
-                        .padding(.horizontal, 10).padding(.vertical, 3).background(Brand.greenSoft).clipShape(Capsule())
-                }
-                Spacer()
-                VStack(alignment: .trailing, spacing: 4) {
-                    Text(s.reliable ? "Fiable · \(s.reliability)%" : "Provisional")
-                        .font(.system(size: 11, weight: .heavy)).foregroundColor(s.reliable ? Color(hex: "18320d") : Color(hex: "7a4d00"))
-                        .padding(.horizontal, 10).padding(.vertical, 5)
-                        .background(s.reliable ? Color(hex: "dff0bf") : Color(hex: "ffe2a3")).clipShape(Capsule())
-                    if !s.reliable {
-                        Text("Faltan \(s.daysUntilReliable) días").font(.caption2).foregroundColor(Brand.soft)
-                    }
-                }
-            }
-            if !s.reliable {
-                Text("Entrena 3 semanas para tu score real (potencial \(s.potential)).")
-                    .font(.footnote).foregroundColor(Brand.muted)
-            }
-            VStack(spacing: 8) {
-                ScoreBarView(label: "Fuerza", value: s.strength)
-                ScoreBarView(label: "Constancia", value: s.consistency)
-                ScoreBarView(label: "Progreso", value: s.progression)
-                ScoreBarView(label: "Volumen", value: s.volume)
-                ScoreBarView(label: "Calidad", value: s.quality)
-                ScoreBarView(label: "Variedad", value: s.variety)
-            }
         }
     }
 
