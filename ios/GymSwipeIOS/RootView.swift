@@ -132,7 +132,6 @@ struct CustomTabBar: View {
         .padding(.top, 6)
         .padding(.bottom, max(8, safeBottom))
         .background(Brand.bg)
-        .overlay(Divider(), alignment: .top)
     }
 
     private var safeBottom: CGFloat {
@@ -140,32 +139,43 @@ struct CustomTabBar: View {
             .windows.first?.safeAreaInsets.bottom) ?? 0
     }
 
+    private let accent = Color(hex: "5e910e")
+
     private func tabButton(_ idx: Int, _ item: (title: String, icon: String)) -> some View {
-        Button { tab = idx } label: {
+        let active = tab == idx
+        return Button { tab = idx } label: {
             VStack(spacing: 4) {
-                Image(systemName: item.icon).font(.system(size: 18, weight: .semibold))
+                Image(systemName: item.icon)
+                    .font(.system(size: 18, weight: active ? .heavy : .semibold))
+                    .frame(width: 46, height: 30)
+                    .background(active ? Brand.greenSoft.opacity(0.55) : .clear)
+                    .clipShape(Capsule())
                 Text(item.title).font(.system(size: 10, weight: .heavy))
             }
-            .foregroundColor(tab == idx ? Color(hex: "4b6211") : Brand.soft)
+            .foregroundColor(active ? accent : Brand.soft)
             .frame(maxWidth: .infinity)
+            .animation(.easeOut(duration: 0.18), value: tab)
         }
     }
 
     private func centerButton(_ idx: Int, _ item: (title: String, icon: String)) -> some View {
-        Button { tab = idx } label: {
+        let active = tab == idx
+        return Button { tab = idx } label: {
             VStack(spacing: 4) {
                 Image(systemName: item.icon).font(.system(size: 24, weight: .heavy))
                     .foregroundColor(Color(hex: "10150a"))
                     .frame(width: 58, height: 58)
-                    .background(Brand.green)
+                    .background(active ? Brand.green : Brand.greenSoft)
                     .clipShape(Circle())
                     .overlay(Circle().stroke(Brand.bg, lineWidth: 4))
-                    .shadow(color: Brand.green.opacity(0.5), radius: 10, y: 4)
+                    .shadow(color: Brand.green.opacity(active ? 0.55 : 0.25), radius: active ? 12 : 6, y: 4)
+                    .scaleEffect(active ? 1 : 0.94)
                 Text(item.title).font(.system(size: 10, weight: .heavy))
-                    .foregroundColor(tab == idx ? Color(hex: "4b6211") : Brand.soft)
+                    .foregroundColor(active ? accent : Brand.soft)
             }
             .frame(maxWidth: .infinity)
             .offset(y: -14)
+            .animation(.spring(response: 0.3, dampingFraction: 0.7), value: tab)
         }
     }
 }
