@@ -4736,3 +4736,75 @@ input:focus-visible {
   color: #5b6154;
   background: #ece9df;
 }
+
+/* ===== Gym Score: tier + reliability ===== */
+.gym-score-head .gym-tier {
+  width: fit-content;
+  margin-top: 5px;
+  border-radius: 999px;
+  padding: 2px 10px;
+  color: #10150a;
+  font-size: 0.72rem;
+  font-weight: 950;
+  text-transform: none;
+  letter-spacing: 0;
+  background: #c8e98a;
+}
+
+.gym-score-head .gym-reliability {
+  display: grid;
+  gap: 4px;
+  justify-items: end;
+  text-align: right;
+  max-width: 48%;
+}
+
+.gym-score-head .gym-reliability b {
+  display: inline-flex;
+  align-items: center;
+  min-height: 26px;
+  border-radius: 999px;
+  padding: 0 10px;
+  font-size: 0.7rem;
+  font-weight: 950;
+}
+
+.gym-score-head .gym-reliability.ok b {
+  color: #18320d;
+  background: #dff0bf;
+}
+
+.gym-score-head .gym-reliability.warn b {
+  color: #7a4d00;
+  background: #ffe2a3;
+}
+
+.gym-score-head .gym-reliability span {
+  color: #8a8f82;
+  font-size: 0.68rem;
+  font-weight: 800;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.reliability-track {
+  height: 8px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #ece9df;
+}
+
+.reliability-track span {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #ffcf3f, #a7f22d);
+  transition: width 280ms ease;
+}
+
+.gym-score-note {
+  color: #7a7f73;
+  font-size: 0.74rem;
+  font-weight: 700;
+  line-height: 1.3;
+}

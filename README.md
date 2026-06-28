@@ -621,18 +621,27 @@ Objetivo:
 - Ranking global y segmentable por geografia.
 - Base futura para comunidades, retos y matching.
 
-Gym Score:
+Gym Score (0-100, exigente):
 
-- Calcula puntuacion a partir del historial local.
-- Usa las ultimas 3 semanas.
-- Tiene en cuenta:
-  - fuerza
-  - constancia
-  - volumen
-  - progresion
-  - variedad
-  - calidad/completitud
-  - fiabilidad de datos
+- Se calcula a partir del historial local, ventana movil de 3 semanas (21 dias).
+- Pilares y pesos: Fuerza 30%, Constancia 22%, Progreso 17%, Volumen 13%, Calidad 10%, Variedad 8%.
+- Disenado para ser exigente:
+  - Fuerza con benchmarks de nivel avanzado por patron (`getExercisePattern`) y penalizacion por entrenar pocos patrones (`coverage`).
+  - Constancia: 5 sesiones/semana (15 en 3 semanas) = 100; 3/semana ~ 55.
+  - Progreso: necesita ~+12% de volumen bloque-a-bloque para >70; las regresiones penalizan mas.
+  - Volumen: tonelaje log-escalado vs benchmark alto.
+  - Calidad y Variedad con curvas potencia (los skips y la falta de variedad castigan).
+  - Curva final gamma=1.25 que comprime la parte alta: 85+ es casi inalcanzable.
+- Niveles (tier): Iniciado (0), Constante (20), Competente (40), Avanzado (55), Élite (70), Legendario (85+).
+
+Fiabilidad (minimo 3 semanas):
+
+- `reliability = spanFactor * evidenceFactor`.
+  - `spanFactor = min(1, diasUsandoLaApp / 21)` → imposible ser fiable antes de 21 dias.
+  - `evidenceFactor = min(1, min(diasEntrenados/9, sesiones/9))` → exige ~3 sesiones/semana.
+- El numero mostrado = `scoreExigente * (0.5 + 0.5 * reliability)`: durante las primeras 3 semanas es PROVISIONAL (hasta -50%).
+- La UI muestra "Provisional · faltan N dias" + barra de fiabilidad y el potencial; cuando es fiable muestra "Fiable · R%".
+- `reliable` cuando hay >= 21 dias de uso y >= 8 dias entrenados.
 
 Mapa:
 

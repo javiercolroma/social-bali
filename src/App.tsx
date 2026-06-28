@@ -177,8 +177,12 @@ type RankingScope = 'global' | 'country' | 'city' | 'zone'
 
 type GymScore = {
   total: number
-  raw: number
+  potential: number
   reliability: number
+  reliable: boolean
+  daysTracked: number
+  daysUntilReliable: number
+  tier: string
   strength: number
   consistency: number
   volume: number
@@ -1004,16 +1008,39 @@ function getWeightedRecentEntries(history: HistoryEntry[], days: number) {
     .filter((item) => item.ageDays <= days)
 }
 
+const gymScoreWindowDays = 21
+const gymScoreReliableTrainingDays = 8
+const gymScoreTiers: Array<{ min: number; label: string }> = [
+  { min: 85, label: 'Legendario' },
+  { min: 70, label: 'Élite' },
+  { min: 55, label: 'Avanzado' },
+  { min: 40, label: 'Competente' },
+  { min: 20, label: 'Constante' },
+  { min: 0, label: 'Iniciado' },
+]
+
+function getGymScoreTier(total: number) {
+  return (gymScoreTiers.find((tier) => total >= tier.min) ?? gymScoreTiers[gymScoreTiers.length - 1]).label
+}
+
+function clamp01(value: number) {
+  return Math.max(0, Math.min(1, value))
+}
+
+// Gym Score (0-100): demanding by design. A reliable score needs >= 3 weeks of
+// real usage; before that the visible number is provisional (gated by confidence).
 function calculateGymScore(history: HistoryEntry[]): GymScore {
-  const recent = getWeightedRecentEntries(history, 21)
-  const previous = getWeightedRecentEntries(history, 42).filter((item) => item.ageDays > 21)
+  const dayMs = 24 * 60 * 60 * 1000
+  const now = Date.now()
+  const recent = getWeightedRecentEntries(history, gymScoreWindowDays)
+  const previous = getWeightedRecentEntries(history, gymScoreWindowDays * 2).filter((item) => item.ageDays > gymScoreWindowDays)
   const recentEntries = recent.map((item) => item.entry)
   const recentSessions = new Set(recentEntries.map((entry) => entry.sessionId ?? entry.completedAt.slice(0, 10)))
   const recentDays = new Set(recentEntries.map((entry) => entry.completedAt.slice(0, 10)))
   const groups = new Set(recentEntries.map((entry) => getExercisePattern(entry.exerciseName).group))
   const skippedRecent = history.filter((entry) => {
-    const ageDays = Math.max(0, (Date.now() - new Date(entry.completedAt).getTime()) / (24 * 60 * 60 * 1000))
-    return ageDays <= 21 && entry.status === 'skipped'
+    const ageDays = Math.max(0, (now - new Date(entry.completedAt).getTime()) / dayMs)
+    return ageDays <= gymScoreWindowDays && entry.status === 'skipped'
   })
   const weightedVolume = recent.reduce((total, item) => {
     const pattern = getExercisePattern(item.entry.exerciseName)
@@ -1032,38 +1059,79 @@ function calculateGymScore(history: HistoryEntry[]): GymScore {
     bestByGroup.set(pattern.group, Math.max(bestByGroup.get(pattern.group) ?? 0, normalizedStrength))
   })
 
-  const strength = bestByGroup.size
-    ? clampScore(Array.from(bestByGroup.values()).reduce((total, value) => total + Math.min(130, value), 0) / bestByGroup.size)
+  const sessions = recentSessions.size
+  const trainingDays = recentDays.size
+
+  // Strength: advanced benchmarks, capped, and penalised for training few patterns.
+  const strengthCoverage = clamp01(bestByGroup.size / 3)
+  const strengthBase = bestByGroup.size
+    ? Array.from(bestByGroup.values()).reduce((total, value) => total + Math.min(120, value), 0) / bestByGroup.size
     : 0
-  const consistency = clampScore((recentDays.size / 12) * 100)
-  const volume = clampScore(Math.log10(weightedVolume + 1) * 21)
-  const progressionBase = previousVolume > 0 ? ((weightedVolume - previousVolume) / previousVolume) * 70 + 50 : recentEntries.length ? 58 : 0
-  const progression = clampScore(progressionBase)
-  const variety = clampScore((groups.size / 5) * 100)
+  const strength = clampScore(strengthBase * strengthCoverage)
+
+  // Consistency: 5 sessions/week (15 in 3 weeks) = 100, 3/week ~ 55.
+  const consistency = clampScore((sessions / 15) * 100)
+
+  // Volume: log-scaled weekly tonnage vs a high benchmark.
+  const volume = clampScore((Math.log10(weightedVolume + 1) - 3.4) * 40)
+
+  // Progression: block-over-block trend; regressions punished harder, flat ~55.
+  const ratio = previousVolume > 0 ? (weightedVolume - previousVolume) / previousVolume : null
+  const progression =
+    ratio === null
+      ? recentEntries.length
+        ? 45
+        : 0
+      : clampScore(55 + (ratio >= 0 ? ratio * 120 : ratio * 200))
+
+  // Variety: all 5 movement patterns for full marks (concave curve).
+  const variety = clampScore(Math.pow(clamp01(groups.size / 5), 1.3) * 100)
+
+  // Quality: completion rate (skips punished via exponent).
   const completionRate = recentEntries.length / Math.max(1, recentEntries.length + skippedRecent.length)
-  const quality = clampScore(completionRate * 72 + Math.min(28, strength * 0.22))
-  const raw =
-    strength * 0.35 +
-    consistency * 0.2 +
-    volume * 0.15 +
-    progression * 0.15 +
-    variety * 0.1 +
-    quality * 0.05
-  const reliability = Math.min(1, recentSessions.size / 6)
-  const total = clampScore(raw * (0.55 + reliability * 0.45))
+  const quality = clampScore(Math.pow(completionRate, 1.5) * 100)
+
+  const rawWeighted =
+    strength * 0.3 +
+    consistency * 0.22 +
+    progression * 0.17 +
+    volume * 0.13 +
+    quality * 0.1 +
+    variety * 0.08
+
+  // Demanding curve (gamma > 1): compresses the top so 85+ is near-unattainable.
+  const potential = clampScore(100 * Math.pow(clamp01(rawWeighted / 100), 1.25))
+
+  // Reliability: needs >= 3 weeks of span AND enough evidence within them.
+  const firstEntry = history.reduce<number | null>((earliest, entry) => {
+    const time = new Date(entry.completedAt).getTime()
+    return earliest === null || time < earliest ? time : earliest
+  }, null)
+  const daysTracked = firstEntry === null ? 0 : Math.floor((now - firstEntry) / dayMs)
+  const spanFactor = clamp01(daysTracked / gymScoreWindowDays)
+  const evidenceFactor = clamp01(Math.min(trainingDays / 9, sessions / 9))
+  const reliability = spanFactor * evidenceFactor
+  const reliable = daysTracked >= gymScoreWindowDays && trainingDays >= gymScoreReliableTrainingDays
+  const daysUntilReliable = Math.max(0, gymScoreWindowDays - daysTracked)
+
+  const total = clampScore(potential * (0.5 + 0.5 * reliability))
 
   return {
     total,
-    raw: clampScore(raw),
+    potential,
     reliability: Math.round(reliability * 100),
+    reliable,
+    daysTracked,
+    daysUntilReliable,
+    tier: getGymScoreTier(total),
     strength,
     consistency,
     volume,
     progression,
     variety,
     quality,
-    sessions: recentSessions.size,
-    trainingDays: recentDays.size,
+    sessions,
+    trainingDays,
   }
 }
 
@@ -4314,16 +4382,34 @@ function RankingView({ history, profile }: { history: HistoryEntry[]; profile: P
           <div>
             <span>Gym Score</span>
             <strong>{gymScore.total}</strong>
+            <small className="gym-tier">{gymScore.tier}</small>
           </div>
-          <b>{gymScore.reliability}% fiable</b>
+          <div className={`gym-reliability ${gymScore.reliable ? 'ok' : 'warn'}`}>
+            <b>{gymScore.reliable ? `Fiable · ${gymScore.reliability}%` : 'Provisional'}</b>
+            <span>
+              {gymScore.reliable
+                ? `${gymScore.sessions} sesiones · 3 semanas`
+                : `Faltan ${gymScore.daysUntilReliable} días para un score fiable`}
+            </span>
+          </div>
         </div>
+        {!gymScore.reliable && (
+          <div className="reliability-track" aria-hidden="true">
+            <span style={{ width: `${gymScore.reliability}%` }} />
+          </div>
+        )}
+        {!gymScore.reliable && (
+          <p className="gym-score-note">
+            Entrena al menos 3 semanas para desbloquear tu score real (potencial actual {gymScore.potential}).
+          </p>
+        )}
         <div className="score-breakdown">
           <ScoreBar label="Fuerza" value={gymScore.strength} />
           <ScoreBar label="Constancia" value={gymScore.consistency} />
-          <ScoreBar label="Volumen" value={gymScore.volume} />
           <ScoreBar label="Progreso" value={gymScore.progression} />
-          <ScoreBar label="Variedad" value={gymScore.variety} />
+          <ScoreBar label="Volumen" value={gymScore.volume} />
           <ScoreBar label="Calidad" value={gymScore.quality} />
+          <ScoreBar label="Variedad" value={gymScore.variety} />
         </div>
       </section>
 
