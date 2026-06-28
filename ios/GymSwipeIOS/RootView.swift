@@ -13,7 +13,7 @@ struct RootView: View {
     @State private var profilePerson: IdString?
     @State private var showProfile = false
 
-    private let titles = ["Social", "Plan", "Entreno", "Ranking", "Partner"]
+    private let titles = ["Social", "Plan", "Entreno", "Comunidad", "Actividad"]
 
     var body: some View {
         VStack(spacing: 0) {
@@ -22,8 +22,8 @@ struct RootView: View {
                 screen(0) { SocialFeedView(onOpenProfile: { profilePerson = IdString(id: $0) }) }
                 screen(1) { PlanView(onLoaded: { tab = 2 }) }
                 screen(2) { TrainView(onGoToPlan: { tab = 1 }) }
-                screen(3) { RankingView() }
-                screen(4) { PartnerView(onOpenChat: { chatPerson = IdString(id: $0) }) }
+                screen(3) { CommunityView(onOpenChat: { chatPerson = IdString(id: $0) }) }
+                screen(4) { ActivityView() }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .onChange(of: tab) { _ in FX.selection() }
@@ -125,8 +125,8 @@ struct CustomTabBar: View {
         ("Social", "newspaper.fill"),
         ("Plan", "list.bullet.clipboard"),
         ("Entreno", "dumbbell.fill"),
-        ("Ranking", "globe.europe.africa.fill"),
-        ("Partner", "person.2.fill"),
+        ("Comunidad", "person.3.fill"),
+        ("Actividad", "chart.bar.fill"),
     ]
 
     var body: some View {
