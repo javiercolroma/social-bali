@@ -8,7 +8,11 @@ Ultima actualizacion: 2026-06-28
 >
 > **Estado Fase 1:** compila y corre. Implementado nativo: alta de cuenta, Entreno (cargar/serie hecha-saltada/descanso/cronometro), Plan (biblioteca + preview + cargar), Ranking (Gym Score exigente + tabla + mapa MapKit con zoom + ubicacion real), Partner (planes, crear, aceptar→chat, descartar, tus planes con tu nombre), Perfil (nivel/XP/datos), Social completo (mensajes/chat/amigos/buscar/notificaciones/perfil de amigo). Persistencia en `UserDefaults` (clave `forge-native-v1`).
 >
-> **Pendiente de portar/afinar:** gesto de swipe del deck de entreno (ahora botones Hecho/Saltar), edicion inline de peso/reps, crear/editar rutinas propias, compartir entrenos, calendario de progreso, pulido visual.
+> **Añadido tras Fase 1:** Plan con "Crear entrenamiento" (formulario de ejercicios) y sin tarjeta "Biblioteca; Ranking con scope "Amigos" por defecto (ranking real de tus amigos); Partner con "Cuándo" y "Dónde" en el creador y flecha atrás a la izquierda (en vez de X); foto de perfil seleccionable (PhotosPicker) y ajustable (arrastrar/pellizcar), tanto en Perfil como al crear cuenta (`Account.photoData/scale/offset`, `PhotoSupport.swift`).
+>
+> **Pendiente de portar/afinar:** gesto de swipe del deck de entreno (ahora botones Hecho/Saltar), edicion inline de peso/reps, editar rutinas guardadas, compartir entrenos, calendario de progreso, pulido visual.
+>
+> **Futuro (autenticacion):** hoy la cuenta es LOCAL (nombre + @handle + foto en el dispositivo, sin login). Para multiusuario real hara falta backend con auth: email+contraseña y/o **Sign in with Apple** (OBLIGATORIO por Apple si se ofrece login de terceros). Requiere servidor (usuarios, sesiones, recuperacion de contraseña) — pendiente de decidir stack (p. ej. Supabase/Firebase para ir rapido).
 >
 > **Comandos nativos:** `npm run ios:generate` (xcodegen) tras añadir archivos Swift; build con `xcodebuild -project ios/GymSwipeIOS.xcodeproj -scheme GymSwipeIOS -destination 'platform=iOS Simulator,name=iPhone 17 Pro' build`. Ya NO hace falta `npm run ios:sync`.
 

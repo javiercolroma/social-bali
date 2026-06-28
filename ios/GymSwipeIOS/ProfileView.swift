@@ -1,8 +1,12 @@
 import SwiftUI
 import UIKit
+import PhotosUI
 
 struct ProfileView: View {
     @EnvironmentObject var store: AppStore
+    @State private var pickerItem: PhotosPickerItem?
+    @State private var editingData: Data?
+    @State private var showEditor = false
 
     var body: some View {
         let level = getLevelProgress(store.player.xp)
@@ -10,12 +14,28 @@ struct ProfileView: View {
             VStack(spacing: 14) {
                 PanelCard {
                     HStack(spacing: 14) {
-                        Avatar(emoji: "🙂", size: 56)
+                        PhotoPickerLabel(item: $pickerItem, onPicked: { data in
+                            var acc = store.account ?? Account(name: "", handle: "")
+                            acc.photoData = data; acc.photoScale = 1; acc.photoOffsetX = 0; acc.photoOffsetY = 0
+                            store.saveAccount(acc)
+                            editingData = data; showEditor = true
+                        }) {
+                            ZStack(alignment: .bottomTrailing) {
+                                MeAvatar(account: store.account, size: 64)
+                                Image(systemName: "camera.fill").font(.system(size: 11, weight: .bold))
+                                    .foregroundColor(Brand.ink).padding(6).background(Brand.green).clipShape(Circle())
+                            }
+                        }
                         VStack(alignment: .leading, spacing: 3) {
                             Text(store.account?.name ?? "Tu perfil").font(.system(size: 20, weight: .heavy)).foregroundColor(Brand.ink)
                             if let h = store.account?.handle { Text("@\(h)").font(.subheadline).foregroundColor(Brand.muted) }
                         }
                         Spacer()
+                    }
+                    if store.account?.photoData != nil {
+                        Button { editingData = store.account?.photoData; showEditor = true } label: {
+                            Label("Ajustar foto", systemImage: "crop").font(.system(size: 13, weight: .heavy))
+                        }
                     }
                 }
 
@@ -51,6 +71,9 @@ struct ProfileView: View {
             .padding(.vertical, 12)
         }
         .background(Brand.bg)
+        .sheet(isPresented: $showEditor) {
+            if let d = editingData { PhotoEditorView(data: d).environmentObject(store) }
+        }
     }
 
     private func metric(_ value: String, _ label: String) -> some View {

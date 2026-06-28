@@ -1,4 +1,5 @@
 import SwiftUI
+import PhotosUI
 
 func normalizeHandle(_ value: String) -> String {
     let lower = value.folding(options: .diacriticInsensitive, locale: .current).lowercased()
@@ -116,7 +117,7 @@ struct FriendsContent: View {
         VStack(spacing: 14) {
             if let acc = store.account {
                 HStack(spacing: 10) {
-                    Avatar(emoji: "🙂", size: 32)
+                    MeAvatar(account: acc, size: 32)
                     VStack(alignment: .leading, spacing: 1) {
                         Text(acc.name).font(.system(size: 14, weight: .heavy)).foregroundColor(Brand.ink)
                         Text("@\(acc.handle)").font(.caption).foregroundColor(Brand.muted)
@@ -410,6 +411,8 @@ struct AccountSetupView: View {
     var onCancel: () -> Void
     @State private var name = ""
     @State private var handle = ""
+    @State private var pickerItem: PhotosPickerItem?
+    @State private var photoData: Data?
 
     private var normalized: String { normalizeHandle(handle) }
     private var taken: [String] { store.people.map { $0.handle } }
@@ -429,6 +432,21 @@ struct AccountSetupView: View {
                     Text(store.account == nil ? "Crea tu cuenta" : "Editar cuenta").font(.system(size: 26, weight: .heavy)).foregroundColor(Brand.ink)
                     Text("Elige tu nombre y un @usuario único para que tus amigos te encuentren.").font(.footnote).foregroundColor(Brand.muted)
                 }
+                HStack {
+                    Spacer()
+                    PhotoPickerLabel(item: $pickerItem, onPicked: { photoData = $0 }) {
+                        ZStack(alignment: .bottomTrailing) {
+                            if let d = photoData, let ui = UIImage(data: d) {
+                                Image(uiImage: ui).resizable().scaledToFill().frame(width: 84, height: 84).clipShape(Circle())
+                            } else {
+                                Avatar(emoji: "📷", size: 84)
+                            }
+                            Image(systemName: "camera.fill").font(.system(size: 12, weight: .bold))
+                                .foregroundColor(Brand.ink).padding(7).background(Brand.green).clipShape(Circle())
+                        }
+                    }
+                    Spacer()
+                }
                 field("Nombre", text: $name, placeholder: "Tu nombre")
                 VStack(alignment: .leading, spacing: 5) {
                     Text("USUARIO").font(.caption2).fontWeight(.heavy).foregroundColor(Brand.muted)
@@ -445,7 +463,11 @@ struct AccountSetupView: View {
                     }
                 }
                 Button {
-                    store.saveAccount(Account(name: name.trimmingCharacters(in: .whitespaces), handle: normalized))
+                    var acc = store.account ?? Account(name: "", handle: "")
+                    acc.name = name.trimmingCharacters(in: .whitespaces)
+                    acc.handle = normalized
+                    if let photoData { acc.photoData = photoData }
+                    store.saveAccount(acc)
                     onCancel()
                 } label: { Text(store.account == nil ? "Empezar" : "Guardar") }
                     .buttonStyle(PrimaryButtonStyle(enabled: canSubmit)).disabled(!canSubmit)
@@ -461,6 +483,7 @@ struct AccountSetupView: View {
         .onAppear {
             name = store.account?.name ?? ""
             handle = store.account?.handle ?? ""
+            photoData = store.account?.photoData
         }
     }
 

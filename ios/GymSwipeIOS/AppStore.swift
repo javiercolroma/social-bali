@@ -261,8 +261,8 @@ final class AppStore: ObservableObject {
         return id
     }
 
-    func addPlan(title: String, place: String, spots: String, score: Int) {
-        let plan = TrainingPlan(id: newId("plan"), title: title, when: "Esta semana", place: place, spots: spots, ownerId: "me", score: score)
+    func addPlan(title: String, when: String, place: String, spots: String, score: Int) {
+        let plan = TrainingPlan(id: newId("plan"), title: title, when: when, place: place, spots: spots, ownerId: "me", score: score)
         trainingPlans.insert(plan, at: 0)
         trainingPlans = Array(trainingPlans.prefix(8))
         persist()
@@ -270,6 +270,21 @@ final class AppStore: ObservableObject {
 
     func deletePlan(_ id: String) {
         trainingPlans.removeAll { $0.id == id }
+        persist()
+    }
+
+    // MARK: - Workouts (create / delete)
+
+    func addWorkout(name: String, exercises: [Exercise]) {
+        let workout = WorkoutTemplate(
+            id: newId("w"), name: name.isEmpty ? "Mi entreno" : name,
+            description: "\(exercises.count) ejercicios", block: "Mis entrenos", exercises: exercises)
+        savedWorkouts.insert(workout, at: 0)
+        persist()
+    }
+
+    func deleteWorkout(_ id: String) {
+        savedWorkouts.removeAll { $0.id == id }
         persist()
     }
 

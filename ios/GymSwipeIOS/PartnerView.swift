@@ -6,29 +6,44 @@ struct PartnerView: View {
 
     @State private var showCreator = false
     @State private var draftWorkout = "Pecho"
+    @State private var draftWhen = "Mañana"
+    @State private var draftWhere = "Mi gimnasio"
     @State private var draftSpots = "1 persona"
 
     private let workouts = ["Pecho", "Espalda", "Pierna", "Push", "Pull", "Full body", "Cardio"]
+    private let whenOptions = ["Hoy", "Mañana", "Esta semana"]
+    private let whereOptions = ["Mi gimnasio", "Cerca de mí", "Parque / calistenia"]
     private let spotsOptions = ["1 persona", "2 personas", "Grupo pequeño", "Me adapto"]
 
     var body: some View {
         ScrollView {
             VStack(spacing: 12) {
                 PanelCard {
-                    HStack {
-                        VStack(alignment: .leading, spacing: 3) {
-                            Text("PLANES DE ENTRENO").font(.caption2).fontWeight(.heavy).foregroundColor(Brand.muted)
-                            Text("\(store.trainingPlans.count) activos").font(.system(size: 15, weight: .bold)).foregroundColor(Brand.ink)
+                    if showCreator {
+                        HStack(spacing: 10) {
+                            Button { withAnimation { showCreator = false } } label: {
+                                Image(systemName: "chevron.left").font(.system(size: 18, weight: .bold)).foregroundColor(Brand.ink)
+                                    .frame(width: 34, height: 34).background(Brand.chip).clipShape(RoundedRectangle(cornerRadius: 9))
+                            }
+                            Text("Nuevo plan").font(.system(size: 16, weight: .heavy)).foregroundColor(Brand.ink)
+                            Spacer()
                         }
-                        Spacer()
-                        Button { withAnimation { showCreator.toggle() } } label: {
-                            Label(showCreator ? "Cerrar" : "Buscar compañero", systemImage: showCreator ? "xmark" : "person.2.fill")
-                                .font(.system(size: 12, weight: .heavy))
-                                .padding(.horizontal, 10).frame(height: 34)
-                                .background(Brand.greenSoft).foregroundColor(Brand.ink).clipShape(Capsule())
+                        creator
+                    } else {
+                        HStack {
+                            VStack(alignment: .leading, spacing: 3) {
+                                Text("PLANES DE ENTRENO").font(.caption2).fontWeight(.heavy).foregroundColor(Brand.muted)
+                                Text("\(store.trainingPlans.count) activos").font(.system(size: 15, weight: .bold)).foregroundColor(Brand.ink)
+                            }
+                            Spacer()
+                            Button { withAnimation { showCreator = true } } label: {
+                                Label("Buscar compañero", systemImage: "person.2.fill")
+                                    .font(.system(size: 12, weight: .heavy))
+                                    .padding(.horizontal, 10).frame(height: 34)
+                                    .background(Brand.greenSoft).foregroundColor(Brand.ink).clipShape(Capsule())
+                            }
                         }
                     }
-                    if showCreator { creator }
                 }
 
                 if !showCreator {
@@ -42,16 +57,26 @@ struct PartnerView: View {
 
     private var creator: some View {
         VStack(alignment: .leading, spacing: 10) {
+            choice("Cuándo", options: whenOptions, selection: $draftWhen)
+            choice("Dónde", options: whereOptions, selection: $draftWhere)
             choice("Qué", options: workouts, selection: $draftWorkout)
             choice("Plazas", options: spotsOptions, selection: $draftSpots)
             Button {
-                let title = draftWorkout == "Pecho" ? "Pecho + tríceps" : draftWorkout
-                store.addPlan(title: title, place: store.profile.gym, spots: draftSpots, score: store.gymScore.total)
+                let title = draftWorkout == "Pecho" ? "Pecho + tríceps" : (draftWorkout == "Espalda" ? "Espalda + bíceps" : draftWorkout)
+                store.addPlan(title: title, when: draftWhen, place: planPlace, spots: draftSpots, score: store.gymScore.total)
                 showCreator = false
             } label: { Label("Crear plan", systemImage: "plus") }
                 .buttonStyle(PrimaryButtonStyle())
         }
         .padding(.top, 4)
+    }
+
+    private var planPlace: String {
+        switch draftWhere {
+        case "Mi gimnasio": return store.profile.gym.isEmpty ? "Mi gimnasio" : store.profile.gym
+        case "Parque / calistenia": return "Parque cercano"
+        default: return "Zona cercana"
+        }
     }
 
     private func choice(_ label: String, options: [String], selection: Binding<String>) -> some View {

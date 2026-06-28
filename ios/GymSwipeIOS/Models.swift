@@ -83,6 +83,10 @@ enum RelationshipStatus: String, Codable {
 struct Account: Codable, Equatable {
     var name: String
     var handle: String
+    var photoData: Data? = nil
+    var photoScale: Double? = nil
+    var photoOffsetX: Double? = nil
+    var photoOffsetY: Double? = nil
 }
 
 struct SocialPerson: Identifiable, Codable, Hashable {

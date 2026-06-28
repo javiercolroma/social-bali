@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		2A369E47736FA626323CEF25 /* ProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E53E08D1A4CF0DE70074A344 /* ProfileView.swift */; };
 		2A71043ED4BBAF7A09523AFF /* Components.swift in Sources */ = {isa = PBXBuildFile; fileRef = A415A6402658DC75C3C37C3C /* Components.swift */; };
+		2A882A99A8CD48DE197DD5A5 /* PhotoSupport.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3A318726DFFA74FF768BA96D /* PhotoSupport.swift */; };
 		388862FD824CE56B55EE672A /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4FDBAEC8202622CA34A302EA /* Theme.swift */; };
 		44168B322E9C8DF64A6B35D2 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 5D321FCC3B325158C232F567 /* PrivacyInfo.xcprivacy */; };
 		46248B5DA3F8CE7CF349D01C /* GymScore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1250C29A42354C7EA62ADC58 /* GymScore.swift */; };
@@ -29,6 +30,7 @@
 		1250C29A42354C7EA62ADC58 /* GymScore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GymScore.swift; sourceTree = "<group>"; };
 		29747A9B85AA4E6D8D9D3843 /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
 		351AF069FE04261E1DB0C543 /* RankingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RankingView.swift; sourceTree = "<group>"; };
+		3A318726DFFA74FF768BA96D /* PhotoSupport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhotoSupport.swift; sourceTree = "<group>"; };
 		43FB86BA08732C17FD45EDF6 /* GymSwipeIOS.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = GymSwipeIOS.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		45AAAB98E146869DA2747469 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		4FDBAEC8202622CA34A302EA /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
@@ -75,6 +77,7 @@
 				F46519F370ACB4CE695F4928 /* LocationManager.swift */,
 				D1596E5BECE9666DDA76867A /* Models.swift */,
 				C6E2A074351DB17430CAE561 /* PartnerView.swift */,
+				3A318726DFFA74FF768BA96D /* PhotoSupport.swift */,
 				EF5C837837CFA069C8F53AE4 /* PlanView.swift */,
 				5D321FCC3B325158C232F567 /* PrivacyInfo.xcprivacy */,
 				E53E08D1A4CF0DE70074A344 /* ProfileView.swift */,
@@ -162,6 +165,7 @@
 				AEC40F20A484762912222BA0 /* LocationManager.swift in Sources */,
 				D1A51AF5DF1BCC6CDABBD42C /* Models.swift in Sources */,
 				C96DA3E9AC38A13BD8D381B1 /* PartnerView.swift in Sources */,
+				2A882A99A8CD48DE197DD5A5 /* PhotoSupport.swift in Sources */,
 				CF3EFCE5F7B166F143B9B408 /* PlanView.swift in Sources */,
 				2A369E47736FA626323CEF25 /* ProfileView.swift in Sources */,
 				BEBB454C3035C16BFE9C0067 /* RankingView.swift in Sources */,

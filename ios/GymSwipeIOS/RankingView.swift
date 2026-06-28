@@ -11,13 +11,13 @@ private struct MapPlace: Identifiable {
 struct RankingView: View {
     @EnvironmentObject var store: AppStore
     @StateObject private var location = LocationManager()
-    @State private var scope = 2 // 0 global,1 país,2 ciudad,3 zona
+    @State private var scope = 0 // 0 amigos,1 global,2 país,3 ciudad,4 zona
     @State private var region = MKCoordinateRegion(
         center: CLLocationCoordinate2D(latitude: 40.4168, longitude: -3.7038),
         span: MKCoordinateSpan(latitudeDelta: 0.08, longitudeDelta: 0.08))
 
-    private let scopeNames = ["Global", "España", "Ciudad", "Zona"]
-    private let scopeIcons = ["globe", "mappin.and.ellipse", "person.3.fill", "scope"]
+    private let scopeNames = ["Amigos", "Global", "España", "Ciudad", "Zona"]
+    private let scopeIcons = ["person.2.fill", "globe", "mappin.and.ellipse", "person.3.fill", "scope"]
 
     var body: some View {
         ScrollView {
@@ -78,7 +78,7 @@ struct RankingView: View {
                 Text(scopeNames[scope]).font(.caption).fontWeight(.heavy).foregroundColor(Brand.muted)
             }
             HStack(spacing: 6) {
-                ForEach(0..<4, id: \.self) { i in
+                ForEach(0..<5, id: \.self) { i in
                     Button { scope = i } label: {
                         Image(systemName: scopeIcons[i]).font(.system(size: 14, weight: .bold))
                             .frame(maxWidth: .infinity).frame(height: 34)
@@ -86,6 +86,9 @@ struct RankingView: View {
                             .foregroundColor(Brand.ink).clipShape(RoundedRectangle(cornerRadius: 9))
                     }
                 }
+            }
+            if scope == 0 && friendsRanking.count <= 1 {
+                Text("Añade amigos para ver vuestro ranking.").font(.footnote).foregroundColor(Brand.muted)
             }
             ForEach(Array(rankingRows.enumerated()), id: \.offset) { idx, row in
                 HStack {
@@ -144,13 +147,23 @@ struct RankingView: View {
         return list
     }
 
+    private var friendsRanking: [(name: String, score: Int, isMe: Bool)] {
+        let friends = store.people.filter { store.relationship($0.id) == .friends }
+        var rows: [(String, Int, Bool)] = friends.map { p in
+            (p.name, GymScoreEngine.calculate(buildFriendHistory(p)).total, false)
+        }
+        rows.append(("Tú", store.gymScore.total, true))
+        return rows.sorted { $0.1 > $1.1 }
+    }
+
     private var rankingRows: [(name: String, score: Int, isMe: Bool)] {
+        if scope == 0 { return friendsRanking }
         let base = store.gymScore.total == 0 ? 42 : store.gymScore.total
         let names = [["Mika", "Leo", "Sofía", "Tú", "Alex", "Nora"],
                      ["Dani", "Carlos", "Tú", "Marina", "Iker", "Luna"],
                      ["Rafa", "Tú", "Julia", "Adri", "Vera", "Noa"],
-                     ["Tú", "Pablo", "Marta", "Hugo", "Laia", "Enzo"]][scope]
-        let offsets = [[24, 16, 9, 0, -4, -11], [13, 6, 0, -5, -9, -14], [8, 0, -3, -7, -12, -16], [0, -2, -6, -10, -13, -18]][scope]
+                     ["Tú", "Pablo", "Marta", "Hugo", "Laia", "Enzo"]][scope - 1]
+        let offsets = [[24, 16, 9, 0, -4, -11], [13, 6, 0, -5, -9, -14], [8, 0, -3, -7, -12, -16], [0, -2, -6, -10, -13, -18]][scope - 1]
         return zip(names, offsets).map { (name, off) in
             (name, max(0, min(100, base + off)), name == "Tú")
         }.sorted { $0.1 > $1.1 }
