@@ -74,28 +74,10 @@ struct ActivityDetailView: View {
 
                     // Exercises
                     if !item.items.isEmpty {
-                        VStack(alignment: .leading, spacing: 8) {
+                        VStack(alignment: .leading, spacing: 10) {
                             Text("EJERCICIOS").font(.caption2).fontWeight(.heavy).foregroundColor(Brand.muted)
-                            ForEach(Array(item.items.enumerated()), id: \.offset) { idx, ex in
-                                let info = setSummary(ex)
-                                HStack(spacing: 12) {
-                                    Text("\(idx + 1)").font(.system(size: 14, weight: .heavy)).foregroundColor(Brand.muted).frame(width: 22)
-                                    VStack(alignment: .leading, spacing: 6) {
-                                        HStack(spacing: 8) {
-                                            Text(ex.name).font(.system(size: 15, weight: .bold)).foregroundColor(Brand.ink)
-                                            Spacer()
-                                            Text(info.headline).font(.system(size: 13, weight: .heavy)).foregroundColor(Color(hex: "4b6211"))
-                                        }
-                                        HStack(spacing: 5) {
-                                            ForEach(0..<info.dots, id: \.self) { _ in
-                                                Circle().fill(Brand.green).frame(width: 11, height: 11)
-                                            }
-                                            Text(info.detail).font(.footnote).foregroundColor(Brand.muted)
-                                        }
-                                    }
-                                }
-                                .padding(12).background(Brand.panel).clipShape(RoundedRectangle(cornerRadius: 10))
-                                .overlay(RoundedRectangle(cornerRadius: 10).stroke(Brand.line))
+                            ForEach(Array(item.items.enumerated()), id: \.offset) { _, ex in
+                                exerciseCard(ex)
                             }
                         }
                     }
@@ -118,23 +100,40 @@ struct ActivityDetailView: View {
         .background(Brand.surface).clipShape(RoundedRectangle(cornerRadius: 12))
     }
 
-    /// Builds "4 × 6" headline and a weight detail. If reps/weights vary per set,
-    /// lists them per set (e.g. "70 · 72.5 · 75 kg").
-    private func setSummary(_ ex: SessionExercise) -> (dots: Int, headline: String, detail: String) {
-        let logs = ex.logs ?? []
-        let reps = logs.isEmpty ? [ex.reps] : logs.map { $0.reps }
-        let weights = logs.isEmpty ? [ex.weight] : logs.map { $0.weight }
-        let count = logs.isEmpty ? max(1, ex.sets) : logs.count
+    /// Per-set list for an exercise (uses logs when available, else uniform sets).
+    private func expandedSets(_ ex: SessionExercise) -> [SetLog] {
+        if let logs = ex.logs, !logs.isEmpty { return logs }
+        return Array(repeating: SetLog(reps: ex.reps, weight: ex.weight), count: max(1, ex.sets))
+    }
 
-        let repsUniform = Set(reps).count <= 1
-        let repsText = repsUniform ? "\(reps.first ?? ex.reps)" : reps.map { "\($0)" }.joined(separator: "·")
-        let headline = "\(count) × \(repsText)"
-
-        let weightsUniform = Set(weights).count <= 1
-        let weightText = weightsUniform
-            ? "\(fmt(weights.first ?? ex.weight)) kg"
-            : weights.map { fmt($0) }.joined(separator: " · ") + " kg"
-        return (count, headline, weightText)
+    private func exerciseCard(_ ex: SessionExercise) -> some View {
+        let sets = expandedSets(ex)
+        return VStack(alignment: .leading, spacing: 10) {
+            HStack {
+                Text(ex.name).font(.system(size: 16, weight: .heavy)).foregroundColor(Brand.ink)
+                Spacer()
+                Text("\(sets.count) \(sets.count == 1 ? "serie" : "series")")
+                    .font(.system(size: 12, weight: .heavy)).foregroundColor(Color(hex: "4b6211"))
+                    .padding(.horizontal, 9).padding(.vertical, 4).background(Brand.greenSoft).clipShape(Capsule())
+            }
+            VStack(spacing: 0) {
+                ForEach(Array(sets.enumerated()), id: \.offset) { i, s in
+                    HStack(spacing: 12) {
+                        ZStack {
+                            Circle().fill(Brand.green).frame(width: 24, height: 24)
+                            Text("\(i + 1)").font(.system(size: 12, weight: .heavy)).foregroundColor(Color(hex: "10150a"))
+                        }
+                        Text("\(s.reps) reps").font(.system(size: 14, weight: .semibold)).foregroundColor(Color(hex: "2c3127"))
+                        Spacer()
+                        Text("\(fmt(s.weight)) kg").font(.system(size: 15, weight: .heavy)).foregroundColor(Brand.ink)
+                    }
+                    .padding(.vertical, 8)
+                    if i < sets.count - 1 { Divider() }
+                }
+            }
+        }
+        .padding(14).background(Brand.panel).clipShape(RoundedRectangle(cornerRadius: 12))
+        .overlay(RoundedRectangle(cornerRadius: 12).stroke(Brand.line))
     }
 
     private func fmt(_ w: Double) -> String { w == w.rounded() ? String(Int(w)) : String(format: "%.1f", w) }
