@@ -9,10 +9,12 @@ struct PlanView: View {
 
     private var grouped: [(group: String, workouts: [WorkoutTemplate])] {
         let dict = Dictionary(grouping: store.allWorkouts, by: { $0.block })
+        let order = AppStore.groupOrder
+        func rank(_ g: String) -> Int { order.firstIndex(of: g) ?? order.count }
         return dict.map { (group: $0.key, workouts: $0.value) }
             .sorted { a, b in
-                if a.group == "Por defecto" { return false }
-                if b.group == "Por defecto" { return true }
+                let ra = rank(a.group), rb = rank(b.group)
+                if ra != rb { return ra < rb }
                 return a.group.localizedCaseInsensitiveCompare(b.group) == .orderedAscending
             }
     }
@@ -150,7 +152,7 @@ struct CreateWorkoutView: View {
     @FocusState private var groupFocused: Bool
     @FocusState private var focusedExercise: UUID?
 
-    private let suggestedGroups = ["Pierna", "Pecho", "Espalda", "Push", "Pull", "Full body", "Brazo", "Hombro", "Core"]
+    private let suggestedGroups = ["Pecho", "Espalda", "Pierna", "Hombro", "Brazo", "Abdomen", "Full body", "Push", "Pull"]
     private var groupOptions: [String] {
         var seen = Set<String>(); var out: [String] = []
         for g in store.customGroups + suggestedGroups where seen.insert(g).inserted { out.append(g) }

@@ -362,7 +362,7 @@ final class AppStore: ObservableObject {
         let g = group.trimmingCharacters(in: .whitespaces)
         let workout = WorkoutTemplate(
             id: newId("w"), name: name.isEmpty ? "Mi entreno" : name,
-            description: AppStore.summary(of: exercises), block: g.isEmpty ? "Mis entrenos" : g, exercises: exercises)
+            description: AppStore.summary(of: exercises), block: g.isEmpty ? "Otros" : g, exercises: exercises)
         savedWorkouts.insert(workout, at: 0)
         persist()
     }
@@ -381,10 +381,10 @@ final class AppStore: ObservableObject {
     func isSaved(_ id: String) -> Bool { savedWorkouts.contains { $0.id == id } }
 
     /// Save edits. If it's a saved workout, update in place; if it's a built-in
-    /// template, create an editable copy in "Mis entrenos".
+    /// template, create an editable copy.
     func updateWorkout(id: String, name: String, group: String, exercises: [Exercise]) {
         let g = group.trimmingCharacters(in: .whitespaces)
-        let block = g.isEmpty ? "Mis entrenos" : g
+        let block = g.isEmpty ? "Otros" : g
         if let idx = savedWorkouts.firstIndex(where: { $0.id == id }) {
             var w = savedWorkouts[idx]
             w.name = name.isEmpty ? "Mi entreno" : name
@@ -495,8 +495,11 @@ final class AppStore: ObservableObject {
 
     private static func template(_ id: String, _ name: String, _ exercises: [(String, Int, Int, Double)]) -> WorkoutTemplate {
         let exs = exercises.map { makeExercise(name, $0.0, $0.1, $0.2, $0.3) }
-        return WorkoutTemplate(id: id, name: name, description: summary(of: exs), block: "Por defecto", exercises: exs)
+        return WorkoutTemplate(id: id, name: name, description: summary(of: exs), block: name, exercises: exs)
     }
+
+    /// Preferred order for workout groups in Plan (others go after, alphabetical).
+    static let groupOrder = ["Pecho", "Espalda", "Pierna", "Hombro", "Brazo", "Abdomen", "Full body"]
 }
 
 // Deterministic demo training history for a friend profile.
