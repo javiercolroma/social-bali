@@ -346,9 +346,12 @@ Problemas tratados:
 - El menu inferior podia taparla.
 - `position: sticky` no era fiable dentro del layout movil.
 - Animaciones con `transform` en contenedores podian interferir con `position: fixed`.
+- El deslizamiento vertical de la app podia fallar o sentirse irregular si el contenido crecia dentro del mock de telefono.
 
 Estado actual:
 
+- `.phone-stage` usa una estructura grid con altura de viewport.
+- `.screen-body` es el contenedor desplazable en todas las pestanas.
 - `.action-dock` usa `position: fixed` en movil.
 - Se situa por encima del menu inferior.
 - Usa `env(safe-area-inset-bottom)`.
