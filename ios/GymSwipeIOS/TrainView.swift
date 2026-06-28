@@ -49,9 +49,9 @@ struct TrainView: View {
         .sheet(item: $previewWorkout) { WorkoutPreview(workoutId: $0.id).environmentObject(store) }
         .onChange(of: store.exercises.isEmpty) { if !$0 { resetLocal() } }
         .onReceive(ticker) { _ in
-            if restActive {
+            if restActive && restElapsed < restTotal {
                 restElapsed += 1
-                if restElapsed == restTotal { fxRest() }
+                if restElapsed >= restTotal { fxRest() }
             }
         }
     }
@@ -86,8 +86,6 @@ struct TrainView: View {
 
     private var restOver: Bool { restElapsed >= restTotal }
     private var restRemaining: Int { max(0, restTotal - restElapsed) }
-    private var restOvertime: Int { max(0, restElapsed - restTotal) }
-    private var restAmber: Color { Color(hex: "d9822b") }
 
     private var restBanner: some View {
         PanelCard {
@@ -95,23 +93,27 @@ struct TrainView: View {
                 ZStack {
                     Circle().stroke(Brand.chip, lineWidth: 7)
                     Circle().trim(from: 0, to: restOver ? 1 : CGFloat(restRemaining) / CGFloat(max(1, restTotal)))
-                        .stroke(restOver ? restAmber : Brand.green, style: StrokeStyle(lineWidth: 7, lineCap: .round))
+                        .stroke(Brand.green, style: StrokeStyle(lineWidth: 7, lineCap: .round))
                         .rotationEffect(.degrees(-90))
                         .animation(.linear(duration: 1), value: restElapsed)
-                    Text(restOver ? "+\(timeString(restOvertime))" : timeString(restRemaining))
-                        .font(.system(size: 16, weight: .heavy)).monospacedDigit()
-                        .foregroundColor(restOver ? restAmber : Brand.ink)
+                    if restOver {
+                        Image(systemName: "figure.strengthtraining.traditional").font(.system(size: 26)).foregroundColor(Color(hex: "4b6211"))
+                    } else {
+                        Text(timeString(restRemaining)).font(.system(size: 17, weight: .heavy)).monospacedDigit().foregroundColor(Brand.ink)
+                    }
                 }.frame(width: 70, height: 70)
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(restOver ? "Te estás pasando" : "Descanso")
-                        .font(.system(size: 16, weight: .heavy)).foregroundColor(restOver ? restAmber : Brand.ink)
-                    Text(restOver ? "Llevas \(timeString(restElapsed)) descansando" : "Recupera para la próxima serie")
+                    Text(restOver ? "¡Haz tu serie!" : "Descanso")
+                        .font(.system(size: 17, weight: .heavy)).foregroundColor(restOver ? Color(hex: "4b6211") : Brand.ink)
+                    Text(restOver ? "Descanso completado" : "Recupera para la próxima serie")
                         .font(.caption).foregroundColor(Brand.muted)
                 }
                 Spacer()
-                Button { restTotal += 15; Haptics.soft() } label: {
-                    Text("+15s").font(.system(size: 14, weight: .heavy)).foregroundColor(Brand.ink)
-                        .padding(.horizontal, 14).frame(height: 38).background(Brand.chip).clipShape(Capsule())
+                if !restOver {
+                    Button { restTotal += 15; Haptics.soft() } label: {
+                        Text("+15s").font(.system(size: 14, weight: .heavy)).foregroundColor(Brand.ink)
+                            .padding(.horizontal, 14).frame(height: 38).background(Brand.chip).clipShape(Capsule())
+                    }
                 }
             }
         }
