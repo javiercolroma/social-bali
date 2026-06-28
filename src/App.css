@@ -336,12 +336,15 @@ input:focus-visible {
   left: 12px;
   right: 12px;
   bottom: max(10px, env(safe-area-inset-bottom));
-  z-index: 12;
+  z-index: 15;
   margin: 0;
   padding: 5px;
   border: 1px solid rgba(19, 22, 18, 0.08);
   border-radius: 12px;
-  background: rgba(255, 255, 255, 0.58);
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  box-shadow: 0 12px 30px rgba(23, 25, 19, 0.12);
 }
 
 .tab-bar button {
@@ -1504,11 +1507,7 @@ input:focus-visible {
 .plan-view {
   display: grid;
   gap: 12px;
-  max-height: 610px;
-  overflow: auto;
-  overscroll-behavior: contain;
   padding-bottom: 76px;
-  -webkit-overflow-scrolling: touch;
 }
 
 .plan-block {
@@ -1645,6 +1644,9 @@ input:focus-visible {
 
 .template-strip button.removable {
   touch-action: pan-y;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 .template-strip button.dragging {
@@ -2112,11 +2114,7 @@ input:focus-visible {
 .progress-view {
   display: grid;
   gap: 14px;
-  max-height: 610px;
-  overflow: auto;
-  overscroll-behavior: contain;
   padding-bottom: 4px;
-  -webkit-overflow-scrolling: touch;
 }
 
 .level-card {
@@ -2780,21 +2778,13 @@ input:focus-visible {
 .settings-view {
   display: grid;
   gap: 14px;
-  max-height: 610px;
-  overflow: auto;
-  overscroll-behavior: contain;
   padding-bottom: 4px;
-  -webkit-overflow-scrolling: touch;
 }
 
 .profile-view {
   display: grid;
   gap: 14px;
-  max-height: 610px;
-  overflow: auto;
-  overscroll-behavior: contain;
   padding-bottom: 4px;
-  -webkit-overflow-scrolling: touch;
 }
 
 .profile-photo-card,
@@ -3208,6 +3198,13 @@ input:focus-visible {
     padding-top: max(20px, env(safe-area-inset-top));
   }
 
+  .tab-bar {
+    position: fixed;
+    left: 12px;
+    right: 12px;
+    bottom: max(10px, env(safe-area-inset-bottom));
+  }
+
   .screen-body {
     padding-bottom: max(132px, calc(env(safe-area-inset-bottom) + 122px));
   }
@@ -3338,11 +3335,7 @@ input:focus-visible {
 .ranking-view {
   display: grid;
   gap: 12px;
-  max-height: 610px;
-  overflow: auto;
-  overscroll-behavior: contain;
   padding-bottom: 4px;
-  -webkit-overflow-scrolling: touch;
 }
 
 .map-panel {
@@ -3491,6 +3484,31 @@ input:focus-visible {
   background: rgba(255, 255, 255, 0.82);
 }
 
+.map-zoom-controls {
+  position: absolute;
+  right: 8px;
+  top: 8px;
+  z-index: 5;
+  display: grid;
+  gap: 6px;
+}
+
+.map-zoom-controls button {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border: 1px solid rgba(19, 22, 18, 0.12);
+  border-radius: 10px;
+  color: #1d2417;
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: 0 6px 14px rgba(23, 25, 19, 0.16);
+}
+
+.map-zoom-controls button:disabled {
+  opacity: 0.4;
+}
+
 .map-summary-row {
   display: flex;
   align-items: center;
@@ -3538,11 +3556,7 @@ input:focus-visible {
 .partner-view {
   display: grid;
   gap: 12px;
-  max-height: 610px;
-  overflow: auto;
-  overscroll-behavior: contain;
   padding-bottom: 4px;
-  -webkit-overflow-scrolling: touch;
 }
 
 .training-plans-panel {

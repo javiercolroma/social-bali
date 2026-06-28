@@ -1157,6 +1157,8 @@ const mapViewportSize = {
   width: 334,
   height: 354,
 }
+const minMapZoom = 1
+const maxMapZoom = 18
 
 function getScopeZoom(scope: RankingScope) {
   return scope === 'global' ? 1 : scope === 'country' ? 5 : scope === 'city' ? 11 : 13
@@ -3372,6 +3374,17 @@ function PlanView({
     }))
   }, [workouts])
 
+  const dragActive = Boolean(draggedWorkout?.active)
+  useEffect(() => {
+    if (!dragActive) {
+      return
+    }
+
+    const preventScroll = (event: TouchEvent) => event.preventDefault()
+    document.addEventListener('touchmove', preventScroll, { passive: false })
+    return () => document.removeEventListener('touchmove', preventScroll)
+  }, [dragActive])
+
   function startWorkoutDrag(event: PointerEvent<HTMLButtonElement>, workout: WorkoutLibraryItem) {
     if (!workout.removable) {
       return
@@ -4107,13 +4120,32 @@ function RankingView({ history, profile }: { history: HistoryEntry[]; profile: P
   const rankingRows = useMemo(() => getRankingRows(gymScore, rankingScope), [gymScore, rankingScope])
   const [userPoint, setUserPoint] = useState<MapPoint>(fallbackMapPoint)
   const [mapCenterOverride, setMapCenterOverride] = useState<MapPoint | null>(null)
+  const [zoomOverride, setZoomOverride] = useState<number | null>(null)
   const [locationStatus, setLocationStatus] = useState('Ubicación aproximada')
   const mapDragRef = useRef<{ x: number; y: number; center: MapPoint } | null>(null)
+  const pointersRef = useRef<Map<number, { x: number; y: number }>>(new Map())
+  const pinchRef = useRef<{ dist: number } | null>(null)
   const visibleUsers = useMemo(() => getVisibleMapUsers(rankingScope), [rankingScope])
+  const baseZoom = getScopeZoom(rankingScope)
+  const zoom = Math.max(minMapZoom, Math.min(maxMapZoom, zoomOverride ?? baseZoom))
   const mapViewport = useMemo(() => {
     const viewport = getMapViewport(rankingScope, userPoint)
-    return mapCenterOverride ? { ...viewport, center: mapCenterOverride } : viewport
-  }, [rankingScope, userPoint, mapCenterOverride])
+    return {
+      ...viewport,
+      zoom,
+      center: mapCenterOverride ?? viewport.center,
+    }
+  }, [rankingScope, userPoint, mapCenterOverride, zoom])
+
+  function changeZoom(delta: number) {
+    setZoomOverride((current) => Math.max(minMapZoom, Math.min(maxMapZoom, (current ?? baseZoom) + delta)))
+  }
+
+  function selectScope(scope: RankingScope) {
+    setRankingScope(scope)
+    setZoomOverride(null)
+    setMapCenterOverride(null)
+  }
   const mapTiles = useMemo(() => getMapTiles(mapViewport), [mapViewport])
   const mapClusters = useMemo(() => getMapClusters(visibleUsers, mapViewport, rankingScope), [visibleUsers, mapViewport, rankingScope])
   const userPosition = projectMapPoint(userPoint, mapViewport)
@@ -4136,16 +4168,50 @@ function RankingView({ history, profile }: { history: HistoryEntry[]; profile: P
     )
   }, [])
 
+  function getPinchDistance() {
+    const points = Array.from(pointersRef.current.values())
+    if (points.length < 2) {
+      return 0
+    }
+    return Math.hypot(points[0].x - points[1].x, points[0].y - points[1].y)
+  }
+
   function onMapPointerDown(event: PointerEvent<HTMLDivElement>) {
+    pointersRef.current.set(event.pointerId, { x: event.clientX, y: event.clientY })
+    event.currentTarget.setPointerCapture(event.pointerId)
+
+    if (pointersRef.current.size >= 2) {
+      mapDragRef.current = null
+      pinchRef.current = { dist: getPinchDistance() }
+      return
+    }
+
     mapDragRef.current = {
       x: event.clientX,
       y: event.clientY,
       center: mapViewport.center,
     }
-    event.currentTarget.setPointerCapture(event.pointerId)
   }
 
   function onMapPointerMove(event: PointerEvent<HTMLDivElement>) {
+    if (pointersRef.current.has(event.pointerId)) {
+      pointersRef.current.set(event.pointerId, { x: event.clientX, y: event.clientY })
+    }
+
+    if (pinchRef.current && pointersRef.current.size >= 2) {
+      const dist = getPinchDistance()
+      const ratio = dist / pinchRef.current.dist
+
+      if (ratio > 1.4) {
+        changeZoom(1)
+        pinchRef.current = { dist }
+      } else if (ratio < 0.7) {
+        changeZoom(-1)
+        pinchRef.current = { dist }
+      }
+      return
+    }
+
     if (!mapDragRef.current) {
       return
     }
@@ -4159,8 +4225,15 @@ function RankingView({ history, profile }: { history: HistoryEntry[]; profile: P
     setMapCenterOverride(worldPixelToPoint(nextCenterPixel, mapViewport.zoom))
   }
 
-  function onMapPointerUp() {
-    mapDragRef.current = null
+  function onMapPointerUp(event: PointerEvent<HTMLDivElement>) {
+    pointersRef.current.delete(event.pointerId)
+
+    if (pointersRef.current.size < 2) {
+      pinchRef.current = null
+    }
+    if (pointersRef.current.size === 0) {
+      mapDragRef.current = null
+    }
   }
 
   function locateUser() {
@@ -4220,7 +4293,7 @@ function RankingView({ history, profile }: { history: HistoryEntry[]; profile: P
               key={scope}
               className={rankingScope === scope ? 'active' : ''}
               type="button"
-              onClick={() => setRankingScope(scope)}
+              onClick={() => selectScope(scope)}
               aria-label={getScopeLabel(scope)}
               title={getScopeLabel(scope)}
             >
@@ -4262,6 +4335,7 @@ function RankingView({ history, profile }: { history: HistoryEntry[]; profile: P
           onPointerMove={onMapPointerMove}
           onPointerUp={onMapPointerUp}
           onPointerCancel={onMapPointerUp}
+          onDoubleClick={() => changeZoom(1)}
         >
           <div className="map-tile-layer" aria-hidden="true">
             {mapTiles.map((tile) => (
@@ -4295,6 +4369,28 @@ function RankingView({ history, profile }: { history: HistoryEntry[]; profile: P
               {cluster.count > 1 ? cluster.count : ''}
             </button>
           ))}
+          <div className="map-zoom-controls">
+            <button
+              type="button"
+              aria-label="Ampliar"
+              title="Ampliar"
+              disabled={zoom >= maxMapZoom}
+              onPointerDown={(event) => event.stopPropagation()}
+              onClick={() => changeZoom(1)}
+            >
+              <Plus size={18} />
+            </button>
+            <button
+              type="button"
+              aria-label="Reducir"
+              title="Reducir"
+              disabled={zoom <= minMapZoom}
+              onPointerDown={(event) => event.stopPropagation()}
+              onClick={() => changeZoom(-1)}
+            >
+              <Minus size={18} />
+            </button>
+          </div>
           <a
             className="map-attribution"
             href="https://www.openstreetmap.org/copyright"

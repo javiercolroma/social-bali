@@ -543,6 +543,14 @@ Problema corregido:
 - En `WKWebView` cargando desde `file://`, esto puede dejar la pantalla en blanco.
 - `scripts/prepare-ios-webdist.mjs` convierte el script principal a `defer` y elimina atributos problematicos.
 
+Geolocalizacion (puente nativo):
+
+- `WKWebView` no implementa la API JS `navigator.geolocation` cargando desde `file://`.
+- `ContentView.swift` incluye `GeolocationBridge` (`CLLocationManagerDelegate` + `WKScriptMessageHandler`).
+- Inyecta un shim JS (`WKUserScript` at document start) que sobreescribe `getCurrentPosition`/`watchPosition` y reenvia la peticion al lado nativo via `window.webkit.messageHandlers.geo`.
+- El nativo pide permiso (`requestWhenInUseAuthorization`), obtiene la posicion con `CoreLocation` y resuelve el callback JS (`window.__geoResolve` / `window.__geoReject`).
+- Requiere `NSLocationWhenInUseUsageDescription` en `Info.plist` y en `project.yml` (para que xcodegen no lo pierda al regenerar).
+
 Flujo correcto despues de cambiar React/CSS:
 
 ```bash
@@ -630,8 +638,19 @@ Mapa:
 
 - Usa tiles de OpenStreetMap.
 - Se puede mover/arrastrar.
+- Se puede ampliar/reducir (zoom) con:
+  - botones `+` / `-` sobre el mapa,
+  - pellizco (pinch) con dos dedos, con snap a niveles enteros de zoom,
+  - doble clic en escritorio.
+- El zoom se reinicia al nivel del filtro (`global/pais/ciudad/zona`) al cambiar de filtro.
 - Muestra usuarios aproximados, no ubicacion exacta.
 - Agrupa puntos cercanos en clusters.
+
+Ubicacion real:
+
+- El boton `Ubicarme` y la carga inicial usan `navigator.geolocation`.
+- En iOS (`WKWebView`) la API JS de geolocalizacion no funciona sola: hay un puente nativo en `ContentView.swift` (ver seccion 11) que la conecta con `CoreLocation`.
+- Si se deniega el permiso o falla, cae al fallback aproximado (Madrid).
 
 Filtros:
 
@@ -686,13 +705,22 @@ Ajustes aplicados:
 - `Mi gimnasio` usa el gimnasio configurado en Perfil.
 - Plazas incluye opcion flexible.
 - No se generan descripciones que el usuario no escribio.
-- Se puede aceptar un plan.
-- Al aceptar, lleva a un chat basico.
+- Cada plan tiene un `ownerId` (la persona que lo propone).
+
+Aceptar entrenamiento (flujo actual):
+
+- Ya NO aparece snackbar/toast ni chat inline.
+- Al pulsar `Aceptar entrenamiento`:
+  - se abre/crea la conversacion con esa persona (una conversacion por persona, id `conv-<personId>`),
+  - se inserta el mensaje inicial "He aceptado tu entrenamiento. ¿Cuándo te viene bien quedar?",
+  - se genera una notificacion de tipo `training_accepted`,
+  - se navega directo al chat.
+- La conversacion queda guardada en Mensajes (ver seccion 22).
 
 Pendiente:
 
-- Persistencia real de chats.
-- Solicitudes reales.
+- Persistencia real de chats en backend.
+- Solicitudes reales contra servidor.
 - Usuarios reales.
 - Seguidores/seguidos.
 - Backend.
@@ -897,7 +925,58 @@ src/components/partner/
 6. PWA offline versionada.
 7. Publicacion TestFlight/App Store.
 
-## 21. Instruccion para futuras sesiones
+## 21. Social: mensajes, chat, amigos y notificaciones
+
+Capa social local (sin backend), persistida en `localStorage` con clave `gym-swipe-social-v1`.
+Logica en `src/App.tsx` (hook `useSocial`).
+
+Accesos superiores:
+
+- En la cabecera, arriba a la derecha: icono sobre (Mensajes) y campana (Notificaciones).
+- Cada uno muestra un badge rojo con el numero de pendientes.
+
+Mensajes (overlay):
+
+- Segmento `Chats` / `Amigos`.
+- Chats: lista de conversaciones (avatar, nombre, ultimo mensaje, hora, no leidos) ordenadas por reciente.
+- Estado vacio "Sin conversaciones".
+
+Chat individual:
+
+- Cabecera con avatar/nombre + volver.
+- Burbujas enviadas/recibidas con hora, auto-scroll.
+- Campo de texto + boton enviar; el mensaje propio aparece al instante.
+- El otro usuario responde automaticamente (~2.6 s) — SIMULADO (no hay backend).
+- Marca la conversacion como leida al entrar.
+
+Amigos:
+
+- Solicitudes recibidas (aceptar/rechazar).
+- Tus amigos (con boton Mensaje).
+- Descubre companeros (enviar solicitud).
+- Estados de relacion: `none`, `outgoing` (solicitud enviada), `incoming`, `friends`.
+- Al enviar solicitud se simula su aceptacion a los ~4.2 s.
+
+Notificaciones (overlay):
+
+- Tipos: `friend_request`, `friend_accepted`, `message`, `training_accepted`.
+- Cada una: titulo, descripcion corta, tiempo relativo, leida/no leida.
+- Tocar abre el chat o la pestana Amigos segun el tipo. Boton "Marcar leido".
+
+Pendiente:
+
+- Backend real (las respuestas y aceptaciones estan simuladas con temporizadores).
+- Cuenta de usuario con nombre + @ unico y busqueda de amigos por nombre/@.
+
+## 22. Correcciones recientes (sesion actual)
+
+- Tab-bar que desaparecia en sesion/ranking: el commit "Fix mobile app scrolling" migro el scroll a `.screen-body` pero solo actualizo `.view-train`. Las vistas `ranking/partner/profile/settings/plan/progress` seguian con scroller propio (`max-height: 610px; overflow: auto`), creando scrollers anidados. Se unifico a un unico scroller (`.screen-body`) y el tab-bar se hizo mas opaco, con z-index seguro y `position: fixed` en movil.
+- Arrastrar entreno a la papelera no funcionaba en tactil: los botones tenian `touch-action: pan-y` y al arrastrar hacia abajo iOS lo trataba como scroll (cambiar `touch-action` a mitad de gesto no surte efecto). Se anadio un listener `touchmove` no pasivo con `preventDefault` mientras el arrastre esta activo + se desactivo callout/seleccion iOS en los botones removable.
+- Zoom de mapa en Ranking (ver seccion 13).
+- Geolocalizacion real en iOS via puente nativo (ver seccion 11).
+- Segmento Chats/Amigos que ocupaba toda la pantalla: el overlay usaba grid de 2 filas con 3 hijos; se paso a flexbox.
+
+## 23. Instruccion para futuras sesiones
 
 Al retomar:
 
