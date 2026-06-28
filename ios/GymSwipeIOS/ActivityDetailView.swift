@@ -77,19 +77,22 @@ struct ActivityDetailView: View {
                         VStack(alignment: .leading, spacing: 8) {
                             Text("EJERCICIOS").font(.caption2).fontWeight(.heavy).foregroundColor(Brand.muted)
                             ForEach(Array(item.items.enumerated()), id: \.offset) { idx, ex in
+                                let info = setSummary(ex)
                                 HStack(spacing: 12) {
                                     Text("\(idx + 1)").font(.system(size: 14, weight: .heavy)).foregroundColor(Brand.muted).frame(width: 22)
                                     VStack(alignment: .leading, spacing: 6) {
-                                        Text(ex.name).font(.system(size: 15, weight: .bold)).foregroundColor(Brand.ink)
+                                        HStack(spacing: 8) {
+                                            Text(ex.name).font(.system(size: 15, weight: .bold)).foregroundColor(Brand.ink)
+                                            Spacer()
+                                            Text(info.headline).font(.system(size: 13, weight: .heavy)).foregroundColor(Color(hex: "4b6211"))
+                                        }
                                         HStack(spacing: 5) {
-                                            ForEach(0..<max(1, ex.sets), id: \.self) { _ in
+                                            ForEach(0..<info.dots, id: \.self) { _ in
                                                 Circle().fill(Brand.green).frame(width: 11, height: 11)
                                             }
-                                            Text("·  \(ex.reps) reps · \(weightText(ex.weight)) kg")
-                                                .font(.footnote).foregroundColor(Brand.muted)
+                                            Text(info.detail).font(.footnote).foregroundColor(Brand.muted)
                                         }
                                     }
-                                    Spacer()
                                 }
                                 .padding(12).background(Brand.panel).clipShape(RoundedRectangle(cornerRadius: 10))
                                 .overlay(RoundedRectangle(cornerRadius: 10).stroke(Brand.line))
@@ -114,6 +117,27 @@ struct ActivityDetailView: View {
         .frame(maxWidth: .infinity).padding(.vertical, 14)
         .background(Brand.surface).clipShape(RoundedRectangle(cornerRadius: 12))
     }
+
+    /// Builds "4 × 6" headline and a weight detail. If reps/weights vary per set,
+    /// lists them per set (e.g. "70 · 72.5 · 75 kg").
+    private func setSummary(_ ex: SessionExercise) -> (dots: Int, headline: String, detail: String) {
+        let logs = ex.logs ?? []
+        let reps = logs.isEmpty ? [ex.reps] : logs.map { $0.reps }
+        let weights = logs.isEmpty ? [ex.weight] : logs.map { $0.weight }
+        let count = logs.isEmpty ? max(1, ex.sets) : logs.count
+
+        let repsUniform = Set(reps).count <= 1
+        let repsText = repsUniform ? "\(reps.first ?? ex.reps)" : reps.map { "\($0)" }.joined(separator: "·")
+        let headline = "\(count) × \(repsText)"
+
+        let weightsUniform = Set(weights).count <= 1
+        let weightText = weightsUniform
+            ? "\(fmt(weights.first ?? ex.weight)) kg"
+            : weights.map { fmt($0) }.joined(separator: " · ") + " kg"
+        return (count, headline, weightText)
+    }
+
+    private func fmt(_ w: Double) -> String { w == w.rounded() ? String(Int(w)) : String(format: "%.1f", w) }
 
     private func durationText(_ s: Int) -> String {
         let m = s / 60

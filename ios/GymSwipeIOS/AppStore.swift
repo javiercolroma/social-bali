@@ -111,6 +111,7 @@ final class AppStore: ObservableObject {
             copy.completedSets = 0
             copy.skippedSets = 0
             copy.status = .pending
+            copy.setLog = nil
             return copy
         }
         lastAction = "\(template.name) cargada"
@@ -134,7 +135,12 @@ final class AppStore: ObservableObject {
         guard let idx = exercises.firstIndex(where: { $0.id == exerciseId }) else { return }
         var ex = exercises[idx]
         if ex.closedSets >= ex.sets { return }
-        if done { ex.completedSets += 1 } else { ex.skippedSets += 1 }
+        if done {
+            ex.completedSets += 1
+            var logs = ex.setLog ?? []
+            logs.append(SetLog(reps: ex.reps, weight: ex.weight))
+            ex.setLog = logs
+        } else { ex.skippedSets += 1 }
         ex.status = ex.resolvedStatus
         exercises[idx] = ex
         lastAction = done ? "Serie completada" : "Serie saltada"
@@ -155,8 +161,11 @@ final class AppStore: ObservableObject {
             gained += xp
             if ex.completedSets > 0 { doneExercises += 1 }
             totalSets += ex.completedSets
-            totalVolume += Double(ex.completedSets) * Double(ex.reps) * ex.weight
-            sessionItems.append(SessionExercise(name: ex.name, sets: ex.completedSets > 0 ? ex.completedSets : ex.sets, reps: ex.reps, weight: ex.weight))
+            let logs = ex.setLog ?? []
+            totalVolume += logs.isEmpty
+                ? Double(ex.completedSets) * Double(ex.reps) * ex.weight
+                : logs.reduce(0) { $0 + Double($1.reps) * $1.weight }
+            sessionItems.append(SessionExercise(name: ex.name, sets: ex.completedSets > 0 ? ex.completedSets : ex.sets, reps: ex.reps, weight: ex.weight, logs: logs.isEmpty ? nil : logs))
             history.insert(HistoryEntry(
                 id: "h-\(ex.id)-\(Int(Date().timeIntervalSince1970 * 1000))-\(Int.random(in: 0..<9999))",
                 exerciseName: ex.name, day: ex.day, status: status,

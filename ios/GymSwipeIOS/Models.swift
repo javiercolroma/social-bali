@@ -4,6 +4,11 @@ enum ExerciseStatus: String, Codable {
     case pending, done, skipped
 }
 
+struct SetLog: Codable, Hashable {
+    var reps: Int
+    var weight: Double
+}
+
 struct Exercise: Identifiable, Codable, Hashable {
     var id: String
     var day: String
@@ -17,6 +22,7 @@ struct Exercise: Identifiable, Codable, Hashable {
     var rest: Int
     var note: String
     var status: ExerciseStatus
+    var setLog: [SetLog]? = nil
 
     var closedSets: Int { min(sets, completedSets + skippedSets) }
     var resolvedStatus: ExerciseStatus {
@@ -72,6 +78,7 @@ struct SessionExercise: Codable, Hashable, Identifiable {
     var sets: Int
     var reps: Int
     var weight: Double
+    var logs: [SetLog]? = nil
 }
 
 struct WorkoutSession: Identifiable, Codable {
