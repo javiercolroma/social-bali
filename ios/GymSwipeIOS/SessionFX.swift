@@ -9,10 +9,11 @@ enum Haptics {
 }
 
 enum SoundFX {
-    static let done: SystemSoundID = 1057    // Tink
-    static let skip: SystemSoundID = 1104    // Tock
-    static let rest: SystemSoundID = 1075    // alert
-    static let finish: SystemSoundID = 1025  // complete
+    static let done: SystemSoundID = 1057      // Tink (serie hecha)
+    static let skip: SystemSoundID = 1104      // Tock
+    static let exercise: SystemSoundID = 1054  // cambio de ejercicio (distinto a serie)
+    static let rest: SystemSoundID = 1075      // fin de descanso
+    static let finish: SystemSoundID = 1025    // entreno terminado
     static func play(_ id: SystemSoundID) { AudioServicesPlaySystemSound(id) }
 }
 

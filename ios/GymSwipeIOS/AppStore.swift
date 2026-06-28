@@ -113,6 +113,19 @@ final class AppStore: ObservableObject {
         persist()
     }
 
+    func adjustReps(_ id: String, _ delta: Int) {
+        guard let i = exercises.firstIndex(where: { $0.id == id }) else { return }
+        exercises[i].reps = max(1, exercises[i].reps + delta)
+        persist()
+    }
+
+    func adjustWeight(_ id: String, _ delta: Double) {
+        guard let i = exercises.firstIndex(where: { $0.id == id }) else { return }
+        let next = max(0, exercises[i].weight + delta)
+        exercises[i].weight = (next * 2).rounded() / 2   // keep .5 steps clean
+        persist()
+    }
+
     func registerSet(_ exerciseId: String, done: Bool) {
         guard let idx = exercises.firstIndex(where: { $0.id == exerciseId }) else { return }
         var ex = exercises[idx]

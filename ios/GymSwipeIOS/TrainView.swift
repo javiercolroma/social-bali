@@ -6,7 +6,8 @@ struct TrainView: View {
     @State private var sessionStart: Date?
     @State private var showSummary = false
     @State private var previewWorkout: WorkoutTemplate?
-    @State private var restRemaining = 0
+    @State private var restActive = false
+    @State private var restElapsed = 0
     @State private var restTotal = 0
     @AppStorage("fxSound") private var soundOn = true
     @AppStorage("fxHaptics") private var hapticsOn = true
@@ -32,7 +33,7 @@ struct TrainView: View {
                     summary
                 } else if let ex = store.activeExercise {
                     sessionHeader
-                    if restRemaining > 0 { restBanner }
+                    if restActive { restBanner }
                     activeCard(ex)
                         .id(ex.id)
                         .transition(.asymmetric(
@@ -48,9 +49,9 @@ struct TrainView: View {
         .sheet(item: $previewWorkout) { WorkoutPreview(workoutId: $0.id).environmentObject(store) }
         .onChange(of: store.exercises.isEmpty) { if !$0 { resetLocal() } }
         .onReceive(ticker) { _ in
-            if restRemaining > 0 {
-                restRemaining -= 1
-                if restRemaining == 0 { fxRest() }
+            if restActive {
+                restElapsed += 1
+                if restElapsed == restTotal { fxRest() }
             }
         }
     }
@@ -83,30 +84,34 @@ struct TrainView: View {
         }
     }
 
+    private var restOver: Bool { restElapsed >= restTotal }
+    private var restRemaining: Int { max(0, restTotal - restElapsed) }
+    private var restOvertime: Int { max(0, restElapsed - restTotal) }
+    private var restAmber: Color { Color(hex: "d9822b") }
+
     private var restBanner: some View {
         PanelCard {
             HStack(spacing: 14) {
                 ZStack {
                     Circle().stroke(Brand.chip, lineWidth: 7)
-                    Circle().trim(from: 0, to: CGFloat(restRemaining) / CGFloat(max(1, restTotal)))
-                        .stroke(Brand.green, style: StrokeStyle(lineWidth: 7, lineCap: .round))
+                    Circle().trim(from: 0, to: restOver ? 1 : CGFloat(restRemaining) / CGFloat(max(1, restTotal)))
+                        .stroke(restOver ? restAmber : Brand.green, style: StrokeStyle(lineWidth: 7, lineCap: .round))
                         .rotationEffect(.degrees(-90))
-                        .animation(.linear(duration: 1), value: restRemaining)
-                    Text("\(restRemaining)").font(.system(size: 20, weight: .heavy)).monospacedDigit().foregroundColor(Brand.ink)
-                }.frame(width: 64, height: 64)
+                        .animation(.linear(duration: 1), value: restElapsed)
+                    Text(restOver ? "+\(timeString(restOvertime))" : timeString(restRemaining))
+                        .font(.system(size: 16, weight: .heavy)).monospacedDigit()
+                        .foregroundColor(restOver ? restAmber : Brand.ink)
+                }.frame(width: 70, height: 70)
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("Descanso").font(.system(size: 16, weight: .heavy)).foregroundColor(Brand.ink)
-                    Text("Recupera para la próxima serie").font(.caption).foregroundColor(Brand.muted)
+                    Text(restOver ? "Te estás pasando" : "Descanso")
+                        .font(.system(size: 16, weight: .heavy)).foregroundColor(restOver ? restAmber : Brand.ink)
+                    Text(restOver ? "Llevas \(timeString(restElapsed)) descansando" : "Recupera para la próxima serie")
+                        .font(.caption).foregroundColor(Brand.muted)
                 }
                 Spacer()
-                VStack(spacing: 6) {
-                    Button { restRemaining += 15; restTotal += 15; Haptics.soft() } label: {
-                        Text("+15s").font(.system(size: 13, weight: .heavy)).foregroundColor(Brand.ink)
-                            .padding(.horizontal, 12).frame(height: 32).background(Brand.chip).clipShape(Capsule())
-                    }
-                    Button { restRemaining = 0 } label: {
-                        Text("Saltar").font(.system(size: 13, weight: .heavy)).foregroundColor(Color(hex: "4b6211"))
-                    }
+                Button { restTotal += 15; Haptics.soft() } label: {
+                    Text("+15s").font(.system(size: 14, weight: .heavy)).foregroundColor(Brand.ink)
+                        .padding(.horizontal, 14).frame(height: 38).background(Brand.chip).clipShape(Capsule())
                 }
             }
         }
@@ -130,10 +135,13 @@ struct TrainView: View {
                         .animation(.spring(response: 0.3, dampingFraction: 0.5), value: ex.completedSets + ex.skippedSets)
                 }
             }
-            HStack(spacing: 14) {
-                bigStat("\(ex.reps)", "reps", "repeat")
-                bigStat(weightText(ex.weight), "kg", "scalemass")
-                bigStat("\(ex.rest)s", "descanso", "timer")
+            HStack(spacing: 12) {
+                editStat("repeat", "\(ex.reps)", "reps",
+                         minus: { store.adjustReps(ex.id, -1); Haptics.soft() },
+                         plus: { store.adjustReps(ex.id, 1); Haptics.soft() })
+                editStat("dumbbell.fill", weightText(ex.weight), "kg",
+                         minus: { store.adjustWeight(ex.id, -2.5); Haptics.soft() },
+                         plus: { store.adjustWeight(ex.id, 2.5); Haptics.soft() })
             }.padding(.vertical, 6)
             HStack(spacing: 10) {
                 Button { register(ex, done: false) } label: {
@@ -162,8 +170,17 @@ struct TrainView: View {
 
     private func register(_ ex: Exercise, done: Bool) {
         if sessionStart == nil { sessionStart = Date() }
-        if done { fxDone(); restTotal = ex.rest; restRemaining = ex.rest } else { fxSkip(); restRemaining = 0 }
+        let willClose = (ex.completedSets + ex.skippedSets + 1) >= ex.sets
+        if done { restActive = true; restTotal = ex.rest; restElapsed = 0 } else { restActive = false }
         withAnimation(.spring(response: 0.4, dampingFraction: 0.82)) { store.registerSet(ex.id, done: done) }
+
+        if willClose && store.activeExercise != nil {
+            fxExercise()   // moved to the next exercise: special sound
+        } else if done {
+            fxDone()
+        } else {
+            fxSkip()
+        }
     }
 
     // MARK: - Summary
@@ -209,7 +226,7 @@ struct TrainView: View {
     }
 
     private var workoutName: String { store.exercises.first?.day ?? "Entreno" }
-    private func resetLocal() { sessionStart = nil; restRemaining = 0; restTotal = 0; showSummary = false }
+    private func resetLocal() { sessionStart = nil; restActive = false; restElapsed = 0; restTotal = 0; showSummary = false }
 
     // MARK: - Empty
 
@@ -245,17 +262,33 @@ struct TrainView: View {
 
     private func fxDone() { if hapticsOn { Haptics.success() }; if soundOn { SoundFX.play(SoundFX.done) } }
     private func fxSkip() { if hapticsOn { Haptics.soft() }; if soundOn { SoundFX.play(SoundFX.skip) } }
+    private func fxExercise() { if hapticsOn { Haptics.success() }; if soundOn { SoundFX.play(SoundFX.exercise) } }
     private func fxRest() { if hapticsOn { Haptics.rigid() }; if soundOn { SoundFX.play(SoundFX.rest) } }
     private func fxFinish() { if hapticsOn { Haptics.success() }; if soundOn { SoundFX.play(SoundFX.finish) } }
 
     // MARK: - Helpers
 
-    private func bigStat(_ value: String, _ label: String, _ icon: String) -> some View {
-        VStack(spacing: 3) {
+    private func editStat(_ icon: String, _ value: String, _ label: String, minus: @escaping () -> Void, plus: @escaping () -> Void) -> some View {
+        VStack(spacing: 6) {
             Image(systemName: icon).font(.system(size: 13)).foregroundColor(Color(hex: "6ea300"))
-            Text(value).font(.system(size: 20, weight: .heavy)).foregroundColor(Brand.ink)
+            HStack(spacing: 12) {
+                stepButton("minus", action: minus)
+                Text(value).font(.system(size: 24, weight: .heavy)).foregroundColor(Brand.ink)
+                    .frame(minWidth: 44).contentTransition(.numericText())
+                stepButton("plus", action: plus)
+            }
             Text(label).font(.caption2).fontWeight(.bold).foregroundColor(Brand.muted)
-        }.frame(maxWidth: .infinity)
+        }
+        .frame(maxWidth: .infinity).padding(.vertical, 10)
+        .background(Brand.surface).clipShape(RoundedRectangle(cornerRadius: 12))
+    }
+
+    private func stepButton(_ icon: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Image(systemName: icon).font(.system(size: 14, weight: .heavy)).foregroundColor(Brand.ink)
+                .frame(width: 32, height: 32).background(Color.white).clipShape(Circle())
+                .overlay(Circle().stroke(Brand.line))
+        }.buttonStyle(PressableButtonStyle())
     }
 
     private func dotColor(_ ex: Exercise, _ i: Int) -> Color {
