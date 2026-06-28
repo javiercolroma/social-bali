@@ -195,25 +195,30 @@ struct ActivityView: View {
     }
 
     private var summaryCard: some View {
-        PanelCard {
-            HStack(alignment: .top) {
+        let score = store.gymScore
+        return PanelCard {
+            HStack(spacing: 12) {
+                // Racha (métrica destacada)
                 VStack(alignment: .leading, spacing: 3) {
-                    Text("TU ACTIVIDAD").font(.caption2).fontWeight(.heavy).foregroundColor(Brand.muted)
-                    Text("\(sessions.count)").font(.system(size: 44, weight: .heavy)).foregroundColor(Brand.ink)
-                    Text(sessions.count == 1 ? "entreno guardado" : "entrenos guardados")
+                    HStack(spacing: 5) {
+                        Image(systemName: "flame.fill").font(.system(size: 12, weight: .heavy)).foregroundColor(Color(hex: "e8820c"))
+                        Text("RACHA").font(.caption2).fontWeight(.heavy).foregroundColor(Brand.muted)
+                    }
+                    Text("\(store.player.streak)").font(.system(size: 48, weight: .heavy)).foregroundColor(Brand.ink)
+                    Text(store.player.streak == 1 ? "día en racha" : "días en racha")
                         .font(.system(size: 12, weight: .bold)).foregroundColor(Brand.soft)
                 }
                 Spacer()
-                VStack(alignment: .trailing, spacing: 6) {
-                    Label("\(store.player.streak) días", systemImage: "flame.fill")
-                        .font(.system(size: 12, weight: .heavy)).foregroundColor(Color(hex: "8a4b00"))
-                        .padding(.horizontal, 10).padding(.vertical, 5)
-                        .background(Color(hex: "ffe2a3")).clipShape(Capsule())
-                    Label("Score \(store.gymScore.total)", systemImage: "trophy.fill")
-                        .font(.system(size: 12, weight: .heavy)).foregroundColor(Color(hex: "10150a"))
-                        .padding(.horizontal, 10).padding(.vertical, 5)
-                        .background(Brand.greenSoft).clipShape(Capsule())
+                // Gym Score con presencia (bloque verde)
+                VStack(spacing: 4) {
+                    Text("GYM SCORE").font(.caption2).fontWeight(.heavy).foregroundColor(Color(hex: "1c2b08"))
+                    Text("\(score.total)").font(.system(size: 46, weight: .heavy)).foregroundColor(Color(hex: "10150a"))
+                    Text(score.tier).font(.system(size: 12, weight: .heavy)).foregroundColor(Color(hex: "10150a"))
+                        .padding(.horizontal, 10).padding(.vertical, 4)
+                        .background(Color.white.opacity(0.7)).clipShape(Capsule())
                 }
+                .padding(.horizontal, 18).padding(.vertical, 14)
+                .background(Brand.green).clipShape(RoundedRectangle(cornerRadius: 18))
             }
             stat("\(sessionsThisWeek)", "Entrenos esta semana", "calendar")
         }
