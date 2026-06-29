@@ -10,7 +10,9 @@ struct PartnerView: View {
     @State private var maxKm: Double = 100
 
     private var visiblePlans: [TrainingPlan] {
-        store.trainingPlans.filter { planKm($0) <= maxKm }
+        store.trainingPlans
+            .filter { planKm($0) <= maxKm }
+            .sorted { planKm($0) < planKm($1) }   // los más cercanos primero
     }
 
     var body: some View {
