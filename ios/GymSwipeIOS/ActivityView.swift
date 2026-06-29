@@ -11,6 +11,7 @@ struct ActivityView: View {
     @State private var detail: WorkoutSession?
     @State private var daySheet: DayPayload?
     @State private var showEpleyInfo = false
+    @State private var showScoreInfo = false
 
     private let tabs: [(title: String, icon: String)] = [
         ("Progreso", "chart.line.uptrend.xyaxis"),
@@ -197,24 +198,22 @@ struct ActivityView: View {
 
     /// Racha en horizontal, de extremo a extremo, con el número dentro de una llama.
     private var rachaCard: some View {
-        PanelCard {
+        let s = store.player.streak
+        return PanelCard {
             HStack(spacing: 16) {
                 ZStack {
+                    Circle().fill(Color(hex: "fff0e0")).frame(width: 64, height: 64)
                     Image(systemName: "flame.fill")
-                        .font(.system(size: 82))
-                        .foregroundStyle(LinearGradient(colors: [Color(hex: "ffc24d"), Color(hex: "f0560a")],
+                        .font(.system(size: 34))
+                        .foregroundStyle(LinearGradient(colors: [Color(hex: "ffb33b"), Color(hex: "f0560a")],
                                                         startPoint: .top, endPoint: .bottom))
-                    // El dígito va en la "barriga" (parte ancha) de la llama.
-                    Text("\(store.player.streak)")
-                        .font(.system(size: 26, weight: .black))
-                        .foregroundColor(.white)
-                        .shadow(color: Color(hex: "b23b00").opacity(0.55), radius: 1, y: 1)
-                        .offset(y: 13)
                 }
-                .frame(width: 82, height: 82)
-                VStack(alignment: .leading, spacing: 3) {
-                    Text(store.player.streak == 0 ? "Empieza tu racha" : "¡En racha!")
-                        .font(.system(size: 19, weight: .heavy)).foregroundColor(Brand.ink)
+                VStack(alignment: .leading, spacing: 2) {
+                    HStack(alignment: .firstTextBaseline, spacing: 6) {
+                        Text("\(s)").font(.system(size: 40, weight: .heavy)).foregroundColor(Brand.ink)
+                        Text(s > 0 ? "en racha" : "sin racha")
+                            .font(.system(size: 15, weight: .heavy)).foregroundColor(Color(hex: "e8820c"))
+                    }
                     Text(streakSubtitle)
                         .font(.system(size: 13, weight: .bold)).foregroundColor(Brand.soft)
                         .fixedSize(horizontal: false, vertical: true)
@@ -225,12 +224,11 @@ struct ActivityView: View {
         }
     }
 
-    /// La racha NO son días consecutivos: cuenta los entrenos encadenados
-    /// mientras no pasen más de 3 días entre uno y otro.
+    /// La racha NO son días consecutivos: cuenta los entrenos encadenados mientras no pasen más de 3 días entre uno y otro.
     private var streakSubtitle: String {
-        let s = store.player.streak
-        if s == 0 { return "Entrena cada 3 días para mantenerla" }
-        return "\(s) \(s == 1 ? "entreno" : "entrenos") encadenados · máx. 3 días de descanso"
+        store.player.streak == 0
+            ? "Entrena para empezar tu racha (máx. 3 días sin entrenar)."
+            : "Sigue así: no pases más de 3 días sin entrenar."
     }
 
     /// Gym Score igual que en Comunidad: puntuación + tier + fiabilidad + barras de pilares.
@@ -239,7 +237,12 @@ struct ActivityView: View {
         return PanelCard {
             HStack(alignment: .top) {
                 VStack(alignment: .leading, spacing: 3) {
-                    Text("GYM SCORE").font(.caption2).fontWeight(.heavy).foregroundColor(Brand.muted)
+                    HStack(spacing: 6) {
+                        Text("GYM SCORE").font(.caption2).fontWeight(.heavy).foregroundColor(Brand.muted)
+                        Button { FX.tap(); showScoreInfo = true } label: {
+                            Image(systemName: "info.circle").font(.system(size: 13)).foregroundColor(Brand.soft)
+                        }.buttonStyle(.plain)
+                    }
                     Text("\(s.total)").font(.system(size: 48, weight: .heavy)).foregroundColor(Brand.ink)
                     Text(s.tier).font(.system(size: 12, weight: .heavy)).foregroundColor(Color(hex: "10150a"))
                         .padding(.horizontal, 10).padding(.vertical, 3).background(Brand.greenSoft).clipShape(Capsule())
@@ -256,7 +259,7 @@ struct ActivityView: View {
                 }
             }
             if !s.reliable {
-                Text("Entrena 3 semanas para tu score real (potencial \(s.potential)).")
+                Text("Entrena 7 días para tu score definitivo (potencial \(s.potential)).")
                     .font(.footnote).foregroundColor(Brand.muted)
             }
             VStack(spacing: 8) {
@@ -267,6 +270,11 @@ struct ActivityView: View {
                 ScoreBarView(label: "Calidad", value: s.quality)
                 ScoreBarView(label: "Variedad", value: s.variety)
             }
+        }
+        .alert("¿Qué es el Gym Score?", isPresented: $showScoreInfo) {
+            Button("Entendido", role: .cancel) {}
+        } message: {
+            Text("Tu Gym Score resume tu entrenamiento en una nota de 0 a 100, a partir de 6 pilares: Fuerza (cuánto levantas), Constancia (con qué frecuencia entrenas), Progreso (si subes cargas), Volumen (trabajo total), Calidad (series completadas) y Variedad (variedad de ejercicios).\n\nEs exigente: hasta que no llevas 7 días entrenando es \"Provisional\"; a partir de ahí pasa a ser tu score definitivo (\"Fiable\").")
         }
     }
 

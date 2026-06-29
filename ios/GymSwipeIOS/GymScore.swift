@@ -2,7 +2,8 @@ import Foundation
 
 enum GymScoreEngine {
     static let windowDays = 21
-    static let reliableTrainingDays = 8
+    static let reliableDays = 7          // el score pasa a "definitivo" tras 7 días entrenando
+    static let reliableTrainingDays = 4
 
     struct Pattern { let group: String; let benchmark: Double; let compound: Double }
 
@@ -96,15 +97,15 @@ enum GymScoreEngine {
 
         let firstAt = history.map { $0.completedAt.timeIntervalSince1970 }.min()
         let daysTracked = firstAt == nil ? 0 : Int((now - firstAt!) / dayMs)
-        let spanFactor = clamp01(Double(daysTracked) / Double(windowDays))
-        let evidence = clamp01(min(Double(trainingDays) / 9, Double(sessions) / 9))
+        let spanFactor = clamp01(Double(daysTracked) / Double(reliableDays))
+        let evidence = clamp01(min(Double(trainingDays) / 5, Double(sessions) / 5))
         let reliability = spanFactor * evidence
-        let reliable = daysTracked >= windowDays && trainingDays >= reliableTrainingDays
+        let reliable = daysTracked >= reliableDays && trainingDays >= reliableTrainingDays
         let total = clampScore(Double(potential) * (0.5 + 0.5 * reliability))
 
         return GymScore(
             total: total, potential: potential, reliability: Int((reliability * 100).rounded()),
-            reliable: reliable, daysUntilReliable: max(0, windowDays - daysTracked), tier: tier(total),
+            reliable: reliable, daysUntilReliable: max(0, reliableDays - daysTracked), tier: tier(total),
             strength: strength, consistency: consistency, volume: volume, progression: progression,
             variety: variety, quality: quality, sessions: sessions, trainingDays: trainingDays
         )
