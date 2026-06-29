@@ -25,12 +25,12 @@ struct MessagesSheet: View {
         NavigationStack {
             VStack(spacing: 10) {
                 Picker("", selection: $tab) {
-                    Text("Chats").tag(0)
-                    Text(incoming.isEmpty ? "Amigos" : "Amigos (\(incoming.count))").tag(1)
+                    Text(incoming.isEmpty ? "Amigos" : "Amigos (\(incoming.count))").tag(0)
+                    Text("Mensajes").tag(1)
                 }.pickerStyle(.segmented).padding(.horizontal, 16)
 
                 ScrollView {
-                    if tab == 0 { chats } else {
+                    if tab == 1 { chats } else {
                         FriendsContent(onOpenChat: onOpenChat, onOpenProfile: onOpenProfile, onEditAccount: onEditAccount)
                     }
                 }
@@ -194,9 +194,9 @@ struct FriendsContent: View {
 
 struct ChatView: View {
     @EnvironmentObject var store: AppStore
-    @Environment(\.dismiss) private var dismiss
     let personId: String
     var onOpenProfile: (String) -> Void
+    var onClose: () -> Void = {}
     @State private var draft = ""
 
     private var person: SocialPerson? { store.person(personId) }
@@ -205,7 +205,7 @@ struct ChatView: View {
     var body: some View {
         VStack(spacing: 0) {
             HStack(spacing: 11) {
-                Button { dismiss() } label: { Image(systemName: "arrow.left").font(.system(size: 18, weight: .semibold)).foregroundColor(Brand.ink) }
+                Button { onClose() } label: { Image(systemName: "arrow.left").font(.system(size: 18, weight: .semibold)).foregroundColor(Brand.ink) }
                 Button { onOpenProfile(personId) } label: {
                     HStack(spacing: 11) {
                         Avatar(emoji: person?.avatar ?? "👤")
@@ -248,7 +248,8 @@ struct ChatView: View {
             .padding(.horizontal, 14).padding(.vertical, 10)
             .background(Brand.bg).overlay(Divider(), alignment: .top)
         }
-        .background(Brand.bg)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(Brand.bg.ignoresSafeArea())
         .onAppear { store.openConversation(personId) }
     }
 

@@ -41,13 +41,20 @@ struct RootView: View {
         }
         .sheet(isPresented: $showNotifications) {
             NotificationsSheet(onOpenChat: { showNotifications = false; chatPerson = IdString(id: $0) },
-                               onOpenFriends: { showNotifications = false; messagesTab = 1; showMessages = true })
+                               onOpenFriends: { showNotifications = false; messagesTab = 0; showMessages = true })
                 .environmentObject(store)
         }
-        .fullScreenCover(item: $chatPerson) { item in
-            ChatView(personId: item.id, onOpenProfile: { profilePerson = IdString(id: $0) })
-                .environmentObject(store)
+        .overlay {
+            if let item = chatPerson {
+                ChatView(personId: item.id,
+                         onOpenProfile: { profilePerson = IdString(id: $0) },
+                         onClose: { chatPerson = nil })
+                    .environmentObject(store)
+                    .transition(.move(edge: .trailing))
+                    .zIndex(5)
+            }
         }
+        .animation(.easeInOut(duration: 0.28), value: chatPerson?.id)
         .sheet(item: $profilePerson) { item in
             if let person = store.person(item.id) {
                 FriendProfileView(person: person).environmentObject(store)
@@ -88,7 +95,7 @@ struct RootView: View {
                 Text(titles[tab]).font(.system(size: 30, weight: .heavy)).foregroundColor(Brand.ink)
             }
             Spacer()
-            headerButton(system: "envelope.fill", badge: store.unreadMessages) { FX.tap(); messagesTab = 0; showMessages = true }
+            headerButton(system: "envelope.fill", badge: store.unreadMessages) { FX.tap(); messagesTab = 1; showMessages = true }
             headerButton(system: "bell.fill", badge: store.unreadNotifications) { FX.tap(); showNotifications = true }
 }
         .padding(.horizontal, 18)
