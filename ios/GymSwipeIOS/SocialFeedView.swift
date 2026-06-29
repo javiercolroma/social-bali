@@ -517,6 +517,7 @@ private struct CommentsSheet: View {
     @State private var draft = ""
     @State private var replyTo: String?
     @State private var replyToName: String?
+    @State private var likesOf: PostComment?
     @FocusState private var focused: Bool
 
     var body: some View {
@@ -541,6 +542,52 @@ private struct CommentsSheet: View {
             .navigationTitle("Comentarios").navigationBarTitleDisplayMode(.inline)
         }
         .presentationDetents([.large])
+        .sheet(item: $likesOf) { likesSheet($0) }
+    }
+
+    @ViewBuilder
+    private func likesSheet(_ c: PostComment) -> some View {
+        let otherTarget = max(0, c.likes - (c.liked ? 1 : 0))
+        let people = Array(likers(for: c).prefix(otherTarget))
+        let remaining = max(0, otherTarget - people.count)
+        NavigationStack {
+            ScrollView {
+                VStack(spacing: 0) {
+                    if c.liked { likeRow(emoji: "", name: store.account?.name ?? "Tú", handle: store.account?.handle ?? "tu_usuario", isMe: true) }
+                    ForEach(people) { p in likeRow(emoji: p.avatar, name: p.name, handle: p.handle, isMe: false) }
+                    if remaining > 0 {
+                        Text("y \(remaining) persona\(remaining == 1 ? "" : "s") más")
+                            .font(.footnote).foregroundColor(Brand.muted)
+                            .frame(maxWidth: .infinity).padding(.vertical, 16)
+                    }
+                }.padding(.vertical, 8)
+            }
+            .background(Brand.bg)
+            .navigationTitle("Me gusta").navigationBarTitleDisplayMode(.inline)
+        }
+        .presentationDetents([.medium, .large])
+    }
+
+    private func likeRow(emoji: String, name: String, handle: String, isMe: Bool) -> some View {
+        HStack(spacing: 11) {
+            if isMe { MeAvatar(account: store.account, size: 40) } else { Avatar(emoji: emoji, size: 40) }
+            VStack(alignment: .leading, spacing: 2) {
+                Text(name).font(.system(size: 15, weight: .heavy)).foregroundColor(Brand.ink)
+                Text("@\(handle)").font(.caption2).foregroundColor(Brand.soft)
+            }
+            Spacer()
+            Image(systemName: "heart.fill").font(.system(size: 14)).foregroundColor(Brand.red)
+        }
+        .padding(.horizontal, 16).padding(.vertical, 8)
+    }
+
+    /// Lista determinista de quién dio like a un comentario (demo).
+    private func likers(for c: PostComment) -> [SocialPerson] {
+        guard !store.people.isEmpty, c.likes > 0 else { return [] }
+        var seed: UInt64 = 0
+        for ch in c.id.unicodeScalars { seed = seed &* 31 &+ UInt64(ch.value) }
+        let start = Int(seed % UInt64(store.people.count))
+        return Array(store.people[start...] + store.people[..<start])
     }
 
     private var emptyState: some View {
@@ -575,7 +622,11 @@ private struct CommentsSheet: View {
                         Text("\(c.likes)").font(.system(size: 11, weight: .semibold)).foregroundColor(Brand.soft)
                     }
                 }
-            }.buttonStyle(.plain)
+            }
+            .buttonStyle(.plain)
+            .simultaneousGesture(LongPressGesture(minimumDuration: 0.35).onEnded { _ in
+                if c.likes > 0 { FX.tap(); likesOf = c }
+            })
         }
         .padding(.leading, isReply ? 42 : 0)
     }
@@ -594,7 +645,6 @@ private struct CommentsSheet: View {
             }
             Divider()
             HStack(spacing: 10) {
-                MeAvatar(account: store.account, size: 32)
                 TextField(replyToName == nil ? "Añade un comentario…" : "Añade una respuesta…", text: $draft, axis: .vertical)
                     .font(.system(size: 15)).focused($focused)
                     .padding(.horizontal, 12).padding(.vertical, 9)
