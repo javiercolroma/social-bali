@@ -43,6 +43,11 @@ struct SocialFeedView: View {
     @State private var commentTarget: FeedItem?
     @State private var comments: [String: [PostComment]] = [:]
     @State private var toast: String?
+    // El feed es un snapshot: no se reorganiza al seguir a alguien; solo cambia al refrescar (pull-to-refresh).
+    @State private var seguidosFeed: [FeedItem] = []
+    @State private var seguidosLoaded = false
+    @State private var paraTiFeed: [FeedItem] = []
+    @State private var paraTiLoaded = false
 
     private let tabs: [(title: String, icon: String)] = [("Seguidos", "person.2.fill"), ("Para ti", "sparkles")]
 
@@ -91,22 +96,30 @@ struct SocialFeedView: View {
     private var seguidosTab: some View {
         ScrollView {
             LazyVStack(spacing: 12) {
-                if store.following.isEmpty {
-                    newUserHeader
-                    if hasSuggestions { suggestionsStrip }
-                    let feed = (myItems + discoverFeed).sorted { $0.date > $1.date }
-                    if feed.isEmpty {
-                        emptyFeed("Sigue a atletas o registra un entreno para llenar tu muro.")
-                    } else {
-                        ForEach(feed) { card($0, showFollow: $0.personId != nil) }
-                    }
+                if store.following.isEmpty { newUserHeader }
+                if hasSuggestions { suggestionsStrip }
+                if seguidosFeed.isEmpty {
+                    emptyFeed("Sigue a atletas o registra un entreno para llenar tu muro.")
                 } else {
-                    if hasSuggestions { suggestionsStrip }
-                    ForEach(followedFeed) { card($0) }
+                    ForEach(seguidosFeed) { item in
+                        card(item, showFollow: item.personId != nil && store.relationship(item.personId ?? "") == .none)
+                    }
                 }
             }
             .padding(.horizontal, 14).padding(.vertical, 12)
         }
+        .refreshable {
+            try? await Task.sleep(nanoseconds: 500_000_000)
+            await MainActor.run { refreshSeguidos() }
+        }
+        .onAppear { if !seguidosLoaded { refreshSeguidos() } }
+    }
+
+    private func refreshSeguidos() {
+        seguidosFeed = store.following.isEmpty
+            ? (myItems + discoverFeed).sorted { $0.date > $1.date }
+            : followedFeed
+        seguidosLoaded = true
     }
 
     private var newUserHeader: some View {
@@ -121,15 +134,26 @@ struct SocialFeedView: View {
     private var paraTiTab: some View {
         ScrollView {
             LazyVStack(spacing: 12) {
-                let disc = discoverFeed
-                if disc.isEmpty {
+                if paraTiFeed.isEmpty {
                     emptyFeed("No hay entrenos por descubrir ahora mismo. ¡Vuelve pronto!")
                 } else {
-                    ForEach(disc) { card($0, showFollow: true) }
+                    ForEach(paraTiFeed) { item in
+                        card(item, showFollow: item.personId != nil && store.relationship(item.personId ?? "") == .none)
+                    }
                 }
             }
             .padding(.horizontal, 14).padding(.vertical, 12)
         }
+        .refreshable {
+            try? await Task.sleep(nanoseconds: 500_000_000)
+            await MainActor.run { refreshParaTi() }
+        }
+        .onAppear { if !paraTiLoaded { refreshParaTi() } }
+    }
+
+    private func refreshParaTi() {
+        paraTiFeed = discoverFeed
+        paraTiLoaded = true
     }
 
     private var hasSuggestions: Bool { !nearbyPeople(limit: 1).isEmpty }
