@@ -95,7 +95,6 @@ struct PhotoEditorView: View {
             .padding(20)
             .background(Brand.bg)
             .navigationTitle("Ajustar foto").navigationBarTitleDisplayMode(.inline)
-            .toolbar { ToolbarItem(placement: .topBarTrailing) { Button("Cerrar") { dismiss() } } }
             .onAppear {
                 scale = CGFloat(store.account?.photoScale ?? 1); lastScale = scale
                 offset = CGSize(width: CGFloat(store.account?.photoOffsetX ?? 0), height: CGFloat(store.account?.photoOffsetY ?? 0))

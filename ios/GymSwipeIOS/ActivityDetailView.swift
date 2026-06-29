@@ -91,7 +91,6 @@ struct ActivityDetailView: View {
             }
             .background(Brand.bg)
             .navigationTitle("Actividad").navigationBarTitleDisplayMode(.inline)
-            .toolbar { ToolbarItem(placement: .topBarTrailing) { Button("Cerrar") { dismiss() } } }
         }
     }
 

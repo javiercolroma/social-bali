@@ -119,7 +119,6 @@ struct WorkoutPreview: View {
             }
             .background(Brand.bg)
             .navigationBarTitleDisplayMode(.inline)
-            .toolbar { ToolbarItem(placement: .topBarTrailing) { Button("Cerrar") { dismiss() } } }
             .sheet(isPresented: $showEditor) {
                 if let workout { CreateWorkoutView(editing: workout).environmentObject(store) }
             }
@@ -247,7 +246,6 @@ struct CreateWorkoutView: View {
             }
             .background(Brand.bg)
             .navigationTitle(editing == nil ? "Crear entreno" : "Editar entreno").navigationBarTitleDisplayMode(.inline)
-            .toolbar { ToolbarItem(placement: .topBarTrailing) { Button("Cerrar") { dismiss() } } }
             .onAppear(perform: prefill)
         }
     }

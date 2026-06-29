@@ -22,6 +22,19 @@ private struct FeedItem: Identifiable {
     var maxHeartRate: Int? = nil
 }
 
+/// Comentario de un post (local). Soporta respuestas (1 nivel), likes y fecha.
+private struct PostComment: Identifiable {
+    let id: String
+    var authorName: String
+    var authorEmoji: String     // vacío => usa el avatar de tu cuenta
+    var isMe: Bool
+    var text: String
+    var date: Date
+    var likes: Int
+    var liked: Bool
+    var replies: [PostComment]
+}
+
 struct SocialFeedView: View {
     @EnvironmentObject var store: AppStore
     var onOpenProfile: (String) -> Void
@@ -29,7 +42,7 @@ struct SocialFeedView: View {
     @State private var segment = 0
     @State private var activity: FeedItem?
     @State private var commentTarget: FeedItem?
-    @State private var comments: [String: [String]] = [:]
+    @State private var comments: [String: [PostComment]] = [:]
     @State private var toast: String?
     @StateObject private var location = LocationManager()
 
@@ -319,31 +332,78 @@ struct SocialFeedView: View {
             .contentShape(Rectangle())
             .onTapGesture { FX.tap(); activity = item }
 
-            HStack(spacing: 8) {
+            // Acciones estilo Instagram: like (corazón), comentario, compartir (avión), con contadores.
+            HStack(spacing: 20) {
                 Button { FX.tap(); store.toggleKudo(item.id) } label: {
-                    let isLiked = store.appliedKudos.contains(item.id)
-                    actionChip(icon: isLiked ? "hands.clap.fill" : "hands.clap",
-                               text: "\(kudos(item) + (isLiked ? 1 : 0))", active: isLiked)
+                    let liked = store.appliedKudos.contains(item.id)
+                    actionIcon(liked ? "heart.fill" : "heart", "\(kudos(item) + (liked ? 1 : 0))",
+                               tint: liked ? Brand.red : Brand.ink)
                 }.buttonStyle(.plain)
 
-                Button { FX.tap(); commentTarget = item } label: {
-                    let n = comments[item.id]?.count ?? 0
-                    actionChip(icon: "bubble.left", text: n > 0 ? "\(n)" : "Comentar", active: n > 0)
+                Button {
+                    FX.tap()
+                    if comments[item.id] == nil { comments[item.id] = demoComments(for: item) }
+                    commentTarget = item
+                } label: {
+                    actionIcon("bubble.right", "\(commentTotal(item))", tint: Brand.ink)
                 }.buttonStyle(.plain)
 
                 ShareLink(item: shareText(item)) {
-                    actionChip(icon: "square.and.arrow.up", text: "Compartir", active: false)
+                    actionIcon("paperplane", "\(shareBase(item))", tint: Brand.ink)
                 }.buttonStyle(.plain)
+
+                Spacer()
             }
+            .padding(.top, 2)
         }
     }
 
-    private func actionChip(icon: String, text: String, active: Bool) -> some View {
-        HStack(spacing: 6) { Image(systemName: icon); Text(text) }
-            .font(.system(size: 13, weight: .heavy))
-            .foregroundColor(active ? Color(hex: "10150a") : Brand.muted)
-            .frame(maxWidth: .infinity).frame(height: 36)
-            .background(active ? Brand.greenSoft : Brand.chip).clipShape(Capsule())
+    private func actionIcon(_ icon: String, _ count: String, tint: Color) -> some View {
+        HStack(spacing: 6) {
+            Image(systemName: icon).font(.system(size: 21, weight: .regular)).foregroundColor(tint)
+            Text(count).font(.system(size: 14, weight: .semibold)).foregroundColor(Brand.ink)
+        }
+    }
+
+    private func shareBase(_ item: FeedItem) -> Int {
+        var s: UInt64 = 5
+        for ch in item.id.unicodeScalars { s = s &* 17 &+ UInt64(ch.value) }
+        return 1 + Int(s % 9)
+    }
+
+    private func commentTotal(_ item: FeedItem) -> Int {
+        let list = comments[item.id] ?? demoComments(for: item)
+        return list.reduce(0) { $0 + 1 + $1.replies.count }
+    }
+
+    /// Comentarios demo deterministas por post (de gente de la comunidad), para que el muro se sienta vivo.
+    private func demoComments(for item: FeedItem) -> [PostComment] {
+        guard !store.people.isEmpty else { return [] }
+        var seed: UInt64 = 0
+        for ch in item.id.unicodeScalars { seed = seed &* 31 &+ UInt64(ch.value) }
+        let texts = ["¡Bestia! 🔥", "Qué máquina 💪", "Buen volumen", "Vaya progreso 👏", "Crack", "Esto es constancia", "Menudo PR 😳", "A tope!"]
+        let replyTexts = ["¡Gracias! 🙌", "Aquí seguimos 💪", "jaja gracias crack", "¡Vamos!"]
+        let n = Int(seed % 4)   // 0..3 comentarios
+        var out: [PostComment] = []
+        for i in 0..<n {
+            let p = store.people[Int((seed / UInt64(i + 1)) % UInt64(store.people.count))]
+            let mins = Int((seed >> (i * 3)) % 1440) + 2
+            var replies: [PostComment] = []
+            if i == 0 && seed % 2 == 0 {
+                replies.append(PostComment(
+                    id: "\(item.id)-r0", authorName: item.authorName,
+                    authorEmoji: item.personId == nil ? "" : item.avatarEmoji, isMe: item.personId == nil,
+                    text: replyTexts[Int(seed % UInt64(replyTexts.count))],
+                    date: Date().addingTimeInterval(-Double(max(1, mins - 7)) * 60),
+                    likes: Int(seed % 3), liked: false, replies: []))
+            }
+            out.append(PostComment(
+                id: "\(item.id)-c\(i)", authorName: p.name, authorEmoji: p.avatar, isMe: false,
+                text: texts[Int((seed >> (i * 2)) % UInt64(texts.count))],
+                date: Date().addingTimeInterval(-Double(mins) * 60),
+                likes: Int((seed >> i) % 14), liked: false, replies: replies))
+        }
+        return out
     }
 
     private func shareText(_ item: FeedItem) -> String {
@@ -448,77 +508,150 @@ struct SocialFeedView: View {
     }
 }
 
-/// Hoja de comentarios de un post del muro (almacenados localmente).
-struct CommentsSheet: View {
+/// Hoja de comentarios de un post estilo Instagram: respuestas (1 nivel), likes
+/// por comentario y antigüedad ("hace ..."). Almacenado localmente.
+private struct CommentsSheet: View {
     @EnvironmentObject var store: AppStore
-    @Environment(\.dismiss) private var dismiss
     let title: String
-    @Binding var comments: [String]
+    @Binding var comments: [PostComment]
     @State private var draft = ""
+    @State private var replyTo: String?
+    @State private var replyToName: String?
+    @FocusState private var focused: Bool
 
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
                 ScrollView {
-                    VStack(alignment: .leading, spacing: 12) {
+                    LazyVStack(alignment: .leading, spacing: 18) {
                         if comments.isEmpty {
-                            VStack(spacing: 8) {
-                                Image(systemName: "bubble.left.and.bubble.right").font(.system(size: 34)).foregroundColor(Brand.soft)
-                                Text("Sé el primero en comentar").font(.system(size: 15, weight: .heavy)).foregroundColor(Brand.ink)
-                                Text("Anima a quien ha entrenado 💬").font(.footnote).foregroundColor(Brand.muted)
-                            }
-                            .frame(maxWidth: .infinity).padding(.top, 40)
+                            emptyState
                         } else {
-                            ForEach(Array(comments.enumerated()), id: \.offset) { _, c in commentRow(c) }
+                            ForEach(comments) { c in
+                                commentRow(c, isReply: false)
+                                ForEach(c.replies) { r in commentRow(r, isReply: true) }
+                            }
                         }
                     }
                     .padding(16)
                 }
-                Divider()
-                HStack(spacing: 10) {
-                    MeAvatar(account: store.account, size: 32)
-                    TextField("Añade un comentario…", text: $draft, axis: .vertical)
-                        .font(.system(size: 15))
-                        .padding(.horizontal, 12).padding(.vertical, 9)
-                        .background(Brand.chip).clipShape(RoundedRectangle(cornerRadius: 18))
-                        .lineLimit(1...4)
-                    Button { post() } label: {
-                        Image(systemName: "paperplane.fill").font(.system(size: 16, weight: .heavy))
-                            .foregroundColor(canPost ? Color(hex: "10150a") : Brand.soft)
-                            .frame(width: 38, height: 38)
-                            .background(canPost ? Brand.green : Brand.chip).clipShape(Circle())
-                    }.disabled(!canPost)
-                }
-                .padding(.horizontal, 14).padding(.vertical, 10)
-                .background(Brand.bg)
+                composer
             }
             .background(Brand.bg)
             .navigationTitle("Comentarios").navigationBarTitleDisplayMode(.inline)
-            .toolbar { ToolbarItem(placement: .topBarTrailing) { Button("Cerrar") { dismiss() } } }
         }
-        .presentationDetents([.medium, .large])
+        .presentationDetents([.large])
+    }
+
+    private var emptyState: some View {
+        VStack(spacing: 8) {
+            Image(systemName: "bubble.left.and.bubble.right").font(.system(size: 34)).foregroundColor(Brand.soft)
+            Text("Sé el primero en comentar").font(.system(size: 15, weight: .heavy)).foregroundColor(Brand.ink)
+            Text("Anima a quien ha entrenado 💬").font(.footnote).foregroundColor(Brand.muted)
+        }
+        .frame(maxWidth: .infinity).padding(.top, 40)
+    }
+
+    private func commentRow(_ c: PostComment, isReply: Bool) -> some View {
+        HStack(alignment: .top, spacing: 10) {
+            avatar(c)
+            VStack(alignment: .leading, spacing: 4) {
+                (Text(c.authorName).font(.system(size: 13, weight: .heavy)).foregroundColor(Brand.ink)
+                 + Text("  ").font(.system(size: 14))
+                 + Text(c.text).font(.system(size: 14)).foregroundColor(Color(hex: "2c3127")))
+                    .fixedSize(horizontal: false, vertical: true)
+                HStack(spacing: 14) {
+                    Text(relativeTime(c.date))
+                    if c.likes > 0 { Text("\(c.likes) me gusta") }
+                    Button("Responder") { startReply(c, isReply: isReply) }
+                }
+                .font(.system(size: 12, weight: .semibold)).foregroundColor(Brand.soft)
+            }
+            Spacer()
+            Button { toggleLike(c.id) } label: {
+                Image(systemName: c.liked ? "heart.fill" : "heart")
+                    .font(.system(size: 13)).foregroundColor(c.liked ? Brand.red : Brand.soft)
+            }.buttonStyle(.plain)
+        }
+        .padding(.leading, isReply ? 42 : 0)
+    }
+
+    private var composer: some View {
+        VStack(spacing: 0) {
+            if let name = replyToName {
+                HStack {
+                    Text("Respondiendo a \(name)").font(.caption).foregroundColor(Brand.muted)
+                    Spacer()
+                    Button { replyTo = nil; replyToName = nil } label: {
+                        Image(systemName: "xmark").font(.system(size: 11, weight: .bold)).foregroundColor(Brand.soft)
+                    }
+                }
+                .padding(.horizontal, 16).padding(.vertical, 6).background(Brand.chip)
+            }
+            Divider()
+            HStack(spacing: 10) {
+                MeAvatar(account: store.account, size: 32)
+                TextField(replyToName == nil ? "Añade un comentario…" : "Añade una respuesta…", text: $draft, axis: .vertical)
+                    .font(.system(size: 15)).focused($focused)
+                    .padding(.horizontal, 12).padding(.vertical, 9)
+                    .background(Brand.chip).clipShape(RoundedRectangle(cornerRadius: 18))
+                    .lineLimit(1...4)
+                Button { post() } label: {
+                    Image(systemName: "paperplane.fill").font(.system(size: 16, weight: .heavy))
+                        .foregroundColor(canPost ? Color(hex: "10150a") : Brand.soft)
+                        .frame(width: 38, height: 38)
+                        .background(canPost ? Brand.green : Brand.chip).clipShape(Circle())
+                }.disabled(!canPost)
+            }
+            .padding(.horizontal, 14).padding(.vertical, 10).background(Brand.bg)
+        }
+    }
+
+    @ViewBuilder
+    private func avatar(_ c: PostComment) -> some View {
+        if c.isMe { MeAvatar(account: store.account, size: 32) }
+        else { Avatar(emoji: c.authorEmoji.isEmpty ? "🙂" : c.authorEmoji, size: 32) }
     }
 
     private var canPost: Bool { !draft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
+
+    private func startReply(_ c: PostComment, isReply: Bool) {
+        if isReply {
+            replyTo = comments.first(where: { $0.replies.contains(where: { $0.id == c.id }) })?.id
+        } else {
+            replyTo = c.id
+        }
+        replyToName = c.authorName
+        focused = true
+    }
 
     private func post() {
         let t = draft.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !t.isEmpty else { return }
         FX.tap()
-        comments.append(t)
-        draft = ""
+        let new = PostComment(id: UUID().uuidString, authorName: store.account?.name ?? "Tú",
+                              authorEmoji: "", isMe: true, text: t, date: Date(), likes: 0, liked: false, replies: [])
+        if let pid = replyTo, let i = comments.firstIndex(where: { $0.id == pid }) {
+            comments[i].replies.append(new)
+        } else {
+            comments.append(new)
+        }
+        draft = ""; replyTo = nil; replyToName = nil; focused = false
     }
 
-    private func commentRow(_ text: String) -> some View {
-        HStack(alignment: .top, spacing: 10) {
-            MeAvatar(account: store.account, size: 32)
-            VStack(alignment: .leading, spacing: 2) {
-                Text(store.account?.name ?? "Tú").font(.system(size: 13, weight: .heavy)).foregroundColor(Brand.ink)
-                Text(text).font(.system(size: 14)).foregroundColor(Color(hex: "2c3127"))
-                    .fixedSize(horizontal: false, vertical: true)
-            }
-            Spacer()
+    private func toggleLike(_ id: String) {
+        FX.tap()
+        if let i = comments.firstIndex(where: { $0.id == id }) {
+            comments[i].liked.toggle()
+            comments[i].likes += comments[i].liked ? 1 : -1
+            return
         }
-        .padding(12).background(Brand.surface).clipShape(RoundedRectangle(cornerRadius: 12))
+        for pi in comments.indices {
+            if let ri = comments[pi].replies.firstIndex(where: { $0.id == id }) {
+                comments[pi].replies[ri].liked.toggle()
+                comments[pi].replies[ri].likes += comments[pi].replies[ri].liked ? 1 : -1
+                return
+            }
+        }
     }
 }

@@ -38,7 +38,6 @@ struct MessagesSheet: View {
             .padding(.top, 8)
             .background(Brand.bg)
             .navigationTitle("Mensajes").navigationBarTitleDisplayMode(.inline)
-            .toolbar { ToolbarItem(placement: .topBarTrailing) { Button("Cerrar") { dismiss() } } }
             .onAppear { tab = initialTab }
         }
     }
@@ -303,7 +302,6 @@ struct NotificationsSheet: View {
                 ToolbarItem(placement: .topBarLeading) {
                     if store.unreadNotifications > 0 { Button("Marcar leído") { store.markAllNotificationsRead() } }
                 }
-                ToolbarItem(placement: .topBarTrailing) { Button("Cerrar") { dismiss() } }
             }
         }
     }
@@ -400,7 +398,6 @@ struct FriendProfileView: View {
             }
             .background(Brand.bg)
             .navigationTitle(person.name).navigationBarTitleDisplayMode(.inline)
-            .toolbar { ToolbarItem(placement: .topBarTrailing) { Button("Cerrar") { dismiss() } } }
         }
     }
 }

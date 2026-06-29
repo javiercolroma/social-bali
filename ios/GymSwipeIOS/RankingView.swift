@@ -210,7 +210,6 @@ struct MapUserSheet: View {
             .padding(20)
             .background(Brand.bg)
             .navigationBarTitleDisplayMode(.inline)
-            .toolbar { ToolbarItem(placement: .topBarTrailing) { Button("Cerrar") { dismiss() } } }
             .sheet(isPresented: $showProfile) { FriendProfileView(person: person).environmentObject(store) }
         }
         .presentationDetents([.medium, .large])

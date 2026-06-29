@@ -57,7 +57,6 @@ struct RootView: View {
                 ProfileView()
                     .environmentObject(store)
                     .navigationTitle("Perfil").navigationBarTitleDisplayMode(.inline)
-                    .toolbar { ToolbarItem(placement: .topBarTrailing) { Button("Cerrar") { showProfile = false } } }
             }
         }
         .fullScreenCover(isPresented: Binding(

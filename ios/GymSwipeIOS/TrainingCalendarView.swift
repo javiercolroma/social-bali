@@ -174,7 +174,6 @@ struct DaySessionsSheet: View {
             }
             .background(Brand.bg)
             .navigationTitle(title).navigationBarTitleDisplayMode(.inline)
-            .toolbar { ToolbarItem(placement: .topBarTrailing) { Button("Cerrar") { dismiss() } } }
         }
         .presentationDetents([.medium, .large])
         .sheet(item: $detail) { ActivityDetailView(item: meActivityData($0, store)).environmentObject(store) }
