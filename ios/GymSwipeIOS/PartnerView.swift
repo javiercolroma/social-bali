@@ -7,26 +7,35 @@ struct PartnerView: View {
     @State private var pendingDelete: TrainingPlan?
     @State private var profileTarget: IdString?
     @State private var showMe = false
+    @State private var maxKm: Double = 100
+
+    private var visiblePlans: [TrainingPlan] {
+        store.trainingPlans.filter { planKm($0) <= maxKm }
+    }
 
     var body: some View {
         ScrollView {
             VStack(spacing: 12) {
                 PanelCard {
+                    Button { FX.tap(); showCreator = true } label: {
+                        Label("Buscar compañero", systemImage: "person.2.fill")
+                    }.buttonStyle(PrimaryButtonStyle())
+
                     HStack {
-                        VStack(alignment: .leading, spacing: 3) {
-                            Text("PLANES DE ENTRENO").font(.caption2).fontWeight(.heavy).foregroundColor(Brand.muted)
-                            Text("\(store.trainingPlans.count) activos").font(.system(size: 15, weight: .bold)).foregroundColor(Brand.ink)
-                        }
+                        Label("Cerca de mí", systemImage: "location.fill").font(.system(size: 13, weight: .heavy)).foregroundColor(Brand.muted)
                         Spacer()
-                        Button { showCreator = true } label: {
-                            Label("Buscar compañero", systemImage: "person.2.fill")
-                                .font(.system(size: 12, weight: .heavy))
-                                .padding(.horizontal, 10).frame(height: 34)
-                                .background(Brand.greenSoft).foregroundColor(Brand.ink).clipShape(Capsule())
-                        }
-                    }
+                        Text(maxKm >= 100 ? "Sin límite" : "Hasta \(Int(maxKm)) km").font(.system(size: 13, weight: .heavy)).foregroundColor(Color(hex: "4b6211"))
+                    }.padding(.top, 4)
+                    Slider(value: $maxKm, in: 5...100, step: 5).tint(Brand.green)
                 }
-                ForEach(store.trainingPlans) { plan in planCard(plan) }
+
+                if visiblePlans.isEmpty {
+                    Text("No hay compañeros a menos de \(Int(maxKm)) km. Amplía la distancia o publica tu plan.")
+                        .font(.footnote).foregroundColor(Brand.muted).multilineTextAlignment(.center)
+                        .frame(maxWidth: .infinity).padding(.top, 30)
+                } else {
+                    ForEach(visiblePlans) { plan in planCard(plan) }
+                }
             }
             .padding(.horizontal, 14).padding(.vertical, 12)
         }
@@ -40,6 +49,14 @@ struct PartnerView: View {
             Button("Eliminar", role: .destructive) { FX.warning(); if let p = pendingDelete { store.deletePlan(p.id) }; pendingDelete = nil }
             Button("Cancelar", role: .cancel) { pendingDelete = nil }
         }
+    }
+
+    /// Distancia aproximada (determinista) a un plan; tus planes están "a 0 km".
+    private func planKm(_ plan: TrainingPlan) -> Double {
+        if plan.ownerId == "me" { return 0 }
+        var s: UInt64 = 7
+        for ch in plan.id.unicodeScalars { s = s &* 131 &+ UInt64(ch.value) }
+        return Double(s % 96) + 1
     }
 
     private func planCard(_ plan: TrainingPlan) -> some View {
@@ -67,6 +84,10 @@ struct PartnerView: View {
             HStack(spacing: 6) {
                 Image(systemName: "mappin.circle.fill").foregroundColor(Color(hex: "6ea300"))
                 Text(plan.place).font(.system(size: 13, weight: .bold)).foregroundColor(Color(hex: "3f4837"))
+                if !isMine { Text("· a \(Int(planKm(plan))) km").font(.system(size: 12, weight: .heavy)).foregroundColor(Brand.soft) }
+            }
+            if let note = plan.note, !note.isEmpty {
+                Text(note).font(.system(size: 13)).foregroundColor(Color(hex: "2c3127")).fixedSize(horizontal: false, vertical: true)
             }
             HStack(spacing: 6) { Tag(text: "Score \(plan.score)", highlight: true); Tag(text: plan.spots) }
             if isMine {
@@ -101,6 +122,7 @@ struct CreatePlanView: View {
     @State private var draftWhere = "Mi gimnasio"
     @State private var draftWorkout = "Pecho"
     @State private var draftSpots = "1 persona"
+    @State private var draftNote = ""
 
     private let whenOptions = ["Hoy", "Mañana", "Esta semana", "Me adapto"]
     private let whereOptions = ["Mi gimnasio", "Cerca de mí", "Parque / calistenia", "Me adapto"]
@@ -131,9 +153,21 @@ struct CreatePlanView: View {
                         choice("Plazas", "person.3.fill", options: spotsOptions, selection: $draftSpots)
                     }
 
+                    PanelCard {
+                        HStack(spacing: 6) {
+                            Image(systemName: "text.alignleft").font(.system(size: 12, weight: .bold)).foregroundColor(Color(hex: "6ea300"))
+                            Text("DESCRIPCIÓN (OPCIONAL)").font(.caption2).fontWeight(.heavy).foregroundColor(Brand.muted)
+                        }
+                        TextField("Cuéntales qué buscas, tu nivel, horario…", text: $draftNote, axis: .vertical)
+                            .font(.system(size: 15)).lineLimit(2...5)
+                            .padding(.horizontal, 12).padding(.vertical, 10)
+                            .background(Brand.surface).clipShape(RoundedRectangle(cornerRadius: 10))
+                    }
+
                     Button {
                         FX.success()
-                        store.addPlan(title: planTitle, when: planWhen, place: planPlace, spots: planSpots, score: store.gymScore.total)
+                        let note = draftNote.trimmingCharacters(in: .whitespacesAndNewlines)
+                        store.addPlan(title: planTitle, when: planWhen, place: planPlace, spots: planSpots, score: store.gymScore.total, note: note.isEmpty ? nil : note)
                         dismiss()
                     } label: { Label("Publicar y buscar", systemImage: "magnifyingglass") }
                         .buttonStyle(PrimaryButtonStyle())
@@ -142,11 +176,6 @@ struct CreatePlanView: View {
             }
             .background(Brand.bg)
             .navigationTitle("Buscar compañero").navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .topBarLeading) {
-                    Button { dismiss() } label: { Image(systemName: "chevron.left").fontWeight(.semibold) }
-                }
-            }
         }
     }
 

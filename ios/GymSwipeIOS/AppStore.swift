@@ -393,8 +393,8 @@ final class AppStore: ObservableObject {
         return id
     }
 
-    func addPlan(title: String, when: String, place: String, spots: String, score: Int) {
-        let plan = TrainingPlan(id: newId("plan"), title: title, when: when, place: place, spots: spots, ownerId: "me", score: score)
+    func addPlan(title: String, when: String, place: String, spots: String, score: Int, note: String? = nil) {
+        let plan = TrainingPlan(id: newId("plan"), title: title, when: when, place: place, spots: spots, ownerId: "me", score: score, note: note)
         trainingPlans.insert(plan, at: 0)
         trainingPlans = Array(trainingPlans.prefix(8))
         persist()
@@ -479,8 +479,8 @@ final class AppStore: ObservableObject {
                 body: "Noa ha empezado a seguirte.", at: now.addingTimeInterval(-3 * 3600), read: false, personId: "p-noa"),
         ]
         trainingPlans = [
-            TrainingPlan(id: "plan-mika", title: "Pecho + tríceps", when: "Mañana", place: "Basic-Fit Gran Vía", spots: "1 persona", ownerId: "p-mika", score: 71),
-            TrainingPlan(id: "plan-sofia", title: "Pierna", when: "Esta semana", place: "Zona cercana", spots: "2 personas", ownerId: "p-sofia", score: 64),
+            TrainingPlan(id: "plan-mika", title: "Pecho + tríceps", when: "Mañana", place: "Basic-Fit Gran Vía", spots: "1 persona", ownerId: "p-mika", score: 71, note: "Busco alguien para hacer fuerza por la mañana, ritmo alto."),
+            TrainingPlan(id: "plan-sofia", title: "Pierna", when: "Esta semana", place: "Zona cercana", spots: "2 personas", ownerId: "p-sofia", score: 64, note: "Día de pierna durillo, se agradece motivación 💪"),
         ]
         player = Player(xp: 260, streak: 4, focus: 82, hearts: 3)
     }

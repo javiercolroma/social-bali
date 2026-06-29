@@ -541,7 +541,6 @@ struct FriendProfileView: View {
                             ScoreBarView(label: "Constancia", value: score.consistency)
                             ScoreBarView(label: "Progreso", value: score.progression)
                             ScoreBarView(label: "Volumen", value: score.volume)
-                            ScoreBarView(label: "Calidad", value: score.quality)
                             ScoreBarView(label: "Variedad", value: score.variety)
                         }
                         TrainingCalendarView(sessions: sessionsList) { date, day in

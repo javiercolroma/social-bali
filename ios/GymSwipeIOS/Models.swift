@@ -120,6 +120,7 @@ struct TrainingPlan: Identifiable, Codable, Hashable {
     var spots: String
     var ownerId: String   // "me" or a person id
     var score: Int
+    var note: String? = nil   // descripción opcional del plan
 }
 
 // MARK: - Social
