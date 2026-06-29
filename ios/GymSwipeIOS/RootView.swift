@@ -19,7 +19,8 @@ struct RootView: View {
         VStack(spacing: 0) {
             header
             ZStack {
-                screen(0) { SocialFeedView(onOpenProfile: { profilePerson = IdString(id: $0) }) }
+                screen(0) { SocialFeedView(onOpenProfile: { profilePerson = IdString(id: $0) },
+                                           onOpenMyProfile: { showProfile = true }) }
                 screen(1) { PlanView(onLoaded: { tab = 2 }) }
                 screen(2) { TrainView(onGoToPlan: { tab = 1 }) }
                 screen(3) { CommunityView(onOpenChat: { chatPerson = IdString(id: $0) }) }

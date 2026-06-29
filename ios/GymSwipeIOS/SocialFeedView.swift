@@ -37,6 +37,7 @@ private struct PostComment: Identifiable {
 struct SocialFeedView: View {
     @EnvironmentObject var store: AppStore
     var onOpenProfile: (String) -> Void
+    var onOpenMyProfile: () -> Void = {}
 
     @State private var segment = 0
     @State private var activity: FeedItem?
@@ -96,13 +97,24 @@ struct SocialFeedView: View {
     private var seguidosTab: some View {
         ScrollView {
             LazyVStack(spacing: 12) {
-                if store.following.isEmpty { newUserHeader }
-                if hasSuggestions { suggestionsStrip }
-                if seguidosFeed.isEmpty {
-                    emptyFeed("Sigue a atletas o registra un entreno para llenar tu muro.")
+                if store.following.isEmpty {
+                    // Usuario nuevo: sugerencias arriba (activación) + feed de cercanos.
+                    newUserHeader
+                    if hasSuggestions { suggestionsStrip }
+                    if seguidosFeed.isEmpty {
+                        emptyFeed("Sigue a atletas o registra un entreno para llenar tu muro.")
+                    } else {
+                        ForEach(seguidosFeed) { item in feedCard(item) }
+                    }
+                } else if seguidosFeed.isEmpty {
+                    if hasSuggestions { suggestionsStrip }
+                    emptyFeed("Registra un entreno o desliza para refrescar tu muro.")
                 } else {
-                    ForEach(seguidosFeed) { item in
-                        card(item, showFollow: item.personId != nil && store.relationship(item.personId ?? "") == .none)
+                    // Con seguidos: las sugerencias van INTERCALADAS entre posts, no arriba.
+                    let insertAt = min(2, seguidosFeed.count - 1)
+                    ForEach(Array(seguidosFeed.enumerated()), id: \.element.id) { idx, item in
+                        feedCard(item)
+                        if hasSuggestions && idx == insertAt { suggestionsStrip }
                     }
                 }
             }
@@ -113,6 +125,10 @@ struct SocialFeedView: View {
             await MainActor.run { refreshSeguidos() }
         }
         .onAppear { if !seguidosLoaded { refreshSeguidos() } }
+    }
+
+    private func feedCard(_ item: FeedItem) -> some View {
+        card(item, showFollow: item.personId != nil && store.relationship(item.personId ?? "") == .none)
     }
 
     private func refreshSeguidos() {
@@ -213,6 +229,12 @@ struct SocialFeedView: View {
         showToast("Ahora sigues a \(p.name)")
     }
 
+    /// Toca el avatar/nombre de un post → su perfil (el tuyo si el post es tuyo).
+    private func openProfile(_ item: FeedItem) {
+        FX.tap()
+        if let pid = item.personId { onOpenProfile(pid) } else { onOpenMyProfile() }
+    }
+
     private func showToast(_ text: String) {
         withAnimation { toast = text }
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.8) {
@@ -261,20 +283,24 @@ struct SocialFeedView: View {
         PanelCard {
             VStack(alignment: .leading, spacing: 12) {
                 HStack(spacing: 11) {
-                    ZStack(alignment: .bottomTrailing) {
-                        authorAvatar(item)
-                        Text(item.flag).font(.system(size: 11)).frame(width: 17, height: 17)
-                            .background(Circle().fill(.white)).overlay(Circle().stroke(Brand.line)).offset(x: 3, y: 3)
-                    }
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text(item.authorName).font(.system(size: 15, weight: .heavy)).foregroundColor(Brand.ink)
-                        HStack(spacing: 5) {
-                            Text(relativeTime(item.date))
-                            if !item.location.isEmpty {
-                                Text("·"); Image(systemName: "mappin.and.ellipse").font(.system(size: 9)); Text(item.location)
+                    Button { openProfile(item) } label: {
+                        HStack(spacing: 11) {
+                            ZStack(alignment: .bottomTrailing) {
+                                authorAvatar(item)
+                                Text(item.flag).font(.system(size: 11)).frame(width: 17, height: 17)
+                                    .background(Circle().fill(.white)).overlay(Circle().stroke(Brand.line)).offset(x: 3, y: 3)
                             }
-                        }.font(.caption2).foregroundColor(Brand.soft)
-                    }
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(item.authorName).font(.system(size: 15, weight: .heavy)).foregroundColor(Brand.ink)
+                                HStack(spacing: 5) {
+                                    Text(relativeTime(item.date))
+                                    if !item.location.isEmpty {
+                                        Text("·"); Image(systemName: "mappin.and.ellipse").font(.system(size: 9)); Text(item.location)
+                                    }
+                                }.font(.caption2).foregroundColor(Brand.soft)
+                            }
+                        }
+                    }.buttonStyle(.plain)
                     Spacer()
                     if showFollow, let pid = item.personId, let p = store.person(pid) {
                         Button { followPerson(p) } label: {
