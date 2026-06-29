@@ -253,6 +253,8 @@ struct SettingsView: View {
             Spacer()
             if chevron { Image(systemName: "chevron.right").font(.system(size: 12, weight: .bold)).foregroundColor(Brand.soft) }
         }
+        .frame(maxWidth: .infinity)
+        .contentShape(Rectangle())
     }
 }
 
