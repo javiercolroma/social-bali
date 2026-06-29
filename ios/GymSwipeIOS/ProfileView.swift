@@ -125,6 +125,11 @@ struct ProfileView: View {
                         .tint(Brand.green)
                     Toggle(isOn: $hapticsOn) { Label("Vibración", systemImage: "iphone.radiowaves.left.and.right") }
                         .tint(Brand.green)
+                    Toggle(isOn: Binding(get: { store.profile.isPrivate }, set: { store.profile.isPrivate = $0; store.persist() })) {
+                        Label("Cuenta privada", systemImage: "lock.fill")
+                    }.tint(Brand.green)
+                    Text("Si tu cuenta es privada, quien quiera seguirte tendrá que enviarte una solicitud que podrás aceptar o rechazar.")
+                        .font(.caption2).foregroundColor(Brand.soft)
                 }
 
                 if health.isAvailable {

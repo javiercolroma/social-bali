@@ -21,6 +21,17 @@ func meActivityData(_ s: WorkoutSession, _ store: AppStore) -> ActivityData {
         avgHeartRate: s.avgHeartRate, maxHeartRate: s.maxHeartRate)
 }
 
+/// ActivityData de la sesión de otra persona (autor = esa persona).
+func personActivityData(_ s: WorkoutSession, _ p: SocialPerson) -> ActivityData {
+    ActivityData(
+        authorName: p.name, avatarPhoto: nil, avatarEmoji: p.avatar,
+        flag: p.flag, location: "\(p.city), \(p.country)",
+        date: s.date, title: s.name, note: s.note, photo: s.photoData,
+        elapsed: s.elapsed, exercises: s.exercises, sets: s.sets,
+        volume: s.volume, items: s.items ?? [],
+        avgHeartRate: s.avgHeartRate, maxHeartRate: s.maxHeartRate)
+}
+
 /// Calendario mensual que resalta los días entrenados. Tocar un día con
 /// entreno dispara `onSelectDay` con sus sesiones.
 struct TrainingCalendarView: View {
@@ -162,6 +173,7 @@ struct DaySessionsSheet: View {
     @Environment(\.dismiss) private var dismiss
     let date: Date
     let sessions: [WorkoutSession]
+    var author: SocialPerson? = nil   // nil => sesiones propias
     @State private var detail: WorkoutSession?
 
     var body: some View {
@@ -176,7 +188,9 @@ struct DaySessionsSheet: View {
             .navigationTitle(title).navigationBarTitleDisplayMode(.inline)
         }
         .presentationDetents([.medium, .large])
-        .sheet(item: $detail) { ActivityDetailView(item: meActivityData($0, store)).environmentObject(store) }
+        .sheet(item: $detail) { s in
+            ActivityDetailView(item: author.map { personActivityData(s, $0) } ?? meActivityData(s, store)).environmentObject(store)
+        }
     }
 
     private func card(_ s: WorkoutSession) -> some View {

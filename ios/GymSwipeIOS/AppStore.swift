@@ -230,50 +230,70 @@ final class AppStore: ObservableObject {
 
     func saveAccount(_ acc: Account) { account = acc; persist() }
 
-    // MARK: - Friends
+    // MARK: - Seguir / solicitudes (estilo Instagram)
 
-    func sendFriendRequest(_ personId: String) {
-        relationships[personId] = .outgoing
-        persist()
-        let name = person(personId)?.name ?? "Tu compañero"
-        DispatchQueue.main.asyncAfter(deadline: .now() + 4.2) { [weak self] in
-            guard let self else { return }
-            if self.relationships[personId] == .outgoing {
-                self.relationships[personId] = .friends
-                self.notifications.insert(AppNotification(
-                    id: self.newId("n"), type: .friendAccepted, title: "Solicitud aceptada",
-                    body: "\(name) ha aceptado tu solicitud de amistad.", at: Date(), read: false, personId: personId), at: 0)
-                self.persist()
+    /// Pulsar "Seguir / Siguiendo / Pendiente" sobre alguien.
+    /// - Público: empiezas a seguir directamente (→ .friends).
+    /// - Privado: se envía una solicitud (→ .outgoing, "Pendiente").
+    /// Si ya lo sigues o la solicitud está pendiente, la acción la deshace.
+    func followOrRequest(_ personId: String) {
+        switch relationship(personId) {
+        case .friends:
+            relationships[personId] = .none          // dejar de seguir
+        case .outgoing:
+            relationships[personId] = .none          // cancelar solicitud pendiente
+        default:
+            if person(personId)?.isPrivate == true {
+                relationships[personId] = .outgoing  // solicitud pendiente de aprobación
+                scheduleFollowResponse(personId)
+            } else {
+                relationships[personId] = .friends    // perfil público: sigues al momento
             }
+        }
+        persist()
+    }
+
+    /// Compatibilidad: enviar solicitud == followOrRequest (respeta privacidad).
+    func sendFriendRequest(_ personId: String) { followOrRequest(personId) }
+
+    /// Respuesta (simulada) del usuario privado a TU solicitud de seguimiento.
+    private func scheduleFollowResponse(_ personId: String) {
+        let name = person(personId)?.name ?? "Esa persona"
+        DispatchQueue.main.asyncAfter(deadline: .now() + 4.5) { [weak self] in
+            guard let self, self.relationships[personId] == .outgoing else { return }
+            self.relationships[personId] = .friends
+            self.notifications.insert(AppNotification(
+                id: self.newId("n"), type: .friendAccepted, title: "Solicitud aceptada",
+                body: "\(name) ha aceptado tu solicitud de seguimiento.", at: Date(), read: false, personId: personId), at: 0)
+            self.persist()
         }
     }
 
+    /// Aceptar una solicitud de seguimiento que TE han enviado (cuenta privada).
     func acceptFriendRequest(_ personId: String) {
         relationships[personId] = .friends
-        let name = person(personId)?.name ?? "Tu compañero"
-        notifications.insert(AppNotification(
-            id: newId("n"), type: .friendAccepted, title: "Nuevo amigo",
-            body: "Ahora tú y \(name) sois amigos.", at: Date(), read: false, personId: personId), at: 0)
-        markFriendRequestNotifsRead(personId)
+        let name = person(personId)?.name ?? "Esa persona"
+        updateFollowRequestNotif(personId, body: "Has aceptado la solicitud de \(name).")
         persist()
     }
 
+    /// Rechazar una solicitud de seguimiento.
     func rejectFriendRequest(_ personId: String) {
-        relationships[personId] = RelationshipStatus.none
-        markFriendRequestNotifsRead(personId)
-        persist()
-    }
-
-    // Seguir/dejar de seguir (inmediato). En este modelo, "seguido" == amigo.
-    func follow(_ personId: String) {
-        relationships[personId] = .friends
-        persist()
-    }
-
-    func unfollow(_ personId: String) {
         relationships[personId] = .none
+        let name = person(personId)?.name ?? "Esa persona"
+        updateFollowRequestNotif(personId, body: "Has rechazado la solicitud de \(name).")
         persist()
     }
+
+    private func updateFollowRequestNotif(_ personId: String, body: String) {
+        notifications = notifications.map { n in
+            guard n.personId == personId, n.type == .friendRequest else { return n }
+            var c = n; c.body = body; c.read = true; return c
+        }
+    }
+
+    func follow(_ personId: String) { relationships[personId] = .friends; persist() }
+    func unfollow(_ personId: String) { relationships[personId] = .none; persist() }
 
     /// Personas que sigues (tu red).
     var following: [SocialPerson] { people.filter { relationship($0.id) == .friends } }
@@ -281,12 +301,6 @@ final class AppStore: ObservableObject {
     func toggleKudo(_ id: String) {
         if appliedKudos.contains(id) { appliedKudos.remove(id) } else { appliedKudos.insert(id) }
         persist()
-    }
-
-    private func markFriendRequestNotifsRead(_ personId: String) {
-        notifications = notifications.map {
-            ($0.personId == personId && $0.type == .friendRequest) ? withRead($0) : $0
-        }
     }
 
     // MARK: - Conversations
@@ -453,9 +467,14 @@ final class AppStore: ObservableObject {
                 ChatMessage(id: "s3", fromMe: false, text: "¿Entrenamos mañana pecho?", at: now.addingTimeInterval(-8 * 60)),
             ],
             unread: 1, lastAt: now.addingTimeInterval(-8 * 60))]
-        notifications = [AppNotification(
-            id: "sn1", type: .friendRequest, title: "Nueva solicitud de amistad",
-            body: "Leo quiere ser tu compañero de entreno.", at: now.addingTimeInterval(-40 * 60), read: false, personId: "p-leo")]
+        notifications = [
+            AppNotification(
+                id: "sn1", type: .friendRequest, title: "Nueva solicitud de seguimiento",
+                body: "Leo quiere seguirte.", at: now.addingTimeInterval(-40 * 60), read: false, personId: "p-leo"),
+            AppNotification(
+                id: "sn2", type: .newFollower, title: "Nuevo seguidor",
+                body: "Noa ha empezado a seguirte.", at: now.addingTimeInterval(-3 * 3600), read: false, personId: "p-noa"),
+        ]
         trainingPlans = [
             TrainingPlan(id: "plan-mika", title: "Pecho + tríceps", when: "Mañana", place: "Basic-Fit Gran Vía", spots: "1 persona", ownerId: "p-mika", score: 71),
             TrainingPlan(id: "plan-sofia", title: "Pierna", when: "Esta semana", place: "Zona cercana", spots: "2 personas", ownerId: "p-sofia", score: 64),
@@ -466,10 +485,10 @@ final class AppStore: ObservableObject {
     static let demoPeople: [SocialPerson] = [
         SocialPerson(id: "p-mika", name: "Mika", handle: "mika", avatar: "🦊", gym: "Basic-Fit Gran Vía", flag: "🇪🇸", city: "Madrid", country: "España"),
         SocialPerson(id: "p-leo", name: "Leo", handle: "leo_lifts", avatar: "🐻", gym: "McFit Chamberí", flag: "🇪🇸", city: "Zaragoza", country: "España"),
-        SocialPerson(id: "p-sofia", name: "Sofía", handle: "sofia_fit", avatar: "🦅", gym: "Altafit Retiro", flag: "🇲🇽", city: "Ciudad de México", country: "México"),
+        SocialPerson(id: "p-sofia", name: "Sofía", handle: "sofia_fit", avatar: "🦅", gym: "Altafit Retiro", flag: "🇲🇽", city: "Ciudad de México", country: "México", isPrivate: true),
         SocialPerson(id: "p-dani", name: "Dani", handle: "dani", avatar: "🐺", gym: "Basic-Fit Sol", flag: "🇦🇷", city: "Buenos Aires", country: "Argentina"),
         SocialPerson(id: "p-vera", name: "Vera", handle: "vera_strong", avatar: "🦌", gym: "VivaGym Malasaña", flag: "🇫🇷", city: "París", country: "Francia"),
-        SocialPerson(id: "p-iker", name: "Iker", handle: "iker", avatar: "🦁", gym: "Synergym Salamanca", flag: "🇪🇸", city: "Bilbao", country: "España"),
+        SocialPerson(id: "p-iker", name: "Iker", handle: "iker", avatar: "🦁", gym: "Synergym Salamanca", flag: "🇪🇸", city: "Bilbao", country: "España", isPrivate: true),
         SocialPerson(id: "p-noa", name: "Noa", handle: "noa_gym", avatar: "🐯", gym: "Basic-Fit Atocha", flag: "🇨🇴", city: "Bogotá", country: "Colombia"),
     ]
 

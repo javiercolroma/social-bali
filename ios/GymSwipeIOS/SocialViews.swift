@@ -290,9 +290,7 @@ struct NotificationsSheet: View {
                     if sorted.isEmpty {
                         emptyState(icon: "bell", title: "Sin notificaciones", body: "Aquí verás solicitudes y entrenos aceptados.")
                     } else {
-                        ForEach(sorted) { n in
-                            Button { open(n) } label: { row(n) }.buttonStyle(.plain)
-                        }
+                        ForEach(sorted) { n in row(n) }
                     }
                 }.padding(14)
             }
@@ -306,25 +304,39 @@ struct NotificationsSheet: View {
         }
     }
 
-    private func open(_ n: AppNotification) {
-        store.markNotificationRead(n.id)
-        if let pid = n.personId, n.conversationId != nil { dismiss(); onOpenChat(pid) }
-        else if n.type == .friendRequest { dismiss(); onOpenFriends() }
-    }
-
     private func row(_ n: AppNotification) -> some View {
-        HStack(alignment: .top, spacing: 11) {
-            Image(systemName: icon(n.type)).font(.system(size: 15))
-                .frame(width: 32, height: 32).background(Brand.greenSoft).foregroundColor(Color(hex: "10150a")).clipShape(RoundedRectangle(cornerRadius: 10))
-            VStack(alignment: .leading, spacing: 3) {
-                HStack {
-                    Text(n.title).font(.system(size: 14, weight: .heavy)).foregroundColor(Brand.ink)
-                    Spacer()
-                    Text(relativeTime(n.at)).font(.caption2).foregroundColor(Brand.soft)
+        let isPendingRequest = n.type == .friendRequest && n.personId.map { store.relationship($0) == .incoming } ?? false
+        return VStack(spacing: 10) {
+            HStack(alignment: .top, spacing: 11) {
+                Image(systemName: icon(n.type)).font(.system(size: 15))
+                    .frame(width: 32, height: 32).background(Brand.greenSoft).foregroundColor(Color(hex: "10150a")).clipShape(RoundedRectangle(cornerRadius: 10))
+                VStack(alignment: .leading, spacing: 3) {
+                    HStack {
+                        Text(n.title).font(.system(size: 14, weight: .heavy)).foregroundColor(Brand.ink)
+                        Spacer()
+                        Text(relativeTime(n.at)).font(.caption2).foregroundColor(Brand.soft)
+                    }
+                    Text(n.body).font(.footnote).foregroundColor(Brand.muted)
                 }
-                Text(n.body).font(.footnote).foregroundColor(Brand.muted)
+                if !n.read { Circle().fill(Brand.red).frame(width: 9, height: 9) }
             }
-            if !n.read { Circle().fill(Brand.red).frame(width: 9, height: 9) }
+            .contentShape(Rectangle())
+            .onTapGesture {
+                store.markNotificationRead(n.id)
+                if let pid = n.personId, n.conversationId != nil { dismiss(); onOpenChat(pid) }
+            }
+            if isPendingRequest, let pid = n.personId {
+                HStack(spacing: 8) {
+                    Button { FX.success(); store.acceptFriendRequest(pid) } label: {
+                        Text("Aceptar").font(.system(size: 14, weight: .heavy)).foregroundColor(Color(hex: "10150a"))
+                            .frame(maxWidth: .infinity).frame(height: 38).background(Brand.green).clipShape(Capsule())
+                    }.buttonStyle(.plain)
+                    Button { FX.warning(); store.rejectFriendRequest(pid) } label: {
+                        Text("Rechazar").font(.system(size: 14, weight: .heavy)).foregroundColor(Color(hex: "a73232"))
+                            .frame(maxWidth: .infinity).frame(height: 38).background(Brand.redSoft).clipShape(Capsule())
+                    }.buttonStyle(.plain)
+                }
+            }
         }
         .padding(12)
         .background(n.read ? Brand.panel : Color(hex: "f4f9e8"))
@@ -335,8 +347,9 @@ struct NotificationsSheet: View {
     private func icon(_ t: NotificationType) -> String {
         switch t {
         case .friendRequest: return "person.badge.plus"
-        case .friendAccepted: return "person.fill.checkmark"
+        case .friendAccepted: return "checkmark.seal.fill"
         case .trainingAccepted: return "dumbbell.fill"
+        case .newFollower: return "person.fill.badge.plus"
         }
     }
 }
@@ -347,27 +360,21 @@ struct FriendProfileView: View {
     @EnvironmentObject var store: AppStore
     @Environment(\.dismiss) private var dismiss
     let person: SocialPerson
+    @State private var daySheet: DayPayload?
 
     var body: some View {
         let history = buildFriendHistory(person)
         let score = GymScoreEngine.calculate(history)
-        let xp = history.reduce(0) { $0 + $1.xp } + 600
-        let level = getLevelProgress(xp)
         let recent = history.sorted { $0.completedAt > $1.completedAt }.prefix(8)
-        let sessions = Set(history.map { $0.sessionId ?? "" }).count
+        let sessionsCount = Set(history.map { $0.sessionId ?? "" }).count
 
         return NavigationStack {
             ScrollView {
                 VStack(spacing: 14) {
-                    HStack {
-                        ForEach([("Nivel", "\(level.level)"), ("Gym Score", "\(score.total)"), ("Racha", "\(score.trainingDays)🔥")], id: \.0) { item in
-                            VStack(spacing: 3) {
-                                Text(item.0.uppercased()).font(.caption2).fontWeight(.heavy).foregroundColor(Brand.muted)
-                                Text(item.1).font(.system(size: 22, weight: .heavy)).foregroundColor(Brand.ink)
-                            }.frame(maxWidth: .infinity).padding(.vertical, 12)
-                            .background(Brand.panel).clipShape(RoundedRectangle(cornerRadius: 12))
-                            .overlay(RoundedRectangle(cornerRadius: 12).stroke(Brand.line))
-                        }
+                    header
+                    HStack(spacing: 10) {
+                        statTile("GYM SCORE", "\(score.total)")
+                        statTile("RACHA", "\(score.trainingDays) 🔥")
                     }
                     PanelCard {
                         Text(score.tier).font(.system(size: 13, weight: .heavy)).foregroundColor(Color(hex: "10150a"))
@@ -379,8 +386,11 @@ struct FriendProfileView: View {
                         ScoreBarView(label: "Calidad", value: score.quality)
                         ScoreBarView(label: "Variedad", value: score.variety)
                     }
+                    TrainingCalendarView(sessions: friendSessions(history)) { date, day in
+                        daySheet = DayPayload(id: date, date: date, sessions: day)
+                    }
                     VStack(alignment: .leading, spacing: 8) {
-                        Text("ENTRENOS RECIENTES · \(sessions) SESIONES").font(.caption2).fontWeight(.heavy).foregroundColor(Brand.muted)
+                        Text("ENTRENOS RECIENTES · \(sessionsCount) SESIONES").font(.caption2).fontWeight(.heavy).foregroundColor(Brand.muted)
                         ForEach(Array(recent)) { e in
                             HStack {
                                 VStack(alignment: .leading, spacing: 2) {
@@ -398,7 +408,83 @@ struct FriendProfileView: View {
             }
             .background(Brand.bg)
             .navigationTitle(person.name).navigationBarTitleDisplayMode(.inline)
+            .sheet(item: $daySheet) { DaySessionsSheet(date: $0.date, sessions: $0.sessions, author: person).environmentObject(store) }
         }
+    }
+
+    private var header: some View {
+        VStack(spacing: 10) {
+            ZStack(alignment: .bottomTrailing) {
+                Avatar(emoji: person.avatar, size: 84)
+                Text(person.flag).font(.system(size: 16)).frame(width: 24, height: 24)
+                    .background(Circle().fill(.white)).overlay(Circle().stroke(Brand.line)).offset(x: 4, y: 4)
+            }
+            VStack(spacing: 3) {
+                HStack(spacing: 6) {
+                    Text(person.name).font(.system(size: 22, weight: .heavy)).foregroundColor(Brand.ink)
+                    if person.isPrivate { Image(systemName: "lock.fill").font(.system(size: 13)).foregroundColor(Brand.soft) }
+                }
+                Text("@\(person.handle)").font(.subheadline).foregroundColor(Brand.muted)
+            }
+            followButton
+        }
+    }
+
+    @ViewBuilder
+    private var followButton: some View {
+        let rel = store.relationship(person.id)
+        let label = rel == .friends ? "Siguiendo" : (rel == .outgoing ? "Pendiente" : "Seguir")
+        Button { FX.tap(); store.followOrRequest(person.id) } label: {
+            HStack(spacing: 6) {
+                if rel == .friends { Image(systemName: "checkmark") }
+                else if rel == .outgoing { Image(systemName: "clock") }
+                Text(label).font(.system(size: 15, weight: .heavy))
+            }
+            .foregroundColor(rel == .none ? Color(hex: "10150a") : Brand.ink)
+            .frame(maxWidth: .infinity).frame(height: 46)
+            .background(rel == .none ? Brand.green : Brand.chip)
+            .clipShape(RoundedRectangle(cornerRadius: 12))
+        }.buttonStyle(.plain)
+    }
+
+    private func statTile(_ label: String, _ value: String) -> some View {
+        VStack(spacing: 3) {
+            Text(label).font(.caption2).fontWeight(.heavy).foregroundColor(Brand.muted)
+            Text(value).font(.system(size: 22, weight: .heavy)).foregroundColor(Brand.ink)
+        }.frame(maxWidth: .infinity).padding(.vertical, 12)
+        .background(Brand.panel).clipShape(RoundedRectangle(cornerRadius: 12))
+        .overlay(RoundedRectangle(cornerRadius: 12).stroke(Brand.line))
+    }
+
+    private func friendSessions(_ history: [HistoryEntry]) -> [WorkoutSession] {
+        let groups = Dictionary(grouping: history) { $0.sessionId ?? $0.id }
+        return groups.map { (sid, entries) -> WorkoutSession in
+            let date = entries.map { $0.completedAt }.max() ?? Date()
+            let sets = entries.reduce(0) { $0 + $1.sets }
+            var seed: UInt64 = 0
+            for ch in sid.unicodeScalars { seed = seed &* 31 &+ UInt64(ch.value) }
+            let avgHR = 118 + Int(seed % 42)
+            let maxHR = avgHR + 12 + Int((seed >> 5) % 22)
+            let items = entries.map { e -> SessionExercise in
+                let logs = (0..<max(1, e.sets)).map { i in
+                    SetLog(reps: e.reps, weight: max(0, e.weight + Double(i) * 2.5 - Double(max(0, e.sets - 1)) * 1.25))
+                }
+                return SessionExercise(name: e.exerciseName, sets: e.sets, reps: e.reps, weight: e.weight, logs: logs)
+            }
+            return WorkoutSession(id: sid, name: Self.sessionTitle(entries), note: "", date: date,
+                                  elapsed: entries.count * 240 + sets * 40, exercises: entries.count, sets: sets,
+                                  volume: entries.reduce(0) { $0 + $1.volume }, xp: 0, photoData: nil,
+                                  visibility: .all, items: items, avgHeartRate: avgHR, maxHeartRate: maxHR)
+        }.sorted { $0.date > $1.date }
+    }
+
+    private static func sessionTitle(_ entries: [HistoryEntry]) -> String {
+        var counts: [String: Int] = [:]
+        for e in entries { counts[GymScoreEngine.pattern(for: e.exerciseName).group, default: 0] += 1 }
+        let top = counts.max { $0.value < $1.value }?.key ?? "accesorio"
+        let names = ["pierna": "Pierna", "bisagra": "Cadena posterior", "empuje": "Empuje",
+                     "tiron": "Tirón", "condicion": "Cardio & core", "accesorio": "Full body"]
+        return names[top] ?? "Entreno"
     }
 }
 

@@ -235,19 +235,25 @@ struct MapUserSheet: View {
     private func friendAction(_ status: RelationshipStatus) -> some View {
         switch status {
         case .none:
-            Button { FX.tap(); store.sendFriendRequest(person.id) } label: {
-                Label("Añadir amigo", systemImage: "person.badge.plus").font(.system(size: 15, weight: .heavy)).foregroundColor(Brand.ink)
-                    .frame(maxWidth: .infinity).frame(minHeight: 48).background(Brand.chip).clipShape(RoundedRectangle(cornerRadius: 12))
+            Button { FX.tap(); store.followOrRequest(person.id) } label: {
+                Label("Seguir", systemImage: "person.badge.plus").font(.system(size: 15, weight: .heavy)).foregroundColor(Color(hex: "10150a"))
+                    .frame(maxWidth: .infinity).frame(minHeight: 48).background(Brand.green).clipShape(RoundedRectangle(cornerRadius: 12))
             }
         case .outgoing:
-            Text("Solicitud enviada").font(.system(size: 14, weight: .heavy)).foregroundColor(Brand.soft)
+            Button { FX.tap(); store.followOrRequest(person.id) } label: {
+                Label("Pendiente", systemImage: "clock").font(.system(size: 15, weight: .heavy)).foregroundColor(Brand.ink)
+                    .frame(maxWidth: .infinity).frame(minHeight: 48).background(Brand.chip).clipShape(RoundedRectangle(cornerRadius: 12))
+            }
         case .incoming:
             Button { FX.success(sound: true); store.acceptFriendRequest(person.id) } label: {
                 Label("Aceptar solicitud", systemImage: "checkmark").font(.system(size: 15, weight: .heavy)).foregroundColor(Brand.ink)
                     .frame(maxWidth: .infinity).frame(minHeight: 48).background(Brand.greenSoft).clipShape(RoundedRectangle(cornerRadius: 12))
             }
         case .friends:
-            Label("Ya sois amigos", systemImage: "checkmark.seal.fill").font(.system(size: 14, weight: .heavy)).foregroundColor(Color(hex: "4b8a1f"))
+            Button { FX.tap(); store.followOrRequest(person.id) } label: {
+                Label("Siguiendo", systemImage: "checkmark").font(.system(size: 15, weight: .heavy)).foregroundColor(Brand.ink)
+                    .frame(maxWidth: .infinity).frame(minHeight: 48).background(Brand.chip).clipShape(RoundedRectangle(cornerRadius: 12))
+            }
         }
     }
 }

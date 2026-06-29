@@ -225,8 +225,12 @@ struct SocialFeedView: View {
 
     private func followPerson(_ p: SocialPerson) {
         FX.success()
-        if store.relationship(p.id) == .incoming { store.acceptFriendRequest(p.id) } else { store.follow(p.id) }
-        showToast("Ahora sigues a \(p.name)")
+        if store.relationship(p.id) == .incoming {
+            store.acceptFriendRequest(p.id); showToast("Ahora sigues a \(p.name)")
+        } else {
+            store.followOrRequest(p.id)
+            showToast(p.isPrivate ? "Solicitud enviada a \(p.name)" : "Ahora sigues a \(p.name)")
+        }
     }
 
     /// Toca el avatar/nombre de un post → su perfil (el tuyo si el post es tuyo).

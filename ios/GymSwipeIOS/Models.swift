@@ -46,6 +46,7 @@ struct Profile: Codable {
     var gym: String
     var region: String? = nil
     var birthdate: Date? = nil
+    var isPrivate: Bool = false
 }
 
 struct HistoryEntry: Identifiable, Codable {
@@ -142,6 +143,7 @@ struct SocialPerson: Identifiable, Codable, Hashable {
     var flag: String = "🇪🇸"
     var city: String = "Madrid"
     var country: String = "España"
+    var isPrivate: Bool = false
 }
 
 struct ChatMessage: Identifiable, Codable, Hashable {
@@ -161,7 +163,7 @@ struct Conversation: Identifiable, Codable, Hashable {
 }
 
 enum NotificationType: String, Codable {
-    case friendRequest, friendAccepted, trainingAccepted
+    case friendRequest, friendAccepted, trainingAccepted, newFollower
 }
 
 struct AppNotification: Identifiable, Codable, Hashable {
