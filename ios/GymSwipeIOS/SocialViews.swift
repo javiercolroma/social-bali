@@ -19,12 +19,13 @@ func formatCount(_ n: Int) -> String {
     return "\(n)"
 }
 
-/// Fila estilo Instagram: entrenos · seguidores · siguiendo.
-func profileCountsRow(entrenos: Int, seguidores: Int, siguiendo: Int) -> some View {
+/// Fila estilo Instagram: entrenos · seguidores · siguiendo (seguidores/siguiendo abren lista).
+func profileCountsRow(entrenos: Int, seguidores: Int, siguiendo: Int,
+                      onSeguidores: @escaping () -> Void, onSiguiendo: @escaping () -> Void) -> some View {
     HStack(spacing: 0) {
         profileCountTile(formatCount(entrenos), "Entrenos")
-        profileCountTile(formatCount(seguidores), "Seguidores")
-        profileCountTile(formatCount(siguiendo), "Siguiendo")
+        Button { onSeguidores() } label: { profileCountTile(formatCount(seguidores), "Seguidores") }.buttonStyle(.plain)
+        Button { onSiguiendo() } label: { profileCountTile(formatCount(siguiendo), "Siguiendo") }.buttonStyle(.plain)
     }
     .padding(.vertical, 12)
     .background(Brand.panel).clipShape(RoundedRectangle(cornerRadius: 12))
@@ -36,6 +37,88 @@ private func profileCountTile(_ value: String, _ label: String) -> some View {
         Text(value).font(.system(size: 18, weight: .heavy)).foregroundColor(Brand.ink)
         Text(label).font(.caption2).foregroundColor(Brand.muted)
     }.frame(maxWidth: .infinity)
+}
+
+/// Lista determinista de personas (seguidores/seguidos demo) rotando el pool.
+func demoFollowList(_ store: AppStore, seed: String, salt: UInt64, exclude: String?) -> [SocialPerson] {
+    let pool = store.people.filter { $0.id != exclude }
+    guard !pool.isEmpty else { return [] }
+    var s = salt
+    for ch in seed.unicodeScalars { s = s &* 131 &+ UInt64(ch.value) }
+    let start = Int(s % UInt64(pool.count))
+    return Array(pool[start...] + pool[..<start])
+}
+
+struct FollowListData: Identifiable { let id = UUID(); let title: String; let people: [SocialPerson] }
+
+/// Lista de seguidores/seguidos con buscador.
+struct FollowListSheet: View {
+    @EnvironmentObject var store: AppStore
+    let title: String
+    let people: [SocialPerson]
+    @State private var query = ""
+    @State private var profileTarget: IdString?
+
+    private var results: [SocialPerson] {
+        let q = query.folding(options: .diacriticInsensitive, locale: .current).lowercased().replacingOccurrences(of: "@", with: "")
+        guard !q.isEmpty else { return people }
+        return people.filter {
+            $0.name.folding(options: .diacriticInsensitive, locale: .current).lowercased().contains(q) || $0.handle.contains(q)
+        }
+    }
+
+    var body: some View {
+        NavigationStack {
+            VStack(spacing: 10) {
+                HStack(spacing: 8) {
+                    Image(systemName: "magnifyingglass").foregroundColor(Brand.soft)
+                    TextField("Buscar por nombre o @usuario", text: $query)
+                        .textInputAutocapitalization(.never).autocorrectionDisabled()
+                    if !query.isEmpty { Button { query = "" } label: { Image(systemName: "xmark.circle.fill").foregroundColor(Brand.soft) } }
+                }
+                .padding(.horizontal, 12).frame(height: 44).background(Color.white).clipShape(Capsule())
+                .overlay(Capsule().stroke(Brand.line)).padding(.horizontal, 14)
+
+                ScrollView {
+                    VStack(spacing: 8) {
+                        if results.isEmpty {
+                            Text(people.isEmpty ? "Nadie por aquí todavía." : "Sin resultados.").font(.footnote).foregroundColor(Brand.muted).padding(.top, 30)
+                        } else {
+                            ForEach(results) { p in row(p) }
+                        }
+                    }.padding(.horizontal, 14).padding(.bottom, 16)
+                }
+            }
+            .padding(.top, 8).background(Brand.bg)
+            .navigationTitle(title).navigationBarTitleDisplayMode(.inline)
+            .sheet(item: $profileTarget) { item in
+                if let p = store.person(item.id) { FriendProfileView(person: p).environmentObject(store) }
+            }
+        }
+    }
+
+    private func row(_ p: SocialPerson) -> some View {
+        let rel = store.relationship(p.id)
+        let label = rel == .friends ? "Siguiendo" : (rel == .outgoing ? "Pendiente" : "Seguir")
+        return HStack(spacing: 11) {
+            Button { profileTarget = IdString(id: p.id) } label: {
+                HStack(spacing: 11) {
+                    Avatar(emoji: p.avatar)
+                    VStack(alignment: .leading, spacing: 1) {
+                        Text(p.name).font(.system(size: 14, weight: .heavy)).foregroundColor(Brand.ink)
+                        Text("@\(p.handle)").font(.caption).foregroundColor(Brand.muted)
+                    }
+                }
+            }.buttonStyle(.plain)
+            Spacer()
+            Button { FX.tap(); store.followOrRequest(p.id) } label: {
+                Text(label).font(.system(size: 12, weight: .heavy)).foregroundColor(rel == .none ? Color(hex: "10150a") : Brand.ink)
+                    .padding(.horizontal, 14).frame(height: 32).background(rel == .none ? Brand.green : Brand.chip).clipShape(Capsule())
+            }.buttonStyle(.plain)
+        }
+        .padding(10).background(Brand.panel).clipShape(RoundedRectangle(cornerRadius: 12))
+        .overlay(RoundedRectangle(cornerRadius: 12).stroke(Brand.line))
+    }
 }
 
 // MARK: - Messages
@@ -423,6 +506,7 @@ struct FriendProfileView: View {
     let person: SocialPerson
     @State private var daySheet: DayPayload?
     @State private var detailSession: WorkoutSession?
+    @State private var followList: FollowListData?
 
     var body: some View {
         let history = buildFriendHistory(person)
@@ -469,6 +553,7 @@ struct FriendProfileView: View {
             .sheet(item: $detailSession) { s in
                 ActivityDetailView(item: personActivityData(s, person)).environmentObject(store)
             }
+            .sheet(item: $followList) { FollowListSheet(title: $0.title, people: $0.people).environmentObject(store) }
         }
     }
 
@@ -533,7 +618,9 @@ struct FriendProfileView: View {
             }
             profileCountsRow(entrenos: entrenos,
                              seguidores: deterministicCount(person.id, salt: 7, lo: 40, hi: 1500) + (store.relationship(person.id) == .friends ? 1 : 0),
-                             siguiendo: deterministicCount(person.id, salt: 13, lo: 30, hi: 700))
+                             siguiendo: deterministicCount(person.id, salt: 13, lo: 30, hi: 700),
+                             onSeguidores: { followList = FollowListData(title: "Seguidores", people: demoFollowList(store, seed: person.id, salt: 7, exclude: person.id)) },
+                             onSiguiendo: { followList = FollowListData(title: "Siguiendo", people: demoFollowList(store, seed: person.id, salt: 13, exclude: person.id)) })
             followButton
         }
     }
@@ -603,6 +690,7 @@ struct MeProfileView: View {
     @State private var daySheet: DayPayload?
     @State private var detailSession: WorkoutSession?
     @State private var showEdit = false
+    @State private var followList: FollowListData?
 
     var body: some View {
         let score = store.gymScore
@@ -646,6 +734,7 @@ struct MeProfileView: View {
             .toolbar { ToolbarItem(placement: .topBarTrailing) { Button { showEdit = true } label: { Image(systemName: "gearshape").foregroundColor(Brand.ink) } } }
             .sheet(item: $daySheet) { DaySessionsSheet(date: $0.date, sessions: $0.sessions).environmentObject(store) }
             .sheet(item: $detailSession) { s in ActivityDetailView(item: meActivityData(s, store)).environmentObject(store) }
+            .sheet(item: $followList) { FollowListSheet(title: $0.title, people: $0.people).environmentObject(store) }
             .sheet(isPresented: $showEdit) {
                 NavigationStack {
                     ProfileView().environmentObject(store)
@@ -667,7 +756,9 @@ struct MeProfileView: View {
             }
             profileCountsRow(entrenos: entrenos,
                              seguidores: deterministicCount(store.account?.handle ?? "me", salt: 7, lo: 40, hi: 1500),
-                             siguiendo: store.following.count)
+                             siguiendo: store.following.count,
+                             onSeguidores: { followList = FollowListData(title: "Seguidores", people: demoFollowList(store, seed: store.account?.handle ?? "me", salt: 7, exclude: nil)) },
+                             onSiguiendo: { followList = FollowListData(title: "Siguiendo", people: store.following) })
             Button { showEdit = true } label: {
                 Label("Editar perfil", systemImage: "pencil").font(.system(size: 15, weight: .heavy)).foregroundColor(Brand.ink)
                     .frame(maxWidth: .infinity).frame(height: 46).background(Brand.chip).clipShape(RoundedRectangle(cornerRadius: 12))
