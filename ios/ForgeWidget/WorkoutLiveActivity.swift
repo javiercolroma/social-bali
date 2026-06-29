@@ -133,37 +133,39 @@ private struct ControlsView: View {
         }
     }
 
-    /// Descanso: el aro circular es el protagonista. El contador va DENTRO del aro como
-    /// `currentValueLabel`, así el sistema lo centra él mismo (sin solapamientos ni cálculos)
-    /// y se mantiene nítido. El tamaño se controla con `.frame` (sí funciona en el contexto
-    /// de Live Activity, al contrario que dentro de la app), sin `.scaleEffect` (que emborrona).
+    /// Descanso: fila compacta HORIZONTAL (aro a la izquierda, texto en medio, "Saltar" a la
+    /// derecha). El layout vertical anterior era demasiado alto y se recortaba en el lock screen.
+    /// El contador va DENTRO del aro como `currentValueLabel` (el sistema lo centra solo, nítido,
+    /// sin solapamientos). Tamaño con `.frame` (funciona en el contexto de Live Activity).
     @ViewBuilder
     private func restRow(start: Date, end: Date) -> some View {
-        VStack(spacing: 10) {
+        HStack(spacing: 14) {
             ProgressView(timerInterval: start...end, countsDown: true) {
                 EmptyView()
             } currentValueLabel: {
                 Text(timerInterval: start...end, countsDown: true)
-                    .font(.system(size: 16, weight: .heavy, design: .rounded))
+                    .font(.system(size: 15, weight: .heavy, design: .rounded))
                     .monospacedDigit()
-                    .minimumScaleFactor(0.6)
+                    .minimumScaleFactor(0.5)
                     .foregroundColor(.white)
             }
             .progressViewStyle(.circular)
             .tint(lime)
-            .frame(width: 78, height: 78)
+            .frame(width: 62, height: 62)
 
-            Text("DESCANSO")
-                .font(.system(size: 12, weight: .heavy))
-                .tracking(2)
-                .foregroundColor(lime)
+            VStack(alignment: .leading, spacing: 2) {
+                Text("DESCANSO").font(.system(size: 14, weight: .heavy)).foregroundColor(lime)
+                Text("Recupera fuerzas").font(.caption2).foregroundColor(.white.opacity(0.6)).lineLimit(1)
+            }
+
+            Spacer(minLength: 8)
 
             if #available(iOS 17.0, *) {
                 Button(intent: WorkoutControlIntent(.restSkip)) {
-                    Text("Saltar descanso")
+                    Text("Saltar")
                         .font(.system(size: 14, weight: .heavy))
                         .foregroundColor(ink)
-                        .frame(maxWidth: .infinity)
+                        .padding(.horizontal, 16)
                         .frame(height: 40)
                         .background(lime)
                         .clipShape(Capsule())
@@ -172,7 +174,6 @@ private struct ControlsView: View {
             }
         }
         .frame(maxWidth: .infinity)
-        .padding(.top, 2)
     }
 
     @available(iOS 17.0, *)
