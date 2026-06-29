@@ -7,6 +7,7 @@ private struct RankRow {
     let isMe: Bool
     let emoji: String
     let flag: String
+    var personId: String? = nil
 }
 
 private struct MapPlace: Identifiable {
@@ -21,6 +22,7 @@ struct RankingView: View {
     @StateObject private var location = LocationManager()
     @State private var scope = 0 // 0 amigos,1 global,2 país,3 ciudad,4 zona
     @State private var selectedMapPerson: SocialPerson?
+    @State private var profileTarget: IdString?
     @State private var showMap = false   // el Map de MapKit pide ubicación al crearse: lo diferimos hasta que el usuario lo abra
     @State private var region = MKCoordinateRegion(
         center: CLLocationCoordinate2D(latitude: 40.4168, longitude: -3.7038),
@@ -40,6 +42,9 @@ struct RankingView: View {
         .background(Brand.bg)
         .onReceive(location.$coordinate.compactMap { $0 }) { coord in
             region = MKCoordinateRegion(center: coord, span: MKCoordinateSpan(latitudeDelta: 0.05, longitudeDelta: 0.05))
+        }
+        .sheet(item: $profileTarget) { item in
+            if let p = store.person(item.id) { FriendProfileView(person: p).environmentObject(store) }
         }
     }
 
@@ -64,25 +69,34 @@ struct RankingView: View {
                 Text("Añade amigos para ver vuestro ranking.").font(.footnote).foregroundColor(Brand.muted)
             }
             ForEach(Array(rankingRows.enumerated()), id: \.offset) { idx, row in
-                HStack(spacing: 10) {
-                    Text("\(idx + 1)").font(.system(size: 13, weight: .heavy)).foregroundColor(Brand.muted).frame(width: 20)
-                    ZStack(alignment: .bottomTrailing) {
-                        if row.isMe { MeAvatar(account: store.account, size: 34) } else { Avatar(emoji: row.emoji, size: 34) }
-                        Text(row.flag).font(.system(size: 11))
-                            .frame(width: 17, height: 17).background(Circle().fill(.white))
-                            .overlay(Circle().stroke(Brand.line))
-                            .offset(x: 3, y: 3)
-                    }
-                    Text(row.name).font(.system(size: 14, weight: row.isMe ? .heavy : .semibold)).foregroundColor(Brand.ink)
-                    Spacer()
-                    Text("\(row.score)").font(.system(size: 15, weight: .heavy)).foregroundColor(Brand.ink)
+                if let pid = row.personId {
+                    Button { FX.tap(); profileTarget = IdString(id: pid) } label: { rankRow(idx, row) }
+                        .buttonStyle(.plain)
+                } else {
+                    rankRow(idx, row)
                 }
-                .padding(.vertical, 5)
-                .padding(.horizontal, 8)
-                .background(row.isMe ? Brand.greenSoft.opacity(0.4) : Color.clear)
-                .clipShape(RoundedRectangle(cornerRadius: 8))
             }
         }
+    }
+
+    private func rankRow(_ idx: Int, _ row: RankRow) -> some View {
+        HStack(spacing: 10) {
+            Text("\(idx + 1)").font(.system(size: 13, weight: .heavy)).foregroundColor(Brand.muted).frame(width: 20)
+            ZStack(alignment: .bottomTrailing) {
+                if row.isMe { MeAvatar(account: store.account, size: 34) } else { Avatar(emoji: row.emoji, size: 34) }
+                Text(row.flag).font(.system(size: 11))
+                    .frame(width: 17, height: 17).background(Circle().fill(.white))
+                    .overlay(Circle().stroke(Brand.line))
+                    .offset(x: 3, y: 3)
+            }
+            Text(row.name).font(.system(size: 14, weight: row.isMe ? .heavy : .semibold)).foregroundColor(Brand.ink)
+            Spacer()
+            Text("\(row.score)").font(.system(size: 15, weight: .heavy)).foregroundColor(Brand.ink)
+        }
+        .padding(.vertical, 5)
+        .padding(.horizontal, 8)
+        .background(row.isMe ? Brand.greenSoft.opacity(0.4) : Color.clear)
+        .clipShape(RoundedRectangle(cornerRadius: 8))
     }
 
     private var mapCard: some View {
@@ -165,7 +179,7 @@ struct RankingView: View {
     private var friendsRanking: [RankRow] {
         let friends = store.people.filter { store.relationship($0.id) == .friends }
         var rows = friends.map { p in
-            RankRow(name: p.name, score: GymScoreEngine.calculate(buildFriendHistory(p)).total, isMe: false, emoji: p.avatar, flag: p.flag)
+            RankRow(name: p.name, score: GymScoreEngine.calculate(buildFriendHistory(p)).total, isMe: false, emoji: p.avatar, flag: p.flag, personId: p.id)
         }
         rows.append(meRow)
         return rows.sorted { $0.score > $1.score }
@@ -185,7 +199,8 @@ struct RankingView: View {
             let (name, off) = pair
             if name == "Tú" { return RankRow(name: "Tú", score: max(0, min(100, base + off)), isMe: true, emoji: "🙂", flag: countryFlag(store.profile.country)) }
             let flag = scope == 1 ? globalFlags[idx % globalFlags.count] : "🇪🇸"
-            return RankRow(name: name, score: max(0, min(100, base + off)), isMe: false, emoji: emojis[idx % emojis.count], flag: flag)
+            let pid = store.people.first { $0.name == name }?.id
+            return RankRow(name: name, score: max(0, min(100, base + off)), isMe: false, emoji: emojis[idx % emojis.count], flag: flag, personId: pid)
         }.sorted { $0.score > $1.score }
     }
 }

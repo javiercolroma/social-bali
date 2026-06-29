@@ -131,18 +131,6 @@ struct FriendsContent: View {
 
     var body: some View {
         VStack(spacing: 14) {
-            if let acc = store.account {
-                HStack(spacing: 10) {
-                    MeAvatar(account: acc, size: 32)
-                    VStack(alignment: .leading, spacing: 1) {
-                        Text(acc.name).font(.system(size: 14, weight: .heavy)).foregroundColor(Brand.ink)
-                        Text("@\(acc.handle)").font(.caption).foregroundColor(Brand.muted)
-                    }
-                    Spacer()
-                }
-                .padding(10).background(Color(hex: "f4f9e8")).clipShape(RoundedRectangle(cornerRadius: 12))
-            }
-
             HStack(spacing: 8) {
                 Image(systemName: "magnifyingglass").foregroundColor(Brand.soft)
                 TextField("Buscar por nombre o @usuario", text: $query)
@@ -301,6 +289,7 @@ struct ChatView: View {
 struct NotificationsSheet: View {
     @EnvironmentObject var store: AppStore
     @Environment(\.dismiss) private var dismiss
+    @State private var profileTarget: IdString?
     var onOpenChat: (String) -> Void
     var onOpenFriends: () -> Void
 
@@ -319,6 +308,9 @@ struct NotificationsSheet: View {
             }
             .background(Brand.bg)
             .navigationTitle("Notificaciones").navigationBarTitleDisplayMode(.inline)
+            .sheet(item: $profileTarget) { item in
+                if let p = store.person(item.id) { FriendProfileView(person: p).environmentObject(store) }
+            }
         }
         // Al abrir, dejan de ser "nuevas" (ya las has visto), como en Instagram.
         .onAppear { store.markAllNotificationsRead() }
@@ -342,7 +334,10 @@ struct NotificationsSheet: View {
             .contentShape(Rectangle())
             .onTapGesture {
                 store.markNotificationRead(n.id)
-                if let pid = n.personId, n.conversationId != nil { dismiss(); onOpenChat(pid) }
+                if let pid = n.personId {
+                    if n.conversationId != nil { dismiss(); onOpenChat(pid) }
+                    else { profileTarget = IdString(id: pid) }
+                }
             }
             if isPendingRequest, let pid = n.personId {
                 HStack(spacing: 8) {
