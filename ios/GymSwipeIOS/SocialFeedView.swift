@@ -1,5 +1,4 @@
 import SwiftUI
-import CoreLocation
 
 private struct FeedItem: Identifiable {
     let id: String
@@ -44,7 +43,6 @@ struct SocialFeedView: View {
     @State private var commentTarget: FeedItem?
     @State private var comments: [String: [PostComment]] = [:]
     @State private var toast: String?
-    @StateObject private var location = LocationManager()
 
     private let tabs: [(title: String, icon: String)] = [("Seguidos", "person.2.fill"), ("Para ti", "sparkles")]
 
@@ -58,8 +56,6 @@ struct SocialFeedView: View {
         }
         .background(Brand.bg)
         .overlay(alignment: .bottom) { toastView }
-        .onAppear { if store.account != nil { location.request() } }
-        .onChange(of: store.account?.handle) { _ in if store.account != nil { location.request() } }
         .sheet(item: $activity) { ActivityDetailView(item: feedItemView($0)).environmentObject(store) }
         .sheet(item: $commentTarget) { item in
             CommentsSheet(title: item.title, comments: Binding(
@@ -94,19 +90,18 @@ struct SocialFeedView: View {
 
     private var seguidosTab: some View {
         ScrollView {
-            VStack(spacing: 12) {
+            LazyVStack(spacing: 12) {
                 if store.following.isEmpty {
                     newUserHeader
-                    if !myItems.isEmpty {
-                        sectionHeader("TUS ENTRENOS")
-                        ForEach(myItems) { card($0) }
+                    if hasSuggestions { suggestionsStrip }
+                    let feed = (myItems + discoverFeed).sorted { $0.date > $1.date }
+                    if feed.isEmpty {
+                        emptyFeed("Sigue a atletas o registra un entreno para llenar tu muro.")
+                    } else {
+                        ForEach(feed) { card($0, showFollow: $0.personId != nil) }
                     }
-                    sectionHeader("CERCA DE TI")
-                    ForEach(nearbyPeople(limit: 5)) { recRow($0) }
-                    Button { FX.tap(); withAnimation { segment = 1 } } label: {
-                        Text("Descubre más en Para ti ›").font(.system(size: 14, weight: .heavy)).foregroundColor(Color(hex: "4b6211"))
-                    }.frame(maxWidth: .infinity).padding(.top, 4)
                 } else {
+                    if hasSuggestions { suggestionsStrip }
                     ForEach(followedFeed) { card($0) }
                 }
             }
@@ -121,37 +116,29 @@ struct SocialFeedView: View {
         }.frame(maxWidth: .infinity, alignment: .leading)
     }
 
-    // MARK: - PARA TI
+    // MARK: - PARA TI (solo posts de gente cercana que aún no sigues)
 
     private var paraTiTab: some View {
         ScrollView {
-            VStack(spacing: 12) {
-                let incoming = store.people.filter { store.relationship($0.id) == .incoming }
-                if !incoming.isEmpty {
-                    sectionHeader("TE QUIEREN SEGUIR")
-                    ForEach(incoming) { incomingRow($0) }
-                }
-
-                let nearby = nearbyPeople(limit: 6)
-                sectionHeader("CERCA DE TI")
-                if nearby.isEmpty {
-                    Text("Ya sigues a toda la comunidad 🎉").font(.footnote).foregroundColor(Brand.muted)
-                        .frame(maxWidth: .infinity).padding(.vertical, 8)
-                } else {
-                    ForEach(nearby) { recRow($0) }
-                }
-
+            LazyVStack(spacing: 12) {
                 let disc = discoverFeed
-                if !disc.isEmpty {
-                    sectionHeader("DESCUBRE ENTRENOS")
+                if disc.isEmpty {
+                    emptyFeed("No hay entrenos por descubrir ahora mismo. ¡Vuelve pronto!")
+                } else {
                     ForEach(disc) { card($0, showFollow: true) }
-                } else if nearby.isEmpty {
-                    Text("No hay más entrenos por descubrir ahora mismo. ¡Vuelve pronto!")
-                        .font(.footnote).foregroundColor(Brand.muted).frame(maxWidth: .infinity).padding(.vertical, 8)
                 }
             }
             .padding(.horizontal, 14).padding(.vertical, 12)
         }
+    }
+
+    private var hasSuggestions: Bool { !nearbyPeople(limit: 1).isEmpty }
+
+    private func emptyFeed(_ msg: String) -> some View {
+        VStack(spacing: 10) {
+            Image(systemName: "figure.run").font(.system(size: 34)).foregroundColor(Brand.soft)
+            Text(msg).font(.footnote).foregroundColor(Brand.muted).multilineTextAlignment(.center)
+        }.frame(maxWidth: .infinity).padding(.top, 40)
     }
 
     private func sectionHeader(_ t: String) -> some View {
@@ -159,59 +146,41 @@ struct SocialFeedView: View {
             .padding(.horizontal, 4).padding(.top, 4)
     }
 
-    private func recRow(_ p: SocialPerson) -> some View {
-        PanelCard {
-            HStack(spacing: 11) {
-                Button { FX.tap(); onOpenProfile(p.id) } label: { personAvatar(p) }.buttonStyle(.plain)
-                VStack(alignment: .leading, spacing: 3) {
-                    Text(p.name).font(.system(size: 15, weight: .heavy)).foregroundColor(Brand.ink)
-                    Text("@\(p.handle)").font(.caption2).foregroundColor(Brand.soft)
-                    Tag(text: "📍 a \(distanceLabel(distanceMeters(p)))", highlight: true)
+    // MARK: - Sugerencias (tira horizontal deslizable, estilo Strava)
+
+    private var suggestionsStrip: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            sectionHeader("A QUIÉN SEGUIR")
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 12) {
+                    ForEach(nearbyPeople(limit: 10)) { p in suggestionCard(p) }
                 }
-                Spacer()
-                followButton(p)
+                .padding(.horizontal, 4).padding(.bottom, 2)
             }
         }
     }
 
-    private func incomingRow(_ p: SocialPerson) -> some View {
-        PanelCard {
-            HStack(spacing: 11) {
-                Button { FX.tap(); onOpenProfile(p.id) } label: { personAvatar(p) }.buttonStyle(.plain)
-                VStack(alignment: .leading, spacing: 3) {
-                    Text(p.name).font(.system(size: 15, weight: .heavy)).foregroundColor(Brand.ink)
-                    Text("@\(p.handle)").font(.caption2).foregroundColor(Brand.soft)
-                    Tag(text: "Te quiere seguir", highlight: true)
+    private func suggestionCard(_ p: SocialPerson) -> some View {
+        VStack(spacing: 8) {
+            Button { FX.tap(); onOpenProfile(p.id) } label: {
+                ZStack(alignment: .bottomTrailing) {
+                    Avatar(emoji: p.avatar, size: 60)
+                    Text(p.flag).font(.system(size: 12)).frame(width: 19, height: 19)
+                        .background(Circle().fill(.white)).overlay(Circle().stroke(Brand.line)).offset(x: 3, y: 3)
                 }
-                Spacer()
-                HStack(spacing: 8) {
-                    Button { FX.success(); store.acceptFriendRequest(p.id); showToast("Ahora sigues a \(p.name)") } label: {
-                        Image(systemName: "checkmark").font(.system(size: 15, weight: .heavy)).foregroundColor(Color(hex: "10150a"))
-                            .frame(width: 44, height: 44).background(Brand.green).clipShape(Circle())
-                    }.buttonStyle(.plain)
-                    Button { FX.warning(); store.rejectFriendRequest(p.id) } label: {
-                        Image(systemName: "xmark").font(.system(size: 15, weight: .heavy)).foregroundColor(Color(hex: "a73232"))
-                            .frame(width: 44, height: 44).background(Brand.redSoft).clipShape(Circle())
-                    }.buttonStyle(.plain)
-                }
+            }.buttonStyle(.plain)
+            VStack(spacing: 1) {
+                Text(p.name).font(.system(size: 14, weight: .heavy)).foregroundColor(Brand.ink).lineLimit(1)
+                Text("@\(p.handle)").font(.caption2).foregroundColor(Brand.soft).lineLimit(1)
             }
+            Button { followPerson(p) } label: {
+                Text("Seguir").font(.system(size: 13, weight: .heavy)).foregroundColor(Color(hex: "10150a"))
+                    .frame(maxWidth: .infinity).frame(height: 32).background(Brand.green).clipShape(Capsule())
+            }.buttonStyle(.plain)
         }
-    }
-
-    private func followButton(_ p: SocialPerson) -> some View {
-        Button { followPerson(p) } label: {
-            Text("Seguir").font(.system(size: 14, weight: .heavy)).foregroundColor(Color(hex: "10150a"))
-                .padding(.horizontal, 16).frame(height: 38).background(Brand.green).clipShape(Capsule())
-        }.buttonStyle(.plain)
-    }
-
-    @ViewBuilder
-    private func personAvatar(_ p: SocialPerson) -> some View {
-        ZStack(alignment: .bottomTrailing) {
-            Avatar(emoji: p.avatar, size: 44)
-            Text(p.flag).font(.system(size: 11)).frame(width: 17, height: 17)
-                .background(Circle().fill(.white)).overlay(Circle().stroke(Brand.line)).offset(x: 3, y: 3)
-        }
+        .padding(12).frame(width: 140)
+        .background(Brand.panel).clipShape(RoundedRectangle(cornerRadius: 14))
+        .overlay(RoundedRectangle(cornerRadius: 14).stroke(Brand.line))
     }
 
     private func followPerson(_ p: SocialPerson) {
@@ -247,26 +216,11 @@ struct SocialFeedView: View {
             .prefix(limit))
     }
 
-    /// Distancia aproximada a una persona. Usa tu ubicación real si está disponible
-    /// (posición determinista alrededor de ti, coherente con el mapa de Ranking);
-    /// si no, una distancia sintética estable por persona.
+    /// Orden de cercanía determinista por persona (no se muestra la distancia).
     private func distanceMeters(_ p: SocialPerson) -> Double {
         var seed: UInt64 = 0
         for ch in p.id.unicodeScalars { seed = seed &* 31 &+ UInt64(ch.value) }
-        let r1 = Double(seed % 1000) / 1000.0
-        let r2 = Double((seed / 1000) % 1000) / 1000.0
-        if let c = location.coordinate {
-            let here = CLLocation(latitude: c.latitude, longitude: c.longitude)
-            let there = CLLocation(latitude: c.latitude + (r1 - 0.5) * 0.02,
-                                   longitude: c.longitude + (r2 - 0.5) * 0.02)
-            return here.distance(from: there)
-        }
-        return 120 + r1 * 2600   // 120 m – 2,7 km sin ubicación
-    }
-
-    private func distanceLabel(_ m: Double) -> String {
-        if m < 1000 { return "\(Int((m / 10).rounded()) * 10) m" }
-        return String(format: "%.1f", m / 1000).replacingOccurrences(of: ".", with: ",") + " km"
+        return Double(seed % 100000)
     }
 
     // MARK: - Card
@@ -327,6 +281,7 @@ struct SocialFeedView: View {
                     stat(durationText(item.elapsed), "Tiempo", "clock")
                     stat("\(item.sets)", "Series", "checkmark.circle")
                     stat("\(item.exercises)", "Ejerc.", "list.bullet")
+                    if let avg = item.avgHeartRate { stat("\(avg)", "ppm", "heart.fill") }
                 }
             }
             .contentShape(Rectangle())
@@ -479,6 +434,8 @@ struct SocialFeedView: View {
                 let sid = entries.first?.sessionId ?? "\(p.id)-post-\(idx)"
                 var seed: UInt64 = 0
                 for ch in sid.unicodeScalars { seed = seed &* 31 &+ UInt64(ch.value) }
+                let avgHR = 118 + Int(seed % 42)                 // 118–159 ppm
+                let maxHR = avgHR + 12 + Int((seed >> 5) % 22)   // +12..+33
                 items.append(FeedItem(
                     id: sid, personId: p.id, authorName: p.name,
                     avatarPhoto: nil, avatarEmoji: p.avatar, flag: p.flag,
@@ -492,7 +449,8 @@ struct SocialFeedView: View {
                             SetLog(reps: e.reps, weight: max(0, e.weight + Double(i) * 2.5 - Double(max(0, e.sets - 1)) * 1.25))
                         }
                         return SessionExercise(name: e.exerciseName, sets: e.sets, reps: e.reps, weight: e.weight, logs: logs)
-                    }))
+                    },
+                    avgHeartRate: avgHR, maxHeartRate: maxHR))
             }
         }
         return items

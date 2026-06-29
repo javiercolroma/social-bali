@@ -21,6 +21,7 @@ struct RankingView: View {
     @StateObject private var location = LocationManager()
     @State private var scope = 0 // 0 amigos,1 global,2 país,3 ciudad,4 zona
     @State private var selectedMapPerson: SocialPerson?
+    @State private var showMap = false   // el Map de MapKit pide ubicación al crearse: lo diferimos hasta que el usuario lo abra
     @State private var region = MKCoordinateRegion(
         center: CLLocationCoordinate2D(latitude: 40.4168, longitude: -3.7038),
         span: MKCoordinateSpan(latitudeDelta: 0.08, longitudeDelta: 0.08))
@@ -92,30 +93,45 @@ struct RankingView: View {
                     Text(location.status).font(.caption).foregroundColor(Brand.muted)
                 }
                 Spacer()
-                Button { location.request() } label: {
-                    Label("Ubicarme", systemImage: "location.fill").font(.system(size: 13, weight: .heavy))
-                        .padding(.horizontal, 12).frame(height: 34).background(Brand.greenSoft)
-                        .foregroundColor(Brand.ink).clipShape(Capsule())
-                }
-            }
-            Map(coordinateRegion: $region, showsUserLocation: true, annotationItems: places) { place in
-                MapAnnotation(coordinate: place.coordinate) {
-                    if place.isMe {
-                        Text("Tú").font(.system(size: 11, weight: .heavy)).foregroundColor(.white)
-                            .padding(.horizontal, 8).padding(.vertical, 4).background(Brand.ink).clipShape(Capsule())
-                    } else if let person = place.person {
-                        Button { FX.tap(); selectedMapPerson = person } label: {
-                            Text(person.avatar).font(.system(size: 20))
-                                .frame(width: 40, height: 40).background(Color.white).clipShape(Circle())
-                                .overlay(Circle().stroke(Brand.green, lineWidth: 2))
-                                .shadow(color: .black.opacity(0.18), radius: 3, y: 2)
-                        }
+                if showMap {
+                    Button { location.request() } label: {
+                        Label("Ubicarme", systemImage: "location.fill").font(.system(size: 13, weight: .heavy))
+                            .padding(.horizontal, 12).frame(height: 34).background(Brand.greenSoft)
+                            .foregroundColor(Brand.ink).clipShape(Capsule())
                     }
                 }
             }
-            .frame(height: 300).clipShape(RoundedRectangle(cornerRadius: 12))
-            Text("Toca un usuario para ver su perfil. Ubicaciones aproximadas.")
-                .font(.caption2).foregroundColor(Brand.soft)
+            if showMap {
+                Map(coordinateRegion: $region, showsUserLocation: location.coordinate != nil, annotationItems: places) { place in
+                    MapAnnotation(coordinate: place.coordinate) {
+                        if place.isMe {
+                            Text("Tú").font(.system(size: 11, weight: .heavy)).foregroundColor(.white)
+                                .padding(.horizontal, 8).padding(.vertical, 4).background(Brand.ink).clipShape(Capsule())
+                        } else if let person = place.person {
+                            Button { FX.tap(); selectedMapPerson = person } label: {
+                                Text(person.avatar).font(.system(size: 20))
+                                    .frame(width: 40, height: 40).background(Color.white).clipShape(Circle())
+                                    .overlay(Circle().stroke(Brand.green, lineWidth: 2))
+                                    .shadow(color: .black.opacity(0.18), radius: 3, y: 2)
+                            }
+                        }
+                    }
+                }
+                .frame(height: 300).clipShape(RoundedRectangle(cornerRadius: 12))
+                Text("Toca un usuario para ver su perfil. Ubicaciones aproximadas.")
+                    .font(.caption2).foregroundColor(Brand.soft)
+            } else {
+                Button { FX.tap(); showMap = true; location.request() } label: {
+                    VStack(spacing: 8) {
+                        Image(systemName: "map.fill").font(.system(size: 30)).foregroundColor(Color(hex: "6ea300"))
+                        Text("Ver mapa de la comunidad").font(.system(size: 15, weight: .heavy)).foregroundColor(Brand.ink)
+                        Text("Descubre atletas cerca de ti").font(.caption).foregroundColor(Brand.muted)
+                    }
+                    .frame(maxWidth: .infinity).frame(height: 160)
+                    .background(Brand.surface).clipShape(RoundedRectangle(cornerRadius: 12))
+                    .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(Brand.line))
+                }.buttonStyle(.plain)
+            }
         }
         .sheet(item: $selectedMapPerson) { MapUserSheet(person: $0).environmentObject(store) }
     }
