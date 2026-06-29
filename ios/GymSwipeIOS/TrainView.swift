@@ -15,6 +15,7 @@ struct TrainView: View {
     @State private var restActive = false
     @State private var restElapsed = 0
     @State private var restTotal = 0
+    @State private var finalElapsed = 0   // tiempo congelado al terminar (el resumen no debe seguir corriendo)
     @AppStorage("fxSound") private var soundOn = true
     @AppStorage("fxHaptics") private var hapticsOn = true
     @ObservedObject private var health = HealthManager.shared
@@ -27,8 +28,6 @@ struct TrainView: View {
     private var closedSets: Int { store.exercises.reduce(0) { $0 + $1.completedSets + $1.skippedSets } }
     private var completedSets: Int { store.exercises.reduce(0) { $0 + $1.completedSets } }
     private var skippedSets: Int { store.exercises.reduce(0) { $0 + $1.skippedSets } }
-    private var sessionVolume: Double { store.exercises.reduce(0) { $0 + Double($1.completedSets) * Double($1.reps) * $1.weight } }
-    private var sessionXP: Int { store.exercises.reduce(0) { $0 + $1.completedSets * 12 + ($1.completedSets > 0 ? 18 : 0) } }
     private var exercisesDone: Int { store.exercises.filter { $0.completedSets > 0 }.count }
     private var elapsedSeconds: Int { sessionStart.map { max(0, Int(-$0.timeIntervalSinceNow)) } ?? 0 }
     private var finished: Bool { store.activeExercise == nil && !store.exercises.isEmpty }
@@ -42,7 +41,7 @@ struct TrainView: View {
                     summary
                 } else if let ex = store.activeExercise {
                     sessionHeader
-                    if restActive { restBanner }
+                    restBanner
                     activeCard(ex)
                         .id(ex.id)
                         .transition(.asymmetric(
@@ -142,7 +141,8 @@ struct TrainView: View {
         Task { if await health.connect() { health.startSession() } }
     }
 
-    private var restOver: Bool { restElapsed >= restTotal }
+    /// Descanso en curso (cuenta atrás activa). Si no, se muestra "¡Haz tu serie!".
+    private var resting: Bool { restActive && restElapsed < restTotal }
     private var restRemaining: Int { max(0, restTotal - restElapsed) }
 
     private var restBanner: some View {
@@ -150,24 +150,24 @@ struct TrainView: View {
             HStack(spacing: 14) {
                 ZStack {
                     Circle().stroke(Brand.chip, lineWidth: 7)
-                    Circle().trim(from: 0, to: restOver ? 1 : CGFloat(restRemaining) / CGFloat(max(1, restTotal)))
+                    Circle().trim(from: 0, to: resting ? CGFloat(restRemaining) / CGFloat(max(1, restTotal)) : 1)
                         .stroke(Brand.green, style: StrokeStyle(lineWidth: 7, lineCap: .round))
                         .rotationEffect(.degrees(-90))
                         .animation(.linear(duration: 1), value: restElapsed)
-                    if restOver {
-                        Image(systemName: "figure.strengthtraining.traditional").font(.system(size: 26)).foregroundColor(Color(hex: "4b6211"))
-                    } else {
+                    if resting {
                         Text(timeString(restRemaining)).font(.system(size: 17, weight: .heavy)).monospacedDigit().foregroundColor(Brand.ink)
+                    } else {
+                        Image(systemName: "figure.strengthtraining.traditional").font(.system(size: 26)).foregroundColor(Color(hex: "4b6211"))
                     }
                 }.frame(width: 70, height: 70)
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(restOver ? "¡Haz tu serie!" : "Descanso")
-                        .font(.system(size: 17, weight: .heavy)).foregroundColor(restOver ? Color(hex: "4b6211") : Brand.ink)
-                    Text(restOver ? "Descanso completado" : "Recupera para la próxima serie")
+                    Text(resting ? "Descanso" : "¡Haz tu serie!")
+                        .font(.system(size: 17, weight: .heavy)).foregroundColor(resting ? Brand.ink : Color(hex: "4b6211"))
+                    Text(resting ? "Recupera para la próxima serie" : "Cuando estés listo, a por ello")
                         .font(.caption).foregroundColor(Brand.muted)
                 }
                 Spacer()
-                if !restOver {
+                if resting {
                     Button { restTotal += 15; Haptics.soft() } label: {
                         Text("+15s").font(.system(size: 14, weight: .heavy)).foregroundColor(Brand.ink)
                             .padding(.horizontal, 14).frame(height: 38).background(Brand.chip).clipShape(Capsule())
@@ -175,7 +175,6 @@ struct TrainView: View {
                 }
             }
         }
-        .transition(.move(edge: .top).combined(with: .opacity))
     }
 
     private func activeCard(_ ex: Exercise) -> some View {
@@ -220,7 +219,7 @@ struct TrainView: View {
     }
 
     private var finishButton: some View {
-        Button { withAnimation { showSummary = true } } label: {
+        Button { finalElapsed = elapsedSeconds; withAnimation { showSummary = true } } label: {
             Label("Finalizar entrenamiento", systemImage: "flag.checkered")
                 .font(.system(size: 15, weight: .heavy)).foregroundColor(Brand.ink)
                 .frame(maxWidth: .infinity).frame(minHeight: 48)
@@ -233,6 +232,7 @@ struct TrainView: View {
         let willClose = (ex.completedSets + ex.skippedSets + 1) >= ex.sets
         if done { restActive = true; restTotal = testRestSeconds; restElapsed = 0 } else { restActive = false }
         withAnimation(.spring(response: 0.4, dampingFraction: 0.82)) { store.registerSet(ex.id, done: done) }
+        if store.activeExercise == nil { finalElapsed = elapsedSeconds }   // último set: congelar tiempo
 
         if willClose && store.activeExercise != nil {
             fxExercise()   // moved to the next exercise: special sound
@@ -252,18 +252,12 @@ struct TrainView: View {
                 Text("¡Buen trabajo!").font(.system(size: 22, weight: .heavy)).foregroundColor(Brand.ink)
                     .frame(maxWidth: .infinity, alignment: .center)
                 HStack(spacing: 10) {
-                    summaryStat(timeString(elapsedSeconds), "Duración", "clock")
+                    summaryStat(timeString(finalElapsed), "Duración", "clock")
                     summaryStat("\(completedSets)", "Series", "checkmark.circle")
                 }
                 HStack(spacing: 10) {
-                    summaryStat("\(Int(sessionVolume)) kg", "Volumen", "dumbbell.fill")
-                    summaryStat("+\(sessionXP)", "XP", "bolt.fill")
-                }
-                if let avg = health.sessionAvg {
-                    HStack(spacing: 10) {
-                        summaryStat("\(avg)", "FC media", "heart.fill")
-                        summaryStat("\(health.sessionMax ?? avg)", "FC máx", "heart.fill")
-                    }
+                    summaryStat(health.sessionAvg.map { "\($0)" } ?? "—", "FC media", "heart.fill")
+                    summaryStat(health.sessionMax.map { "\($0)" } ?? "—", "FC máx", "heart.fill")
                 }
                 if skippedSets > 0 {
                     Text("\(skippedSets) series saltadas · \(exercisesDone) ejercicios").font(.caption).foregroundColor(Brand.soft)
@@ -322,7 +316,7 @@ struct TrainView: View {
                     fxFinish()
                     let hr = health.endSession()
                     store.saveSession(name: sessionName, note: sessionNote, photoData: sessionPhoto, visibility: visibility,
-                                      elapsed: elapsedSeconds, avgHeartRate: hr.avg, maxHeartRate: hr.max)
+                                      elapsed: finalElapsed, avgHeartRate: hr.avg, maxHeartRate: hr.max)
                     resetLocal()
                 } label: { Label("Guardar entrenamiento", systemImage: "checkmark") }
                     .buttonStyle(PrimaryButtonStyle()).padding(.top, 4)
@@ -332,7 +326,7 @@ struct TrainView: View {
             }
             ConfettiView().frame(height: 320).allowsHitTesting(false)
         }
-        .onAppear { fxFinish(); if sessionName.isEmpty { sessionName = defaultSessionName } }
+        .onAppear { fxFinish(); if sessionName.isEmpty { sessionName = defaultSessionName }; if finalElapsed == 0 { finalElapsed = elapsedSeconds } }
     }
 
     private func summaryLabel(_ text: String) -> some View {
@@ -365,7 +359,7 @@ struct TrainView: View {
     }
     private func resetLocal() {
         health.endSession()
-        sessionStart = nil; restActive = false; restElapsed = 0; restTotal = 0; showSummary = false
+        sessionStart = nil; restActive = false; restElapsed = 0; restTotal = 0; finalElapsed = 0; showSummary = false
         sessionName = ""; sessionNote = ""; sessionPhoto = nil; sessionPickerItem = nil; visibility = .all
     }
 

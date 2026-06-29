@@ -415,6 +415,7 @@ struct AccountSetupView: View {
     @State private var handle = ""
     @State private var pickerItem: PhotosPickerItem?
     @State private var photoData: Data?
+    @ObservedObject private var health = HealthManager.shared
 
     private var normalized: String { normalizeHandle(handle) }
     private var taken: [String] { store.people.map { $0.handle } }
@@ -464,13 +465,34 @@ struct AccountSetupView: View {
                         Text("@\(normalized) disponible").font(.caption).foregroundColor(Color(hex: "4b8a1f"))
                     }
                 }
+                if store.account == nil && health.isAvailable {
+                    Button { connectHealth() } label: {
+                        HStack(spacing: 10) {
+                            Image(systemName: "heart.fill").font(.system(size: 16)).foregroundColor(Brand.red)
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(health.connected ? "Salud conectada" : "Conectar con Salud")
+                                    .font(.system(size: 14, weight: .heavy)).foregroundColor(Brand.ink)
+                                Text(health.connected ? "Registraremos tu frecuencia cardíaca" : "Para ver tu frecuencia cardíaca en los entrenos")
+                                    .font(.caption2).foregroundColor(Brand.muted)
+                            }
+                            Spacer()
+                            Image(systemName: health.connected ? "checkmark.seal.fill" : "chevron.right")
+                                .font(.system(size: 15, weight: .bold))
+                                .foregroundColor(health.connected ? Color(hex: "4b8a1f") : Brand.soft)
+                        }
+                        .padding(12).background(Brand.surface).clipShape(RoundedRectangle(cornerRadius: 10))
+                        .overlay(RoundedRectangle(cornerRadius: 10).stroke(Brand.line))
+                    }.buttonStyle(.plain).disabled(health.connected)
+                }
                 Button {
+                    let isNew = store.account == nil
                     var acc = store.account ?? Account(name: "", handle: "")
                     acc.name = name.trimmingCharacters(in: .whitespaces)
                     acc.handle = normalized
                     if let photoData { acc.photoData = photoData }
                     FX.success(sound: true)
                     store.saveAccount(acc)
+                    if isNew && health.isAvailable && !health.connected { Task { await health.connect() } }
                     onCancel()
                 } label: { Text(store.account == nil ? "Empezar" : "Guardar") }
                     .buttonStyle(PrimaryButtonStyle(enabled: canSubmit)).disabled(!canSubmit)
@@ -488,6 +510,11 @@ struct AccountSetupView: View {
             handle = store.account?.handle ?? ""
             photoData = store.account?.photoData
         }
+    }
+
+    private func connectHealth() {
+        FX.tap()
+        Task { await health.connect() }
     }
 
     private func field(_ label: String, text: Binding<String>, placeholder: String) -> some View {
