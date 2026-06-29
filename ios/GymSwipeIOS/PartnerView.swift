@@ -26,7 +26,7 @@ struct PartnerView: View {
                         Spacer()
                         Text(maxKm >= 99.5 ? "Sin límite" : "Hasta \(Int(maxKm.rounded())) km").font(.system(size: 13, weight: .heavy)).foregroundColor(Color(hex: "4b6211"))
                     }.padding(.top, 4)
-                    Slider(value: $maxKm, in: 5...100).tint(Brand.green)   // continuo = se desliza suave (sin saltos de 5 km)
+                    DistanceSlider(value: $maxKm, range: 1...100)   // mín 1 km, pulgar circular pequeño, continuo
                 }
 
                 if visiblePlans.isEmpty {
@@ -113,6 +113,39 @@ struct PartnerView: View {
                 }
             }
         }
+    }
+}
+
+/// Slider de distancia con pista fina y pulgar circular pequeño; deslizamiento continuo.
+private struct DistanceSlider: View {
+    @Binding var value: Double
+    var range: ClosedRange<Double>
+    private let thumb: CGFloat = 16
+
+    var body: some View {
+        GeometryReader { geo in
+            let usable = max(1, geo.size.width - thumb)
+            let frac = min(max((value - range.lowerBound) / (range.upperBound - range.lowerBound), 0), 1)
+            let x = CGFloat(frac) * usable
+            ZStack(alignment: .leading) {
+                Capsule().fill(Brand.chip).frame(height: 4)
+                Capsule().fill(Brand.green).frame(width: x + thumb / 2, height: 4)
+                Circle().fill(.white)
+                    .frame(width: thumb, height: thumb)
+                    .overlay(Circle().stroke(Brand.green, lineWidth: 2))
+                    .shadow(color: .black.opacity(0.18), radius: 1.5, y: 1)
+                    .offset(x: x)
+            }
+            .frame(height: thumb)
+            .contentShape(Rectangle())
+            .gesture(
+                DragGesture(minimumDistance: 0).onChanged { g in
+                    let px = min(max(0, g.location.x - thumb / 2), usable)
+                    value = range.lowerBound + Double(px / usable) * (range.upperBound - range.lowerBound)
+                }
+            )
+        }
+        .frame(height: thumb)
     }
 }
 
