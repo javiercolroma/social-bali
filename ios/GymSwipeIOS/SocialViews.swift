@@ -427,7 +427,7 @@ struct FriendProfileView: View {
                 }.padding(16)
             }
             .background(Brand.bg)
-            .navigationTitle(person.name).navigationBarTitleDisplayMode(.inline)
+            .navigationTitle("").navigationBarTitleDisplayMode(.inline)
             .sheet(item: $daySheet) { DaySessionsSheet(date: $0.date, sessions: $0.sessions, author: person).environmentObject(store) }
             .sheet(item: $detailSession) { s in
                 ActivityDetailView(item: personActivityData(s, person)).environmentObject(store)
