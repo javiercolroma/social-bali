@@ -714,7 +714,6 @@ struct MeProfileView: View {
                         ScoreBarView(label: "Calidad", value: score.quality)
                         ScoreBarView(label: "Variedad", value: score.variety)
                     }
-                    socialCards
                     TrainingCalendarView(sessions: sessionsList) { date, day in
                         daySheet = DayPayload(id: date, date: date, sessions: day)
                     }
@@ -743,37 +742,34 @@ struct MeProfileView: View {
     }
 
     @ViewBuilder
-    private var socialCards: some View {
+    private var socialPills: some View {
         let links = socialLinks
         if !links.isEmpty {
-            VStack(spacing: 8) {
+            HStack(spacing: 8) {
                 ForEach(links, id: \.url) { l in
                     Link(destination: l.url) {
-                        HStack(spacing: 10) {
-                            Image(systemName: l.icon).foregroundColor(Color(hex: "6ea300"))
-                            Text(l.title).font(.system(size: 14, weight: .heavy)).foregroundColor(Brand.ink)
-                            Text("@\(l.handle)").font(.caption).foregroundColor(Brand.soft)
-                            Spacer()
-                            Image(systemName: "arrow.up.right").font(.system(size: 12, weight: .bold)).foregroundColor(Brand.soft)
+                        HStack(spacing: 5) {
+                            Text(l.emoji).font(.system(size: 13))
+                            Text("@\(l.handle)").font(.system(size: 12, weight: .heavy)).foregroundColor(Brand.ink).lineLimit(1)
                         }
-                        .padding(12).background(Brand.panel).clipShape(RoundedRectangle(cornerRadius: 12))
-                        .overlay(RoundedRectangle(cornerRadius: 12).stroke(Brand.line))
+                        .padding(.horizontal, 11).frame(height: 30)
+                        .background(Brand.chip).clipShape(Capsule())
                     }
                 }
             }
         }
     }
 
-    private var socialLinks: [(title: String, handle: String, icon: String, url: URL)] {
-        var out: [(title: String, handle: String, icon: String, url: URL)] = []
+    private var socialLinks: [(title: String, handle: String, emoji: String, url: URL)] {
+        var out: [(title: String, handle: String, emoji: String, url: URL)] = []
         if let ig = store.profile.instagram, !ig.isEmpty, let u = URL(string: "https://instagram.com/\(ig)") {
-            out.append(("Instagram", ig, "camera.circle.fill", u))
+            out.append(("Instagram", ig, "📸", u))
         }
         if let tk = store.profile.tiktok, !tk.isEmpty, let u = URL(string: "https://www.tiktok.com/@\(tk)") {
-            out.append(("TikTok", tk, "music.note", u))
+            out.append(("TikTok", tk, "🎵", u))
         }
         if let tw = store.profile.twitter, !tw.isEmpty, let u = URL(string: "https://x.com/\(tw)") {
-            out.append(("X", tw, "at", u))
+            out.append(("X", tw, "🐦", u))
         }
         return out
     }
@@ -781,12 +777,13 @@ struct MeProfileView: View {
     private func header(entrenos: Int) -> some View {
         VStack(spacing: 12) {
             MeAvatar(account: store.account, size: 84)
-            VStack(spacing: 3) {
+            VStack(spacing: 6) {
                 HStack(spacing: 6) {
                     Text(store.account?.name ?? "Tú").font(.system(size: 22, weight: .heavy)).foregroundColor(Brand.ink)
                     if store.profile.isPrivate { Image(systemName: "lock.fill").font(.system(size: 13)).foregroundColor(Brand.soft) }
                 }
                 Text("@\(store.account?.handle ?? "tu_usuario")").font(.subheadline).foregroundColor(Brand.muted)
+                socialPills
             }
             profileCountsRow(entrenos: entrenos,
                              seguidores: deterministicCount(store.account?.handle ?? "me", salt: 7, lo: 40, hi: 1500),
