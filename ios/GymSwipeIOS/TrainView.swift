@@ -23,9 +23,7 @@ struct TrainView: View {
     @ObservedObject private var health = HealthManager.shared
     @ObservedObject private var remote = WorkoutRemote.shared
 
-    // Gamificación de sesión (todo en memoria, no se persiste)
-    @State private var combo = 0                 // series completadas seguidas
-    @State private var comboBroke = false        // para el aviso al romper racha
+    // Detalles de sesión (en memoria, no se persiste)
     @State private var lineSeed = 0              // rota la microcopia del coach
     @State private var lastEvent: SetEvent = .go
     @State private var hitMilestones: Set<Int> = []
@@ -78,7 +76,7 @@ struct TrainView: View {
             if id == nil { resetLocal() }
             else {
                 sessionStart = Date(); restActive = false; restElapsed = 0; showSummary = false
-                combo = 0; comboBroke = false; lineSeed = 0; lastEvent = .go; hitMilestones = []
+                lineSeed = 0; lastEvent = .go; hitMilestones = []
                 health.startSession()
                 LiveActivityManager.shared.end(); startLive()
             }
@@ -95,7 +93,7 @@ struct TrainView: View {
                 restElapsed += 1
                 if restElapsed >= restTotal {
                     lastEvent = .go; lineSeed += 1   // el coach pasa a "¡Vamos!"
-                    fxReady(); syncLive()
+                    fxRest(); syncLive()
                 }
             }
         }
@@ -113,7 +111,6 @@ struct TrainView: View {
                 }
                 Spacer()
                 VStack(alignment: .trailing, spacing: 6) {
-                    if combo >= 2 { comboChip.transition(.scale.combined(with: .opacity)) }
                     if let start = sessionStart {
                         TimelineView(.periodic(from: .now, by: 1)) { _ in
                             HStack(spacing: 5) {
@@ -198,12 +195,7 @@ struct TrainView: View {
                 VStack(alignment: .leading, spacing: 2) {
                     Text(coachTitle)
                         .font(.system(size: 17, weight: .heavy)).foregroundColor(resting ? Brand.ink : Color(hex: "4b6211"))
-                    HStack(spacing: 4) {
-                        if resting && combo >= 2 {
-                            Image(systemName: "flame.fill").font(.caption2).foregroundColor(Brand.gold)
-                        }
-                        Text(coachSub).font(.caption).foregroundColor(Brand.muted).lineLimit(1)
-                    }
+                    Text(coachSub).font(.caption).foregroundColor(Brand.muted).lineLimit(1)
                 }
                 .id(lineSeed)
                 .transition(.opacity.combined(with: .move(edge: .top)))
@@ -283,10 +275,6 @@ struct TrainView: View {
         let willClose = (ex.completedSets + ex.skippedSets + 1) >= ex.sets
         if done { restActive = true; restTotal = testRestSeconds; restElapsed = 0 } else { restActive = false }
 
-        // Racha de sesión: sube con cada serie hecha, se rompe al saltar.
-        withAnimation(.spring(response: 0.3, dampingFraction: 0.45)) {
-            if done { combo += 1 } else { if combo >= 2 { comboBroke = true }; combo = 0 }
-        }
         lineSeed += 1
         lastEvent = done ? .done : .skip
 
@@ -296,7 +284,7 @@ struct TrainView: View {
         // Hito del 50% (una sola vez por sesión).
         let pct = Double(closedSets) / Double(max(1, totalSets))
         if pct >= 0.5 && pct < 1.0 && hitMilestones.insert(50).inserted {
-            if soundOn { Synth.shared.milestone(full: false) }
+            if soundOn { Synth.shared.milestone() }
             if hapticsOn { Haptics.success() }
             milestonePop = 1.7
             withAnimation(.spring(response: 0.4, dampingFraction: 0.5)) { milestonePop = 1 }
@@ -337,26 +325,7 @@ struct TrainView: View {
     private var coachSub: String {
         if !resting { return goLines[lineSeed % goLines.count] }
         if lastEvent == .skip { return skipLines[lineSeed % skipLines.count] }
-        if combo >= 2 { return "\(combo) seguidas · ¡no pares!" }
         return restLines[lineSeed % restLines.count]
-    }
-
-    private var comboTier: Color {
-        if combo >= 7 { return Brand.teal }
-        if combo >= 4 { return Brand.green }
-        return Brand.gold
-    }
-
-    private var comboChip: some View {
-        HStack(spacing: 4) {
-            Image(systemName: "flame.fill")
-            Text("x\(combo)").contentTransition(.numericText())
-        }
-        .font(.system(size: 13, weight: .heavy)).foregroundColor(Brand.ink)
-        .padding(.horizontal, 9).padding(.vertical, 4)
-        .background(comboTier).clipShape(Capsule())
-        .scaleEffect(1 + min(CGFloat(combo), 8) * 0.02)
-        .shadow(color: comboTier.opacity(0.55), radius: CGFloat(min(combo, 8)))
     }
 
     /// Serie actual (1-based) del ejercicio activo, para mostrarla en el widget.
@@ -521,7 +490,7 @@ struct TrainView: View {
         LiveActivityManager.shared.end()
         sessionStart = nil; restActive = false; restElapsed = 0; restTotal = 0; finalElapsed = 0; showSummary = false
         sessionName = ""; sessionNote = ""; sessionPhoto = nil; sessionPickerItem = nil; visibility = .all
-        combo = 0; comboBroke = false; lineSeed = 0; lastEvent = .go; hitMilestones = []
+        lineSeed = 0; lastEvent = .go; hitMilestones = []
     }
 
     // MARK: - Empty
@@ -549,16 +518,10 @@ struct TrainView: View {
 
     // MARK: - FX
 
-    private func fxDone() {
-        if hapticsOn { if combo >= 4 { Haptics.rigid() }; Haptics.success() }   // háptica que sube con la racha
-        if soundOn { Synth.shared.done(step: max(0, combo - 1)) }               // tono que sube con la racha
-    }
-    private func fxSkip() {
-        if hapticsOn { if comboBroke { Haptics.warning(); comboBroke = false } else { Haptics.soft() } }
-        if soundOn { Synth.shared.skip() }
-    }
+    private func fxDone() { if hapticsOn { Haptics.success() }; if soundOn { Synth.shared.done() } }
+    private func fxSkip() { if hapticsOn { Haptics.soft() }; if soundOn { Synth.shared.skip() } }
     private func fxExercise() { if hapticsOn { Haptics.success() }; if soundOn { Synth.shared.exercise() } }
-    private func fxReady() { if hapticsOn { Haptics.rigid() }; if soundOn { Synth.shared.restOver() } }
+    private func fxRest() { if hapticsOn { Haptics.rigid() }; if soundOn { Synth.shared.rest() } }
     private func fxFinish() { if hapticsOn { Haptics.success() }; if soundOn { Synth.shared.finish() } }
 
     // MARK: - Helpers

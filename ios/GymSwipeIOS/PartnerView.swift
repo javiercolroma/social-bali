@@ -24,13 +24,13 @@ struct PartnerView: View {
                     HStack {
                         Label("Cerca de mí", systemImage: "location.fill").font(.system(size: 13, weight: .heavy)).foregroundColor(Brand.muted)
                         Spacer()
-                        Text(maxKm >= 100 ? "Sin límite" : "Hasta \(Int(maxKm)) km").font(.system(size: 13, weight: .heavy)).foregroundColor(Color(hex: "4b6211"))
+                        Text(maxKm >= 99.5 ? "Sin límite" : "Hasta \(Int(maxKm.rounded())) km").font(.system(size: 13, weight: .heavy)).foregroundColor(Color(hex: "4b6211"))
                     }.padding(.top, 4)
-                    Slider(value: $maxKm, in: 5...100, step: 5).tint(Brand.green)
+                    Slider(value: $maxKm, in: 5...100).tint(Brand.green)   // continuo = se desliza suave (sin saltos de 5 km)
                 }
 
                 if visiblePlans.isEmpty {
-                    Text("No hay compañeros a menos de \(Int(maxKm)) km. Amplía la distancia o publica tu plan.")
+                    Text("No hay compañeros a menos de \(Int(maxKm.rounded())) km. Amplía la distancia o publica tu plan.")
                         .font(.footnote).foregroundColor(Brand.muted).multilineTextAlignment(.center)
                         .frame(maxWidth: .infinity).padding(.top, 30)
                 } else {
@@ -38,6 +38,7 @@ struct PartnerView: View {
                 }
             }
             .padding(.horizontal, 14).padding(.vertical, 12)
+            .animation(.easeInOut(duration: 0.2), value: visiblePlans.count)   // aparición/desaparición suave de planes
         }
         .background(Brand.bg)
         .sheet(isPresented: $showCreator) { CreatePlanView().environmentObject(store) }
