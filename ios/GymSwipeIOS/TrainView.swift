@@ -176,7 +176,7 @@ struct TrainView: View {
                 }
                 Spacer()
                 if resting {
-                    Button { restTotal += 15; Haptics.soft() } label: {
+                    Button { restTotal += 15; Haptics.soft(); syncLive() } label: {
                         Text("+15s").font(.system(size: 14, weight: .heavy)).foregroundColor(Brand.ink)
                             .padding(.horizontal, 14).frame(height: 38).background(Brand.chip).clipShape(Capsule())
                     }
@@ -273,6 +273,7 @@ struct TrainView: View {
                                           reps: ex.reps, weight: ex.weight,
                                           setIndex: currentSetIndex(ex), exerciseSets: ex.sets,
                                           bpm: health.liveBPM, resting: resting,
+                                          restStartedAt: resting ? Date().addingTimeInterval(-Double(restElapsed)) : nil,
                                           restEndsAt: resting ? Date().addingTimeInterval(Double(restRemaining)) : nil)
     }
 

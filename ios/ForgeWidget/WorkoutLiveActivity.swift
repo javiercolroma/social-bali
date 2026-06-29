@@ -19,7 +19,8 @@ struct WorkoutLiveActivity: Widget {
             return DynamicIsland {
                 DynamicIslandExpandedRegion(.leading) {
                     Label {
-                        Text(s.workoutName).font(.caption).fontWeight(.heavy).lineLimit(1)
+                        Text(s.currentExercise.isEmpty ? "En marcha" : s.currentExercise)
+                            .font(.caption).fontWeight(.heavy).lineLimit(1)
                     } icon: {
                         Image(systemName: "dumbbell.fill").foregroundColor(lime)
                     }
@@ -29,8 +30,10 @@ struct WorkoutLiveActivity: Widget {
                         .foregroundColor(.white).frame(maxWidth: 70, alignment: .trailing)
                 }
                 DynamicIslandExpandedRegion(.center) {
-                    Text(s.resting ? "Descanso" : (s.currentExercise.isEmpty ? "En marcha" : s.currentExercise))
-                        .font(.caption2).foregroundColor(.white.opacity(0.7)).lineLimit(1)
+                    if s.exerciseSets > 0 && !s.resting {
+                        Text("Serie \(s.setIndex)/\(s.exerciseSets)")
+                            .font(.caption2).foregroundColor(.white.opacity(0.7)).lineLimit(1)
+                    }
                 }
                 DynamicIslandExpandedRegion(.bottom) {
                     ControlsView(state: s).padding(.top, 2)
@@ -55,29 +58,28 @@ private struct LockScreenView: View {
         VStack(spacing: 10) {
             HStack(spacing: 8) {
                 Image(systemName: "dumbbell.fill").foregroundColor(lime)
-                Text(state.workoutName).font(.headline).foregroundColor(.white).lineLimit(1)
+                Text(state.currentExercise.isEmpty ? "Entreno en marcha" : state.currentExercise)
+                    .font(.headline).foregroundColor(.white).lineLimit(1)
                 Spacer()
                 Text(state.startedAt, style: .timer).monospacedDigit()
                     .font(.title3.weight(.heavy)).foregroundColor(.white)
                     .frame(maxWidth: 80, alignment: .trailing)
             }
             HStack(spacing: 8) {
-                Text(state.currentExercise.isEmpty ? "Entreno en marcha" : state.currentExercise)
-                    .font(.subheadline.weight(.semibold)).foregroundColor(.white).lineLimit(1)
-                Spacer()
                 if state.exerciseSets > 0 {
                     Text("Serie \(state.setIndex)/\(state.exerciseSets)")
                         .font(.caption2.weight(.heavy)).foregroundColor(ink)
                         .padding(.horizontal, 8).padding(.vertical, 3)
                         .background(lime).clipShape(Capsule())
                 }
+                Spacer()
                 if let bpm = state.bpm {
                     Label("\(bpm)", systemImage: "heart.fill").font(.caption.weight(.bold)).foregroundColor(.red)
                 }
             }
             ControlsView(state: state)
         }
-        .padding(14)
+        .padding(EdgeInsets(top: 14, leading: 16, bottom: 18, trailing: 16))
         .activityBackgroundTint(Color.black.opacity(0.65))
     }
 }
@@ -90,7 +92,7 @@ private struct ControlsView: View {
 
     var body: some View {
         if state.resting, let ends = state.restEndsAt {
-            restRow(ends)
+            restRow(start: state.restStartedAt ?? ends, end: ends)
         } else if #available(iOS 17.0, *) {
             VStack(spacing: 8) {
                 HStack(spacing: 8) {
@@ -114,23 +116,26 @@ private struct ControlsView: View {
     }
 
     @ViewBuilder
-    private func restRow(_ ends: Date) -> some View {
-        HStack(spacing: 10) {
-            VStack(alignment: .leading, spacing: 0) {
-                Text("DESCANSO").font(.caption2.weight(.heavy)).foregroundColor(.orange.opacity(0.85))
-                Text(timerInterval: Date()...ends, countsDown: true).monospacedDigit()
-                    .font(.system(size: 22, weight: .heavy)).foregroundColor(.white).frame(maxWidth: 90, alignment: .leading)
+    private func restRow(start: Date, end: Date) -> some View {
+        HStack(spacing: 14) {
+            ZStack {
+                ProgressView(timerInterval: start...end, countsDown: true)
+                    .progressViewStyle(.circular)
+                    .tint(lime)
+                Text(timerInterval: start...end, countsDown: true)
+                    .font(.system(size: 15, weight: .heavy)).monospacedDigit()
+                    .foregroundColor(.white).frame(maxWidth: 54)
+            }
+            .frame(width: 62, height: 62)
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Descanso").font(.system(size: 16, weight: .heavy)).foregroundColor(.white)
+                Text("Recupera para la próxima serie").font(.caption2).foregroundColor(.white.opacity(0.65))
             }
             Spacer()
             if #available(iOS 17.0, *) {
-                Button(intent: WorkoutControlIntent(.restPlus)) {
-                    Text("+15s").font(.system(size: 14, weight: .heavy)).foregroundColor(.white)
-                        .padding(.horizontal, 12).frame(height: 38)
-                        .background(Color.white.opacity(0.16)).clipShape(Capsule())
-                }.buttonStyle(.plain)
                 Button(intent: WorkoutControlIntent(.restSkip)) {
                     Text("Saltar").font(.system(size: 14, weight: .heavy)).foregroundColor(ink)
-                        .padding(.horizontal, 14).frame(height: 38)
+                        .padding(.horizontal, 16).frame(height: 40)
                         .background(lime).clipShape(Capsule())
                 }.buttonStyle(.plain)
             }

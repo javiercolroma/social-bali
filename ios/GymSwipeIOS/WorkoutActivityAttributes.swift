@@ -17,6 +17,7 @@ struct WorkoutActivityAttributes: ActivityAttributes {
         var exerciseSets: Int  // nº de series del ejercicio actual
         var bpm: Int?
         var resting: Bool
+        var restStartedAt: Date?
         var restEndsAt: Date?
     }
 

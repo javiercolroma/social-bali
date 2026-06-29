@@ -17,7 +17,7 @@ final class LiveActivityManager {
         let state = WorkoutActivityAttributes.ContentState(
             workoutName: name, startedAt: startedAt, closedSets: closedSets, totalSets: totalSets,
             currentExercise: currentExercise, reps: reps, weight: weight, setIndex: setIndex,
-            exerciseSets: exerciseSets, bpm: nil, resting: false, restEndsAt: nil)
+            exerciseSets: exerciseSets, bpm: nil, resting: false, restStartedAt: nil, restEndsAt: nil)
         do {
             current = try Activity.request(attributes: attrs,
                                            content: ActivityContent(state: state, staleDate: nil),
@@ -29,12 +29,12 @@ final class LiveActivityManager {
 
     func update(name: String, startedAt: Date, closedSets: Int, totalSets: Int,
                 currentExercise: String, reps: Int, weight: Double, setIndex: Int, exerciseSets: Int,
-                bpm: Int?, resting: Bool, restEndsAt: Date?) {
+                bpm: Int?, resting: Bool, restStartedAt: Date?, restEndsAt: Date?) {
         guard #available(iOS 16.2, *), let act = current as? Activity<WorkoutActivityAttributes> else { return }
         let state = WorkoutActivityAttributes.ContentState(
             workoutName: name, startedAt: startedAt, closedSets: closedSets, totalSets: totalSets,
             currentExercise: currentExercise, reps: reps, weight: weight, setIndex: setIndex,
-            exerciseSets: exerciseSets, bpm: bpm, resting: resting, restEndsAt: restEndsAt)
+            exerciseSets: exerciseSets, bpm: bpm, resting: resting, restStartedAt: restStartedAt, restEndsAt: restEndsAt)
         Task { await act.update(ActivityContent(state: state, staleDate: nil)) }
     }
 
