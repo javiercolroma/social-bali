@@ -19,6 +19,7 @@ struct TrainView: View {
     @AppStorage("fxSound") private var soundOn = true
     @AppStorage("fxHaptics") private var hapticsOn = true
     @ObservedObject private var health = HealthManager.shared
+    @ObservedObject private var remote = WorkoutRemote.shared
 
     private let ticker = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
     // TODO: pruebas — descanso fijo a 10s. Volver a `ex.rest` para producción.
@@ -71,10 +72,12 @@ struct TrainView: View {
             if isOn && !store.exercises.isEmpty && !showSummary && !finished { health.startSession() }
         }
         .onChange(of: health.liveBPM) { _ in syncLive() }
+        // Comandos desde el widget de la pantalla de bloqueo / Isla Dinámica.
+        .onReceive(remote.$pending.compactMap { $0 }) { item in apply(item.command) }
         .onReceive(ticker) { _ in
             if restActive && restElapsed < restTotal {
                 restElapsed += 1
-                if restElapsed >= restTotal { fxRest() }
+                if restElapsed >= restTotal { fxRest(); syncLive() }
             }
         }
     }
@@ -249,20 +252,46 @@ struct TrainView: View {
         syncLive()
     }
 
+    /// Serie actual (1-based) del ejercicio activo, para mostrarla en el widget.
+    private func currentSetIndex(_ ex: Exercise) -> Int { min(ex.sets, ex.completedSets + ex.skippedSets + 1) }
+
     private func startLive() {
         guard let start = sessionStart else { return }
+        let ex = store.activeExercise
         LiveActivityManager.shared.start(name: workoutName, startedAt: start,
                                          closedSets: closedSets, totalSets: totalSets,
-                                         currentExercise: store.activeExercise?.name ?? "")
+                                         currentExercise: ex?.name ?? "",
+                                         reps: ex?.reps ?? 0, weight: ex?.weight ?? 0,
+                                         setIndex: ex.map(currentSetIndex) ?? 0, exerciseSets: ex?.sets ?? 0)
     }
 
     private func syncLive() {
-        guard let start = sessionStart, store.activeExercise != nil else { return }
+        guard let start = sessionStart, let ex = store.activeExercise else { return }
         LiveActivityManager.shared.update(name: workoutName, startedAt: start,
                                           closedSets: closedSets, totalSets: totalSets,
-                                          currentExercise: store.activeExercise?.name ?? "",
+                                          currentExercise: ex.name,
+                                          reps: ex.reps, weight: ex.weight,
+                                          setIndex: currentSetIndex(ex), exerciseSets: ex.sets,
                                           bpm: health.liveBPM, resting: resting,
                                           restEndsAt: resting ? Date().addingTimeInterval(Double(restRemaining)) : nil)
+    }
+
+    /// Aplica un comando llegado desde el widget (botones de la Live Activity) usando
+    /// la misma lógica que la UI dentro de la app.
+    private func apply(_ command: WorkoutCommand) {
+        guard let ex = store.activeExercise else { return }
+        switch command {
+        case .done: register(ex, done: true)
+        case .skip: register(ex, done: false)
+        case .repsUp:    store.adjustReps(ex.id, 1);     Haptics.soft(); syncLive()
+        case .repsDown:  store.adjustReps(ex.id, -1);    Haptics.soft(); syncLive()
+        case .weightUp:   store.adjustWeight(ex.id, 2.5);  Haptics.soft(); syncLive()
+        case .weightDown: store.adjustWeight(ex.id, -2.5); Haptics.soft(); syncLive()
+        case .restPlus:
+            if resting { restTotal += 15; Haptics.soft(); syncLive() }
+        case .restSkip:
+            if resting { restActive = false; restElapsed = restTotal; Haptics.soft(); syncLive() }
+        }
     }
 
     // MARK: - Summary

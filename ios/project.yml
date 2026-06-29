@@ -58,6 +58,8 @@ targets:
     sources:
       - path: ForgeWidget
       - path: GymSwipeIOS/WorkoutActivityAttributes.swift
+      - path: GymSwipeIOS/WorkoutRemote.swift
+      - path: GymSwipeIOS/WorkoutIntents.swift
     info:
       path: ForgeWidget/Info.plist
       properties:

@@ -11,6 +11,10 @@ struct WorkoutActivityAttributes: ActivityAttributes {
         var closedSets: Int
         var totalSets: Int
         var currentExercise: String
+        var reps: Int
+        var weight: Double
+        var setIndex: Int      // serie actual del ejercicio (1-based)
+        var exerciseSets: Int  // nº de series del ejercicio actual
         var bpm: Int?
         var resting: Bool
         var restEndsAt: Date?
