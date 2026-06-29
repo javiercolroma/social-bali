@@ -133,49 +133,38 @@ private struct ControlsView: View {
         }
     }
 
-    /// Descanso: el aro circular es el protagonista. Un único contador centrado.
+    /// Descanso: el aro circular es el protagonista. El contador va DENTRO del aro como
+    /// `currentValueLabel`, así el sistema lo centra él mismo (sin solapamientos ni cálculos)
+    /// y se mantiene nítido. El tamaño se controla con `.frame` (sí funciona en el contexto
+    /// de Live Activity, al contrario que dentro de la app), sin `.scaleEffect` (que emborrona).
     @ViewBuilder
     private func restRow(start: Date, end: Date) -> some View {
-        // 60pt es el tamaño intrínseco del ProgressView circular. `.frame` se IGNORA en
-        // `.progressViewStyle(.circular)`, así que `.scaleEffect` es la única palanca real
-        // para agrandarlo; el `.frame` posterior solo reserva espacio de layout.
-        let base: CGFloat = 60
-        let scale: CGFloat = 1.75        // aro "hero" de ~105pt
-        VStack(spacing: 12) {
-            ZStack {
-                // Aro auto-animado. label + currentValueLabel vacíos eliminan los dígitos
-                // por defecto, así que NO pueden superponerse a nuestro contador.
-                ProgressView(timerInterval: start...end, countsDown: true) {
-                    EmptyView()
-                } currentValueLabel: {
-                    EmptyView()
-                }
-                .progressViewStyle(.circular)
-                .tint(lime)
-                .scaleEffect(scale)
-                .frame(width: base * scale, height: base * scale)   // reserva espacio real
-
-                // EXACTAMENTE un contador — nítido, sin escalar, centrado en el aro.
+        VStack(spacing: 10) {
+            ProgressView(timerInterval: start...end, countsDown: true) {
+                EmptyView()
+            } currentValueLabel: {
                 Text(timerInterval: start...end, countsDown: true)
-                    .font(.system(size: 30, weight: .heavy, design: .rounded))
+                    .font(.system(size: 16, weight: .heavy, design: .rounded))
                     .monospacedDigit()
+                    .minimumScaleFactor(0.6)
                     .foregroundColor(.white)
-                    .multilineTextAlignment(.center)
-                    .frame(width: 92)
             }
+            .progressViewStyle(.circular)
+            .tint(lime)
+            .frame(width: 78, height: 78)
 
             Text("DESCANSO")
-                .font(.system(size: 13, weight: .heavy))
+                .font(.system(size: 12, weight: .heavy))
                 .tracking(2)
                 .foregroundColor(lime)
 
             if #available(iOS 17.0, *) {
                 Button(intent: WorkoutControlIntent(.restSkip)) {
                     Text("Saltar descanso")
-                        .font(.system(size: 15, weight: .heavy))
+                        .font(.system(size: 14, weight: .heavy))
                         .foregroundColor(ink)
                         .frame(maxWidth: .infinity)
-                        .frame(height: 44)
+                        .frame(height: 40)
                         .background(lime)
                         .clipShape(Capsule())
                 }
@@ -183,6 +172,7 @@ private struct ControlsView: View {
             }
         }
         .frame(maxWidth: .infinity)
+        .padding(.top, 2)
     }
 
     @available(iOS 17.0, *)
