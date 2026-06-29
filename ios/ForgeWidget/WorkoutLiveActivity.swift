@@ -26,13 +26,20 @@ struct WorkoutLiveActivity: Widget {
                     }
                 }
                 DynamicIslandExpandedRegion(.trailing) {
-                    Text(s.startedAt, style: .timer).monospacedDigit().font(.title3.weight(.heavy))
-                        .foregroundColor(.white).frame(maxWidth: 70, alignment: .trailing)
+                    if s.resting, let ends = s.restEndsAt {
+                        Text(timerInterval: (s.restStartedAt ?? ends)...ends, countsDown: true)
+                            .monospacedDigit().font(.title3.weight(.heavy))
+                            .foregroundColor(lime).frame(maxWidth: 72, alignment: .trailing)
+                    } else if s.exerciseSets > 0 {
+                        Text("Serie \(s.setIndex)/\(s.exerciseSets)")
+                            .font(.caption.weight(.heavy)).foregroundColor(.white)
+                            .frame(maxWidth: 90, alignment: .trailing)
+                    }
                 }
                 DynamicIslandExpandedRegion(.center) {
-                    if s.exerciseSets > 0 && !s.resting {
-                        Text("Serie \(s.setIndex)/\(s.exerciseSets)")
-                            .font(.caption2).foregroundColor(.white.opacity(0.7)).lineLimit(1)
+                    if let bpm = s.bpm {
+                        Label("\(bpm)", systemImage: "heart.fill")
+                            .font(.caption2.weight(.bold)).foregroundColor(.red)
                     }
                 }
                 DynamicIslandExpandedRegion(.bottom) {
@@ -41,9 +48,22 @@ struct WorkoutLiveActivity: Widget {
             } compactLeading: {
                 Image(systemName: "dumbbell.fill").foregroundColor(lime)
             } compactTrailing: {
-                Text(context.state.startedAt, style: .timer).monospacedDigit().frame(maxWidth: 52).foregroundColor(.white)
+                if s.resting, let ends = s.restEndsAt {
+                    Text(timerInterval: (s.restStartedAt ?? ends)...ends, countsDown: true)
+                        .monospacedDigit().frame(maxWidth: 44).foregroundColor(lime)
+                } else if s.exerciseSets > 0 {
+                    Text("\(s.setIndex)/\(s.exerciseSets)")
+                        .font(.caption2.weight(.heavy)).monospacedDigit().foregroundColor(.white)
+                } else {
+                    Image(systemName: "dumbbell.fill").foregroundColor(lime)
+                }
             } minimal: {
-                Image(systemName: "dumbbell.fill").foregroundColor(lime)
+                if s.resting, let ends = s.restEndsAt {
+                    Text(timerInterval: (s.restStartedAt ?? ends)...ends, countsDown: true)
+                        .monospacedDigit().frame(maxWidth: 36).foregroundColor(lime)
+                } else {
+                    Image(systemName: "dumbbell.fill").foregroundColor(lime)
+                }
             }
             .keylineTint(lime)
         }
@@ -55,36 +75,34 @@ private struct LockScreenView: View {
     let state: WorkoutActivityAttributes.ContentState
 
     var body: some View {
-        VStack(spacing: 10) {
+        VStack(spacing: 12) {
+            // Una sola fila de cabecera. El cronómetro de entrenamiento se ha
+            // eliminado; el chip "Serie X/Y" ocupa el hueco que dejó arriba a la derecha.
             HStack(spacing: 8) {
                 Image(systemName: "dumbbell.fill").foregroundColor(lime)
                 Text(state.currentExercise.isEmpty ? "Entreno en marcha" : state.currentExercise)
                     .font(.headline).foregroundColor(.white).lineLimit(1)
-                Spacer()
-                Text(state.startedAt, style: .timer).monospacedDigit()
-                    .font(.title3.weight(.heavy)).foregroundColor(.white)
-                    .frame(maxWidth: 80, alignment: .trailing)
-            }
-            HStack(spacing: 8) {
+                Spacer(minLength: 8)
+                if let bpm = state.bpm {
+                    Label("\(bpm)", systemImage: "heart.fill")
+                        .font(.caption2.weight(.bold)).foregroundColor(.red)
+                        .labelStyle(.titleAndIcon)
+                }
                 if state.exerciseSets > 0 {
                     Text("Serie \(state.setIndex)/\(state.exerciseSets)")
                         .font(.caption2.weight(.heavy)).foregroundColor(ink)
                         .padding(.horizontal, 8).padding(.vertical, 3)
                         .background(lime).clipShape(Capsule())
                 }
-                Spacer()
-                if let bpm = state.bpm {
-                    Label("\(bpm)", systemImage: "heart.fill").font(.caption.weight(.bold)).foregroundColor(.red)
-                }
             }
-            ControlsView(state: state)
+            ControlsView(state: state)   // controles O el bloque de descanso
         }
-        .padding(EdgeInsets(top: 14, leading: 16, bottom: 18, trailing: 16))
+        .padding(EdgeInsets(top: 14, leading: 16, bottom: 16, trailing: 16))
         .activityBackgroundTint(Color.black.opacity(0.65))
     }
 }
 
-/// Fila(s) de control: pasos de reps/peso + Hecho/Saltar; o controles de descanso.
+/// Fila(s) de control: pasos de reps/peso + Hecho/Saltar; o el bloque de descanso.
 /// Los botones son interactivos en iOS 17+ (App Intents); en 16.2–16.x se muestran como info.
 @available(iOS 16.2, *)
 private struct ControlsView: View {
@@ -115,31 +133,56 @@ private struct ControlsView: View {
         }
     }
 
+    /// Descanso: el aro circular es el protagonista. Un único contador centrado.
     @ViewBuilder
     private func restRow(start: Date, end: Date) -> some View {
-        HStack(spacing: 14) {
+        // 60pt es el tamaño intrínseco del ProgressView circular. `.frame` se IGNORA en
+        // `.progressViewStyle(.circular)`, así que `.scaleEffect` es la única palanca real
+        // para agrandarlo; el `.frame` posterior solo reserva espacio de layout.
+        let base: CGFloat = 60
+        let scale: CGFloat = 1.75        // aro "hero" de ~105pt
+        VStack(spacing: 12) {
             ZStack {
-                ProgressView(timerInterval: start...end, countsDown: true)
-                    .progressViewStyle(.circular)
-                    .tint(lime)
+                // Aro auto-animado. label + currentValueLabel vacíos eliminan los dígitos
+                // por defecto, así que NO pueden superponerse a nuestro contador.
+                ProgressView(timerInterval: start...end, countsDown: true) {
+                    EmptyView()
+                } currentValueLabel: {
+                    EmptyView()
+                }
+                .progressViewStyle(.circular)
+                .tint(lime)
+                .scaleEffect(scale)
+                .frame(width: base * scale, height: base * scale)   // reserva espacio real
+
+                // EXACTAMENTE un contador — nítido, sin escalar, centrado en el aro.
                 Text(timerInterval: start...end, countsDown: true)
-                    .font(.system(size: 15, weight: .heavy)).monospacedDigit()
-                    .foregroundColor(.white).frame(maxWidth: 54)
+                    .font(.system(size: 30, weight: .heavy, design: .rounded))
+                    .monospacedDigit()
+                    .foregroundColor(.white)
+                    .multilineTextAlignment(.center)
+                    .frame(width: 92)
             }
-            .frame(width: 62, height: 62)
-            VStack(alignment: .leading, spacing: 2) {
-                Text("Descanso").font(.system(size: 16, weight: .heavy)).foregroundColor(.white)
-                Text("Recupera para la próxima serie").font(.caption2).foregroundColor(.white.opacity(0.65))
-            }
-            Spacer()
+
+            Text("DESCANSO")
+                .font(.system(size: 13, weight: .heavy))
+                .tracking(2)
+                .foregroundColor(lime)
+
             if #available(iOS 17.0, *) {
                 Button(intent: WorkoutControlIntent(.restSkip)) {
-                    Text("Saltar").font(.system(size: 14, weight: .heavy)).foregroundColor(ink)
-                        .padding(.horizontal, 16).frame(height: 40)
-                        .background(lime).clipShape(Capsule())
-                }.buttonStyle(.plain)
+                    Text("Saltar descanso")
+                        .font(.system(size: 15, weight: .heavy))
+                        .foregroundColor(ink)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 44)
+                        .background(lime)
+                        .clipShape(Capsule())
+                }
+                .buttonStyle(.plain)
             }
         }
+        .frame(maxWidth: .infinity)
     }
 
     @available(iOS 17.0, *)
