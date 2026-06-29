@@ -1,6 +1,8 @@
 import SwiftUI
 import PhotosUI
 
+private enum SetEvent { case done, skip, go }
+
 struct TrainView: View {
     @EnvironmentObject var store: AppStore
     var onGoToPlan: () -> Void = {}
@@ -20,6 +22,19 @@ struct TrainView: View {
     @AppStorage("fxHaptics") private var hapticsOn = true
     @ObservedObject private var health = HealthManager.shared
     @ObservedObject private var remote = WorkoutRemote.shared
+
+    // Gamificación de sesión (todo en memoria, no se persiste)
+    @State private var combo = 0                 // series completadas seguidas
+    @State private var comboBroke = false        // para el aviso al romper racha
+    @State private var lineSeed = 0              // rota la microcopia del coach
+    @State private var lastEvent: SetEvent = .go
+    @State private var hitMilestones: Set<Int> = []
+    @State private var milestonePop: CGFloat = 1 // pop del tick del 50%
+    @State private var burst = 0                  // dispara el "fire" del botón Hecho
+    @State private var ringScale: CGFloat = 1.4   // anillo de onda del botón Hecho
+    @State private var ringOpacity: Double = 0
+    @State private var glow: CGFloat = 12          // radio del resplandor del botón Hecho
+    @State private var pulse: CGFloat = 1          // sobreimpulso de escala del botón Hecho
 
     private let ticker = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
     // TODO: pruebas — descanso fijo a 10s. Volver a `ex.rest` para producción.
@@ -63,6 +78,7 @@ struct TrainView: View {
             if id == nil { resetLocal() }
             else {
                 sessionStart = Date(); restActive = false; restElapsed = 0; showSummary = false
+                combo = 0; comboBroke = false; lineSeed = 0; lastEvent = .go; hitMilestones = []
                 health.startSession()
                 LiveActivityManager.shared.end(); startLive()
             }
@@ -77,7 +93,10 @@ struct TrainView: View {
         .onReceive(ticker) { _ in
             if restActive && restElapsed < restTotal {
                 restElapsed += 1
-                if restElapsed >= restTotal { fxRest(); syncLive() }
+                if restElapsed >= restTotal {
+                    lastEvent = .go; lineSeed += 1   // el coach pasa a "¡Vamos!"
+                    fxReady(); syncLive()
+                }
             }
         }
     }
@@ -89,10 +108,12 @@ struct TrainView: View {
             HStack {
                 VStack(alignment: .leading, spacing: 3) {
                     Text(workoutName.uppercased()).font(.caption2).fontWeight(.heavy).foregroundColor(Brand.muted)
-                    Text("\(closedSets) / \(totalSets) series").font(.system(size: 18, weight: .heavy)).foregroundColor(Brand.ink)
+                    Text("\(closedSets) / \(totalSets) series").font(.system(size: 18, weight: .heavy))
+                        .foregroundColor(Brand.ink).contentTransition(.numericText())
                 }
                 Spacer()
                 VStack(alignment: .trailing, spacing: 6) {
+                    if combo >= 2 { comboChip.transition(.scale.combined(with: .opacity)) }
                     if let start = sessionStart {
                         TimelineView(.periodic(from: .now, by: 1)) { _ in
                             HStack(spacing: 5) {
@@ -108,11 +129,17 @@ struct TrainView: View {
                 }
             }
             GeometryReader { geo in
+                let halfway = closedSets * 2 >= totalSets
                 ZStack(alignment: .leading) {
                     Capsule().fill(Brand.chip)
                     Capsule().fill(Brand.green)
                         .frame(width: max(6, geo.size.width * CGFloat(closedSets) / CGFloat(max(1, totalSets))))
                         .animation(.spring(response: 0.4, dampingFraction: 0.8), value: closedSets)
+                    Circle()
+                        .fill(halfway ? Brand.gold : Brand.muted.opacity(0.3))
+                        .frame(width: 6, height: 6)
+                        .scaleEffect(halfway ? milestonePop : 1)
+                        .position(x: geo.size.width * 0.5, y: 5)
                 }
             }.frame(height: 10)
         }
@@ -169,11 +196,18 @@ struct TrainView: View {
                     }
                 }.frame(width: 70, height: 70)
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(resting ? "Descanso" : "¡Haz tu serie!")
+                    Text(coachTitle)
                         .font(.system(size: 17, weight: .heavy)).foregroundColor(resting ? Brand.ink : Color(hex: "4b6211"))
-                    Text(resting ? "Recupera para la próxima serie" : "Cuando estés listo, a por ello")
-                        .font(.caption).foregroundColor(Brand.muted)
+                    HStack(spacing: 4) {
+                        if resting && combo >= 2 {
+                            Image(systemName: "flame.fill").font(.caption2).foregroundColor(Brand.gold)
+                        }
+                        Text(coachSub).font(.caption).foregroundColor(Brand.muted).lineLimit(1)
+                    }
                 }
+                .id(lineSeed)
+                .transition(.opacity.combined(with: .move(edge: .top)))
+                .animation(.easeOut(duration: 0.25), value: lineSeed)
                 Spacer()
                 if resting {
                     Button { restTotal += 15; Haptics.soft(); syncLive() } label: {
@@ -220,8 +254,17 @@ struct TrainView: View {
                     Label("Hecho", systemImage: "checkmark").font(.system(size: 17, weight: .heavy))
                         .foregroundColor(Color(hex: "10150a")).frame(maxWidth: .infinity).frame(minHeight: 56)
                         .background(Brand.green).clipShape(RoundedRectangle(cornerRadius: 14))
-                        .shadow(color: Brand.green.opacity(0.45), radius: 12, y: 6)
-                }.buttonStyle(PressableButtonStyle())
+                        .shadow(color: Brand.green.opacity(0.5), radius: glow, y: 6)
+                        .overlay {
+                            RoundedRectangle(cornerRadius: 14)
+                                .stroke(Brand.green, lineWidth: 3)
+                                .scaleEffect(ringScale)
+                                .opacity(ringOpacity)
+                                .allowsHitTesting(false)
+                        }
+                }
+                .buttonStyle(PressableButtonStyle())
+                .scaleEffect(pulse)
             }
         }
     }
@@ -239,8 +282,25 @@ struct TrainView: View {
         if sessionStart == nil { sessionStart = Date() }
         let willClose = (ex.completedSets + ex.skippedSets + 1) >= ex.sets
         if done { restActive = true; restTotal = testRestSeconds; restElapsed = 0 } else { restActive = false }
+
+        // Racha de sesión: sube con cada serie hecha, se rompe al saltar.
+        withAnimation(.spring(response: 0.3, dampingFraction: 0.45)) {
+            if done { combo += 1 } else { if combo >= 2 { comboBroke = true }; combo = 0 }
+        }
+        lineSeed += 1
+        lastEvent = done ? .done : .skip
+
         withAnimation(.spring(response: 0.4, dampingFraction: 0.82)) { store.registerSet(ex.id, done: done) }
         if store.activeExercise == nil { finalElapsed = elapsedSeconds; LiveActivityManager.shared.end() }   // último set
+
+        // Hito del 50% (una sola vez por sesión).
+        let pct = Double(closedSets) / Double(max(1, totalSets))
+        if pct >= 0.5 && pct < 1.0 && hitMilestones.insert(50).inserted {
+            if soundOn { Synth.shared.milestone(full: false) }
+            if hapticsOn { Haptics.success() }
+            milestonePop = 1.7
+            withAnimation(.spring(response: 0.4, dampingFraction: 0.5)) { milestonePop = 1 }
+        }
 
         if willClose && store.activeExercise != nil {
             fxExercise()   // moved to the next exercise: special sound
@@ -249,7 +309,54 @@ struct TrainView: View {
         } else {
             fxSkip()
         }
+        if done { triggerBurst() }
         syncLive()
+    }
+
+    /// "Fire" del botón Hecho: onda + resplandor + sobreimpulso (sin mover el layout).
+    private func triggerBurst() {
+        burst += 1
+        ringScale = 0.6; ringOpacity = 0.7; glow = 24; pulse = 1.07
+        withAnimation(.easeOut(duration: 0.45)) { ringScale = 1.5; ringOpacity = 0; glow = 12 }
+        withAnimation(.spring(response: 0.32, dampingFraction: 0.5)) { pulse = 1 }
+    }
+
+    // MARK: - Coach (microcopia reactiva del descanso)
+
+    private let restLines = ["Recupera para la próxima serie", "Respira. Vuelves más fuerte.",
+                             "Suelta tensión y prepárate.", "Aprovecha, la siguiente es tuya."]
+    private let skipLines = ["Sin drama. La próxima es tuya.", "Tranqui, sigue el plan.",
+                             "Apunta a por la siguiente."]
+    private let goLines = ["Cuando estés listo, a por ello", "Técnica limpia, fuerza total.",
+                           "Una serie más. Tú puedes.", "Concéntrate y empuja."]
+
+    private var coachTitle: String {
+        if !resting { return lastEvent == .go ? "¡Vamos!" : "¡Haz tu serie!" }
+        return "Descanso"
+    }
+    private var coachSub: String {
+        if !resting { return goLines[lineSeed % goLines.count] }
+        if lastEvent == .skip { return skipLines[lineSeed % skipLines.count] }
+        if combo >= 2 { return "\(combo) seguidas · ¡no pares!" }
+        return restLines[lineSeed % restLines.count]
+    }
+
+    private var comboTier: Color {
+        if combo >= 7 { return Brand.teal }
+        if combo >= 4 { return Brand.green }
+        return Brand.gold
+    }
+
+    private var comboChip: some View {
+        HStack(spacing: 4) {
+            Image(systemName: "flame.fill")
+            Text("x\(combo)").contentTransition(.numericText())
+        }
+        .font(.system(size: 13, weight: .heavy)).foregroundColor(Brand.ink)
+        .padding(.horizontal, 9).padding(.vertical, 4)
+        .background(comboTier).clipShape(Capsule())
+        .scaleEffect(1 + min(CGFloat(combo), 8) * 0.02)
+        .shadow(color: comboTier.opacity(0.55), radius: CGFloat(min(combo, 8)))
     }
 
     /// Serie actual (1-based) del ejercicio activo, para mostrarla en el widget.
@@ -414,6 +521,7 @@ struct TrainView: View {
         LiveActivityManager.shared.end()
         sessionStart = nil; restActive = false; restElapsed = 0; restTotal = 0; finalElapsed = 0; showSummary = false
         sessionName = ""; sessionNote = ""; sessionPhoto = nil; sessionPickerItem = nil; visibility = .all
+        combo = 0; comboBroke = false; lineSeed = 0; lastEvent = .go; hitMilestones = []
     }
 
     // MARK: - Empty
@@ -441,10 +549,16 @@ struct TrainView: View {
 
     // MARK: - FX
 
-    private func fxDone() { if hapticsOn { Haptics.success() }; if soundOn { Synth.shared.done() } }
-    private func fxSkip() { if hapticsOn { Haptics.soft() }; if soundOn { Synth.shared.skip() } }
+    private func fxDone() {
+        if hapticsOn { if combo >= 4 { Haptics.rigid() }; Haptics.success() }   // háptica que sube con la racha
+        if soundOn { Synth.shared.done(step: max(0, combo - 1)) }               // tono que sube con la racha
+    }
+    private func fxSkip() {
+        if hapticsOn { if comboBroke { Haptics.warning(); comboBroke = false } else { Haptics.soft() } }
+        if soundOn { Synth.shared.skip() }
+    }
     private func fxExercise() { if hapticsOn { Haptics.success() }; if soundOn { Synth.shared.exercise() } }
-    private func fxRest() { if hapticsOn { Haptics.rigid() }; if soundOn { Synth.shared.rest() } }
+    private func fxReady() { if hapticsOn { Haptics.rigid() }; if soundOn { Synth.shared.restOver() } }
     private func fxFinish() { if hapticsOn { Haptics.success() }; if soundOn { Synth.shared.finish() } }
 
     // MARK: - Helpers
