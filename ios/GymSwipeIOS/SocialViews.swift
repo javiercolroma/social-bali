@@ -14,6 +14,7 @@ struct MessagesSheet: View {
     @Environment(\.dismiss) private var dismiss
     @State var initialTab: Int = 0
     @State private var tab = 0
+    @State private var profileTarget: IdString?
     var onOpenChat: (String) -> Void
     var onOpenProfile: (String) -> Void
     var onEditAccount: () -> Void
@@ -31,7 +32,9 @@ struct MessagesSheet: View {
 
                 ScrollView {
                     if tab == 1 { chats } else {
-                        FriendsContent(onOpenChat: onOpenChat, onOpenProfile: onOpenProfile, onEditAccount: onEditAccount)
+                        FriendsContent(onOpenChat: onOpenChat,
+                                       onOpenProfile: { profileTarget = IdString(id: $0) },
+                                       onEditAccount: onEditAccount)
                     }
                 }
             }
@@ -39,6 +42,9 @@ struct MessagesSheet: View {
             .background(Brand.bg)
             .navigationTitle("Mensajes").navigationBarTitleDisplayMode(.inline)
             .onAppear { tab = initialTab }
+            .sheet(item: $profileTarget) { item in
+                if let p = store.person(item.id) { FriendProfileView(person: p).environmentObject(store) }
+            }
         }
     }
 
@@ -198,6 +204,7 @@ struct ChatView: View {
     var onOpenProfile: (String) -> Void
     var onClose: () -> Void = {}
     @State private var draft = ""
+    @State private var profileTarget: IdString?
 
     private var person: SocialPerson? { store.person(personId) }
     private var conversation: Conversation? { store.conversations.first { $0.personId == personId } }
@@ -206,7 +213,7 @@ struct ChatView: View {
         VStack(spacing: 0) {
             HStack(spacing: 11) {
                 Button { onClose() } label: { Image(systemName: "arrow.left").font(.system(size: 18, weight: .semibold)).foregroundColor(Brand.ink) }
-                Button { onOpenProfile(personId) } label: {
+                Button { profileTarget = IdString(id: personId) } label: {
                     HStack(spacing: 11) {
                         Avatar(emoji: person?.avatar ?? "👤")
                         VStack(alignment: .leading, spacing: 1) {
@@ -251,6 +258,9 @@ struct ChatView: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Brand.bg.ignoresSafeArea())
         .onAppear { store.openConversation(personId) }
+        .sheet(item: $profileTarget) { item in
+            if let p = store.person(item.id) { FriendProfileView(person: p).environmentObject(store) }
+        }
     }
 
     private func send() {
