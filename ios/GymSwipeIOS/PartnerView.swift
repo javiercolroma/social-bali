@@ -5,6 +5,7 @@ struct PartnerView: View {
     var onOpenChat: (String) -> Void
     @State private var showCreator = false
     @State private var pendingDelete: TrainingPlan?
+    @State private var profileTarget: IdString?
 
     var body: some View {
         ScrollView {
@@ -30,6 +31,9 @@ struct PartnerView: View {
         }
         .background(Brand.bg)
         .sheet(isPresented: $showCreator) { CreatePlanView().environmentObject(store) }
+        .sheet(item: $profileTarget) { item in
+            if let p = store.person(item.id) { FriendProfileView(person: p).environmentObject(store) }
+        }
         .confirmationDialog("¿Eliminar este plan?", isPresented: Binding(get: { pendingDelete != nil }, set: { if !$0 { pendingDelete = nil } }), titleVisibility: .visible) {
             Button("Eliminar", role: .destructive) { FX.warning(); if let p = pendingDelete { store.deletePlan(p.id) }; pendingDelete = nil }
             Button("Cancelar", role: .cancel) { pendingDelete = nil }
@@ -48,11 +52,15 @@ struct PartnerView: View {
                     Text(plan.when).font(.system(size: 13, weight: .heavy))
                 }.foregroundColor(Brand.muted)
             }
-            HStack(spacing: 7) {
-                Avatar(emoji: isMine ? "🙂" : (owner?.avatar ?? "👤"), size: 24)
-                Text(isMine ? "Tu plan · \(store.account?.name ?? "Tú")" : "Propuesto por \(owner?.name ?? "Compañero")")
-                    .font(.system(size: 13, weight: .bold)).foregroundColor(Color(hex: "3f4837"))
-            }
+            Button {
+                if !isMine, let o = owner { FX.tap(); profileTarget = IdString(id: o.id) }
+            } label: {
+                HStack(spacing: 7) {
+                    Avatar(emoji: isMine ? "🙂" : (owner?.avatar ?? "👤"), size: 24)
+                    Text(isMine ? "Tu plan · \(store.account?.name ?? "Tú")" : "Propuesto por \(owner?.name ?? "Compañero")")
+                        .font(.system(size: 13, weight: .bold)).foregroundColor(Color(hex: "3f4837"))
+                }
+            }.buttonStyle(.plain).disabled(isMine)
             HStack(spacing: 6) {
                 Image(systemName: "mappin.circle.fill").foregroundColor(Color(hex: "6ea300"))
                 Text(plan.place).font(.system(size: 13, weight: .bold)).foregroundColor(Color(hex: "3f4837"))
