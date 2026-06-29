@@ -103,7 +103,11 @@ struct FollowListSheet: View {
         return HStack(spacing: 11) {
             Button { profileTarget = IdString(id: p.id) } label: {
                 HStack(spacing: 11) {
-                    Avatar(emoji: p.avatar)
+                    ZStack(alignment: .bottomTrailing) {
+                        Avatar(emoji: p.avatar)
+                        Text(p.flag).font(.system(size: 10)).frame(width: 16, height: 16)
+                            .background(Circle().fill(.white)).overlay(Circle().stroke(Brand.line)).offset(x: 3, y: 3)
+                    }
                     VStack(alignment: .leading, spacing: 1) {
                         Text(p.name).font(.system(size: 14, weight: .heavy)).foregroundColor(Brand.ink)
                         Text("@\(p.handle)").font(.caption).foregroundColor(Brand.muted)
@@ -280,7 +284,11 @@ struct FriendsContent: View {
         return HStack(spacing: 11) {
             Button { onOpenProfile(person.id) } label: {
                 HStack(spacing: 11) {
-                    Avatar(emoji: person.avatar)
+                    ZStack(alignment: .bottomTrailing) {
+                        Avatar(emoji: person.avatar)
+                        Text(person.flag).font(.system(size: 10)).frame(width: 16, height: 16)
+                            .background(Circle().fill(.white)).overlay(Circle().stroke(Brand.line)).offset(x: 3, y: 3)
+                    }
                     VStack(alignment: .leading, spacing: 1) {
                         Text(person.name).font(.system(size: 14, weight: .heavy)).foregroundColor(Brand.ink)
                         Text("@\(person.handle)").font(.caption).foregroundColor(Brand.muted)
@@ -711,7 +719,6 @@ struct MeProfileView: View {
                         ScoreBarView(label: "Constancia", value: score.consistency)
                         ScoreBarView(label: "Progreso", value: score.progression)
                         ScoreBarView(label: "Volumen", value: score.volume)
-                        ScoreBarView(label: "Calidad", value: score.quality)
                         ScoreBarView(label: "Variedad", value: score.variety)
                     }
                     TrainingCalendarView(sessions: sessionsList) { date, day in
@@ -749,8 +756,8 @@ struct MeProfileView: View {
                 ForEach(links, id: \.url) { l in
                     Link(destination: l.url) {
                         HStack(spacing: 5) {
-                            Text(l.emoji).font(.system(size: 13))
-                            Text("@\(l.handle)").font(.system(size: 12, weight: .heavy)).foregroundColor(Brand.ink).lineLimit(1)
+                            Text(l.title).font(.system(size: 11, weight: .heavy)).foregroundColor(Color(hex: "10150a"))
+                            Text("@\(l.handle)").font(.system(size: 11, weight: .semibold)).foregroundColor(Brand.soft).lineLimit(1)
                         }
                         .padding(.horizontal, 11).frame(height: 30)
                         .background(Brand.chip).clipShape(Capsule())
@@ -760,23 +767,27 @@ struct MeProfileView: View {
         }
     }
 
-    private var socialLinks: [(title: String, handle: String, emoji: String, url: URL)] {
-        var out: [(title: String, handle: String, emoji: String, url: URL)] = []
+    private var socialLinks: [(title: String, handle: String, url: URL)] {
+        var out: [(title: String, handle: String, url: URL)] = []
         if let ig = store.profile.instagram, !ig.isEmpty, let u = URL(string: "https://instagram.com/\(ig)") {
-            out.append(("Instagram", ig, "📸", u))
+            out.append(("Instagram", ig, u))
         }
         if let tk = store.profile.tiktok, !tk.isEmpty, let u = URL(string: "https://www.tiktok.com/@\(tk)") {
-            out.append(("TikTok", tk, "🎵", u))
+            out.append(("TikTok", tk, u))
         }
         if let tw = store.profile.twitter, !tw.isEmpty, let u = URL(string: "https://x.com/\(tw)") {
-            out.append(("X", tw, "🐦", u))
+            out.append(("X", tw, u))
         }
         return out
     }
 
     private func header(entrenos: Int) -> some View {
         VStack(spacing: 12) {
-            MeAvatar(account: store.account, size: 84)
+            ZStack(alignment: .bottomTrailing) {
+                MeAvatar(account: store.account, size: 84)
+                Text(countryFlag(store.profile.country)).font(.system(size: 16)).frame(width: 24, height: 24)
+                    .background(Circle().fill(.white)).overlay(Circle().stroke(Brand.line)).offset(x: 4, y: 4)
+            }
             VStack(spacing: 6) {
                 HStack(spacing: 6) {
                     Text(store.account?.name ?? "Tú").font(.system(size: 22, weight: .heavy)).foregroundColor(Brand.ink)

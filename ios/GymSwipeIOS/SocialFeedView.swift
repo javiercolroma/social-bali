@@ -48,6 +48,7 @@ struct SocialFeedView: View {
     @State private var seguidosFeed: [FeedItem] = []
     @State private var seguidosLoaded = false
     @State private var showInterleavedSuggestions = false
+    @State private var suggestionsSnapshot: [SocialPerson] = []
     @State private var paraTiFeed: [FeedItem] = []
     @State private var paraTiLoaded = false
 
@@ -136,6 +137,8 @@ struct SocialFeedView: View {
         seguidosFeed = store.following.isEmpty
             ? (myItems + discoverFeed).sorted { $0.date > $1.date }
             : followedFeed
+        // Las recomendaciones son un snapshot: solo se rehacen (quitando a quien ya sigues) al refrescar.
+        suggestionsSnapshot = nearbyPeople(limit: 10)
         // Las sugerencias intercaladas aparecen al refrescar manualmente, no en la carga inicial.
         if manual { showInterleavedSuggestions = true }
         seguidosLoaded = true
@@ -175,7 +178,7 @@ struct SocialFeedView: View {
         paraTiLoaded = true
     }
 
-    private var hasSuggestions: Bool { !nearbyPeople(limit: 1).isEmpty }
+    private var hasSuggestions: Bool { !suggestionsSnapshot.isEmpty }
 
     private func emptyFeed(_ msg: String) -> some View {
         VStack(spacing: 10) {
@@ -196,7 +199,7 @@ struct SocialFeedView: View {
             sectionHeader("A QUIÉN SEGUIR")
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 12) {
-                    ForEach(nearbyPeople(limit: 10)) { p in suggestionCard(p) }
+                    ForEach(suggestionsSnapshot) { p in suggestionCard(p) }
                 }
                 .padding(.horizontal, 4).padding(.bottom, 2)
             }
@@ -216,10 +219,12 @@ struct SocialFeedView: View {
                 Text(p.name).font(.system(size: 14, weight: .heavy)).foregroundColor(Brand.ink).lineLimit(1)
                 Text("@\(p.handle)").font(.caption2).foregroundColor(Brand.soft).lineLimit(1)
             }
-            Button { followPerson(p) } label: {
-                Text("Seguir").font(.system(size: 13, weight: .heavy)).foregroundColor(Color(hex: "10150a"))
-                    .frame(maxWidth: .infinity).frame(height: 32).background(Brand.green).clipShape(Capsule())
-            }.buttonStyle(.plain)
+            let rel = store.relationship(p.id)
+            let label = rel == .friends ? "Siguiendo" : (rel == .outgoing ? "Pendiente" : "Seguir")
+            Button { if rel == .none { followPerson(p) } } label: {
+                Text(label).font(.system(size: 13, weight: .heavy)).foregroundColor(rel == .none ? Color(hex: "10150a") : Brand.ink)
+                    .frame(maxWidth: .infinity).frame(height: 32).background(rel == .none ? Brand.green : Brand.chip).clipShape(Capsule())
+            }.buttonStyle(.plain).disabled(rel != .none)
         }
         .padding(12).frame(width: 140)
         .background(Brand.panel).clipShape(RoundedRectangle(cornerRadius: 14))

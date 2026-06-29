@@ -139,7 +139,14 @@ struct ActivityView: View {
         .alert("1RM estimado (Epley)", isPresented: $showEpleyInfo) {
             Button("Entendido", role: .cancel) {}
         } message: {
-            Text("Tu 1RM es el peso máximo que podrías levantar una sola vez. Medirlo de verdad es arriesgado, así que se estima a partir de una serie normal con la fórmula de Epley:\n\n1RM ≈ peso × (1 + repeticiones / 30)\n\nTomamos tu mejor serie de cada entreno, de modo que el progreso refleja tu fuerza real y no solo el volumen total. Es más fiable en series de 1 a 12 repeticiones.")
+            Text("""
+            Tu 1RM es el peso máximo que podrías levantar una sola vez.
+
+            Como medirlo es arriesgado, se estima con la fórmula de Epley:
+            1RM ≈ peso × (1 + reps / 30)
+
+            Usamos tu mejor serie de cada entreno. Más fiable en series de 1 a 12 repeticiones.
+            """)
         }
     }
 
@@ -267,14 +274,24 @@ struct ActivityView: View {
                 ScoreBarView(label: "Constancia", value: s.consistency)
                 ScoreBarView(label: "Progreso", value: s.progression)
                 ScoreBarView(label: "Volumen", value: s.volume)
-                ScoreBarView(label: "Calidad", value: s.quality)
                 ScoreBarView(label: "Variedad", value: s.variety)
             }
         }
         .alert("¿Qué es el Gym Score?", isPresented: $showScoreInfo) {
             Button("Entendido", role: .cancel) {}
         } message: {
-            Text("Tu Gym Score resume tu entrenamiento en una nota de 0 a 100, a partir de 6 pilares: Fuerza (cuánto levantas), Constancia (con qué frecuencia entrenas), Progreso (si subes cargas), Volumen (trabajo total), Calidad (series completadas) y Variedad (variedad de ejercicios).\n\nEs exigente: hasta que no llevas 7 días entrenando es \"Provisional\"; a partir de ahí pasa a ser tu score definitivo (\"Fiable\").")
+            Text("""
+            Tu nota de entrenamiento, de 0 a 100.
+
+            Pilares:
+            • Fuerza — cuánto levantas
+            • Constancia — cuánto entrenas
+            • Progreso — si subes cargas
+            • Volumen — trabajo total
+            • Variedad — variedad de ejercicios
+
+            Es provisional hasta los 7 días entrenando; después es definitivo.
+            """)
         }
     }
 
