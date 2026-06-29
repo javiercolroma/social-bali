@@ -1,4 +1,5 @@
 import SwiftUI
+import CoreLocation
 
 private struct FeedItem: Identifiable {
     let id: String
@@ -30,6 +31,7 @@ struct SocialFeedView: View {
     @State private var commentTarget: FeedItem?
     @State private var comments: [String: [String]] = [:]
     @State private var toast: String?
+    @StateObject private var location = LocationManager()
 
     private let tabs: [(title: String, icon: String)] = [("Seguidos", "person.2.fill"), ("Para ti", "sparkles")]
 
@@ -43,6 +45,8 @@ struct SocialFeedView: View {
         }
         .background(Brand.bg)
         .overlay(alignment: .bottom) { toastView }
+        .onAppear { if store.account != nil { location.request() } }
+        .onChange(of: store.account?.handle) { _ in if store.account != nil { location.request() } }
         .sheet(item: $activity) { ActivityDetailView(item: feedItemView($0)).environmentObject(store) }
         .sheet(item: $commentTarget) { item in
             CommentsSheet(title: item.title, comments: Binding(
@@ -84,8 +88,8 @@ struct SocialFeedView: View {
                         sectionHeader("TUS ENTRENOS")
                         ForEach(myItems) { card($0) }
                     }
-                    sectionHeader("A QUIÉN SEGUIR")
-                    ForEach(recommended(limit: 5)) { recRow($0) }
+                    sectionHeader("CERCA DE TI")
+                    ForEach(nearbyPeople(limit: 5)) { recRow($0) }
                     Button { FX.tap(); withAnimation { segment = 1 } } label: {
                         Text("Descubre más en Para ti ›").font(.system(size: 14, weight: .heavy)).foregroundColor(Color(hex: "4b6211"))
                     }.frame(maxWidth: .infinity).padding(.top, 4)
@@ -115,20 +119,20 @@ struct SocialFeedView: View {
                     ForEach(incoming) { incomingRow($0) }
                 }
 
-                let recs = recommended(limit: 5)
-                sectionHeader("A QUIÉN SEGUIR")
-                if recs.isEmpty {
+                let nearby = nearbyPeople(limit: 6)
+                sectionHeader("CERCA DE TI")
+                if nearby.isEmpty {
                     Text("Ya sigues a toda la comunidad 🎉").font(.footnote).foregroundColor(Brand.muted)
                         .frame(maxWidth: .infinity).padding(.vertical, 8)
                 } else {
-                    ForEach(recs) { recRow($0) }
+                    ForEach(nearby) { recRow($0) }
                 }
 
                 let disc = discoverFeed
                 if !disc.isEmpty {
                     sectionHeader("DESCUBRE ENTRENOS")
                     ForEach(disc) { card($0, showFollow: true) }
-                } else if recs.isEmpty {
+                } else if nearby.isEmpty {
                     Text("No hay más entrenos por descubrir ahora mismo. ¡Vuelve pronto!")
                         .font(.footnote).foregroundColor(Brand.muted).frame(maxWidth: .infinity).padding(.vertical, 8)
                 }
@@ -143,14 +147,13 @@ struct SocialFeedView: View {
     }
 
     private func recRow(_ p: SocialPerson) -> some View {
-        let chip = reasonChip(for: p)
-        return PanelCard {
+        PanelCard {
             HStack(spacing: 11) {
                 Button { FX.tap(); onOpenProfile(p.id) } label: { personAvatar(p) }.buttonStyle(.plain)
                 VStack(alignment: .leading, spacing: 3) {
                     Text(p.name).font(.system(size: 15, weight: .heavy)).foregroundColor(Brand.ink)
                     Text("@\(p.handle)").font(.caption2).foregroundColor(Brand.soft)
-                    Tag(text: chip.text, highlight: chip.highlight)
+                    Tag(text: "📍 a \(distanceLabel(distanceMeters(p)))", highlight: true)
                 }
                 Spacer()
                 followButton(p)
@@ -222,41 +225,35 @@ struct SocialFeedView: View {
         }
     }
 
-    // MARK: - Recommendations
+    // MARK: - Cercanía
 
-    private func recommended(limit: Int) -> [SocialPerson] {
-        let candidates = store.people.filter { store.relationship($0.id) == .none }
-        return Array(candidates.sorted { a, b in
-            let fa = affinity(a), fb = affinity(b)
-            return fa != fb ? fa > fb : a.name < b.name
-        }.prefix(limit))
+    /// Personas que no sigues, ordenadas de más cerca a más lejos.
+    private func nearbyPeople(limit: Int) -> [SocialPerson] {
+        Array(store.people.filter { store.relationship($0.id) == .none }
+            .sorted { distanceMeters($0) < distanceMeters($1) }
+            .prefix(limit))
     }
 
-    private func affinity(_ p: SocialPerson) -> Int {
-        var score = 0
-        let myGym = store.profile.gym.trimmingCharacters(in: .whitespaces).lowercased()
-        if !myGym.isEmpty && p.gym.trimmingCharacters(in: .whitespaces).lowercased() == myGym { score += 1000 }
-        if p.city == store.profile.city { score += 500 }
-        if p.country == store.profile.country { score += 200 }
-        score += personScore(p)
-        score += idJitter(p.id)
-        return score
-    }
-
-    private func personScore(_ p: SocialPerson) -> Int { GymScoreEngine.calculate(buildFriendHistory(p)).total }
-
-    private func idJitter(_ id: String) -> Int {
+    /// Distancia aproximada a una persona. Usa tu ubicación real si está disponible
+    /// (posición determinista alrededor de ti, coherente con el mapa de Ranking);
+    /// si no, una distancia sintética estable por persona.
+    private func distanceMeters(_ p: SocialPerson) -> Double {
         var seed: UInt64 = 0
-        for ch in id.unicodeScalars { seed = seed &* 31 &+ UInt64(ch.value) }
-        return Int(seed % 10)
+        for ch in p.id.unicodeScalars { seed = seed &* 31 &+ UInt64(ch.value) }
+        let r1 = Double(seed % 1000) / 1000.0
+        let r2 = Double((seed / 1000) % 1000) / 1000.0
+        if let c = location.coordinate {
+            let here = CLLocation(latitude: c.latitude, longitude: c.longitude)
+            let there = CLLocation(latitude: c.latitude + (r1 - 0.5) * 0.02,
+                                   longitude: c.longitude + (r2 - 0.5) * 0.02)
+            return here.distance(from: there)
+        }
+        return 120 + r1 * 2600   // 120 m – 2,7 km sin ubicación
     }
 
-    private func reasonChip(for p: SocialPerson) -> (text: String, highlight: Bool) {
-        let myGym = store.profile.gym.trimmingCharacters(in: .whitespaces).lowercased()
-        if !myGym.isEmpty && p.gym.trimmingCharacters(in: .whitespaces).lowercased() == myGym { return ("Tu mismo gym", true) }
-        if p.city == store.profile.city { return ("En \(p.city)", false) }
-        if p.country == store.profile.country { return ("\(p.flag) En tu país", false) }
-        return ("Gym Score \(personScore(p))", false)
+    private func distanceLabel(_ m: Double) -> String {
+        if m < 1000 { return "\(Int((m / 10).rounded()) * 10) m" }
+        return String(format: "%.1f", m / 1000).replacingOccurrences(of: ".", with: ",") + " km"
     }
 
     // MARK: - Card
@@ -316,7 +313,6 @@ struct SocialFeedView: View {
                 HStack(spacing: 8) {
                     stat(durationText(item.elapsed), "Tiempo", "clock")
                     stat("\(item.sets)", "Series", "checkmark.circle")
-                    stat("\(Int(item.volume))", "kg vol.", "dumbbell.fill")
                     stat("\(item.exercises)", "Ejerc.", "list.bullet")
                 }
             }
@@ -351,7 +347,7 @@ struct SocialFeedView: View {
     }
 
     private func shareText(_ item: FeedItem) -> String {
-        "\(item.authorName) entrenó \(item.title): \(item.sets) series · \(Int(item.volume)) kg de volumen · \(durationText(item.elapsed)). 💪 vía Forge Loop"
+        "\(item.authorName) entrenó \(item.title): \(item.sets) series · \(durationText(item.elapsed)). 💪 vía Forge Loop"
     }
 
     @ViewBuilder
@@ -403,7 +399,7 @@ struct SocialFeedView: View {
 
     private var discoverFeed: [FeedItem] {
         let strangers = store.people.filter { store.relationship($0.id) == .none }
-            .sorted { affinity($0) > affinity($1) }
+            .sorted { distanceMeters($0) < distanceMeters($1) }
         return Array(posts(for: strangers).prefix(12))
     }
 

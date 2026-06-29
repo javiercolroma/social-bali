@@ -68,9 +68,6 @@ struct ActivityDetailView: View {
                     HStack(spacing: 10) {
                         metric(durationText(item.elapsed), "Tiempo", "clock")
                         metric("\(item.sets)", "Series", "checkmark.circle")
-                    }
-                    HStack(spacing: 10) {
-                        metric("\(Int(item.volume)) kg", "Volumen", "dumbbell.fill")
                         metric("\(item.exercises)", "Ejercicios", "list.bullet")
                     }
                     if let avg = item.avgHeartRate {

@@ -300,7 +300,6 @@ struct ActivityView: View {
                 HStack(spacing: 8) {
                     miniStat(durationText(s.elapsed), "Tiempo")
                     miniStat("\(s.sets)", "Series")
-                    miniStat("\(Int(s.volume))", "kg vol.")
                     miniStat("\(s.exercises)", "Ejerc.")
                 }
             }

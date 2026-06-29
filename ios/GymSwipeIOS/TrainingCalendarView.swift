@@ -197,7 +197,6 @@ struct DaySessionsSheet: View {
                 HStack(spacing: 8) {
                     mini(durationText(s.elapsed), "Tiempo")
                     mini("\(s.sets)", "Series")
-                    mini("\(Int(s.volume))", "kg vol.")
                     mini("\(s.exercises)", "Ejerc.")
                 }
             }
