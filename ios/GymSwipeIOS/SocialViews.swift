@@ -397,32 +397,38 @@ struct FriendProfileView: View {
         let history = buildFriendHistory(person)
         let score = GymScoreEngine.calculate(history)
         let sessionsList = friendSessions(history)
+        // Cuenta privada y aún no la sigues → contenido oculto (estilo Instagram).
+        let locked = person.isPrivate && store.relationship(person.id) != .friends
 
         return NavigationStack {
             ScrollView {
                 VStack(spacing: 14) {
                     header
-                    HStack(spacing: 10) {
-                        statTile("GYM SCORE", "\(score.total)")
-                        statTile("RACHA", "\(score.trainingDays) 🔥")
-                    }
-                    PanelCard {
-                        Text(score.tier).font(.system(size: 13, weight: .heavy)).foregroundColor(Color(hex: "10150a"))
-                            .padding(.horizontal, 10).padding(.vertical, 3).background(Brand.greenSoft).clipShape(Capsule())
-                        ScoreBarView(label: "Fuerza", value: score.strength)
-                        ScoreBarView(label: "Constancia", value: score.consistency)
-                        ScoreBarView(label: "Progreso", value: score.progression)
-                        ScoreBarView(label: "Volumen", value: score.volume)
-                        ScoreBarView(label: "Calidad", value: score.quality)
-                        ScoreBarView(label: "Variedad", value: score.variety)
-                    }
-                    TrainingCalendarView(sessions: sessionsList) { date, day in
-                        daySheet = DayPayload(id: date, date: date, sessions: day)
-                    }
-                    VStack(alignment: .leading, spacing: 12) {
-                        Text("ENTRENOS · \(sessionsList.count)").font(.caption2).fontWeight(.heavy).foregroundColor(Brand.muted)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                        ForEach(sessionsList) { s in sessionPostCard(s) }
+                    if locked {
+                        privateNotice
+                    } else {
+                        HStack(spacing: 10) {
+                            statTile("GYM SCORE", "\(score.total)")
+                            statTile("RACHA", "\(score.trainingDays) 🔥")
+                        }
+                        PanelCard {
+                            Text(score.tier).font(.system(size: 13, weight: .heavy)).foregroundColor(Color(hex: "10150a"))
+                                .padding(.horizontal, 10).padding(.vertical, 3).background(Brand.greenSoft).clipShape(Capsule())
+                            ScoreBarView(label: "Fuerza", value: score.strength)
+                            ScoreBarView(label: "Constancia", value: score.consistency)
+                            ScoreBarView(label: "Progreso", value: score.progression)
+                            ScoreBarView(label: "Volumen", value: score.volume)
+                            ScoreBarView(label: "Calidad", value: score.quality)
+                            ScoreBarView(label: "Variedad", value: score.variety)
+                        }
+                        TrainingCalendarView(sessions: sessionsList) { date, day in
+                            daySheet = DayPayload(id: date, date: date, sessions: day)
+                        }
+                        VStack(alignment: .leading, spacing: 12) {
+                            Text("ENTRENOS · \(sessionsList.count)").font(.caption2).fontWeight(.heavy).foregroundColor(Brand.muted)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                            ForEach(sessionsList) { s in sessionPostCard(s) }
+                        }
                     }
                 }.padding(16)
             }
@@ -467,6 +473,17 @@ struct FriendProfileView: View {
         let m = s / 60
         if m >= 60 { return "\(m / 60)h \(m % 60)m" }
         return "\(max(1, m)) min"
+    }
+
+    private var privateNotice: some View {
+        PanelCard {
+            HStack { Spacer(); Image(systemName: "lock.fill").font(.system(size: 30)).foregroundColor(Brand.soft); Spacer() }
+                .padding(.top, 6)
+            Text("Esta cuenta es privada").font(.system(size: 16, weight: .heavy)).foregroundColor(Brand.ink)
+                .frame(maxWidth: .infinity, alignment: .center)
+            Text("Envía una solicitud y, cuando \(person.name) la acepte, podrás ver su Gym Score y sus entrenos.")
+                .font(.footnote).foregroundColor(Brand.muted).multilineTextAlignment(.center).frame(maxWidth: .infinity)
+        }
     }
 
     private var header: some View {
@@ -542,6 +559,126 @@ struct FriendProfileView: View {
         let names = ["pierna": "Pierna", "bisagra": "Cadena posterior", "empuje": "Empuje",
                      "tiron": "Tirón", "condicion": "Cardio & core", "accesorio": "Full body"]
         return names[top] ?? "Entreno"
+    }
+}
+
+// MARK: - My profile (vista pública de tu propio perfil)
+
+struct MeProfileView: View {
+    @EnvironmentObject var store: AppStore
+    @State private var daySheet: DayPayload?
+    @State private var detailSession: WorkoutSession?
+    @State private var showEdit = false
+
+    var body: some View {
+        let score = store.gymScore
+        let sessionsList = store.sessions.sorted { $0.date > $1.date }
+        return NavigationStack {
+            ScrollView {
+                VStack(spacing: 14) {
+                    header
+                    HStack(spacing: 10) {
+                        statTile("GYM SCORE", "\(score.total)")
+                        statTile("RACHA", "\(store.player.streak) 🔥")
+                    }
+                    PanelCard {
+                        Text(score.tier).font(.system(size: 13, weight: .heavy)).foregroundColor(Color(hex: "10150a"))
+                            .padding(.horizontal, 10).padding(.vertical, 3).background(Brand.greenSoft).clipShape(Capsule())
+                        ScoreBarView(label: "Fuerza", value: score.strength)
+                        ScoreBarView(label: "Constancia", value: score.consistency)
+                        ScoreBarView(label: "Progreso", value: score.progression)
+                        ScoreBarView(label: "Volumen", value: score.volume)
+                        ScoreBarView(label: "Calidad", value: score.quality)
+                        ScoreBarView(label: "Variedad", value: score.variety)
+                    }
+                    TrainingCalendarView(sessions: sessionsList) { date, day in
+                        daySheet = DayPayload(id: date, date: date, sessions: day)
+                    }
+                    if sessionsList.isEmpty {
+                        Text("Aún no has guardado entrenos. ¡Registra tu primera sesión!")
+                            .font(.footnote).foregroundColor(Brand.muted).multilineTextAlignment(.center)
+                            .frame(maxWidth: .infinity).padding(.top, 8)
+                    } else {
+                        VStack(alignment: .leading, spacing: 12) {
+                            Text("ENTRENOS · \(sessionsList.count)").font(.caption2).fontWeight(.heavy).foregroundColor(Brand.muted)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                            ForEach(sessionsList) { s in sessionPostCard(s) }
+                        }
+                    }
+                }.padding(16)
+            }
+            .background(Brand.bg)
+            .navigationTitle("").navigationBarTitleDisplayMode(.inline)
+            .toolbar { ToolbarItem(placement: .topBarTrailing) { Button { showEdit = true } label: { Image(systemName: "gearshape").foregroundColor(Brand.ink) } } }
+            .sheet(item: $daySheet) { DaySessionsSheet(date: $0.date, sessions: $0.sessions).environmentObject(store) }
+            .sheet(item: $detailSession) { s in ActivityDetailView(item: meActivityData(s, store)).environmentObject(store) }
+            .sheet(isPresented: $showEdit) {
+                NavigationStack {
+                    ProfileView().environmentObject(store)
+                        .navigationTitle("Editar perfil").navigationBarTitleDisplayMode(.inline)
+                }
+            }
+        }
+    }
+
+    private var header: some View {
+        VStack(spacing: 10) {
+            MeAvatar(account: store.account, size: 84)
+            VStack(spacing: 3) {
+                HStack(spacing: 6) {
+                    Text(store.account?.name ?? "Tú").font(.system(size: 22, weight: .heavy)).foregroundColor(Brand.ink)
+                    if store.profile.isPrivate { Image(systemName: "lock.fill").font(.system(size: 13)).foregroundColor(Brand.soft) }
+                }
+                Text("@\(store.account?.handle ?? "tu_usuario")").font(.subheadline).foregroundColor(Brand.muted)
+            }
+            Button { showEdit = true } label: {
+                Label("Editar perfil", systemImage: "pencil").font(.system(size: 15, weight: .heavy)).foregroundColor(Brand.ink)
+                    .frame(maxWidth: .infinity).frame(height: 46).background(Brand.chip).clipShape(RoundedRectangle(cornerRadius: 12))
+            }.buttonStyle(.plain)
+        }
+    }
+
+    private func sessionPostCard(_ s: WorkoutSession) -> some View {
+        Button { FX.tap(); detailSession = s } label: {
+            PanelCard {
+                HStack(spacing: 8) {
+                    Image(systemName: "dumbbell.fill").font(.system(size: 13)).foregroundColor(Color(hex: "6ea300"))
+                    Text(s.name).font(.system(size: 16, weight: .heavy)).foregroundColor(Brand.ink).lineLimit(1)
+                    Spacer()
+                    Image(systemName: "chevron.right").font(.system(size: 12, weight: .bold)).foregroundColor(Brand.soft)
+                }
+                Text(relativeTime(s.date)).font(.caption).foregroundColor(Brand.soft).frame(maxWidth: .infinity, alignment: .leading)
+                HStack(spacing: 8) {
+                    miniStat(durationText(s.elapsed), "Tiempo")
+                    miniStat("\(s.sets)", "Series")
+                    miniStat("\(s.exercises)", "Ejerc.")
+                    if let avg = s.avgHeartRate { miniStat("\(avg)", "ppm") }
+                }
+            }
+        }.buttonStyle(.plain)
+    }
+
+    private func statTile(_ label: String, _ value: String) -> some View {
+        VStack(spacing: 3) {
+            Text(label).font(.caption2).fontWeight(.heavy).foregroundColor(Brand.muted)
+            Text(value).font(.system(size: 22, weight: .heavy)).foregroundColor(Brand.ink)
+        }.frame(maxWidth: .infinity).padding(.vertical, 12)
+        .background(Brand.panel).clipShape(RoundedRectangle(cornerRadius: 12))
+        .overlay(RoundedRectangle(cornerRadius: 12).stroke(Brand.line))
+    }
+
+    private func miniStat(_ value: String, _ label: String) -> some View {
+        VStack(spacing: 2) {
+            Text(value).font(.system(size: 15, weight: .heavy)).foregroundColor(Brand.ink)
+            Text(label).font(.system(size: 9, weight: .bold)).foregroundColor(Brand.muted)
+        }.frame(maxWidth: .infinity).padding(.vertical, 8)
+            .background(Brand.surface).clipShape(RoundedRectangle(cornerRadius: 10))
+    }
+
+    private func durationText(_ s: Int) -> String {
+        let m = s / 60
+        if m >= 60 { return "\(m / 60)h \(m % 60)m" }
+        return "\(max(1, m)) min"
     }
 }
 

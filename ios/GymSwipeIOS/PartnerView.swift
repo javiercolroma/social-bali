@@ -6,6 +6,7 @@ struct PartnerView: View {
     @State private var showCreator = false
     @State private var pendingDelete: TrainingPlan?
     @State private var profileTarget: IdString?
+    @State private var showMe = false
 
     var body: some View {
         ScrollView {
@@ -34,6 +35,7 @@ struct PartnerView: View {
         .sheet(item: $profileTarget) { item in
             if let p = store.person(item.id) { FriendProfileView(person: p).environmentObject(store) }
         }
+        .sheet(isPresented: $showMe) { MeProfileView().environmentObject(store) }
         .confirmationDialog("¿Eliminar este plan?", isPresented: Binding(get: { pendingDelete != nil }, set: { if !$0 { pendingDelete = nil } }), titleVisibility: .visible) {
             Button("Eliminar", role: .destructive) { FX.warning(); if let p = pendingDelete { store.deletePlan(p.id) }; pendingDelete = nil }
             Button("Cancelar", role: .cancel) { pendingDelete = nil }
@@ -53,14 +55,15 @@ struct PartnerView: View {
                 }.foregroundColor(Brand.muted)
             }
             Button {
-                if !isMine, let o = owner { FX.tap(); profileTarget = IdString(id: o.id) }
+                FX.tap()
+                if isMine { showMe = true } else if let o = owner { profileTarget = IdString(id: o.id) }
             } label: {
                 HStack(spacing: 7) {
                     Avatar(emoji: isMine ? "🙂" : (owner?.avatar ?? "👤"), size: 24)
                     Text(isMine ? "Tu plan · \(store.account?.name ?? "Tú")" : "Propuesto por \(owner?.name ?? "Compañero")")
                         .font(.system(size: 13, weight: .bold)).foregroundColor(Color(hex: "3f4837"))
                 }
-            }.buttonStyle(.plain).disabled(isMine)
+            }.buttonStyle(.plain)
             HStack(spacing: 6) {
                 Image(systemName: "mappin.circle.fill").foregroundColor(Color(hex: "6ea300"))
                 Text(plan.place).font(.system(size: 13, weight: .bold)).foregroundColor(Color(hex: "3f4837"))

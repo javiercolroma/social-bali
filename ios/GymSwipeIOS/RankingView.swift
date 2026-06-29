@@ -23,6 +23,7 @@ struct RankingView: View {
     @State private var scope = 0 // 0 amigos,1 global,2 país,3 ciudad,4 zona
     @State private var selectedMapPerson: SocialPerson?
     @State private var profileTarget: IdString?
+    @State private var showMe = false
     @State private var showMap = false   // el Map de MapKit pide ubicación al crearse: lo diferimos hasta que el usuario lo abra
     @State private var region = MKCoordinateRegion(
         center: CLLocationCoordinate2D(latitude: 40.4168, longitude: -3.7038),
@@ -46,6 +47,7 @@ struct RankingView: View {
         .sheet(item: $profileTarget) { item in
             if let p = store.person(item.id) { FriendProfileView(person: p).environmentObject(store) }
         }
+        .sheet(isPresented: $showMe) { MeProfileView().environmentObject(store) }
     }
 
     private var rankingCard: some View {
@@ -71,6 +73,9 @@ struct RankingView: View {
             ForEach(Array(rankingRows.enumerated()), id: \.offset) { idx, row in
                 if let pid = row.personId {
                     Button { FX.tap(); profileTarget = IdString(id: pid) } label: { rankRow(idx, row) }
+                        .buttonStyle(.plain)
+                } else if row.isMe {
+                    Button { FX.tap(); showMe = true } label: { rankRow(idx, row) }
                         .buttonStyle(.plain)
                 } else {
                     rankRow(idx, row)

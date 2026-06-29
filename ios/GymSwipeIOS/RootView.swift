@@ -61,11 +61,7 @@ struct RootView: View {
             }
         }
         .sheet(isPresented: $showProfile) {
-            NavigationStack {
-                ProfileView()
-                    .environmentObject(store)
-                    .navigationTitle("Perfil").navigationBarTitleDisplayMode(.inline)
-            }
+            MeProfileView().environmentObject(store)
         }
         .fullScreenCover(isPresented: Binding(
             get: { store.account == nil || editingAccount },
