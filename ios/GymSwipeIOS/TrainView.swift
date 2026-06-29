@@ -55,17 +55,22 @@ struct TrainView: View {
         }
         .background(Brand.bg)
         .sheet(item: $previewWorkout) { WorkoutPreview(workoutId: $0.id).environmentObject(store) }
-        .onAppear { if !store.exercises.isEmpty && sessionStart == nil { sessionStart = Date(); health.startSession() } }
+        .onAppear { if !store.exercises.isEmpty && sessionStart == nil { sessionStart = Date(); health.startSession(); startLive() } }
         // Reaccionar a la IDENTIDAD del entreno cargado: así cargar un entreno nuevo
         // (incluso encima de uno terminado-sin-guardar) reinicia tiempo + captura de FC.
         .onChange(of: store.exercises.first?.id) { id in
             if id == nil { resetLocal() }
-            else { sessionStart = Date(); restActive = false; restElapsed = 0; showSummary = false; health.startSession() }
+            else {
+                sessionStart = Date(); restActive = false; restElapsed = 0; showSummary = false
+                health.startSession()
+                LiveActivityManager.shared.end(); startLive()
+            }
         }
         // Si conectas Salud a mitad de sesión (p. ej. desde Perfil), empieza a captar ya.
         .onChange(of: health.connected) { isOn in
             if isOn && !store.exercises.isEmpty && !showSummary && !finished { health.startSession() }
         }
+        .onChange(of: health.liveBPM) { _ in syncLive() }
         .onReceive(ticker) { _ in
             if restActive && restElapsed < restTotal {
                 restElapsed += 1
@@ -219,7 +224,7 @@ struct TrainView: View {
     }
 
     private var finishButton: some View {
-        Button { finalElapsed = elapsedSeconds; withAnimation { showSummary = true } } label: {
+        Button { finalElapsed = elapsedSeconds; LiveActivityManager.shared.end(); withAnimation { showSummary = true } } label: {
             Label("Finalizar entrenamiento", systemImage: "flag.checkered")
                 .font(.system(size: 15, weight: .heavy)).foregroundColor(Brand.ink)
                 .frame(maxWidth: .infinity).frame(minHeight: 48)
@@ -232,7 +237,7 @@ struct TrainView: View {
         let willClose = (ex.completedSets + ex.skippedSets + 1) >= ex.sets
         if done { restActive = true; restTotal = testRestSeconds; restElapsed = 0 } else { restActive = false }
         withAnimation(.spring(response: 0.4, dampingFraction: 0.82)) { store.registerSet(ex.id, done: done) }
-        if store.activeExercise == nil { finalElapsed = elapsedSeconds }   // último set: congelar tiempo
+        if store.activeExercise == nil { finalElapsed = elapsedSeconds; LiveActivityManager.shared.end() }   // último set
 
         if willClose && store.activeExercise != nil {
             fxExercise()   // moved to the next exercise: special sound
@@ -241,6 +246,23 @@ struct TrainView: View {
         } else {
             fxSkip()
         }
+        syncLive()
+    }
+
+    private func startLive() {
+        guard let start = sessionStart else { return }
+        LiveActivityManager.shared.start(name: workoutName, startedAt: start,
+                                         closedSets: closedSets, totalSets: totalSets,
+                                         currentExercise: store.activeExercise?.name ?? "")
+    }
+
+    private func syncLive() {
+        guard let start = sessionStart, store.activeExercise != nil else { return }
+        LiveActivityManager.shared.update(name: workoutName, startedAt: start,
+                                          closedSets: closedSets, totalSets: totalSets,
+                                          currentExercise: store.activeExercise?.name ?? "",
+                                          bpm: health.liveBPM, resting: resting,
+                                          restEndsAt: resting ? Date().addingTimeInterval(Double(restRemaining)) : nil)
     }
 
     // MARK: - Summary
@@ -359,6 +381,7 @@ struct TrainView: View {
     }
     private func resetLocal() {
         health.endSession()
+        LiveActivityManager.shared.end()
         sessionStart = nil; restActive = false; restElapsed = 0; restTotal = 0; finalElapsed = 0; showSummary = false
         sessionName = ""; sessionNote = ""; sessionPhoto = nil; sessionPickerItem = nil; visibility = .all
     }
