@@ -122,7 +122,6 @@ struct FriendsContent: View {
                         Text("@\(acc.handle)").font(.caption).foregroundColor(Brand.muted)
                     }
                     Spacer()
-                    Button { onEditAccount() } label: { Label("Editar", systemImage: "pencil").font(.system(size: 12, weight: .heavy)) }
                 }
                 .padding(10).background(Color(hex: "f4f9e8")).clipShape(RoundedRectangle(cornerRadius: 12))
             }
@@ -179,9 +178,11 @@ struct FriendsContent: View {
             case .friends:
                 Button { FX.tap(); onOpenChat(person.id) } label: { Label("Mensaje", systemImage: "message.fill").font(.system(size: 12, weight: .heavy)) }
             case .outgoing:
-                Text("Enviada").font(.system(size: 12, weight: .heavy)).foregroundColor(Brand.soft)
+                Button { FX.tap(); store.followOrRequest(person.id) } label: {
+                    Label("Pendiente", systemImage: "clock").font(.system(size: 12, weight: .heavy)).foregroundColor(Brand.ink)
+                }
             case .none:
-                Button { FX.tap(); store.sendFriendRequest(person.id) } label: { Label("Añadir", systemImage: "person.badge.plus").font(.system(size: 12, weight: .heavy)) }
+                Button { FX.tap(); store.followOrRequest(person.id) } label: { Label("Seguir", systemImage: "person.badge.plus").font(.system(size: 12, weight: .heavy)) }
             }
         }
         .padding(10).background(Brand.panel).clipShape(RoundedRectangle(cornerRadius: 12))
@@ -296,20 +297,16 @@ struct NotificationsSheet: View {
             }
             .background(Brand.bg)
             .navigationTitle("Notificaciones").navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .topBarLeading) {
-                    if store.unreadNotifications > 0 { Button("Marcar leído") { store.markAllNotificationsRead() } }
-                }
-            }
         }
+        // Al abrir, dejan de ser "nuevas" (ya las has visto), como en Instagram.
+        .onAppear { store.markAllNotificationsRead() }
     }
 
     private func row(_ n: AppNotification) -> some View {
         let isPendingRequest = n.type == .friendRequest && n.personId.map { store.relationship($0) == .incoming } ?? false
         return VStack(spacing: 10) {
             HStack(alignment: .top, spacing: 11) {
-                Image(systemName: icon(n.type)).font(.system(size: 15))
-                    .frame(width: 32, height: 32).background(Brand.greenSoft).foregroundColor(Color(hex: "10150a")).clipShape(RoundedRectangle(cornerRadius: 10))
+                leadingIcon(n)
                 VStack(alignment: .leading, spacing: 3) {
                     HStack {
                         Text(n.title).font(.system(size: 14, weight: .heavy)).foregroundColor(Brand.ink)
@@ -318,7 +315,7 @@ struct NotificationsSheet: View {
                     }
                     Text(n.body).font(.footnote).foregroundColor(Brand.muted)
                 }
-                if !n.read { Circle().fill(Brand.red).frame(width: 9, height: 9) }
+                Spacer(minLength: 0)
             }
             .contentShape(Rectangle())
             .onTapGesture {
@@ -339,15 +336,31 @@ struct NotificationsSheet: View {
             }
         }
         .padding(12)
-        .background(n.read ? Brand.panel : Color(hex: "f4f9e8"))
+        .background(Brand.panel)
         .clipShape(RoundedRectangle(cornerRadius: 12))
         .overlay(RoundedRectangle(cornerRadius: 12).stroke(Brand.line))
+    }
+
+    /// Foto de perfil de la persona (con badge del tipo) si la notificación es de alguien; si no, icono genérico.
+    @ViewBuilder
+    private func leadingIcon(_ n: AppNotification) -> some View {
+        if let pid = n.personId, let p = store.person(pid) {
+            ZStack(alignment: .bottomTrailing) {
+                Avatar(emoji: p.avatar, size: 42)
+                Image(systemName: icon(n.type)).font(.system(size: 9, weight: .heavy)).foregroundColor(Color(hex: "10150a"))
+                    .frame(width: 18, height: 18).background(Brand.green).clipShape(Circle())
+                    .overlay(Circle().stroke(.white, lineWidth: 1.5)).offset(x: 3, y: 3)
+            }
+        } else {
+            Image(systemName: icon(n.type)).font(.system(size: 15))
+                .frame(width: 42, height: 42).background(Brand.greenSoft).foregroundColor(Color(hex: "10150a")).clipShape(Circle())
+        }
     }
 
     private func icon(_ t: NotificationType) -> String {
         switch t {
         case .friendRequest: return "person.badge.plus"
-        case .friendAccepted: return "checkmark.seal.fill"
+        case .friendAccepted: return "checkmark"
         case .trainingAccepted: return "dumbbell.fill"
         case .newFollower: return "person.fill.badge.plus"
         }
