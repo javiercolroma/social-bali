@@ -47,6 +47,7 @@ struct SocialFeedView: View {
     // El feed es un snapshot: no se reorganiza al seguir a alguien; solo cambia al refrescar (pull-to-refresh).
     @State private var seguidosFeed: [FeedItem] = []
     @State private var seguidosLoaded = false
+    @State private var showInterleavedSuggestions = false
     @State private var paraTiFeed: [FeedItem] = []
     @State private var paraTiLoaded = false
 
@@ -110,11 +111,11 @@ struct SocialFeedView: View {
                     if hasSuggestions { suggestionsStrip }
                     emptyFeed("Registra un entreno o desliza para refrescar tu muro.")
                 } else {
-                    // Con seguidos: las sugerencias van INTERCALADAS entre posts, no arriba.
+                    // Con seguidos: las sugerencias se INTERCALAN entre posts, pero solo tras refrescar (no automático).
                     let insertAt = min(2, seguidosFeed.count - 1)
                     ForEach(Array(seguidosFeed.enumerated()), id: \.element.id) { idx, item in
                         feedCard(item)
-                        if hasSuggestions && idx == insertAt { suggestionsStrip }
+                        if showInterleavedSuggestions && hasSuggestions && idx == insertAt { suggestionsStrip }
                     }
                 }
             }
@@ -122,19 +123,21 @@ struct SocialFeedView: View {
         }
         .refreshable {
             try? await Task.sleep(nanoseconds: 500_000_000)
-            await MainActor.run { refreshSeguidos() }
+            await MainActor.run { refreshSeguidos(manual: true) }
         }
-        .onAppear { if !seguidosLoaded { refreshSeguidos() } }
+        .onAppear { if !seguidosLoaded { refreshSeguidos(manual: false) } }
     }
 
     private func feedCard(_ item: FeedItem) -> some View {
         card(item, showFollow: item.personId != nil && store.relationship(item.personId ?? "") == .none)
     }
 
-    private func refreshSeguidos() {
+    private func refreshSeguidos(manual: Bool) {
         seguidosFeed = store.following.isEmpty
             ? (myItems + discoverFeed).sorted { $0.date > $1.date }
             : followedFeed
+        // Las sugerencias intercaladas aparecen al refrescar manualmente, no en la carga inicial.
+        if manual { showInterleavedSuggestions = true }
         seguidosLoaded = true
     }
 
