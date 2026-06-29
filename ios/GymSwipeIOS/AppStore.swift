@@ -18,6 +18,7 @@ final class AppStore: ObservableObject {
     @Published var conversations: [Conversation] = []
     @Published var notifications: [AppNotification] = []
     @Published var trainingPlans: [TrainingPlan] = []
+    @Published var appliedKudos: Set<String> = []   // posts del muro a los que has dado aplausos
 
     let people = AppStore.demoPeople
     let templates = AppStore.builtinTemplates
@@ -39,6 +40,7 @@ final class AppStore: ObservableObject {
             notifications = snap.notifications
             trainingPlans = snap.trainingPlans
             sessions = snap.sessions ?? []
+            appliedKudos = Set(snap.appliedKudos ?? [])
             // Migrate old "Mis entrenos" group to "Otros"
             savedWorkouts = savedWorkouts.map { w in
                 guard w.block == "Mis entrenos" else { return w }
@@ -64,6 +66,7 @@ final class AppStore: ObservableObject {
         var notifications: [AppNotification]
         var trainingPlans: [TrainingPlan]
         var sessions: [WorkoutSession]?
+        var appliedKudos: [String]?
     }
 
     func persist() {
@@ -72,7 +75,7 @@ final class AppStore: ObservableObject {
             exercises: exercises, player: player, history: history, profile: profile,
             savedWorkouts: savedWorkouts, account: account, relationships: relationships,
             conversations: conversations, notifications: notifications, trainingPlans: trainingPlans,
-            sessions: sessions
+            sessions: sessions, appliedKudos: Array(appliedKudos)
         )
         if let data = try? JSONEncoder().encode(snap) {
             UserDefaults.standard.set(data, forKey: storeKey)
@@ -275,6 +278,11 @@ final class AppStore: ObservableObject {
     /// Personas que sigues (tu red).
     var following: [SocialPerson] { people.filter { relationship($0.id) == .friends } }
 
+    func toggleKudo(_ id: String) {
+        if appliedKudos.contains(id) { appliedKudos.remove(id) } else { appliedKudos.insert(id) }
+        persist()
+    }
+
     private func markFriendRequestNotifsRead(_ personId: String) {
         notifications = notifications.map {
             ($0.personId == personId && $0.type == .friendRequest) ? withRead($0) : $0
@@ -434,7 +442,9 @@ final class AppStore: ObservableObject {
 
     private func seedDemo() {
         let now = Date()
-        relationships = ["p-mika": .friends, "p-leo": .incoming]
+        // Empieza SIN seguidos para mostrar el onboarding de usuario nuevo en Social.
+        // Mika aparece como recomendación; Leo, como solicitud entrante ("te quiere seguir").
+        relationships = ["p-leo": .incoming]
         conversations = [Conversation(
             id: conversationId("p-mika"), personId: "p-mika",
             messages: [

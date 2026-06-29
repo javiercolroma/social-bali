@@ -24,25 +24,25 @@ private struct FeedItem: Identifiable {
 struct SocialFeedView: View {
     @EnvironmentObject var store: AppStore
     var onOpenProfile: (String) -> Void
-    @State private var liked: Set<String> = []
+
+    @State private var segment = 0
     @State private var activity: FeedItem?
     @State private var commentTarget: FeedItem?
     @State private var comments: [String: [String]] = [:]
+    @State private var toast: String?
 
-    private var friends: [SocialPerson] { store.people.filter { store.relationship($0.id) == .friends } }
+    private let tabs: [(title: String, icon: String)] = [("Seguidos", "person.2.fill"), ("Para ti", "sparkles")]
 
     var body: some View {
-        ScrollView {
-            VStack(spacing: 12) {
-                if feed.isEmpty {
-                    emptyState
-                } else {
-                    ForEach(feed) { item in card(item) }
-                }
+        VStack(spacing: 0) {
+            switcher
+            ZStack {
+                seguidosTab.opacity(segment == 0 ? 1 : 0).allowsHitTesting(segment == 0)
+                paraTiTab.opacity(segment == 1 ? 1 : 0).allowsHitTesting(segment == 1)
             }
-            .padding(.horizontal, 14).padding(.vertical, 12)
         }
         .background(Brand.bg)
+        .overlay(alignment: .bottom) { toastView }
         .sheet(item: $activity) { ActivityDetailView(item: feedItemView($0)).environmentObject(store) }
         .sheet(item: $commentTarget) { item in
             CommentsSheet(title: item.title, comments: Binding(
@@ -52,6 +52,215 @@ struct SocialFeedView: View {
         }
     }
 
+    // MARK: - Switcher
+
+    private var switcher: some View {
+        HStack(spacing: 6) {
+            ForEach(Array(tabs.enumerated()), id: \.offset) { idx, t in
+                let active = segment == idx
+                Button { FX.selection(); withAnimation { segment = idx } } label: {
+                    HStack(spacing: 6) {
+                        Image(systemName: t.icon).font(.system(size: 13, weight: .heavy))
+                        Text(t.title).font(.system(size: 14, weight: .heavy))
+                    }
+                    .foregroundColor(active ? Color(hex: "10150a") : Brand.soft)
+                    .frame(maxWidth: .infinity).frame(height: 40)
+                    .background(active ? Brand.green : Brand.chip)
+                    .clipShape(RoundedRectangle(cornerRadius: 12)).contentShape(Rectangle())
+                }.buttonStyle(.plain)
+            }
+        }
+        .padding(.horizontal, 14).padding(.top, 2).padding(.bottom, 8)
+    }
+
+    // MARK: - SEGUIDOS
+
+    private var seguidosTab: some View {
+        ScrollView {
+            VStack(spacing: 12) {
+                if store.following.isEmpty {
+                    newUserHeader
+                    if !myItems.isEmpty {
+                        sectionHeader("TUS ENTRENOS")
+                        ForEach(myItems) { card($0) }
+                    }
+                    sectionHeader("A QUIÉN SEGUIR")
+                    ForEach(recommended(limit: 5)) { recRow($0) }
+                    Button { FX.tap(); withAnimation { segment = 1 } } label: {
+                        Text("Descubre más en Para ti ›").font(.system(size: 14, weight: .heavy)).foregroundColor(Color(hex: "4b6211"))
+                    }.frame(maxWidth: .infinity).padding(.top, 4)
+                } else {
+                    ForEach(followedFeed) { card($0) }
+                }
+            }
+            .padding(.horizontal, 14).padding(.vertical, 12)
+        }
+    }
+
+    private var newUserHeader: some View {
+        VStack(alignment: .leading, spacing: 3) {
+            Text("Hola, \(store.account?.name ?? "atleta") 👋").font(.system(size: 20, weight: .heavy)).foregroundColor(Brand.ink)
+            Text("Pon en marcha tu Forge Loop").font(.footnote).foregroundColor(Brand.muted)
+        }.frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    // MARK: - PARA TI
+
+    private var paraTiTab: some View {
+        ScrollView {
+            VStack(spacing: 12) {
+                let incoming = store.people.filter { store.relationship($0.id) == .incoming }
+                if !incoming.isEmpty {
+                    sectionHeader("TE QUIEREN SEGUIR")
+                    ForEach(incoming) { incomingRow($0) }
+                }
+
+                let recs = recommended(limit: 5)
+                sectionHeader("A QUIÉN SEGUIR")
+                if recs.isEmpty {
+                    Text("Ya sigues a toda la comunidad 🎉").font(.footnote).foregroundColor(Brand.muted)
+                        .frame(maxWidth: .infinity).padding(.vertical, 8)
+                } else {
+                    ForEach(recs) { recRow($0) }
+                }
+
+                let disc = discoverFeed
+                if !disc.isEmpty {
+                    sectionHeader("DESCUBRE ENTRENOS")
+                    ForEach(disc) { card($0, showFollow: true) }
+                } else if recs.isEmpty {
+                    Text("No hay más entrenos por descubrir ahora mismo. ¡Vuelve pronto!")
+                        .font(.footnote).foregroundColor(Brand.muted).frame(maxWidth: .infinity).padding(.vertical, 8)
+                }
+            }
+            .padding(.horizontal, 14).padding(.vertical, 12)
+        }
+    }
+
+    private func sectionHeader(_ t: String) -> some View {
+        HStack { Text(t).font(.caption2).fontWeight(.heavy).foregroundColor(Brand.muted); Spacer() }
+            .padding(.horizontal, 4).padding(.top, 4)
+    }
+
+    private func recRow(_ p: SocialPerson) -> some View {
+        let chip = reasonChip(for: p)
+        return PanelCard {
+            HStack(spacing: 11) {
+                Button { FX.tap(); onOpenProfile(p.id) } label: { personAvatar(p) }.buttonStyle(.plain)
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(p.name).font(.system(size: 15, weight: .heavy)).foregroundColor(Brand.ink)
+                    Text("@\(p.handle)").font(.caption2).foregroundColor(Brand.soft)
+                    Tag(text: chip.text, highlight: chip.highlight)
+                }
+                Spacer()
+                followButton(p)
+            }
+        }
+    }
+
+    private func incomingRow(_ p: SocialPerson) -> some View {
+        PanelCard {
+            HStack(spacing: 11) {
+                Button { FX.tap(); onOpenProfile(p.id) } label: { personAvatar(p) }.buttonStyle(.plain)
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(p.name).font(.system(size: 15, weight: .heavy)).foregroundColor(Brand.ink)
+                    Text("@\(p.handle)").font(.caption2).foregroundColor(Brand.soft)
+                    Tag(text: "Te quiere seguir", highlight: true)
+                }
+                Spacer()
+                HStack(spacing: 8) {
+                    Button { FX.success(); store.acceptFriendRequest(p.id); showToast("Ahora sigues a \(p.name)") } label: {
+                        Image(systemName: "checkmark").font(.system(size: 15, weight: .heavy)).foregroundColor(Color(hex: "10150a"))
+                            .frame(width: 44, height: 44).background(Brand.green).clipShape(Circle())
+                    }.buttonStyle(.plain)
+                    Button { FX.warning(); store.rejectFriendRequest(p.id) } label: {
+                        Image(systemName: "xmark").font(.system(size: 15, weight: .heavy)).foregroundColor(Color(hex: "a73232"))
+                            .frame(width: 44, height: 44).background(Brand.redSoft).clipShape(Circle())
+                    }.buttonStyle(.plain)
+                }
+            }
+        }
+    }
+
+    private func followButton(_ p: SocialPerson) -> some View {
+        Button { followPerson(p) } label: {
+            Text("Seguir").font(.system(size: 14, weight: .heavy)).foregroundColor(Color(hex: "10150a"))
+                .padding(.horizontal, 16).frame(height: 38).background(Brand.green).clipShape(Capsule())
+        }.buttonStyle(.plain)
+    }
+
+    @ViewBuilder
+    private func personAvatar(_ p: SocialPerson) -> some View {
+        ZStack(alignment: .bottomTrailing) {
+            Avatar(emoji: p.avatar, size: 44)
+            Text(p.flag).font(.system(size: 11)).frame(width: 17, height: 17)
+                .background(Circle().fill(.white)).overlay(Circle().stroke(Brand.line)).offset(x: 3, y: 3)
+        }
+    }
+
+    private func followPerson(_ p: SocialPerson) {
+        FX.success()
+        if store.relationship(p.id) == .incoming { store.acceptFriendRequest(p.id) } else { store.follow(p.id) }
+        showToast("Ahora sigues a \(p.name)")
+    }
+
+    private func showToast(_ text: String) {
+        withAnimation { toast = text }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.8) {
+            withAnimation { if toast == text { toast = nil } }
+        }
+    }
+
+    @ViewBuilder
+    private var toastView: some View {
+        if let t = toast {
+            Text(t).font(.system(size: 14, weight: .heavy)).foregroundColor(.white)
+                .padding(.horizontal, 16).padding(.vertical, 10)
+                .background(Brand.ink).clipShape(Capsule())
+                .padding(.bottom, 16)
+                .transition(.move(edge: .bottom).combined(with: .opacity))
+        }
+    }
+
+    // MARK: - Recommendations
+
+    private func recommended(limit: Int) -> [SocialPerson] {
+        let candidates = store.people.filter { store.relationship($0.id) == .none }
+        return Array(candidates.sorted { a, b in
+            let fa = affinity(a), fb = affinity(b)
+            return fa != fb ? fa > fb : a.name < b.name
+        }.prefix(limit))
+    }
+
+    private func affinity(_ p: SocialPerson) -> Int {
+        var score = 0
+        let myGym = store.profile.gym.trimmingCharacters(in: .whitespaces).lowercased()
+        if !myGym.isEmpty && p.gym.trimmingCharacters(in: .whitespaces).lowercased() == myGym { score += 1000 }
+        if p.city == store.profile.city { score += 500 }
+        if p.country == store.profile.country { score += 200 }
+        score += personScore(p)
+        score += idJitter(p.id)
+        return score
+    }
+
+    private func personScore(_ p: SocialPerson) -> Int { GymScoreEngine.calculate(buildFriendHistory(p)).total }
+
+    private func idJitter(_ id: String) -> Int {
+        var seed: UInt64 = 0
+        for ch in id.unicodeScalars { seed = seed &* 31 &+ UInt64(ch.value) }
+        return Int(seed % 10)
+    }
+
+    private func reasonChip(for p: SocialPerson) -> (text: String, highlight: Bool) {
+        let myGym = store.profile.gym.trimmingCharacters(in: .whitespaces).lowercased()
+        if !myGym.isEmpty && p.gym.trimmingCharacters(in: .whitespaces).lowercased() == myGym { return ("Tu mismo gym", true) }
+        if p.city == store.profile.city { return ("En \(p.city)", false) }
+        if p.country == store.profile.country { return ("\(p.flag) En tu país", false) }
+        return ("Gym Score \(personScore(p))", false)
+    }
+
+    // MARK: - Card
+
     private func feedItemView(_ item: FeedItem) -> ActivityData {
         ActivityData(authorName: item.authorName, avatarPhoto: item.avatarPhoto, avatarEmoji: item.avatarEmoji,
                      flag: item.flag, location: item.location, date: item.date, title: item.title, note: item.note,
@@ -60,20 +269,9 @@ struct SocialFeedView: View {
                      avgHeartRate: item.avgHeartRate, maxHeartRate: item.maxHeartRate)
     }
 
-    private var emptyState: some View {
-        PanelCard {
-            HStack { Spacer(); Text("👥").font(.system(size: 44)); Spacer() }
-            Text("Tu muro está vacío").font(.system(size: 18, weight: .heavy)).foregroundColor(Brand.ink)
-                .frame(maxWidth: .infinity, alignment: .center)
-            Text("Guarda un entreno o hazte amigo de alguien para ver actividad aquí.")
-                .font(.footnote).foregroundColor(Brand.muted).multilineTextAlignment(.center).frame(maxWidth: .infinity)
-        }
-    }
-
-    private func card(_ item: FeedItem) -> some View {
+    private func card(_ item: FeedItem, showFollow: Bool = false) -> some View {
         PanelCard {
             VStack(alignment: .leading, spacing: 12) {
-                // Header: avatar, name, time, location
                 HStack(spacing: 11) {
                     ZStack(alignment: .bottomTrailing) {
                         authorAvatar(item)
@@ -90,28 +288,31 @@ struct SocialFeedView: View {
                         }.font(.caption2).foregroundColor(Brand.soft)
                     }
                     Spacer()
-                    Image(systemName: "chevron.right").font(.system(size: 12, weight: .bold)).foregroundColor(Brand.soft)
+                    if showFollow, let pid = item.personId, let p = store.person(pid) {
+                        Button { followPerson(p) } label: {
+                            Text("Seguir").font(.system(size: 12, weight: .heavy)).foregroundColor(Color(hex: "10150a"))
+                                .padding(.horizontal, 12).frame(height: 30).background(Brand.green).clipShape(Capsule())
+                        }.buttonStyle(.plain)
+                    } else {
+                        Image(systemName: "chevron.right").font(.system(size: 12, weight: .bold)).foregroundColor(Brand.soft)
+                    }
                 }
 
-                // Title
                 HStack(spacing: 8) {
                     Image(systemName: "dumbbell.fill").font(.system(size: 13)).foregroundColor(Color(hex: "6ea300"))
                     Text(item.title).font(.system(size: 16, weight: .heavy)).foregroundColor(Brand.ink)
                 }
 
-                // Comment / note
                 if !item.note.isEmpty {
                     Text(item.note).font(.system(size: 14)).foregroundColor(Color(hex: "2c3127")).lineLimit(2).fixedSize(horizontal: false, vertical: true)
                 }
 
-                // Photo
                 if let data = item.photo, let ui = UIImage(data: data) {
                     Image(uiImage: ui).resizable().scaledToFill()
                         .frame(maxWidth: .infinity).frame(height: 180).clipped()
                         .clipShape(RoundedRectangle(cornerRadius: 12))
                 }
 
-                // Metrics
                 HStack(spacing: 8) {
                     stat(durationText(item.elapsed), "Tiempo", "clock")
                     stat("\(item.sets)", "Series", "checkmark.circle")
@@ -123,23 +324,17 @@ struct SocialFeedView: View {
             .onTapGesture { FX.tap(); activity = item }
 
             HStack(spacing: 8) {
-                // Aplausos
-                Button {
-                    FX.tap()
-                    if liked.contains(item.id) { liked.remove(item.id) } else { liked.insert(item.id) }
-                } label: {
-                    let isLiked = liked.contains(item.id)
+                Button { FX.tap(); store.toggleKudo(item.id) } label: {
+                    let isLiked = store.appliedKudos.contains(item.id)
                     actionChip(icon: isLiked ? "hands.clap.fill" : "hands.clap",
                                text: "\(kudos(item) + (isLiked ? 1 : 0))", active: isLiked)
                 }.buttonStyle(.plain)
 
-                // Comentar
                 Button { FX.tap(); commentTarget = item } label: {
                     let n = comments[item.id]?.count ?? 0
                     actionChip(icon: "bubble.left", text: n > 0 ? "\(n)" : "Comentar", active: n > 0)
                 }.buttonStyle(.plain)
 
-                // Compartir
                 ShareLink(item: shareText(item)) {
                     actionChip(icon: "square.and.arrow.up", text: "Compartir", active: false)
                 }.buttonStyle(.plain)
@@ -148,14 +343,11 @@ struct SocialFeedView: View {
     }
 
     private func actionChip(icon: String, text: String, active: Bool) -> some View {
-        HStack(spacing: 6) {
-            Image(systemName: icon)
-            Text(text)
-        }
-        .font(.system(size: 13, weight: .heavy))
-        .foregroundColor(active ? Color(hex: "10150a") : Brand.muted)
-        .frame(maxWidth: .infinity).frame(height: 36)
-        .background(active ? Brand.greenSoft : Brand.chip).clipShape(Capsule())
+        HStack(spacing: 6) { Image(systemName: icon); Text(text) }
+            .font(.system(size: 13, weight: .heavy))
+            .foregroundColor(active ? Color(hex: "10150a") : Brand.muted)
+            .frame(maxWidth: .infinity).frame(height: 36)
+            .background(active ? Brand.greenSoft : Brand.chip).clipShape(Capsule())
     }
 
     private func shareText(_ item: FeedItem) -> String {
@@ -192,10 +384,6 @@ struct SocialFeedView: View {
 
     // MARK: - Feed sources
 
-    private var feed: [FeedItem] {
-        (myItems + friendItems).sorted { $0.date > $1.date }
-    }
-
     private var myItems: [FeedItem] {
         let loc = [store.profile.city, store.profile.country].filter { !$0.isEmpty }.joined(separator: ", ")
         return store.sessions.map { s in
@@ -209,20 +397,30 @@ struct SocialFeedView: View {
         }
     }
 
+    private var followedFeed: [FeedItem] {
+        (myItems + posts(for: store.following)).sorted { $0.date > $1.date }
+    }
+
+    private var discoverFeed: [FeedItem] {
+        let strangers = store.people.filter { store.relationship($0.id) == .none }
+            .sorted { affinity($0) > affinity($1) }
+        return Array(posts(for: strangers).prefix(12))
+    }
+
     private let friendNotes = ["", "Buenas sensaciones hoy 💪", "", "PR en el último ejercicio 🔥", "", "Día duro pero hecho ✅"]
 
-    private var friendItems: [FeedItem] {
+    private func posts(for people: [SocialPerson]) -> [FeedItem] {
         var items: [FeedItem] = []
-        for p in friends {
+        for p in people {
             let history = buildFriendHistory(p)
             let sessions = Dictionary(grouping: history) { $0.sessionId ?? $0.id }
             let recent = sessions.values
                 .sorted { ($0.first?.completedAt ?? .distantPast) > ($1.first?.completedAt ?? .distantPast) }
                 .prefix(2)
-            for entries in recent {
+            for (idx, entries) in recent.enumerated() {
                 let date = entries.map { $0.completedAt }.max() ?? Date()
                 let sets = entries.reduce(0) { $0 + $1.sets }
-                let sid = entries.first?.sessionId ?? UUID().uuidString
+                let sid = entries.first?.sessionId ?? "\(p.id)-post-\(idx)"
                 var seed: UInt64 = 0
                 for ch in sid.unicodeScalars { seed = seed &* 31 &+ UInt64(ch.value) }
                 items.append(FeedItem(
@@ -234,7 +432,6 @@ struct SocialFeedView: View {
                     exercises: entries.count, sets: sets,
                     volume: entries.reduce(0) { $0 + $1.volume },
                     items: entries.map { e in
-                        // build per-set logs with a small weight ramp for realism
                         let logs = (0..<max(1, e.sets)).map { i in
                             SetLog(reps: e.reps, weight: max(0, e.weight + Double(i) * 2.5 - Double(max(0, e.sets - 1)) * 1.25))
                         }
