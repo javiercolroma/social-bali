@@ -7,6 +7,37 @@ func normalizeHandle(_ value: String) -> String {
     return String(String.UnicodeScalarView(filtered)).prefix(20).description
 }
 
+/// Número determinista (para seguidores/seguidos demo) a partir de un id.
+func deterministicCount(_ seed: String, salt: UInt64, lo: Int, hi: Int) -> Int {
+    var s = salt
+    for ch in seed.unicodeScalars { s = s &* 131 &+ UInt64(ch.value) }
+    return lo + Int(s % UInt64(max(1, hi - lo + 1)))
+}
+
+func formatCount(_ n: Int) -> String {
+    if n >= 1000 { return String(format: "%.1f", Double(n) / 1000).replacingOccurrences(of: ".", with: ",") + "k" }
+    return "\(n)"
+}
+
+/// Fila estilo Instagram: entrenos · seguidores · siguiendo.
+func profileCountsRow(entrenos: Int, seguidores: Int, siguiendo: Int) -> some View {
+    HStack(spacing: 0) {
+        profileCountTile(formatCount(entrenos), "Entrenos")
+        profileCountTile(formatCount(seguidores), "Seguidores")
+        profileCountTile(formatCount(siguiendo), "Siguiendo")
+    }
+    .padding(.vertical, 12)
+    .background(Brand.panel).clipShape(RoundedRectangle(cornerRadius: 12))
+    .overlay(RoundedRectangle(cornerRadius: 12).stroke(Brand.line))
+}
+
+private func profileCountTile(_ value: String, _ label: String) -> some View {
+    VStack(spacing: 2) {
+        Text(value).font(.system(size: 18, weight: .heavy)).foregroundColor(Brand.ink)
+        Text(label).font(.caption2).foregroundColor(Brand.muted)
+    }.frame(maxWidth: .infinity)
+}
+
 // MARK: - Messages
 
 struct MessagesSheet: View {
@@ -403,7 +434,7 @@ struct FriendProfileView: View {
         return NavigationStack {
             ScrollView {
                 VStack(spacing: 14) {
-                    header
+                    header(entrenos: sessionsList.count)
                     if locked {
                         privateNotice
                     } else {
@@ -486,8 +517,8 @@ struct FriendProfileView: View {
         }
     }
 
-    private var header: some View {
-        VStack(spacing: 10) {
+    private func header(entrenos: Int) -> some View {
+        VStack(spacing: 12) {
             ZStack(alignment: .bottomTrailing) {
                 Avatar(emoji: person.avatar, size: 84)
                 Text(person.flag).font(.system(size: 16)).frame(width: 24, height: 24)
@@ -500,6 +531,9 @@ struct FriendProfileView: View {
                 }
                 Text("@\(person.handle)").font(.subheadline).foregroundColor(Brand.muted)
             }
+            profileCountsRow(entrenos: entrenos,
+                             seguidores: deterministicCount(person.id, salt: 7, lo: 40, hi: 1500) + (store.relationship(person.id) == .friends ? 1 : 0),
+                             siguiendo: deterministicCount(person.id, salt: 13, lo: 30, hi: 700))
             followButton
         }
     }
@@ -576,7 +610,7 @@ struct MeProfileView: View {
         return NavigationStack {
             ScrollView {
                 VStack(spacing: 14) {
-                    header
+                    header(entrenos: sessionsList.count)
                     HStack(spacing: 10) {
                         statTile("GYM SCORE", "\(score.total)")
                         statTile("RACHA", "\(store.player.streak) 🔥")
@@ -621,8 +655,8 @@ struct MeProfileView: View {
         }
     }
 
-    private var header: some View {
-        VStack(spacing: 10) {
+    private func header(entrenos: Int) -> some View {
+        VStack(spacing: 12) {
             MeAvatar(account: store.account, size: 84)
             VStack(spacing: 3) {
                 HStack(spacing: 6) {
@@ -631,6 +665,9 @@ struct MeProfileView: View {
                 }
                 Text("@\(store.account?.handle ?? "tu_usuario")").font(.subheadline).foregroundColor(Brand.muted)
             }
+            profileCountsRow(entrenos: entrenos,
+                             seguidores: deterministicCount(store.account?.handle ?? "me", salt: 7, lo: 40, hi: 1500),
+                             siguiendo: store.following.count)
             Button { showEdit = true } label: {
                 Label("Editar perfil", systemImage: "pencil").font(.system(size: 15, weight: .heavy)).foregroundColor(Brand.ink)
                     .frame(maxWidth: .infinity).frame(height: 46).background(Brand.chip).clipShape(RoundedRectangle(cornerRadius: 12))
