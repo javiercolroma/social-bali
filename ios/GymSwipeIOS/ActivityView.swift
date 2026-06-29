@@ -375,7 +375,8 @@ struct ActivityView: View {
             flag: countryFlag(store.profile.country), location: loc,
             date: s.date, title: s.name, note: s.note, photo: s.photoData,
             elapsed: s.elapsed, exercises: s.exercises, sets: s.sets,
-            volume: s.volume, items: s.items ?? [])
+            volume: s.volume, items: s.items ?? [],
+            avgHeartRate: s.avgHeartRate, maxHeartRate: s.maxHeartRate)
     }
 
     private func durationText(_ s: Int) -> String {

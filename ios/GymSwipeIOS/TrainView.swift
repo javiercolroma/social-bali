@@ -17,6 +17,7 @@ struct TrainView: View {
     @State private var restTotal = 0
     @AppStorage("fxSound") private var soundOn = true
     @AppStorage("fxHaptics") private var hapticsOn = true
+    @ObservedObject private var health = HealthManager.shared
 
     private let ticker = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
     // TODO: pruebas — descanso fijo a 10s. Volver a `ex.rest` para producción.
@@ -55,10 +56,16 @@ struct TrainView: View {
         }
         .background(Brand.bg)
         .sheet(item: $previewWorkout) { WorkoutPreview(workoutId: $0.id).environmentObject(store) }
-        .onAppear { if !store.exercises.isEmpty && sessionStart == nil { sessionStart = Date() } }
-        .onChange(of: store.exercises.isEmpty) { empty in
-            if empty { resetLocal() }
-            else { sessionStart = Date(); restActive = false; restElapsed = 0; showSummary = false }
+        .onAppear { if !store.exercises.isEmpty && sessionStart == nil { sessionStart = Date(); health.startSession() } }
+        // Reaccionar a la IDENTIDAD del entreno cargado: así cargar un entreno nuevo
+        // (incluso encima de uno terminado-sin-guardar) reinicia tiempo + captura de FC.
+        .onChange(of: store.exercises.first?.id) { id in
+            if id == nil { resetLocal() }
+            else { sessionStart = Date(); restActive = false; restElapsed = 0; showSummary = false; health.startSession() }
+        }
+        // Si conectas Salud a mitad de sesión (p. ej. desde Perfil), empieza a captar ya.
+        .onChange(of: health.connected) { isOn in
+            if isOn && !store.exercises.isEmpty && !showSummary && !finished { health.startSession() }
         }
         .onReceive(ticker) { _ in
             if restActive && restElapsed < restTotal {
@@ -78,16 +85,19 @@ struct TrainView: View {
                     Text("\(closedSets) / \(totalSets) series").font(.system(size: 18, weight: .heavy)).foregroundColor(Brand.ink)
                 }
                 Spacer()
-                if let start = sessionStart {
-                    TimelineView(.periodic(from: .now, by: 1)) { _ in
-                        HStack(spacing: 5) {
-                            Image(systemName: "clock.fill").font(.system(size: 13)).foregroundColor(Color(hex: "6ea300"))
-                            Text(timeString(max(0, Int(-start.timeIntervalSinceNow))))
-                                .font(.system(size: 21, weight: .heavy)).monospacedDigit().foregroundColor(Brand.ink)
+                VStack(alignment: .trailing, spacing: 6) {
+                    if let start = sessionStart {
+                        TimelineView(.periodic(from: .now, by: 1)) { _ in
+                            HStack(spacing: 5) {
+                                Image(systemName: "clock.fill").font(.system(size: 13)).foregroundColor(Color(hex: "6ea300"))
+                                Text(timeString(max(0, Int(-start.timeIntervalSinceNow))))
+                                    .font(.system(size: 21, weight: .heavy)).monospacedDigit().foregroundColor(Brand.ink)
+                            }
+                            .padding(.horizontal, 10).padding(.vertical, 5)
+                            .background(Brand.surface).clipShape(Capsule())
                         }
-                        .padding(.horizontal, 10).padding(.vertical, 5)
-                        .background(Brand.surface).clipShape(Capsule())
                     }
+                    heartChip
                 }
             }
             GeometryReader { geo in
@@ -99,6 +109,37 @@ struct TrainView: View {
                 }
             }.frame(height: 10)
         }
+    }
+
+    @ViewBuilder
+    private var heartChip: some View {
+        if health.isAvailable {
+            if health.connected {
+                HStack(spacing: 5) {
+                    Image(systemName: "heart.fill").font(.system(size: 12))
+                        .foregroundColor(Brand.red)
+                    Text(health.liveBPM.map { "\($0)" } ?? "—").font(.system(size: 15, weight: .heavy)).monospacedDigit().foregroundColor(Brand.ink)
+                    Text("ppm").font(.caption2).fontWeight(.bold).foregroundColor(Brand.muted)
+                }
+                .padding(.horizontal, 10).padding(.vertical, 5)
+                .background(Brand.surface).clipShape(Capsule())
+            } else {
+                Button { connectHealth() } label: {
+                    HStack(spacing: 5) {
+                        Image(systemName: "heart.fill").font(.system(size: 11))
+                        Text("Conectar Salud").font(.system(size: 12, weight: .heavy))
+                    }
+                    .foregroundColor(Color(hex: "a73232"))
+                    .padding(.horizontal, 10).padding(.vertical, 5)
+                    .background(Brand.redSoft).clipShape(Capsule())
+                }
+            }
+        }
+    }
+
+    private func connectHealth() {
+        FX.tap()
+        Task { if await health.connect() { health.startSession() } }
     }
 
     private var restOver: Bool { restElapsed >= restTotal }
@@ -218,6 +259,12 @@ struct TrainView: View {
                     summaryStat("\(Int(sessionVolume)) kg", "Volumen", "dumbbell.fill")
                     summaryStat("+\(sessionXP)", "XP", "bolt.fill")
                 }
+                if let avg = health.sessionAvg {
+                    HStack(spacing: 10) {
+                        summaryStat("\(avg)", "FC media", "heart.fill")
+                        summaryStat("\(health.sessionMax ?? avg)", "FC máx", "heart.fill")
+                    }
+                }
                 if skippedSets > 0 {
                     Text("\(skippedSets) series saltadas · \(exercisesDone) ejercicios").font(.caption).foregroundColor(Brand.soft)
                         .frame(maxWidth: .infinity, alignment: .center)
@@ -273,7 +320,9 @@ struct TrainView: View {
 
                 Button {
                     fxFinish()
-                    store.saveSession(name: sessionName, note: sessionNote, photoData: sessionPhoto, visibility: visibility, elapsed: elapsedSeconds)
+                    let hr = health.endSession()
+                    store.saveSession(name: sessionName, note: sessionNote, photoData: sessionPhoto, visibility: visibility,
+                                      elapsed: elapsedSeconds, avgHeartRate: hr.avg, maxHeartRate: hr.max)
                     resetLocal()
                 } label: { Label("Guardar entrenamiento", systemImage: "checkmark") }
                     .buttonStyle(PrimaryButtonStyle()).padding(.top, 4)
@@ -315,6 +364,7 @@ struct TrainView: View {
         return "\(labels[top] ?? "Entreno") \(time)"
     }
     private func resetLocal() {
+        health.endSession()
         sessionStart = nil; restActive = false; restElapsed = 0; restTotal = 0; showSummary = false
         sessionName = ""; sessionNote = ""; sessionPhoto = nil; sessionPickerItem = nil; visibility = .all
     }

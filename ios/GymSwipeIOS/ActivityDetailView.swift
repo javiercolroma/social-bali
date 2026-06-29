@@ -15,6 +15,8 @@ struct ActivityData {
     let sets: Int
     let volume: Double
     let items: [SessionExercise]
+    var avgHeartRate: Int? = nil
+    var maxHeartRate: Int? = nil
 }
 
 struct ActivityDetailView: View {
@@ -70,6 +72,12 @@ struct ActivityDetailView: View {
                     HStack(spacing: 10) {
                         metric("\(Int(item.volume)) kg", "Volumen", "dumbbell.fill")
                         metric("\(item.exercises)", "Ejercicios", "list.bullet")
+                    }
+                    if let avg = item.avgHeartRate {
+                        HStack(spacing: 10) {
+                            metric("\(avg) ppm", "FC media", "heart.fill")
+                            metric("\(item.maxHeartRate ?? avg) ppm", "FC máx", "heart.fill")
+                        }
                     }
 
                     // Exercises

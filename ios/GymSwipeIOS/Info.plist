@@ -24,6 +24,8 @@
 	<false/>
 	<key>LSApplicationCategoryType</key>
 	<string>public.app-category.healthcare-fitness</string>
+	<key>NSHealthShareUsageDescription</key>
+	<string>Forge Loop lee tu frecuencia cardíaca de la app Salud para registrarla en tus entrenamientos.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>Forge Loop usa tu ubicación para mostrarte el ranking y los compañeros de entreno cercanos.</string>
 	<key>UILaunchScreen</key>

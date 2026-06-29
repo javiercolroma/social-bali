@@ -94,6 +94,8 @@ struct WorkoutSession: Identifiable, Codable {
     var photoData: Data?
     var visibility: WorkoutVisibility
     var items: [SessionExercise]? = nil
+    var avgHeartRate: Int? = nil
+    var maxHeartRate: Int? = nil
 }
 
 struct WorkoutTemplate: Identifiable, Codable, Hashable {

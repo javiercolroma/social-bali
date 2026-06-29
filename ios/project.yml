@@ -14,12 +14,20 @@ targets:
     deploymentTarget: "16.0"
     sources:
       - path: GymSwipeIOS
+    dependencies:
+      - sdk: HealthKit.framework
+    entitlements:
+      path: GymSwipeIOS/GymSwipeIOS.entitlements
+      properties:
+        com.apple.developer.healthkit: true
+        com.apple.developer.healthkit.access: []
     info:
       path: GymSwipeIOS/Info.plist
       properties:
         CFBundleDisplayName: Forge Loop
         ITSAppUsesNonExemptEncryption: false
         LSApplicationCategoryType: public.app-category.healthcare-fitness
+        NSHealthShareUsageDescription: Forge Loop lee tu frecuencia cardíaca de la app Salud para registrarla en tus entrenamientos.
         NSLocationWhenInUseUsageDescription: Forge Loop usa tu ubicación para mostrarte el ranking y los compañeros de entreno cercanos.
         UILaunchScreen:
           UIColorName: LaunchBackground

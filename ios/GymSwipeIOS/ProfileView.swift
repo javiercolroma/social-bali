@@ -11,6 +11,7 @@ struct ProfileView: View {
     @State private var birthSelection = Calendar.current.date(byAdding: .year, value: -25, to: Date()) ?? Date()
     @AppStorage("fxSound") private var soundOn = true
     @AppStorage("fxHaptics") private var hapticsOn = true
+    @ObservedObject private var health = HealthManager.shared
 
     private var ageText: String {
         guard let b = store.profile.birthdate else { return "" }
@@ -124,6 +125,28 @@ struct ProfileView: View {
                         .tint(Brand.green)
                     Toggle(isOn: $hapticsOn) { Label("Vibración", systemImage: "iphone.radiowaves.left.and.right") }
                         .tint(Brand.green)
+                }
+
+                if health.isAvailable {
+                    PanelCard {
+                        Text("SALUD").font(.caption2).fontWeight(.heavy).foregroundColor(Brand.muted)
+                        if health.connected {
+                            HStack(spacing: 8) {
+                                Image(systemName: "heart.fill").foregroundColor(Brand.red)
+                                Text("Conectado con Salud").font(.system(size: 15, weight: .heavy)).foregroundColor(Brand.ink)
+                                Spacer()
+                                Image(systemName: "checkmark.seal.fill").foregroundColor(Color(hex: "4b8a1f"))
+                            }
+                            Text("Tu frecuencia cardíaca se registra durante el entrenamiento.")
+                                .font(.caption).foregroundColor(Brand.muted)
+                        } else {
+                            Text("Conecta la app Salud para registrar tu frecuencia cardíaca en los entrenos.")
+                                .font(.footnote).foregroundColor(Brand.muted)
+                            Button { FX.tap(); Task { await health.connect() } } label: {
+                                Label("Conectar con Salud", systemImage: "heart.fill")
+                            }.buttonStyle(PrimaryButtonStyle())
+                        }
+                    }
                 }
             }
             .padding(.horizontal, 14)

@@ -17,6 +17,8 @@ private struct FeedItem: Identifiable {
     let sets: Int
     let volume: Double
     let items: [SessionExercise]
+    var avgHeartRate: Int? = nil
+    var maxHeartRate: Int? = nil
 }
 
 struct SocialFeedView: View {
@@ -54,7 +56,8 @@ struct SocialFeedView: View {
         ActivityData(authorName: item.authorName, avatarPhoto: item.avatarPhoto, avatarEmoji: item.avatarEmoji,
                      flag: item.flag, location: item.location, date: item.date, title: item.title, note: item.note,
                      photo: item.photo, elapsed: item.elapsed, exercises: item.exercises, sets: item.sets,
-                     volume: item.volume, items: item.items)
+                     volume: item.volume, items: item.items,
+                     avgHeartRate: item.avgHeartRate, maxHeartRate: item.maxHeartRate)
     }
 
     private var emptyState: some View {
@@ -202,7 +205,7 @@ struct SocialFeedView: View {
                 flag: countryFlag(store.profile.country), location: loc,
                 date: s.date, title: s.name, note: s.note, photo: s.photoData,
                 elapsed: s.elapsed, exercises: s.exercises, sets: s.sets, volume: s.volume,
-                items: s.items ?? [])
+                items: s.items ?? [], avgHeartRate: s.avgHeartRate, maxHeartRate: s.maxHeartRate)
         }
     }
 
