@@ -561,16 +561,20 @@ private struct CommentsSheet: View {
                  + Text(c.text).font(.system(size: 14)).foregroundColor(Color(hex: "2c3127")))
                     .fixedSize(horizontal: false, vertical: true)
                 HStack(spacing: 14) {
-                    Text(relativeTime(c.date))
-                    if c.likes > 0 { Text("\(c.likes) me gusta") }
+                    Text(commentTime(c.date))
                     Button("Responder") { startReply(c, isReply: isReply) }
                 }
                 .font(.system(size: 12, weight: .semibold)).foregroundColor(Brand.soft)
             }
             Spacer()
             Button { toggleLike(c.id) } label: {
-                Image(systemName: c.liked ? "heart.fill" : "heart")
-                    .font(.system(size: 13)).foregroundColor(c.liked ? Brand.red : Brand.soft)
+                VStack(spacing: 2) {
+                    Image(systemName: c.liked ? "heart.fill" : "heart")
+                        .font(.system(size: 14)).foregroundColor(c.liked ? Brand.red : Brand.soft)
+                    if c.likes > 0 {
+                        Text("\(c.likes)").font(.system(size: 11, weight: .semibold)).foregroundColor(Brand.soft)
+                    }
+                }
             }.buttonStyle(.plain)
         }
         .padding(.leading, isReply ? 42 : 0)
@@ -614,6 +618,21 @@ private struct CommentsSheet: View {
     }
 
     private var canPost: Bool { !draft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
+
+    /// Antigüedad estilo Instagram: "34 min" → "6 h" → "2 d" → "d MMM yyyy".
+    private func commentTime(_ date: Date) -> String {
+        let mins = Int(max(0, -date.timeIntervalSinceNow) / 60)
+        if mins < 1 { return "ahora" }
+        if mins < 60 { return "\(mins) min" }
+        let hours = mins / 60
+        if hours < 24 { return "\(hours) h" }
+        let days = hours / 24
+        if days < 7 { return "\(days) d" }
+        let f = DateFormatter()
+        f.locale = Locale(identifier: "es_ES")
+        f.dateFormat = "d MMM yyyy"
+        return f.string(from: date)
+    }
 
     private func startReply(_ c: PostComment, isReply: Bool) {
         if isReply {
