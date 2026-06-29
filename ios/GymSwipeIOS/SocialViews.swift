@@ -687,9 +687,10 @@ struct FriendProfileView: View {
 
 struct MeProfileView: View {
     @EnvironmentObject var store: AppStore
+    @Environment(\.dismiss) private var dismiss
     @State private var daySheet: DayPayload?
     @State private var detailSession: WorkoutSession?
-    @State private var showEdit = false
+    @State private var showSettings = false
     @State private var followList: FollowListData?
 
     var body: some View {
@@ -713,6 +714,7 @@ struct MeProfileView: View {
                         ScoreBarView(label: "Calidad", value: score.quality)
                         ScoreBarView(label: "Variedad", value: score.variety)
                     }
+                    socialCards
                     TrainingCalendarView(sessions: sessionsList) { date, day in
                         daySheet = DayPayload(id: date, date: date, sessions: day)
                     }
@@ -731,17 +733,49 @@ struct MeProfileView: View {
             }
             .background(Brand.bg)
             .navigationTitle("").navigationBarTitleDisplayMode(.inline)
-            .toolbar { ToolbarItem(placement: .topBarTrailing) { Button { showEdit = true } label: { Image(systemName: "gearshape").foregroundColor(Brand.ink) } } }
+            .toolbar { ToolbarItem(placement: .topBarTrailing) { Button { FX.tap(); showSettings = true } label: { Image(systemName: "gearshape").foregroundColor(Brand.ink) } } }
             .sheet(item: $daySheet) { DaySessionsSheet(date: $0.date, sessions: $0.sessions).environmentObject(store) }
             .sheet(item: $detailSession) { s in ActivityDetailView(item: meActivityData(s, store)).environmentObject(store) }
             .sheet(item: $followList) { FollowListSheet(title: $0.title, people: $0.people).environmentObject(store) }
-            .sheet(isPresented: $showEdit) {
-                NavigationStack {
-                    ProfileView().environmentObject(store)
-                        .navigationTitle("Editar perfil").navigationBarTitleDisplayMode(.inline)
+            .sheet(isPresented: $showSettings) { SettingsView().environmentObject(store) }
+            .onChange(of: store.account?.handle) { _ in if store.account == nil { dismiss() } }
+        }
+    }
+
+    @ViewBuilder
+    private var socialCards: some View {
+        let links = socialLinks
+        if !links.isEmpty {
+            VStack(spacing: 8) {
+                ForEach(links, id: \.url) { l in
+                    Link(destination: l.url) {
+                        HStack(spacing: 10) {
+                            Image(systemName: l.icon).foregroundColor(Color(hex: "6ea300"))
+                            Text(l.title).font(.system(size: 14, weight: .heavy)).foregroundColor(Brand.ink)
+                            Text("@\(l.handle)").font(.caption).foregroundColor(Brand.soft)
+                            Spacer()
+                            Image(systemName: "arrow.up.right").font(.system(size: 12, weight: .bold)).foregroundColor(Brand.soft)
+                        }
+                        .padding(12).background(Brand.panel).clipShape(RoundedRectangle(cornerRadius: 12))
+                        .overlay(RoundedRectangle(cornerRadius: 12).stroke(Brand.line))
+                    }
                 }
             }
         }
+    }
+
+    private var socialLinks: [(title: String, handle: String, icon: String, url: URL)] {
+        var out: [(title: String, handle: String, icon: String, url: URL)] = []
+        if let ig = store.profile.instagram, !ig.isEmpty, let u = URL(string: "https://instagram.com/\(ig)") {
+            out.append(("Instagram", ig, "camera.circle.fill", u))
+        }
+        if let tk = store.profile.tiktok, !tk.isEmpty, let u = URL(string: "https://www.tiktok.com/@\(tk)") {
+            out.append(("TikTok", tk, "music.note", u))
+        }
+        if let tw = store.profile.twitter, !tw.isEmpty, let u = URL(string: "https://x.com/\(tw)") {
+            out.append(("X", tw, "at", u))
+        }
+        return out
     }
 
     private func header(entrenos: Int) -> some View {
@@ -759,10 +793,6 @@ struct MeProfileView: View {
                              siguiendo: store.following.count,
                              onSeguidores: { followList = FollowListData(title: "Seguidores", people: demoFollowList(store, seed: store.account?.handle ?? "me", salt: 7, exclude: nil)) },
                              onSiguiendo: { followList = FollowListData(title: "Siguiendo", people: store.following) })
-            Button { showEdit = true } label: {
-                Label("Editar perfil", systemImage: "pencil").font(.system(size: 15, weight: .heavy)).foregroundColor(Brand.ink)
-                    .frame(maxWidth: .infinity).frame(height: 46).background(Brand.chip).clipShape(RoundedRectangle(cornerRadius: 12))
-            }.buttonStyle(.plain)
         }
     }
 

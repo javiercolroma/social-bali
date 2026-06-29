@@ -230,6 +230,9 @@ final class AppStore: ObservableObject {
 
     func saveAccount(_ acc: Account) { account = acc; persist() }
 
+    /// Cerrar sesión: vuelve a la pantalla de creación de cuenta.
+    func logout() { account = nil; persist() }
+
     // MARK: - Seguir / solicitudes (estilo Instagram)
 
     /// Pulsar "Seguir / Siguiendo / Pendiente" sobre alguien.

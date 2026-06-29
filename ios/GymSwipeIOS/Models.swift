@@ -47,6 +47,9 @@ struct Profile: Codable {
     var region: String? = nil
     var birthdate: Date? = nil
     var isPrivate: Bool = false
+    var instagram: String? = nil
+    var tiktok: String? = nil
+    var twitter: String? = nil
 }
 
 struct HistoryEntry: Identifiable, Codable {
