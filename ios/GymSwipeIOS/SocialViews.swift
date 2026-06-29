@@ -15,6 +15,7 @@ struct MessagesSheet: View {
     @State var initialTab: Int = 0
     @State private var tab = 0
     @State private var profileTarget: IdString?
+    @State private var chatTarget: IdString?
     var onOpenChat: (String) -> Void
     var onOpenProfile: (String) -> Void
     var onEditAccount: () -> Void
@@ -32,7 +33,7 @@ struct MessagesSheet: View {
 
                 ScrollView {
                     if tab == 1 { chats } else {
-                        FriendsContent(onOpenChat: onOpenChat,
+                        FriendsContent(onOpenChat: { chatTarget = IdString(id: $0) },
                                        onOpenProfile: { profileTarget = IdString(id: $0) },
                                        onEditAccount: onEditAccount)
                     }
@@ -46,6 +47,16 @@ struct MessagesSheet: View {
                 if let p = store.person(item.id) { FriendProfileView(person: p).environmentObject(store) }
             }
         }
+        // Chat dentro de Mensajes: al volver, regresas a Amigos/Mensajes (no a Social).
+        .overlay {
+            if let c = chatTarget {
+                ChatView(personId: c.id, onOpenProfile: { _ in }, onClose: { chatTarget = nil })
+                    .environmentObject(store)
+                    .transition(.move(edge: .trailing))
+                    .zIndex(5)
+            }
+        }
+        .animation(.easeInOut(duration: 0.28), value: chatTarget?.id)
     }
 
     private var chats: some View {
@@ -55,7 +66,7 @@ struct MessagesSheet: View {
             } else {
                 ForEach(conversations) { conv in
                     let person = store.person(conv.personId)
-                    Button { onOpenChat(conv.personId) } label: {
+                    Button { chatTarget = IdString(id: conv.personId) } label: {
                         HStack(spacing: 11) {
                             Avatar(emoji: person?.avatar ?? "👤")
                             VStack(alignment: .leading, spacing: 3) {
@@ -385,12 +396,12 @@ struct FriendProfileView: View {
     @Environment(\.dismiss) private var dismiss
     let person: SocialPerson
     @State private var daySheet: DayPayload?
+    @State private var detailSession: WorkoutSession?
 
     var body: some View {
         let history = buildFriendHistory(person)
         let score = GymScoreEngine.calculate(history)
-        let recent = history.sorted { $0.completedAt > $1.completedAt }.prefix(8)
-        let sessionsCount = Set(history.map { $0.sessionId ?? "" }).count
+        let sessionsList = friendSessions(history)
 
         return NavigationStack {
             ScrollView {
@@ -410,30 +421,57 @@ struct FriendProfileView: View {
                         ScoreBarView(label: "Calidad", value: score.quality)
                         ScoreBarView(label: "Variedad", value: score.variety)
                     }
-                    TrainingCalendarView(sessions: friendSessions(history)) { date, day in
+                    TrainingCalendarView(sessions: sessionsList) { date, day in
                         daySheet = DayPayload(id: date, date: date, sessions: day)
                     }
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("ENTRENOS RECIENTES · \(sessionsCount) SESIONES").font(.caption2).fontWeight(.heavy).foregroundColor(Brand.muted)
-                        ForEach(Array(recent)) { e in
-                            HStack {
-                                VStack(alignment: .leading, spacing: 2) {
-                                    Text(e.exerciseName).font(.system(size: 14, weight: .bold)).foregroundColor(Brand.ink)
-                                    Text("\(e.sets)×\(e.reps) · \(Int(e.weight)) kg").font(.caption).foregroundColor(Brand.muted)
-                                }
-                                Spacer()
-                                Text(shortTime(e.completedAt)).font(.caption2).foregroundColor(Brand.soft)
-                            }
-                            .padding(10).background(Brand.panel).clipShape(RoundedRectangle(cornerRadius: 10))
-                            .overlay(RoundedRectangle(cornerRadius: 10).stroke(Brand.line))
-                        }
+                    VStack(alignment: .leading, spacing: 12) {
+                        Text("ENTRENOS · \(sessionsList.count)").font(.caption2).fontWeight(.heavy).foregroundColor(Brand.muted)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                        ForEach(sessionsList) { s in sessionPostCard(s) }
                     }
                 }.padding(16)
             }
             .background(Brand.bg)
             .navigationTitle(person.name).navigationBarTitleDisplayMode(.inline)
             .sheet(item: $daySheet) { DaySessionsSheet(date: $0.date, sessions: $0.sessions, author: person).environmentObject(store) }
+            .sheet(item: $detailSession) { s in
+                ActivityDetailView(item: personActivityData(s, person)).environmentObject(store)
+            }
         }
+    }
+
+    private func sessionPostCard(_ s: WorkoutSession) -> some View {
+        Button { FX.tap(); detailSession = s } label: {
+            PanelCard {
+                HStack(spacing: 8) {
+                    Image(systemName: "dumbbell.fill").font(.system(size: 13)).foregroundColor(Color(hex: "6ea300"))
+                    Text(s.name).font(.system(size: 16, weight: .heavy)).foregroundColor(Brand.ink).lineLimit(1)
+                    Spacer()
+                    Image(systemName: "chevron.right").font(.system(size: 12, weight: .bold)).foregroundColor(Brand.soft)
+                }
+                Text(relativeTime(s.date)).font(.caption).foregroundColor(Brand.soft).frame(maxWidth: .infinity, alignment: .leading)
+                HStack(spacing: 8) {
+                    miniStat(durationText(s.elapsed), "Tiempo")
+                    miniStat("\(s.sets)", "Series")
+                    miniStat("\(s.exercises)", "Ejerc.")
+                    if let avg = s.avgHeartRate { miniStat("\(avg)", "ppm") }
+                }
+            }
+        }.buttonStyle(.plain)
+    }
+
+    private func miniStat(_ value: String, _ label: String) -> some View {
+        VStack(spacing: 2) {
+            Text(value).font(.system(size: 15, weight: .heavy)).foregroundColor(Brand.ink)
+            Text(label).font(.system(size: 9, weight: .bold)).foregroundColor(Brand.muted)
+        }.frame(maxWidth: .infinity).padding(.vertical, 8)
+            .background(Brand.surface).clipShape(RoundedRectangle(cornerRadius: 10))
+    }
+
+    private func durationText(_ s: Int) -> String {
+        let m = s / 60
+        if m >= 60 { return "\(m / 60)h \(m % 60)m" }
+        return "\(max(1, m)) min"
     }
 
     private var header: some View {

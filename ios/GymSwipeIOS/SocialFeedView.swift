@@ -285,61 +285,62 @@ struct SocialFeedView: View {
 
     private func card(_ item: FeedItem, showFollow: Bool = false) -> some View {
         PanelCard {
-            VStack(alignment: .leading, spacing: 12) {
-                HStack(spacing: 11) {
-                    Button { openProfile(item) } label: {
-                        HStack(spacing: 11) {
-                            ZStack(alignment: .bottomTrailing) {
-                                authorAvatar(item)
-                                Text(item.flag).font(.system(size: 11)).frame(width: 17, height: 17)
-                                    .background(Circle().fill(.white)).overlay(Circle().stroke(Brand.line)).offset(x: 3, y: 3)
-                            }
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text(item.authorName).font(.system(size: 15, weight: .heavy)).foregroundColor(Brand.ink)
-                                HStack(spacing: 5) {
-                                    Text(relativeTime(item.date))
-                                    if !item.location.isEmpty {
-                                        Text("·"); Image(systemName: "mappin.and.ellipse").font(.system(size: 9)); Text(item.location)
-                                    }
-                                }.font(.caption2).foregroundColor(Brand.soft)
-                            }
+            // Cabecera: avatar/nombre abre el PERFIL (zona de toque propia).
+            HStack(spacing: 11) {
+                Button { openProfile(item) } label: {
+                    HStack(spacing: 11) {
+                        ZStack(alignment: .bottomTrailing) {
+                            authorAvatar(item)
+                            Text(item.flag).font(.system(size: 11)).frame(width: 17, height: 17)
+                                .background(Circle().fill(.white)).overlay(Circle().stroke(Brand.line)).offset(x: 3, y: 3)
                         }
-                    }.buttonStyle(.plain)
-                    Spacer()
-                    if showFollow, let pid = item.personId, let p = store.person(pid) {
-                        Button { followPerson(p) } label: {
-                            Text("Seguir").font(.system(size: 12, weight: .heavy)).foregroundColor(Color(hex: "10150a"))
-                                .padding(.horizontal, 12).frame(height: 30).background(Brand.green).clipShape(Capsule())
-                        }.buttonStyle(.plain)
-                    } else {
-                        Image(systemName: "chevron.right").font(.system(size: 12, weight: .bold)).foregroundColor(Brand.soft)
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(item.authorName).font(.system(size: 15, weight: .heavy)).foregroundColor(Brand.ink)
+                            HStack(spacing: 5) {
+                                Text(relativeTime(item.date))
+                                if !item.location.isEmpty {
+                                    Text("·"); Image(systemName: "mappin.and.ellipse").font(.system(size: 9)); Text(item.location)
+                                }
+                            }.font(.caption2).foregroundColor(Brand.soft)
+                        }
                     }
-                }
-
-                HStack(spacing: 8) {
-                    Image(systemName: "dumbbell.fill").font(.system(size: 13)).foregroundColor(Color(hex: "6ea300"))
-                    Text(item.title).font(.system(size: 16, weight: .heavy)).foregroundColor(Brand.ink)
-                }
-
-                if !item.note.isEmpty {
-                    Text(item.note).font(.system(size: 14)).foregroundColor(Color(hex: "2c3127")).lineLimit(2).fixedSize(horizontal: false, vertical: true)
-                }
-
-                if let data = item.photo, let ui = UIImage(data: data) {
-                    Image(uiImage: ui).resizable().scaledToFill()
-                        .frame(maxWidth: .infinity).frame(height: 180).clipped()
-                        .clipShape(RoundedRectangle(cornerRadius: 12))
-                }
-
-                HStack(spacing: 8) {
-                    stat(durationText(item.elapsed), "Tiempo", "clock")
-                    stat("\(item.sets)", "Series", "checkmark.circle")
-                    stat("\(item.exercises)", "Ejerc.", "list.bullet")
-                    if let avg = item.avgHeartRate { stat("\(avg)", "ppm", "heart.fill") }
+                }.buttonStyle(.plain)
+                Spacer()
+                if showFollow, let pid = item.personId, let p = store.person(pid) {
+                    Button { followPerson(p) } label: {
+                        Text("Seguir").font(.system(size: 12, weight: .heavy)).foregroundColor(Color(hex: "10150a"))
+                            .padding(.horizontal, 12).frame(height: 30).background(Brand.green).clipShape(Capsule())
+                    }.buttonStyle(.plain)
+                } else {
+                    Image(systemName: "chevron.right").font(.system(size: 12, weight: .bold)).foregroundColor(Brand.soft)
                 }
             }
-            .contentShape(Rectangle())
-            .onTapGesture { FX.tap(); activity = item }
+
+            // Cuerpo: abre el DETALLE del entreno.
+            Button { FX.tap(); activity = item } label: {
+                VStack(alignment: .leading, spacing: 12) {
+                    HStack(spacing: 8) {
+                        Image(systemName: "dumbbell.fill").font(.system(size: 13)).foregroundColor(Color(hex: "6ea300"))
+                        Text(item.title).font(.system(size: 16, weight: .heavy)).foregroundColor(Brand.ink)
+                    }
+                    if !item.note.isEmpty {
+                        Text(item.note).font(.system(size: 14)).foregroundColor(Color(hex: "2c3127")).lineLimit(2).fixedSize(horizontal: false, vertical: true)
+                    }
+                    if let data = item.photo, let ui = UIImage(data: data) {
+                        Image(uiImage: ui).resizable().scaledToFill()
+                            .frame(maxWidth: .infinity).frame(height: 180).clipped()
+                            .clipShape(RoundedRectangle(cornerRadius: 12))
+                    }
+                    HStack(spacing: 8) {
+                        stat(durationText(item.elapsed), "Tiempo", "clock")
+                        stat("\(item.sets)", "Series", "checkmark.circle")
+                        stat("\(item.exercises)", "Ejerc.", "list.bullet")
+                        if let avg = item.avgHeartRate { stat("\(avg)", "ppm", "heart.fill") }
+                    }
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .contentShape(Rectangle())
+            }.buttonStyle(.plain)
 
             // Acciones estilo Instagram: like (corazón), comentario, compartir (avión), con contadores.
             HStack(spacing: 20) {
