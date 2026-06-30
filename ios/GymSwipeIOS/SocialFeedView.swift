@@ -407,11 +407,7 @@ struct SocialFeedView: View {
             HStack(spacing: 20) {
                 LikeButton(id: item.id, baseCount: kudos(item), onShowLikes: { likesOfPost = item }).environmentObject(store)
 
-                Button {
-                    FX.tap()
-                    if comments[item.id] == nil { comments[item.id] = demoComments(for: item) }
-                    commentTarget = item
-                } label: {
+                Button { openComments(item) } label: {
                     actionIcon("bubble.right", "\(commentTotal(item))", tint: Brand.ink)
                 }.buttonStyle(.plain)
 
@@ -422,7 +418,48 @@ struct SocialFeedView: View {
                 Spacer()
             }
             .padding(.top, 2)
+
+            commentPreview(item)
         }
+    }
+
+    /// Vista previa de comentarios estilo Instagram: "Ver los N comentarios" + 1-2 comentarios recientes.
+    @ViewBuilder private func commentPreview(_ item: FeedItem) -> some View {
+        let total = commentTotal(item)
+        let preview = previewComments(item)
+        if !preview.isEmpty {
+            VStack(alignment: .leading, spacing: 3) {
+                if total > preview.count {
+                    Button { openComments(item) } label: {
+                        Text("Ver los \(total) comentarios")
+                            .font(.system(size: 13)).foregroundColor(Brand.soft)
+                    }.buttonStyle(.plain)
+                }
+                ForEach(preview) { c in
+                    Button { openComments(item) } label: {
+                        (Text(c.authorName).font(.system(size: 13, weight: .heavy)).foregroundColor(Brand.ink)
+                         + Text("  ")
+                         + Text(c.text).font(.system(size: 13)).foregroundColor(Color(hex: "2c3127")))
+                            .lineLimit(1)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                    }.buttonStyle(.plain)
+                }
+            }
+            .padding(.top, 1)
+        }
+    }
+
+    private func openComments(_ item: FeedItem) {
+        FX.tap()
+        if comments[item.id] == nil { comments[item.id] = demoComments(for: item) }
+        commentTarget = item
+    }
+
+    private func commentList(_ item: FeedItem) -> [PostComment] { comments[item.id] ?? demoComments(for: item) }
+
+    /// Hasta 2 comentarios de nivel superior, los más recientes primero (como Instagram).
+    private func previewComments(_ item: FeedItem) -> [PostComment] {
+        Array(commentList(item).sorted { $0.date > $1.date }.prefix(2))
     }
 
     private func actionIcon(_ icon: String, _ count: String, tint: Color) -> some View {
@@ -439,8 +476,7 @@ struct SocialFeedView: View {
     }
 
     private func commentTotal(_ item: FeedItem) -> Int {
-        let list = comments[item.id] ?? demoComments(for: item)
-        return list.reduce(0) { $0 + 1 + $1.replies.count }
+        commentList(item).reduce(0) { $0 + 1 + $1.replies.count }
     }
 
     /// Comentarios demo deterministas por post (de gente de la comunidad), para que el muro se sienta vivo.
