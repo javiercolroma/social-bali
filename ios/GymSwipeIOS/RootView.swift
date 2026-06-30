@@ -29,7 +29,7 @@ struct RootView: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .onChange(of: tab) { _ in FX.selection() }
 
-            CustomTabBar(tab: $tab)
+            CustomTabBar(tab: tab, onSelect: { tab = $0 }).id(tab)
         }
         .background(Brand.bg.ignoresSafeArea())
         .sheet(isPresented: $showMessages) {
@@ -137,7 +137,11 @@ struct RootView: View {
 }
 
 struct CustomTabBar: View {
-    @Binding var tab: Int
+    // Se pasa el VALOR (no un @Binding): así el resaltado SIEMPRE se re-renderiza al
+    // cambiar de pestaña. Con solo un @Binding, SwiftUI podía saltarse el re-render y el
+    // resaltado se quedaba pegado en Social.
+    let tab: Int
+    var onSelect: (Int) -> Void
     private let items: [(title: String, icon: String)] = [
         ("Social", "newspaper.fill"),
         ("Plan", "list.bullet.clipboard"),
@@ -167,7 +171,7 @@ struct CustomTabBar: View {
 
     private func tabButton(_ idx: Int, _ item: (title: String, icon: String)) -> some View {
         let active = tab == idx
-        return Button { tab = idx } label: {
+        return Button { onSelect(idx) } label: {
             VStack(spacing: 4) {
                 Image(systemName: item.icon)
                     .font(.system(size: 18, weight: active ? .heavy : .semibold))
@@ -185,7 +189,7 @@ struct CustomTabBar: View {
 
     private func centerButton(_ idx: Int, _ item: (title: String, icon: String)) -> some View {
         let active = tab == idx
-        return Button { tab = idx } label: {
+        return Button { onSelect(idx) } label: {
             VStack(spacing: 4) {
                 Image(systemName: item.icon).font(.system(size: 20, weight: .heavy))
                     .foregroundStyle(active ? Color(hex: "10150a") : Brand.soft)
