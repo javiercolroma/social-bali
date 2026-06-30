@@ -42,6 +42,7 @@ struct SocialFeedView: View {
     @State private var segment = 0
     @State private var activity: FeedItem?
     @State private var commentTarget: FeedItem?
+    @State private var likesOfPost: FeedItem?
     @State private var comments: [String: [PostComment]] = [:]
     @State private var toast: String?
     // El feed es un snapshot: no se reorganiza al seguir a alguien; solo cambia al refrescar (pull-to-refresh).
@@ -72,6 +73,55 @@ struct SocialFeedView: View {
                 set: { comments[item.id] = $0 }))
                 .environmentObject(store)
         }
+        .sheet(item: $likesOfPost) { postLikesSheet($0) }
+    }
+
+    // MARK: - Me gusta de una publicación
+
+    @ViewBuilder
+    private func postLikesSheet(_ item: FeedItem) -> some View {
+        let liked = store.appliedKudos.contains(item.id)
+        let others = kudos(item)                      // likes de la comunidad (sin contar el tuyo)
+        let people = Array(postLikers(item).prefix(others))
+        let remaining = max(0, others - people.count)
+        NavigationStack {
+            ScrollView {
+                VStack(spacing: 0) {
+                    if liked { likeRow(emoji: "", name: store.account?.name ?? "Tú", handle: store.account?.handle ?? "tu_usuario", isMe: true) }
+                    ForEach(people) { p in likeRow(emoji: p.avatar, name: p.name, handle: p.handle, isMe: false) }
+                    if remaining > 0 {
+                        Text("y \(remaining) persona\(remaining == 1 ? "" : "s") más")
+                            .font(.footnote).foregroundColor(Brand.muted)
+                            .frame(maxWidth: .infinity).padding(.vertical, 16)
+                    }
+                }.padding(.vertical, 8)
+            }
+            .background(Brand.bg)
+            .navigationTitle("Me gusta").navigationBarTitleDisplayMode(.inline)
+        }
+        .presentationDetents([.medium, .large])
+    }
+
+    private func likeRow(emoji: String, name: String, handle: String, isMe: Bool) -> some View {
+        HStack(spacing: 11) {
+            if isMe { MeAvatar(account: store.account, size: 40) } else { Avatar(emoji: emoji, size: 40) }
+            VStack(alignment: .leading, spacing: 2) {
+                Text(name).font(.system(size: 15, weight: .heavy)).foregroundColor(Brand.ink)
+                Text("@\(handle)").font(.caption2).foregroundColor(Brand.soft)
+            }
+            Spacer()
+            Image(systemName: "heart.fill").font(.system(size: 14)).foregroundColor(Brand.red)
+        }
+        .padding(.horizontal, 16).padding(.vertical, 8)
+    }
+
+    /// Lista determinista de quién dio like a una publicación (demo).
+    private func postLikers(_ item: FeedItem) -> [SocialPerson] {
+        guard !store.people.isEmpty else { return [] }
+        var seed: UInt64 = 7
+        for ch in item.id.unicodeScalars { seed = seed &* 31 &+ UInt64(ch.value) }
+        let start = Int(seed % UInt64(store.people.count))
+        return Array(store.people[start...] + store.people[..<start])
     }
 
     // MARK: - Switcher
@@ -351,7 +401,7 @@ struct SocialFeedView: View {
 
             // Acciones estilo Instagram: like (corazón), comentario, compartir (avión), con contadores.
             HStack(spacing: 20) {
-                LikeButton(id: item.id, baseCount: kudos(item)).environmentObject(store)
+                LikeButton(id: item.id, baseCount: kudos(item), onShowLikes: { likesOfPost = item }).environmentObject(store)
 
                 Button {
                     FX.tap()
@@ -740,29 +790,32 @@ private struct LikeButton: View {
     @EnvironmentObject var store: AppStore
     let id: String
     let baseCount: Int
+    var onShowLikes: () -> Void = {}
     @State private var pop: CGFloat = 1
     @State private var burst = false
 
     private var liked: Bool { store.appliedKudos.contains(id) }
+    private var total: Int { baseCount + (liked ? 1 : 0) }
 
     var body: some View {
-        Button {
-            let wasLiked = liked
-            store.toggleKudo(id)
-            if wasLiked {
-                FX.tap()
-            } else {
-                Haptics.rigid()
-                pop = 0.6
-                withAnimation(.spring(response: 0.28, dampingFraction: 0.38)) { pop = 1.35 }
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.18) {
-                    withAnimation(.spring(response: 0.35, dampingFraction: 0.6)) { pop = 1 }
+        HStack(spacing: 6) {
+            // El corazón da/quita like (con animación).
+            Button {
+                let wasLiked = liked
+                store.toggleKudo(id)
+                if wasLiked {
+                    FX.tap()
+                } else {
+                    Haptics.rigid()
+                    pop = 0.6
+                    withAnimation(.spring(response: 0.28, dampingFraction: 0.38)) { pop = 1.35 }
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.18) {
+                        withAnimation(.spring(response: 0.35, dampingFraction: 0.6)) { pop = 1 }
+                    }
+                    burst = true
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) { burst = false }
                 }
-                burst = true
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) { burst = false }
-            }
-        } label: {
-            HStack(spacing: 6) {
+            } label: {
                 ZStack {
                     if burst { HeartBurst() }
                     Image(systemName: liked ? "heart.fill" : "heart")
@@ -770,11 +823,15 @@ private struct LikeButton: View {
                         .foregroundColor(liked ? Brand.red : Brand.ink)
                         .scaleEffect(pop)
                 }
-                Text("\(baseCount + (liked ? 1 : 0))")
+            }.buttonStyle(.plain)
+
+            // El número abre la lista de a quién le gusta (como en los comentarios).
+            Button { if total > 0 { FX.tap(); onShowLikes() } } label: {
+                Text("\(total)")
                     .font(.system(size: 14, weight: .semibold)).foregroundColor(Brand.ink)
                     .contentTransition(.numericText())
-            }
-        }.buttonStyle(.plain)
+            }.buttonStyle(.plain).disabled(total == 0)
+        }
     }
 }
 
