@@ -165,7 +165,7 @@ struct MessagesSheet: View {
             }
             .padding(.top, 8)
             .background(Brand.bg)
-            .navigationTitle("Mensajes").navigationBarTitleDisplayMode(.inline)
+            .navigationTitle("").navigationBarTitleDisplayMode(.inline)
             .onAppear { tab = initialTab }
             .sheet(item: $profileTarget) { item in
                 if let p = store.person(item.id) { FriendProfileView(person: p).environmentObject(store) }
@@ -267,7 +267,7 @@ struct FriendsContent: View {
             if !query.isEmpty {
                 section("Resultados", people: results, empty: "Nadie coincide con “\(query)”.")
             } else {
-                section("Solicitudes recibidas", people: incoming, empty: "Sin solicitudes pendientes.")
+                if !incoming.isEmpty { section("Solicitudes recibidas", people: incoming, empty: "") }
                 section("Tus amigos", people: friends, empty: "Aún no tienes amigos. Busca arriba.")
                 section("Descubre compañeros", people: discover, empty: "Ya estás conectado con todos.")
             }
