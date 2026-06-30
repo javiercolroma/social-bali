@@ -85,6 +85,18 @@ final class AppStore: ObservableObject {
         }
     }
 
+    /// Persistencia diferida (coalescente) para ráfagas de cambios como los steppers de
+    /// reps/peso (incluidos los del widget): evita codificar TODO el estado en cada toque.
+    private var persistGen = 0
+    func persistSoon() {
+        persistGen += 1
+        let gen = persistGen
+        Task { @MainActor in
+            try? await Task.sleep(nanoseconds: 600_000_000)
+            if self.persistGen == gen { self.persist() }
+        }
+    }
+
     // MARK: - Computed
 
     var gymScore: GymScore { GymScoreEngine.calculate(history) }
@@ -132,14 +144,14 @@ final class AppStore: ObservableObject {
     func adjustReps(_ id: String, _ delta: Int) {
         guard let i = exercises.firstIndex(where: { $0.id == id }) else { return }
         exercises[i].reps = max(1, exercises[i].reps + delta)
-        persist()
+        persistSoon()   // ráfagas de toques: no recodificar todo el estado en cada uno
     }
 
     func adjustWeight(_ id: String, _ delta: Double) {
         guard let i = exercises.firstIndex(where: { $0.id == id }) else { return }
         let next = max(0, exercises[i].weight + delta)
         exercises[i].weight = (next * 2).rounded() / 2   // keep .5 steps clean
-        persist()
+        persistSoon()
     }
 
     func registerSet(_ exerciseId: String, done: Bool) {
