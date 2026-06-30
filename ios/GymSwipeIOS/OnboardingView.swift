@@ -696,8 +696,9 @@ private struct TypingBubble: View {
     var onDone: (() -> Void)?
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var shown = ""
-    @State private var caret = false
     @State private var task: Task<Void, Never>?
+
+    private let font = Font.system(size: 19, weight: .heavy)
 
     init(_ text: String, typing: Bool = true, onDone: (() -> Void)? = nil) {
         self.full = text; self.typing = typing; self.onDone = onDone
@@ -707,14 +708,13 @@ private struct TypingBubble: View {
         VStack(spacing: 0) {
             Triangle().fill(Color.white).frame(width: 22, height: 11)
                 .overlay(Triangle().stroke(Brand.line, lineWidth: 1).clipShape(Rectangle().offset(y: 1)))
-            HStack(alignment: .center, spacing: 2) {
-                Text(shown).font(.system(size: 19, weight: .heavy)).foregroundColor(Brand.ink)
-                    .multilineTextAlignment(.center).fixedSize(horizontal: false, vertical: true)
-                if typing && shown.count < full.count {
-                    Capsule().fill(Brand.ink).frame(width: 2, height: 18).opacity(caret ? 1 : 0)
-                        .onAppear { withAnimation(.easeInOut(duration: 0.5).repeatForever(autoreverses: true)) { caret = true } }
-                }
+            // El texto completo (invisible) reserva el tamaño final → el bocadillo no salta
+            // al ir apareciendo las letras; encima, el texto que se va escribiendo.
+            ZStack {
+                Text(full).font(font).foregroundColor(.clear).multilineTextAlignment(.center)
+                Text(shown).font(font).foregroundColor(Brand.ink).multilineTextAlignment(.center)
             }
+            .fixedSize(horizontal: false, vertical: true)
             .padding(.horizontal, 18).padding(.vertical, 14)
             .frame(maxWidth: .infinity)
             .background(Color.white).clipShape(RoundedRectangle(cornerRadius: 16))
@@ -730,17 +730,17 @@ private struct TypingBubble: View {
     private func start() {
         if !typing || reduceMotion { shown = full; onDone?(); return }
         shown = ""
-        // Ritmo CONSTANTE y natural (~33 letras/seg) — igual en todas las pantallas,
-        // con pausas suaves al final de frase. Tope total para frases muy largas.
-        let base = min(0.030, 2.0 / Double(max(1, full.count)))
+        // Ritmo pausado y natural: ~40 ms/letra con variación humana por letra
+        // (no mecánico) + pausas tras la puntuación. Tope total para frases largas.
+        let perChar = min(0.042, 2.6 / Double(max(1, full.count)))
         task = Task { @MainActor in
-            try? await Task.sleep(nanoseconds: 120_000_000)   // respira un instante antes
+            try? await Task.sleep(nanoseconds: 200_000_000)   // respira un instante antes
             for ch in full {
                 if Task.isCancelled { return }
                 shown.append(ch)
-                var d = base
-                if ".!?…".contains(ch) { d += 0.08 }
-                else if ",;".contains(ch) { d += 0.04 }
+                var d = perChar * Double.random(in: 0.7...1.45)   // variación natural
+                if ".!?…".contains(ch) { d += 0.12 }
+                else if ",;".contains(ch) { d += 0.06 }
                 try? await Task.sleep(nanoseconds: UInt64(d * 1_000_000_000))
             }
             onDone?()
