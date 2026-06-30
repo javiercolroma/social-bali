@@ -188,7 +188,17 @@ struct OnboardingView: View {
                 }
             }
         } actions: {
-            primary(photoData == nil ? "Elegir foto" : "Usar esta foto") { advance() }
+            if photoData == nil {
+                // "Elegir foto" abre el selector (no avanza); reusa el cargador de PhotoPickerLabel.
+                PhotoPickerLabel(item: $pickerItem, onPicked: { photoData = $0; Haptics.soft() }) {
+                    Text("Elegir foto")
+                        .font(.system(size: 16, weight: .heavy)).foregroundColor(Color(hex: "10150a"))
+                        .frame(maxWidth: .infinity).frame(minHeight: 50)
+                        .background(Brand.green).clipShape(RoundedRectangle(cornerRadius: 12))
+                }
+            } else {
+                primary("Usar esta foto") { advance() }
+            }
             skip()
         }
     }
@@ -197,15 +207,16 @@ struct OnboardingView: View {
         layout {
             Mascot(size: 88)
             Bubble("Cuéntame un poco sobre ti")
-            HStack(spacing: 0) {
+            VStack(spacing: 0) {
                 Picker("Año", selection: $birthYear) {
                     ForEach(years, id: \.self) { Text(String($0)).tag($0) }
-                }.pickerStyle(.wheel).frame(width: 110).clipped()
+                }.pickerStyle(.wheel).frame(height: 112).clipped()
+                Divider().overlay(Brand.line)
                 Picker("Género", selection: $sexSel) {
                     ForEach(sexes, id: \.self) { Text($0).tag($0) }
-                }.pickerStyle(.wheel).frame(maxWidth: .infinity).clipped()
+                }.pickerStyle(.wheel).frame(height: 112).clipped()
             }
-            .frame(height: 150)
+            .frame(maxWidth: .infinity)
             .background(Color.white).clipShape(RoundedRectangle(cornerRadius: 16))
             .overlay(RoundedRectangle(cornerRadius: 16).stroke(Brand.line))
         } actions: {
@@ -223,7 +234,7 @@ struct OnboardingView: View {
                 CitySearchField(label: "", selected: city, country: country) { city = $0 }
                 HStack(spacing: 10) {
                     Image(systemName: "dumbbell.fill").foregroundColor(Brand.soft)
-                    TextField("Tu gimnasio", text: $gym).font(.system(size: 16, weight: .semibold)).tint(Brand.ink)
+                    TextField("Tu gimnasio (opcional)", text: $gym).font(.system(size: 16, weight: .semibold)).tint(Brand.ink)
                 }
                 .padding(.horizontal, 14).frame(height: 50).background(Color.white)
                 .clipShape(RoundedRectangle(cornerRadius: 12)).overlay(RoundedRectangle(cornerRadius: 12).stroke(Brand.line))
@@ -341,8 +352,8 @@ struct OnboardingView: View {
 
 // MARK: - Forgey (mascota original)
 
-/// Mascota amistosa de Forge Loop: cuerpo verde redondeado, ojos que parpadean,
-/// sonrisa y mejillas. Acompaña en cada paso del onboarding.
+/// Mascota amistosa de Forge Loop: cuerpo "blob" con degradado, brillo, ojos con
+/// destello y mejillas suaves. Acompaña en cada paso del onboarding.
 private struct Mascot: View {
     var size: CGFloat = 110
     var wave = false
@@ -351,56 +362,76 @@ private struct Mascot: View {
     @State private var blink = false
     @State private var waveAngle = false
 
+    private let ink = Color(hex: "16240b")
+
     var body: some View {
         ZStack {
-            // Cuerpo
-            RoundedRectangle(cornerRadius: size * 0.42, style: .continuous)
-                .fill(Brand.green)
-                .frame(width: size, height: size * 0.94)
-                .shadow(color: Brand.green.opacity(0.35), radius: 12, y: 8)
-            // Cara
-            VStack(spacing: size * 0.11) {
-                HStack(spacing: size * 0.20) {
-                    eye; eye
+            // Sombra de contacto en el suelo
+            Ellipse().fill(Color.black.opacity(0.10))
+                .frame(width: size * 0.66, height: size * 0.12)
+                .blur(radius: 7).offset(y: size * 0.56)
+
+            ZStack {
+                // Cuerpo con degradado vertical
+                BlobShape()
+                    .fill(LinearGradient(colors: [Color(hex: "c2f861"), Color(hex: "8ed11d")],
+                                         startPoint: .top, endPoint: .bottom))
+                    .overlay(BlobShape().stroke(Color(hex: "6fa916").opacity(0.5), lineWidth: 1))
+                    .frame(width: size, height: size * 1.02)
+                    .shadow(color: Color(hex: "8ed11d").opacity(0.4), radius: 14, y: 10)
+
+                // Brillo superior (gloss)
+                Ellipse().fill(Color.white.opacity(0.40))
+                    .frame(width: size * 0.52, height: size * 0.30)
+                    .blur(radius: 9).offset(x: -size * 0.11, y: -size * 0.28)
+
+                // Mejillas suaves
+                HStack(spacing: size * 0.44) { cheek; cheek }.offset(y: size * 0.15)
+
+                // Cara
+                VStack(spacing: size * 0.10) {
+                    HStack(spacing: size * 0.19) { eye; eye }
+                    Smile().stroke(ink, style: StrokeStyle(lineWidth: size * 0.05, lineCap: .round))
+                        .frame(width: size * 0.34, height: size * 0.16)
+                }.offset(y: size * 0.05)
+
+                if wave {
+                    Image(systemName: "hand.wave.fill")
+                        .font(.system(size: size * 0.20)).foregroundColor(Color(hex: "f2b134"))
+                        .rotationEffect(.degrees(waveAngle ? 20 : -4), anchor: .bottomLeading)
+                        .offset(x: size * 0.5, y: -size * 0.34)
+                        .animation(.easeInOut(duration: 0.5).repeatForever(autoreverses: true), value: waveAngle)
                 }
-                Smile().stroke(Color(hex: "10150a"), style: StrokeStyle(lineWidth: size * 0.045, lineCap: .round))
-                    .frame(width: size * 0.30, height: size * 0.15)
+                if holdsHeart {
+                    Image(systemName: "heart.fill").font(.system(size: size * 0.22)).foregroundColor(Brand.red)
+                        .shadow(color: Brand.red.opacity(0.4), radius: 4, y: 2)
+                        .offset(x: size * 0.46, y: -size * 0.36)
+                        .scaleEffect(bob ? 1.14 : 0.94)
+                }
             }
-            .offset(y: size * 0.02)
-            // Mejillas
-            HStack(spacing: size * 0.46) {
-                cheek; cheek
-            }.offset(y: size * 0.12)
-            // Brazo que saluda / corazón
-            if wave {
-                Image(systemName: "hand.wave.fill")
-                    .font(.system(size: size * 0.22))
-                    .foregroundColor(Color(hex: "10150a"))
-                    .rotationEffect(.degrees(waveAngle ? 18 : -6), anchor: .bottomLeading)
-                    .offset(x: size * 0.52, y: -size * 0.30)
-                    .animation(.easeInOut(duration: 0.5).repeatForever(autoreverses: true), value: waveAngle)
-            }
-            if holdsHeart {
-                Image(systemName: "heart.fill").font(.system(size: size * 0.24)).foregroundColor(Brand.red)
-                    .offset(x: size * 0.5, y: -size * 0.34)
-                    .scaleEffect(bob ? 1.12 : 0.95)
-            }
+            .offset(y: bob ? -size * 0.03 : size * 0.03)
         }
-        .offset(y: bob ? -size * 0.035 : size * 0.035)
+        .frame(width: size * 1.2, height: size * 1.3)
         .onAppear {
-            withAnimation(.easeInOut(duration: 1.5).repeatForever(autoreverses: true)) { bob = true }
+            withAnimation(.easeInOut(duration: 1.6).repeatForever(autoreverses: true)) { bob = true }
             if wave { waveAngle = true }
             scheduleBlink()
         }
     }
 
+    // Ojo: óvalo oscuro con un destello blanco (le da vida)
     private var eye: some View {
-        Capsule().fill(Color(hex: "10150a"))
-            .frame(width: size * 0.085, height: blink ? size * 0.02 : size * 0.17)
+        Capsule().fill(ink)
+            .frame(width: size * 0.115, height: blink ? size * 0.025 : size * 0.215)
+            .overlay(alignment: .top) {
+                Circle().fill(Color.white.opacity(blink ? 0 : 0.9))
+                    .frame(width: size * 0.045, height: size * 0.045)
+                    .offset(y: size * 0.035)
+            }
     }
     private var cheek: some View {
-        Circle().fill(Color(red: 1, green: 0.45, blue: 0.45).opacity(0.45))
-            .frame(width: size * 0.12, height: size * 0.12)
+        Circle().fill(Color(red: 1, green: 0.46, blue: 0.46).opacity(0.5))
+            .frame(width: size * 0.15, height: size * 0.15).blur(radius: size * 0.02)
     }
     private func scheduleBlink() {
         DispatchQueue.main.asyncAfter(deadline: .now() + Double.random(in: 2.5...4.5)) {
@@ -410,6 +441,27 @@ private struct Mascot: View {
                 scheduleBlink()
             }
         }
+    }
+}
+
+/// Cuerpo "blob" simétrico y suave (más orgánico que un cuadrado redondeado).
+private struct BlobShape: Shape {
+    func path(in r: CGRect) -> Path {
+        let w = r.width, h = r.height
+        var p = Path()
+        // Squircle suave construido con curvas (esquinas muy redondeadas, lados ligeramente abombados)
+        let cx = w * 0.5
+        p.move(to: CGPoint(x: cx, y: 0))
+        p.addCurve(to: CGPoint(x: w, y: h * 0.5),
+                   control1: CGPoint(x: w * 0.92, y: 0), control2: CGPoint(x: w, y: h * 0.12))
+        p.addCurve(to: CGPoint(x: cx, y: h),
+                   control1: CGPoint(x: w, y: h * 0.9), control2: CGPoint(x: w * 0.9, y: h))
+        p.addCurve(to: CGPoint(x: 0, y: h * 0.5),
+                   control1: CGPoint(x: w * 0.1, y: h), control2: CGPoint(x: 0, y: h * 0.9))
+        p.addCurve(to: CGPoint(x: cx, y: 0),
+                   control1: CGPoint(x: 0, y: h * 0.12), control2: CGPoint(x: w * 0.08, y: 0))
+        p.closeSubpath()
+        return p
     }
 }
 

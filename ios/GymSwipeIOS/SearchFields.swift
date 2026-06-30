@@ -14,9 +14,11 @@ private func fieldBox<Content: View>(_ focused: Bool, @ViewBuilder content: () -
 
 private func dropdown<Content: View>(@ViewBuilder content: () -> Content) -> some View {
     VStack(spacing: 0, content: content)
-        .background(Color.white).clipShape(RoundedRectangle(cornerRadius: 10))
-        .overlay(RoundedRectangle(cornerRadius: 10).stroke(Brand.line))
+        .background(Color.white).clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).stroke(Brand.line))
+        .shadow(color: .black.opacity(0.10), radius: 16, y: 8)
         .padding(.top, 6)
+        .transition(.opacity.combined(with: .move(edge: .top)))
 }
 
 // MARK: - País (local search over OS country list)
@@ -127,18 +129,22 @@ struct CitySearchField: View {
                     dropdown {
                         ForEach(Array(completer.results.enumerated()), id: \.offset) { idx, r in
                             Button { onSelect(r.title); query = r.title; focused = false } label: {
-                                HStack {
-                                    Image(systemName: "mappin.circle.fill").foregroundColor(Color(hex: "6ea300"))
+                                HStack(spacing: 11) {
+                                    ZStack {
+                                        Circle().fill(Brand.greenSoft).frame(width: 32, height: 32)
+                                        Image(systemName: "mappin").font(.system(size: 13, weight: .bold)).foregroundColor(Color(hex: "4f7a00"))
+                                    }
                                     VStack(alignment: .leading, spacing: 1) {
-                                        Text(r.title).font(.system(size: 14, weight: .semibold)).foregroundColor(Brand.ink)
-                                        if !r.subtitle.isEmpty { Text(r.subtitle).font(.caption2).foregroundColor(Brand.soft) }
+                                        Text(r.title).font(.system(size: 15, weight: .heavy)).foregroundColor(Brand.ink).lineLimit(1)
+                                        if !r.subtitle.isEmpty { Text(r.subtitle).font(.caption2).foregroundColor(Brand.soft).lineLimit(1) }
                                     }
                                     Spacer()
-                                }.padding(.horizontal, 12).frame(minHeight: 44)
-                            }
-                            if idx < completer.results.count - 1 { Divider() }
+                                }.padding(.horizontal, 12).frame(minHeight: 52).contentShape(Rectangle())
+                            }.buttonStyle(.plain)
+                            if idx < completer.results.count - 1 { Divider().padding(.leading, 54) }
                         }
                     }
+                    .animation(.easeOut(duration: 0.18), value: completer.results.count)
                 }
             }
         }
