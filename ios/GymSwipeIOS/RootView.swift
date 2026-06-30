@@ -89,8 +89,17 @@ struct RootView: View {
             Button { FX.tap(); showProfile = true } label: {
                 MeAvatar(account: store.account, size: 44)
                     .overlay(Circle().stroke(Brand.line))
+                    .overlay(alignment: .bottomTrailing) {
+                        // Gym Score en la esquina inferior derecha de la foto.
+                        Text("\(store.gymScore.total)")
+                            .font(.system(size: 11, weight: .heavy)).foregroundColor(Color(hex: "10150a"))
+                            .padding(.horizontal, 5).frame(minWidth: 20, minHeight: 18)
+                            .background(Brand.green).clipShape(Capsule())
+                            .overlay(Capsule().stroke(.white, lineWidth: 1.5))
+                            .offset(x: 6, y: 4)
+                    }
             }
-            .accessibilityLabel("Perfil")
+            .accessibilityLabel("Perfil · Gym Score \(store.gymScore.total)")
             VStack(alignment: .leading, spacing: 2) {
                 Text("FORGE LOOP").font(.caption2).fontWeight(.heavy).kerning(1.4).foregroundColor(Color(hex: "4b6211"))
                 Text(titles[tab]).font(.system(size: 30, weight: .heavy)).foregroundColor(Brand.ink)
