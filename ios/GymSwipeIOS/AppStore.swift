@@ -13,6 +13,7 @@ final class AppStore: ObservableObject {
     @Published var sessions: [WorkoutSession] = []
     @Published var lastAction = "Listo para empezar"
 
+    @Published var auth: Auth?
     @Published var account: Account?
     @Published var relationships: [String: RelationshipStatus] = [:]
     @Published var conversations: [Conversation] = []
@@ -35,6 +36,7 @@ final class AppStore: ObservableObject {
             history = snap.history
             profile = snap.profile
             savedWorkouts = snap.savedWorkouts
+            auth = snap.auth
             account = snap.account
             relationships = snap.relationships
             conversations = snap.conversations
@@ -62,6 +64,7 @@ final class AppStore: ObservableObject {
         var history: [HistoryEntry]
         var profile: Profile
         var savedWorkouts: [WorkoutTemplate]
+        var auth: Auth?
         var account: Account?
         var relationships: [String: RelationshipStatus]
         var conversations: [Conversation]
@@ -76,7 +79,7 @@ final class AppStore: ObservableObject {
         guard loaded else { return }
         let snap = Persisted(
             exercises: exercises, player: player, history: history, profile: profile,
-            savedWorkouts: savedWorkouts, account: account, relationships: relationships,
+            savedWorkouts: savedWorkouts, auth: auth, account: account, relationships: relationships,
             conversations: conversations, notifications: notifications, trainingPlans: trainingPlans,
             sessions: sessions, appliedKudos: Array(appliedKudos), hiddenWorkoutIds: Array(hiddenWorkoutIds)
         )
@@ -249,8 +252,14 @@ final class AppStore: ObservableObject {
 
     func saveAccount(_ acc: Account) { account = acc; persist() }
 
-    /// Cerrar sesión: vuelve a la pantalla de creación de cuenta.
-    func logout() { account = nil; persist() }
+    /// Inicia sesión con un proveedor (Apple / email / Google). Sin backend: se guarda local.
+    func signIn(provider: String, userId: String, email: String?, name: String?) {
+        auth = Auth(provider: provider, userId: userId, email: email, name: name)
+        persist()
+    }
+
+    /// Cerrar sesión: vuelve a la pantalla de login (se conserva el perfil para reentrar).
+    func logout() { auth = nil; persist() }
 
     // MARK: - Seguir / solicitudes (estilo Instagram)
 

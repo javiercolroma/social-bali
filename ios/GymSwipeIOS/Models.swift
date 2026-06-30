@@ -134,6 +134,14 @@ enum RelationshipStatus: String, Codable {
     case none, outgoing, incoming, friends
 }
 
+/// Sesión iniciada (identidad del proveedor). Sin backend todavía: se guarda local.
+struct Auth: Codable, Equatable {
+    var provider: String      // "apple" | "google" | "email"
+    var userId: String
+    var email: String? = nil
+    var name: String? = nil
+}
+
 struct Account: Codable, Equatable {
     var name: String
     var handle: String

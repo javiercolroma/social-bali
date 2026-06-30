@@ -78,6 +78,9 @@ struct OnboardingView: View {
                     .padding(.horizontal, 24)
             }
         }
+        .onAppear {
+            if name.isEmpty, let n = store.auth?.name, !n.isEmpty { name = n }   // prefijar con Apple/Google
+        }
         .onChange(of: step) { _ in
             reactionLine = nil   // la reacción de Forgey es por pantalla
             if step == .name { focusSoon(.name) }

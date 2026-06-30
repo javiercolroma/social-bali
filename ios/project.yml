@@ -22,6 +22,8 @@ targets:
       properties:
         com.apple.developer.healthkit: true
         com.apple.developer.healthkit.access: []
+        com.apple.developer.applesignin:
+          - Default
     info:
       path: GymSwipeIOS/Info.plist
       properties:

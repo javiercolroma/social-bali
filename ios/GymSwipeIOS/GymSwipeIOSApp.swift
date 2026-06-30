@@ -6,9 +6,15 @@ struct GymSwipeIOSApp: App {
 
     var body: some Scene {
         WindowGroup {
-            RootView()
-                .environmentObject(store)
-                .tint(Color(hex: "5e910e"))
+            Group {
+                if store.auth == nil {
+                    AuthView()
+                } else {
+                    RootView()
+                }
+            }
+            .environmentObject(store)
+            .tint(Color(hex: "5e910e"))
         }
     }
 }
