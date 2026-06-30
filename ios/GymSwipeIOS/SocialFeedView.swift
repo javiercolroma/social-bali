@@ -32,6 +32,7 @@ private struct PostComment: Identifiable {
     var likes: Int
     var liked: Bool
     var replies: [PostComment]
+    var personId: String? = nil  // id de la persona (para abrir su perfil); nil si eres tú
 }
 
 struct SocialFeedView: View {
@@ -498,13 +499,13 @@ struct SocialFeedView: View {
                     authorEmoji: item.personId == nil ? "" : item.avatarEmoji, isMe: item.personId == nil,
                     text: replyTexts[Int(seed % UInt64(replyTexts.count))],
                     date: Date().addingTimeInterval(-Double(max(1, mins - 7)) * 60),
-                    likes: Int(seed % 3), liked: false, replies: []))
+                    likes: Int(seed % 3), liked: false, replies: [], personId: item.personId))
             }
             out.append(PostComment(
                 id: "\(item.id)-c\(i)", authorName: p.name, authorEmoji: p.avatar, isMe: false,
                 text: texts[Int((seed >> (i * 2)) % UInt64(texts.count))],
                 date: Date().addingTimeInterval(-Double(mins) * 60),
-                likes: Int((seed >> i) % 14), liked: false, replies: replies))
+                likes: Int((seed >> i) % 14), liked: false, replies: replies, personId: p.id))
         }
         return out
     }
@@ -771,10 +772,35 @@ private struct CommentsSheet: View {
         }
     }
 
+    /// Avatar del autor con su Gym Score (igual que el resto de la plataforma) y, si es
+    /// otra persona, tocable para abrir su perfil.
     @ViewBuilder
     private func avatar(_ c: PostComment) -> some View {
-        if c.isMe { MeAvatar(account: store.account, size: 32) }
-        else { Avatar(emoji: c.authorEmoji.isEmpty ? "🙂" : c.authorEmoji, size: 32) }
+        let canOpen = !c.isMe && (c.personId.flatMap { store.person($0) } != nil)
+        Button { openAuthor(c) } label: { scoredAvatar(c) }
+            .buttonStyle(.plain)
+            .disabled(!canOpen)
+    }
+
+    @ViewBuilder
+    private func scoredAvatar(_ c: PostComment) -> some View {
+        if c.isMe {
+            ScoredAvatar(account: store.account, score: store.gymScore.total, size: 32)
+        } else {
+            ScoredAvatar(emoji: c.authorEmoji.isEmpty ? "🙂" : c.authorEmoji, score: authorScore(c), size: 32)
+        }
+    }
+
+    private func authorScore(_ c: PostComment) -> Int {
+        if c.isMe { return store.gymScore.total }
+        if let pid = c.personId { return store.personScore(pid) }
+        return 0
+    }
+
+    private func openAuthor(_ c: PostComment) {
+        guard !c.isMe, let pid = c.personId, store.person(pid) != nil else { return }
+        FX.tap()
+        profileTarget = IdString(id: pid)
     }
 
     private var canPost: Bool { !draft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
