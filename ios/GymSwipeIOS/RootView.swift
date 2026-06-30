@@ -90,13 +90,8 @@ struct RootView: View {
                 MeAvatar(account: store.account, size: 44)
                     .overlay(Circle().stroke(Brand.line))
                     .overlay(alignment: .bottomTrailing) {
-                        // Gym Score en la esquina inferior derecha de la foto.
-                        Text("\(store.gymScore.total)")
-                            .font(.system(size: 11, weight: .heavy)).foregroundColor(Color(hex: "10150a"))
-                            .padding(.horizontal, 5).frame(minWidth: 20, minHeight: 18)
-                            .background(Brand.green).clipShape(Capsule())
-                            .overlay(Capsule().stroke(.white, lineWidth: 1.5))
-                            .offset(x: 6, y: 4)
+                        // Gym Score con el color de la división (Hierro → Maestro).
+                        ScoreBadge(score: store.gymScore.total, avatarSize: 44)
                     }
             }
             .accessibilityLabel("Perfil · Gym Score \(store.gymScore.total)")

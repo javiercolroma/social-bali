@@ -45,69 +45,99 @@ struct Avatar: View {
     }
 }
 
-/// Divisiones de gamificación por Gym Score: de Bronce a Diamante. Solo a nivel visual.
-/// El color tiñe el badge del nivel en el avatar (y se puede mostrar como chip en el perfil).
-enum ScoreTier {
-    case bronce, plata, oro, platino, diamante
+/// Divisiones de gamificación por Gym Score: de Hierro (bajo, apagado) a Maestro (cima, brilla).
+/// Cuanto más alta la división, más vivo el color y más brillo (halo) — el nivel se lee a simple vista.
+enum ScoreTier: Int, CaseIterable {
+    case hierro, bronce, plata, oro, platino, diamante, maestro
 
     static func of(_ score: Int) -> ScoreTier {
         switch score {
-        case ..<20: return .bronce
-        case 20..<40: return .plata
-        case 40..<60: return .oro
-        case 60..<80: return .platino
-        default: return .diamante
+        case ..<15: return .hierro
+        case 15..<30: return .bronce
+        case 30..<45: return .plata
+        case 45..<60: return .oro
+        case 60..<75: return .platino
+        case 75..<90: return .diamante
+        default: return .maestro
         }
     }
 
     var name: String {
         switch self {
-        case .bronce: return "Bronce"; case .plata: return "Plata"; case .oro: return "Oro"
-        case .platino: return "Platino"; case .diamante: return "Diamante"
+        case .hierro: return "Hierro"; case .bronce: return "Bronce"; case .plata: return "Plata"
+        case .oro: return "Oro"; case .platino: return "Platino"; case .diamante: return "Diamante"
+        case .maestro: return "Maestro"
         }
     }
 
-    /// Color base de la división (para texto/iconos sobre fondo claro).
+    /// Color representativo (para texto/iconos sobre fondo claro).
     var color: Color {
         switch self {
+        case .hierro: return Color(hex: "7f878f")
         case .bronce: return Color(hex: "b9742f")
-        case .plata: return Color(hex: "9aa6b2")
+        case .plata: return Color(hex: "8e99a4")
         case .oro: return Color(hex: "e8b020")
-        case .platino: return Color(hex: "4a93b8")
-        case .diamante: return Color(hex: "2bbbd6")
+        case .platino: return Color(hex: "3f93bd")
+        case .diamante: return Color(hex: "1fc0e0")
+        case .maestro: return Color(hex: "8a63ff")
         }
     }
 
-    /// Relleno del badge (degradado metálico sutil para dar empaque "tech").
+    /// Relleno del badge: apagado/grisáceo abajo, vívido y saturado arriba.
     var fill: AnyShapeStyle {
         func grad(_ a: String, _ b: String) -> AnyShapeStyle {
             AnyShapeStyle(LinearGradient(colors: [Color(hex: a), Color(hex: b)], startPoint: .top, endPoint: .bottom))
         }
         switch self {
-        case .bronce: return grad("d99553", "b06a26")
-        case .plata: return grad("d2dae1", "a3afba")
+        case .hierro: return grad("aab0b6", "808890")     // gris apagado
+        case .bronce: return grad("cf9560", "9c5f29")
+        case .plata: return grad("d6dee5", "9fabb6")
         case .oro: return grad("ffd84d", "e6a812")
-        case .platino: return grad("bfe6ec", "6fbdd6")
-        case .diamante: return grad("8af0ff", "29c3e6")
+        case .platino: return grad("c2eaf2", "5fb8d8")
+        case .diamante: return grad("8af0ff", "1fc0e6")
+        case .maestro: return grad("b58cff", "5ad6ff")    // gradiente vívido (cima)
         }
     }
 
-    var textColor: Color { Color(hex: "10150a") }
-    var symbol: String { self == .diamante ? "diamond.fill" : "shield.fill" }
+    var textColor: Color { self == .maestro ? .white : Color(hex: "10150a") }
+
+    /// Halo: nulo en divisiones bajas, intenso en las altas (las de prestigio "brillan").
+    var glow: (color: Color, radius: CGFloat) {
+        switch self {
+        case .hierro, .bronce: return (color, 0)
+        case .plata: return (color, 1)
+        case .oro: return (Color(hex: "e8b020"), 2.5)
+        case .platino: return (Color(hex: "5fb8d8"), 4)
+        case .diamante: return (Color(hex: "2cd3f0"), 6)
+        case .maestro: return (Color(hex: "8a63ff"), 9)
+        }
+    }
+
+    var symbol: String {
+        switch self {
+        case .hierro, .bronce, .plata: return "shield.fill"
+        case .oro, .platino: return "rosette"
+        case .diamante: return "diamond.fill"
+        case .maestro: return "crown.fill"
+        }
+    }
 }
 
 /// Badge del Gym Score para la esquina inferior derecha de un avatar (sustituye la banderita).
-/// El color refleja la división (Bronce → Diamante). Úsalo en un `ZStack(alignment: .bottomTrailing)`.
+/// El color y el brillo reflejan la división (Hierro → Maestro). Úsalo en `ZStack(alignment: .bottomTrailing)`.
 struct ScoreBadge: View {
     let score: Int
     var avatarSize: CGFloat = 42
     var body: some View {
+        let t = ScoreTier.of(score)
         let f = max(9, avatarSize * 0.30)
+        let k = avatarSize / 42
         Text("\(score)")
-            .font(.system(size: f, weight: .heavy)).foregroundColor(ScoreTier.of(score).textColor)
+            .font(.system(size: f, weight: .heavy)).foregroundColor(t.textColor)
             .padding(.horizontal, f * 0.42).frame(minWidth: f * 1.6, minHeight: f * 1.5)
-            .background(ScoreTier.of(score).fill).clipShape(Capsule())
+            .background(t.fill).clipShape(Capsule())
             .overlay(Capsule().stroke(.white, lineWidth: max(1, avatarSize * 0.045)))
+            .shadow(color: t.glow.color.opacity(0.95), radius: t.glow.radius * k)
             .offset(x: avatarSize * 0.16, y: avatarSize * 0.12)
     }
 }
