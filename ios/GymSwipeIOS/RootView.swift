@@ -67,8 +67,13 @@ struct RootView: View {
             get: { store.account == nil || editingAccount },
             set: { if !$0 { editingAccount = false } }
         )) {
-            AccountSetupView(allowCancel: store.account != nil, onCancel: { editingAccount = false })
-                .environmentObject(store)
+            // Usuario nuevo: acompañamiento cálido paso a paso. Edición: el formulario simple de siempre.
+            if store.account == nil {
+                OnboardingView().environmentObject(store)
+            } else {
+                AccountSetupView(allowCancel: true, onCancel: { editingAccount = false })
+                    .environmentObject(store)
+            }
         }
     }
 

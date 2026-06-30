@@ -36,6 +36,7 @@
 		AEC40F20A484762912222BA0 /* LocationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F46519F370ACB4CE695F4928 /* LocationManager.swift */; };
 		B087CB2C4C5E2848E78E6BFE /* WorkoutRemote.swift in Sources */ = {isa = PBXBuildFile; fileRef = 896F243436BE8AEDD8406091 /* WorkoutRemote.swift */; };
 		B2BA2EDCA173DDEDD61FF8BD /* SocialViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = A94209F7155C5A09DA6E950A /* SocialViews.swift */; };
+		BA42448E61D8F741BC01820C /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD5D6AB5B854D33B50CA68B /* OnboardingView.swift */; };
 		BEBB454C3035C16BFE9C0067 /* RankingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 351AF069FE04261E1DB0C543 /* RankingView.swift */; };
 		C01A2049E004FBE4ADDF5F10 /* SessionFX.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6323375755B5CE9680137707 /* SessionFX.swift */; };
 		C181C6D254D5000258AD8003 /* ActivityDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ED8AD2852D06439AA4198279 /* ActivityDetailView.swift */; };
@@ -110,6 +111,7 @@
 		ED8AD2852D06439AA4198279 /* ActivityDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActivityDetailView.swift; sourceTree = "<group>"; };
 		EF5C837837CFA069C8F53AE4 /* PlanView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlanView.swift; sourceTree = "<group>"; };
 		F46519F370ACB4CE695F4928 /* LocationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationManager.swift; sourceTree = "<group>"; };
+		FCD5D6AB5B854D33B50CA68B /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
 		FDB8BD1E12E0FD517BCB9CF5 /* ActivityView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActivityView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -181,6 +183,7 @@
 				51E3F8B26293A58B6A5DC2F4 /* LiveActivityManager.swift */,
 				F46519F370ACB4CE695F4928 /* LocationManager.swift */,
 				D1596E5BECE9666DDA76867A /* Models.swift */,
+				FCD5D6AB5B854D33B50CA68B /* OnboardingView.swift */,
 				C6E2A074351DB17430CAE561 /* PartnerView.swift */,
 				3A318726DFFA74FF768BA96D /* PhotoSupport.swift */,
 				EF5C837837CFA069C8F53AE4 /* PlanView.swift */,
@@ -316,6 +319,7 @@
 				A6911B1E14CE1300F4DD0173 /* LiveActivityManager.swift in Sources */,
 				AEC40F20A484762912222BA0 /* LocationManager.swift in Sources */,
 				D1A51AF5DF1BCC6CDABBD42C /* Models.swift in Sources */,
+				BA42448E61D8F741BC01820C /* OnboardingView.swift in Sources */,
 				C96DA3E9AC38A13BD8D381B1 /* PartnerView.swift in Sources */,
 				2A882A99A8CD48DE197DD5A5 /* PhotoSupport.swift in Sources */,
 				CF3EFCE5F7B166F143B9B408 /* PlanView.swift in Sources */,
