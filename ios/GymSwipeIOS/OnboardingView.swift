@@ -20,8 +20,8 @@ struct OnboardingView: View {
     @State private var handle = ""
     @State private var pickerItem: PhotosPickerItem?
     @State private var photoData: Data?
-    @State private var birthYear = 1998
-    @State private var sexSel = "No especificar"
+    @State private var birthYear = 1997
+    @State private var sexSel = "Hombre"
     @State private var aboutDone = false
     @State private var country = "España"
     @State private var city = ""
@@ -208,13 +208,15 @@ struct OnboardingView: View {
             Mascot(size: 88)
             Bubble("Cuéntame un poco sobre ti")
             VStack(spacing: 0) {
+                wheelLabel("¿Cuándo naciste?")
                 Picker("Año", selection: $birthYear) {
                     ForEach(years, id: \.self) { Text(String($0)).tag($0) }
-                }.pickerStyle(.wheel).frame(height: 112).clipped()
+                }.pickerStyle(.wheel).frame(height: 104).clipped()
                 Divider().overlay(Brand.line)
+                wheelLabel("¿Cuál es tu sexo?")
                 Picker("Género", selection: $sexSel) {
                     ForEach(sexes, id: \.self) { Text($0).tag($0) }
-                }.pickerStyle(.wheel).frame(height: 112).clipped()
+                }.pickerStyle(.wheel).frame(height: 104).clipped()
             }
             .frame(maxWidth: .infinity)
             .background(Color.white).clipShape(RoundedRectangle(cornerRadius: 16))
@@ -293,6 +295,11 @@ struct OnboardingView: View {
         .padding(.bottom, 14)
     }
 
+    private func wheelLabel(_ t: String) -> some View {
+        Text(t).font(.system(size: 14, weight: .heavy)).foregroundColor(Brand.ink)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.horizontal, 16).padding(.top, 12).padding(.bottom, 2)
+    }
     private func hint(_ t: String, _ icon: String, _ color: Color) -> some View {
         HStack(spacing: 5) { Image(systemName: icon); Text(t) }
             .font(.system(size: 14, weight: .heavy)).foregroundColor(color)
