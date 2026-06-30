@@ -1,9 +1,8 @@
 import SwiftUI
 import PhotosUI
 
-/// Acompañamiento cálido para usuarios nuevos: una pregunta amable por pantalla,
-/// pasos opcionales saltables y un cierre personal. Solo para cuentas nuevas
-/// (la edición de cuenta sigue usando `AccountSetupView`).
+/// Acompañamiento cálido para usuarios nuevos: Forgey (la mascota) te guía con una
+/// pregunta amable por pantalla. Solo para cuentas nuevas (editar usa `AccountSetupView`).
 struct OnboardingView: View {
     @EnvironmentObject var store: AppStore
     @ObservedObject private var health = HealthManager.shared
@@ -16,23 +15,26 @@ struct OnboardingView: View {
     @State private var goingBack = false
     @FocusState private var focus: Field?
 
-    // Todos los datos viven aquí para no perderlos al volver atrás.
+    // Datos (viven aquí para no perderlos al volver atrás)
     @State private var name = ""
     @State private var handle = ""
     @State private var pickerItem: PhotosPickerItem?
     @State private var photoData: Data?
-    @State private var birthdate: Date?
-    @State private var sex = ""
+    @State private var birthYear = 1998
+    @State private var sexSel = "No especificar"
+    @State private var aboutDone = false
     @State private var country = "España"
     @State private var city = ""
     @State private var gym = ""
 
-    @State private var showBirthPicker = false
-    @State private var birthSelection = Calendar.current.date(byAdding: .year, value: -25, to: Date()) ?? Date()
     @State private var drawCheck: CGFloat = 0
     @State private var avatarIn = false
 
-    private let sexes = ["Hombre", "Mujer", "Otro", "Prefiero no decirlo"]
+    private let sexes = ["Hombre", "Mujer", "Otro", "No especificar"]
+    private var years: [Int] {
+        let now = Calendar.current.component(.year, from: Date())
+        return Array(1930...(now - 13))
+    }
 
     // MARK: - Validación
 
@@ -48,7 +50,6 @@ struct OnboardingView: View {
     }
     private var nameOK: Bool { name.trimmingCharacters(in: .whitespaces).count >= 2 }
     private var handleOK: Bool { handleError == nil }
-
     private var progress: Double { Double(step.rawValue) / Double(Step.allCases.count - 1) }
 
     // MARK: - Body
@@ -58,16 +59,13 @@ struct OnboardingView: View {
             Brand.bg.ignoresSafeArea()
             VStack(spacing: 0) {
                 topBar
-                ZStack {
-                    stepBody
-                        .id(step)
-                        .transition(slide)
-                        .padding(.horizontal, 24)
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
-                }
+                stepBody
+                    .id(step)
+                    .transition(slide)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .padding(.horizontal, 24)
             }
         }
-        .sheet(isPresented: $showBirthPicker) { birthPicker }
         .onChange(of: step) { _ in
             if step == .name { focusSoon(.name) }
             else if step == .handle { focusSoon(.handle) }
@@ -83,8 +81,6 @@ struct OnboardingView: View {
             removal: .move(edge: goingBack ? .trailing : .leading).combined(with: .opacity))
     }
 
-    // MARK: - Top bar (progreso + atrás)
-
     private var topBar: some View {
         VStack(spacing: 10) {
             GeometryReader { geo in
@@ -97,13 +93,12 @@ struct OnboardingView: View {
             HStack {
                 if step != .welcome && step != .done {
                     Button { back() } label: {
-                        Image(systemName: "chevron.left").font(.system(size: 17, weight: .heavy)).foregroundColor(Brand.muted)
+                        Image(systemName: "chevron.left").font(.system(size: 17, weight: .heavy)).foregroundColor(Brand.ink.opacity(0.55))
                             .frame(width: 36, height: 36)
                     }
                 }
                 Spacer()
-            }
-            .frame(height: 36)
+            }.frame(height: 36)
         }
         .padding(.horizontal, 16).padding(.top, 8)
     }
@@ -125,53 +120,49 @@ struct OnboardingView: View {
     }
 
     private var welcomeStep: some View {
-        scaffold {
-            VStack(spacing: 18) {
-                Spacer()
-                ZStack {
-                    Circle().fill(Brand.greenSoft).frame(width: 104, height: 104)
-                    Image(systemName: "dumbbell.fill").font(.system(size: 44, weight: .heavy)).foregroundColor(Color(hex: "10150a"))
-                }
-                title("Bienvenido a Forge Loop")
-                subtitle("Vamos a preparar tu espacio sin prisa, una cosa cada vez. Tú marcas el ritmo.")
-                Spacer()
-            }
+        layout {
+            Mascot(size: 150, wave: true)
+            Bubble("¡Hola! Soy Forgey 💪 Voy a acompañarte a montar tu perfil.")
         } actions: {
             primary("Empezar") { advance() }
         }
     }
 
     private var nameStep: some View {
-        scaffold {
-            heading("¿Cómo te llamas?", "Así te saludaremos cada vez que entres a entrenar.")
+        layout {
+            Mascot(size: 96)
+            Bubble("¿Cómo te llamas?")
             TextField("Tu nombre", text: $name)
-                .font(.system(size: 18, weight: .semibold)).focused($focus, equals: .name)
-                .submitLabel(.next).onSubmit { if nameOK { advance() } }
-                .padding(.horizontal, 14).frame(height: 54).background(Color.white)
-                .clipShape(RoundedRectangle(cornerRadius: 12))
-                .overlay(RoundedRectangle(cornerRadius: 12).stroke(focus == .name ? Brand.green : Brand.line, lineWidth: focus == .name ? 1.6 : 1))
+                .multilineTextAlignment(.center).font(.system(size: 22, weight: .heavy))
+                .foregroundColor(Brand.ink).tint(Brand.ink)
+                .focused($focus, equals: .name).submitLabel(.next).onSubmit { if nameOK { advance() } }
+                .padding(.horizontal, 14).frame(height: 58).background(Color.white)
+                .clipShape(RoundedRectangle(cornerRadius: 14))
+                .overlay(RoundedRectangle(cornerRadius: 14).stroke(focus == .name ? Brand.green : Brand.line, lineWidth: focus == .name ? 1.8 : 1))
         } actions: {
             primary("Continuar", enabled: nameOK) { advance() }
         }
     }
 
     private var handleStep: some View {
-        scaffold {
-            heading(firstName.isEmpty ? "Elige tu @usuario" : "Genial, \(firstName). Elige tu @usuario",
-                    "Es tu nombre en la comunidad: tus colegas de gimnasio te encontrarán por él.")
-            HStack(spacing: 2) {
-                Text("@").font(.system(size: 18, weight: .heavy)).foregroundColor(Brand.soft)
-                TextField("tu_usuario", text: $handle).font(.system(size: 18, weight: .semibold))
-                    .textInputAutocapitalization(.never).autocorrectionDisabled().focused($focus, equals: .handle)
-                    .submitLabel(.next).onSubmit { if handleOK { advance() } }
-            }
-            .padding(.horizontal, 14).frame(height: 54).background(Color.white)
-            .clipShape(RoundedRectangle(cornerRadius: 12))
-            .overlay(RoundedRectangle(cornerRadius: 12).stroke(focus == .handle ? Brand.green : Brand.line, lineWidth: focus == .handle ? 1.6 : 1))
-            if !normalized.isEmpty, let err = handleError {
-                hint(err, "exclamationmark.circle.fill", Color(hex: "c14b46"))
-            } else if !normalized.isEmpty {
-                hint("@\(normalized) disponible", "checkmark.circle.fill", Color(hex: "4b8a1f"))
+        layout {
+            Mascot(size: 96)
+            Bubble(firstName.isEmpty ? "Elige tu nombre de usuario" : "Encantado, \(firstName). Elige tu usuario")
+            VStack(spacing: 8) {
+                HStack(spacing: 2) {
+                    Text("@").font(.system(size: 22, weight: .heavy)).foregroundColor(Brand.soft)
+                    TextField("usuario", text: $handle).font(.system(size: 22, weight: .heavy)).foregroundColor(Brand.ink).tint(Brand.ink)
+                        .textInputAutocapitalization(.never).autocorrectionDisabled()
+                        .focused($focus, equals: .handle).submitLabel(.next).onSubmit { if handleOK { advance() } }
+                }
+                .padding(.horizontal, 16).frame(height: 58).background(Color.white)
+                .clipShape(RoundedRectangle(cornerRadius: 14))
+                .overlay(RoundedRectangle(cornerRadius: 14).stroke(focus == .handle ? Brand.green : Brand.line, lineWidth: focus == .handle ? 1.8 : 1))
+                if !normalized.isEmpty, let err = handleError {
+                    hint(err, "exclamationmark.circle.fill", Color(hex: "c14b46"))
+                } else if !normalized.isEmpty {
+                    hint("@\(normalized) está libre", "checkmark.circle.fill", Color(hex: "4b8a1f"))
+                }
             }
         } actions: {
             primary("Continuar", enabled: handleOK) { advance() }
@@ -179,197 +170,132 @@ struct OnboardingView: View {
     }
 
     private var photoStep: some View {
-        scaffold {
-            heading(firstName.isEmpty ? "Ponle cara a tu perfil" : "Ponle cara, \(firstName)",
-                    "Una foto ayuda a que te reconozcan en la pista. Puedes añadirla cuando quieras.", optional: true)
-            HStack {
-                Spacer()
-                PhotoPickerLabel(item: $pickerItem, onPicked: { photoData = $0; Haptics.soft() }) {
-                    ZStack(alignment: .bottomTrailing) {
-                        if let d = photoData, let ui = UIImage(data: d) {
-                            Image(uiImage: ui).resizable().scaledToFill().frame(width: 120, height: 120).clipShape(Circle())
-                        } else {
-                            ZStack {
-                                Circle().fill(Brand.chip).frame(width: 120, height: 120)
-                                Image(systemName: "person.fill").font(.system(size: 46)).foregroundColor(Brand.soft)
-                            }
+        layout {
+            Bubble(firstName.isEmpty ? "¿Le ponemos una foto?" : "\(firstName), ¿le ponemos cara?")
+            PhotoPickerLabel(item: $pickerItem, onPicked: { photoData = $0; Haptics.soft() }) {
+                ZStack(alignment: .bottomTrailing) {
+                    if let d = photoData, let ui = UIImage(data: d) {
+                        Image(uiImage: ui).resizable().scaledToFill().frame(width: 150, height: 150).clipShape(Circle())
+                    } else {
+                        ZStack {
+                            Circle().fill(Brand.chip).frame(width: 150, height: 150)
+                            Image(systemName: "camera.fill").font(.system(size: 40)).foregroundColor(Brand.soft)
                         }
-                        Image(systemName: "camera.fill").font(.system(size: 14, weight: .bold))
-                            .foregroundColor(Brand.ink).padding(9).background(Brand.green).clipShape(Circle())
-                            .overlay(Circle().stroke(Brand.bg, lineWidth: 3))
                     }
+                    Image(systemName: "plus").font(.system(size: 16, weight: .heavy))
+                        .foregroundColor(Brand.ink).padding(11).background(Brand.green).clipShape(Circle())
+                        .overlay(Circle().stroke(Brand.bg, lineWidth: 4))
                 }
-                Spacer()
             }
         } actions: {
-            primary(photoData == nil ? "Añadir foto" : "Usar esta foto") { advance() }
-            skip("Ahora no")
+            primary(photoData == nil ? "Elegir foto" : "Usar esta foto") { advance() }
+            skip()
         }
     }
 
     private var aboutStep: some View {
-        scaffold {
-            heading("Cuéntanos un poco de ti",
-                    "Nos sirve para comparar tu progreso de forma justa con gente como tú. Solo si te apetece.", optional: true)
-            Button { birthSelection = birthdate ?? birthSelection; showBirthPicker = true } label: {
-                HStack {
-                    Image(systemName: "calendar").foregroundColor(Brand.soft)
-                    Text(birthdate == nil ? "Fecha de nacimiento" : birthText)
-                        .foregroundColor(birthdate == nil ? Brand.soft : Brand.ink)
-                    Spacer()
-                    Image(systemName: "chevron.right").font(.caption).foregroundColor(Brand.soft)
-                }
-                .font(.system(size: 16, weight: .semibold))
-                .padding(.horizontal, 14).frame(height: 52).background(Color.white)
-                .clipShape(RoundedRectangle(cornerRadius: 12))
-                .overlay(RoundedRectangle(cornerRadius: 12).stroke(Brand.line))
-            }.buttonStyle(.plain)
-            OnboardingChips(options: sexes, selected: $sex)
+        layout {
+            Mascot(size: 88)
+            Bubble("Cuéntame un poco sobre ti")
+            HStack(spacing: 0) {
+                Picker("Año", selection: $birthYear) {
+                    ForEach(years, id: \.self) { Text(String($0)).tag($0) }
+                }.pickerStyle(.wheel).frame(width: 110).clipped()
+                Picker("Género", selection: $sexSel) {
+                    ForEach(sexes, id: \.self) { Text($0).tag($0) }
+                }.pickerStyle(.wheel).frame(maxWidth: .infinity).clipped()
+            }
+            .frame(height: 150)
+            .background(Color.white).clipShape(RoundedRectangle(cornerRadius: 16))
+            .overlay(RoundedRectangle(cornerRadius: 16).stroke(Brand.line))
         } actions: {
-            primary("Continuar") { advance() }
-            skip("Omitir este paso")
+            primary("Continuar") { aboutDone = true; advance() }
+            skip()
         }
     }
 
     private var placeStep: some View {
-        scaffold {
-            heading("¿Dónde entrenas?",
-                    "Para encontrar compañeros y rankings cerca de ti. Lo tuyo, cuando quieras.", optional: true)
-            CountryField(label: "País", selected: country) { country = $0 }
-            CitySearchField(label: "Ciudad", selected: city, country: country) { city = $0 }
-            VStack(alignment: .leading, spacing: 5) {
-                Text("GIMNASIO").font(.caption2).fontWeight(.heavy).foregroundColor(Brand.muted)
-                TextField("Tu gimnasio", text: $gym)
-                    .padding(.horizontal, 12).frame(height: 48).background(Color.white)
-                    .clipShape(RoundedRectangle(cornerRadius: 10)).overlay(RoundedRectangle(cornerRadius: 10).stroke(Brand.line))
+        layout {
+            Mascot(size: 88)
+            Bubble("¿Dónde sueles entrenar?")
+            VStack(spacing: 10) {
+                CountryField(label: "", selected: country) { country = $0 }
+                CitySearchField(label: "", selected: city, country: country) { city = $0 }
+                HStack(spacing: 10) {
+                    Image(systemName: "dumbbell.fill").foregroundColor(Brand.soft)
+                    TextField("Tu gimnasio", text: $gym).font(.system(size: 16, weight: .semibold)).tint(Brand.ink)
+                }
+                .padding(.horizontal, 14).frame(height: 50).background(Color.white)
+                .clipShape(RoundedRectangle(cornerRadius: 12)).overlay(RoundedRectangle(cornerRadius: 12).stroke(Brand.line))
             }
         } actions: {
             primary("Continuar") { advance() }
-            skip("Ahora no")
+            skip()
         }
     }
 
     private var healthStep: some View {
-        scaffold {
-            VStack(spacing: 18) {
-                Spacer()
-                ZStack {
-                    Circle().fill(Brand.redSoft).frame(width: 104, height: 104)
-                    Image(systemName: "heart.fill").font(.system(size: 44)).foregroundColor(Brand.red)
-                        .scaleEffect(avatarIn ? 1.08 : 1)
-                        .animation(reduceMotion ? nil : .easeInOut(duration: 0.9).repeatForever(autoreverses: true), value: avatarIn)
-                }
-                if health.isAvailable {
-                    title("Tu pulso, en directo")
-                    subtitle("Conecta Salud y verás tus pulsaciones en cada serie. Solo leemos tu ritmo cardíaco, y puedes cambiarlo luego.")
-                } else {
-                    title("Tu pulso, en directo")
-                    subtitle("Podrás conectar Salud desde tu perfil cuando tengas el iPhone a mano.")
-                }
-                Spacer()
-            }
+        layout {
+            Mascot(size: 96, holdsHeart: true)
+            Bubble(health.isAvailable ? "¿Conectamos con Salud para ver tu pulso en cada serie?"
+                                       : "Cuando tengas el iPhone a mano podrás conectar Salud desde tu perfil.")
         } actions: {
             if health.isAvailable && !health.connected {
                 primary("Conectar con Salud") { Task { _ = await health.connect(); advance() } }
-                skip("Ahora no")
+                skip()
             } else {
-                primary(health.connected ? "Salud conectada ✓" : "Continuar") { advance() }
+                primary(health.connected ? "¡Conectado! Seguir" : "Seguir") { advance() }
             }
         }
-        .onAppear { avatarIn = true }
     }
 
     private var doneStep: some View {
-        scaffold {
-            VStack(spacing: 20) {
-                Spacer()
-                ZStack {
-                    Circle().stroke(Brand.greenSoft, lineWidth: 6).frame(width: 132, height: 132)
-                    Circle().trim(from: 0, to: drawCheck).stroke(Brand.green, style: StrokeStyle(lineWidth: 6, lineCap: .round))
-                        .rotationEffect(.degrees(-90)).frame(width: 132, height: 132)
-                    MeAvatar(account: previewAccount, size: 104)
-                        .scaleEffect(avatarIn ? 1 : 0.4).opacity(avatarIn ? 1 : 0)
-                }
-                title(firstName.isEmpty ? "¡Todo listo!" : "Listo, \(firstName)")
-                subtitle("Tu espacio ya está montado. Es hora de levantar algo pesado.")
-                Spacer()
+        layout {
+            ZStack {
+                Circle().stroke(Brand.greenSoft, lineWidth: 7).frame(width: 150, height: 150)
+                Circle().trim(from: 0, to: drawCheck).stroke(Brand.green, style: StrokeStyle(lineWidth: 7, lineCap: .round))
+                    .rotationEffect(.degrees(-90)).frame(width: 150, height: 150)
+                MeAvatar(account: previewAccount, size: 116)
+                    .scaleEffect(avatarIn ? 1 : 0.4).opacity(avatarIn ? 1 : 0)
             }
+            Bubble(firstName.isEmpty ? "¡Todo listo! A darlo todo 🔥" : "¡Listo, \(firstName)! A darlo todo 🔥")
         } actions: {
             primary("Entrar a Forge Loop") { commit() }
         }
     }
 
-    /// Cuenta provisional solo para previsualizar el avatar en la pantalla final.
     private var previewAccount: Account {
         Account(name: name.trimmingCharacters(in: .whitespaces), handle: normalized, photoData: photoData)
     }
 
-    // MARK: - Scaffold
+    // MARK: - Layout helper (centrado, con acciones abajo)
 
     @ViewBuilder
-    private func scaffold<C: View, A: View>(@ViewBuilder content: () -> C, @ViewBuilder actions: () -> A) -> some View {
+    private func layout<C: View, A: View>(@ViewBuilder content: () -> C, @ViewBuilder actions: () -> A) -> some View {
         VStack(spacing: 16) {
-            VStack(alignment: .leading, spacing: 14) { content() }
-                .frame(maxWidth: .infinity, alignment: .leading)
             Spacer(minLength: 0)
-            VStack(spacing: 6) { actions() }
+            VStack(spacing: 18) { content() }
+                .frame(maxWidth: .infinity)
+            Spacer(minLength: 0)
+            VStack(spacing: 4) { actions() }
         }
-        .padding(.top, 24).padding(.bottom, 14)
+        .padding(.bottom, 14)
     }
 
-    private func heading(_ t: String, _ s: String, optional: Bool = false) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
-            if optional {
-                Text("OPCIONAL").font(.system(size: 10, weight: .heavy)).tracking(0.5).foregroundColor(Brand.soft)
-                    .padding(.horizontal, 8).padding(.vertical, 3).background(Brand.chip).clipShape(Capsule())
-            }
-            title(t); subtitle(s)
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-    }
-
-    private func title(_ t: String) -> some View {
-        Text(t).font(.system(size: 27, weight: .heavy)).foregroundColor(Brand.ink)
-            .fixedSize(horizontal: false, vertical: true)
-    }
-    private func subtitle(_ s: String) -> some View {
-        Text(s).font(.system(size: 15)).foregroundColor(Brand.muted).fixedSize(horizontal: false, vertical: true)
-    }
     private func hint(_ t: String, _ icon: String, _ color: Color) -> some View {
         HStack(spacing: 5) { Image(systemName: icon); Text(t) }
-            .font(.system(size: 13, weight: .semibold)).foregroundColor(color)
+            .font(.system(size: 14, weight: .heavy)).foregroundColor(color)
     }
-
     private func primary(_ label: String, enabled: Bool = true, _ action: @escaping () -> Void) -> some View {
         Button { action() } label: { Text(label) }
             .buttonStyle(PrimaryButtonStyle(enabled: enabled)).disabled(!enabled)
     }
-    private func skip(_ label: String) -> some View {
+    /// Saltar discreto (pasos no obligatorios). Sin etiquetar nada como "opcional".
+    private func skip() -> some View {
         Button { advance() } label: {
-            Text(label).font(.system(size: 15, weight: .bold)).foregroundColor(Brand.soft)
-                .frame(maxWidth: .infinity).frame(height: 38)
+            Text("Quizá más tarde").font(.system(size: 14, weight: .semibold)).foregroundColor(Brand.soft)
+                .frame(maxWidth: .infinity).frame(height: 36)
         }.buttonStyle(.plain)
-    }
-
-    private var birthText: String {
-        guard let b = birthdate else { return "" }
-        let f = DateFormatter(); f.locale = Locale(identifier: "es_ES"); f.dateFormat = "d 'de' MMMM, yyyy"
-        return f.string(from: b)
-    }
-
-    private var birthPicker: some View {
-        let minBirth = Calendar.current.date(byAdding: .year, value: -100, to: Date()) ?? Date()
-        return NavigationStack {
-            VStack {
-                DatePicker("Fecha de nacimiento", selection: $birthSelection, in: minBirth...Date(), displayedComponents: .date)
-                    .datePickerStyle(.graphical).environment(\.locale, Locale(identifier: "es_ES")).padding()
-                Spacer()
-            }
-            .navigationTitle("Tu fecha de nacimiento").navigationBarTitleDisplayMode(.inline)
-            .toolbar { ToolbarItem(placement: .topBarTrailing) {
-                Button("Listo") { birthdate = birthSelection; showBirthPicker = false }.fontWeight(.heavy)
-            } }
-        }.presentationDetents([.medium, .large])
     }
 
     // MARK: - Navegación
@@ -388,7 +314,6 @@ struct OnboardingView: View {
     private func focusSoon(_ f: Field) {
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) { focus = f }
     }
-
     private func runFinish() {
         avatarIn = false; drawCheck = 0
         FX.success(sound: true)
@@ -401,9 +326,11 @@ struct OnboardingView: View {
         var acc = Account(name: name.trimmingCharacters(in: .whitespaces), handle: normalized)
         acc.photoData = photoData
         store.saveAccount(acc)
-        // Solo escribimos los campos de perfil que el usuario rellenó.
-        if let birthdate { store.profile.birthdate = birthdate }
-        if !sex.isEmpty { store.profile.sex = sex }
+        if aboutDone {
+            var comp = DateComponents(); comp.year = birthYear; comp.month = 6; comp.day = 15
+            if let d = Calendar.current.date(from: comp) { store.profile.birthdate = d }
+            if sexSel != "No especificar" { store.profile.sex = sexSel }
+        }
         if !country.isEmpty { store.profile.country = country }
         if !city.isEmpty { store.profile.city = city }
         if !gym.trimmingCharacters(in: .whitespaces).isEmpty { store.profile.gym = gym.trimmingCharacters(in: .whitespaces) }
@@ -412,25 +339,116 @@ struct OnboardingView: View {
     }
 }
 
-/// Chips seleccionables (selección única) — toque suave para sexo/género.
-private struct OnboardingChips: View {
-    let options: [String]
-    @Binding var selected: String
-    private let cols = [GridItem(.adaptive(minimum: 110), spacing: 8)]
+// MARK: - Forgey (mascota original)
+
+/// Mascota amistosa de Forge Loop: cuerpo verde redondeado, ojos que parpadean,
+/// sonrisa y mejillas. Acompaña en cada paso del onboarding.
+private struct Mascot: View {
+    var size: CGFloat = 110
+    var wave = false
+    var holdsHeart = false
+    @State private var bob = false
+    @State private var blink = false
+    @State private var waveAngle = false
+
     var body: some View {
-        LazyVGrid(columns: cols, spacing: 8) {
-            ForEach(options, id: \.self) { opt in
-                let on = selected == opt
-                Button {
-                    FX.selection(); selected = on ? "" : opt
-                } label: {
-                    Text(opt).font(.system(size: 14, weight: .heavy)).foregroundColor(on ? Color(hex: "10150a") : Brand.ink)
-                        .frame(maxWidth: .infinity).frame(height: 44)
-                        .background(on ? Brand.greenSoft : Brand.surface)
-                        .clipShape(RoundedRectangle(cornerRadius: 12))
-                        .overlay(RoundedRectangle(cornerRadius: 12).stroke(on ? Brand.green : Brand.line, lineWidth: on ? 1.5 : 1))
-                }.buttonStyle(.plain)
+        ZStack {
+            // Cuerpo
+            RoundedRectangle(cornerRadius: size * 0.42, style: .continuous)
+                .fill(Brand.green)
+                .frame(width: size, height: size * 0.94)
+                .shadow(color: Brand.green.opacity(0.35), radius: 12, y: 8)
+            // Cara
+            VStack(spacing: size * 0.11) {
+                HStack(spacing: size * 0.20) {
+                    eye; eye
+                }
+                Smile().stroke(Color(hex: "10150a"), style: StrokeStyle(lineWidth: size * 0.045, lineCap: .round))
+                    .frame(width: size * 0.30, height: size * 0.15)
+            }
+            .offset(y: size * 0.02)
+            // Mejillas
+            HStack(spacing: size * 0.46) {
+                cheek; cheek
+            }.offset(y: size * 0.12)
+            // Brazo que saluda / corazón
+            if wave {
+                Image(systemName: "hand.wave.fill")
+                    .font(.system(size: size * 0.22))
+                    .foregroundColor(Color(hex: "10150a"))
+                    .rotationEffect(.degrees(waveAngle ? 18 : -6), anchor: .bottomLeading)
+                    .offset(x: size * 0.52, y: -size * 0.30)
+                    .animation(.easeInOut(duration: 0.5).repeatForever(autoreverses: true), value: waveAngle)
+            }
+            if holdsHeart {
+                Image(systemName: "heart.fill").font(.system(size: size * 0.24)).foregroundColor(Brand.red)
+                    .offset(x: size * 0.5, y: -size * 0.34)
+                    .scaleEffect(bob ? 1.12 : 0.95)
             }
         }
+        .offset(y: bob ? -size * 0.035 : size * 0.035)
+        .onAppear {
+            withAnimation(.easeInOut(duration: 1.5).repeatForever(autoreverses: true)) { bob = true }
+            if wave { waveAngle = true }
+            scheduleBlink()
+        }
+    }
+
+    private var eye: some View {
+        Capsule().fill(Color(hex: "10150a"))
+            .frame(width: size * 0.085, height: blink ? size * 0.02 : size * 0.17)
+    }
+    private var cheek: some View {
+        Circle().fill(Color(red: 1, green: 0.45, blue: 0.45).opacity(0.45))
+            .frame(width: size * 0.12, height: size * 0.12)
+    }
+    private func scheduleBlink() {
+        DispatchQueue.main.asyncAfter(deadline: .now() + Double.random(in: 2.5...4.5)) {
+            withAnimation(.easeInOut(duration: 0.10)) { blink = true }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.13) {
+                withAnimation(.easeInOut(duration: 0.10)) { blink = false }
+                scheduleBlink()
+            }
+        }
+    }
+}
+
+/// Sonrisa (arco suave) para la mascota.
+private struct Smile: Shape {
+    func path(in r: CGRect) -> Path {
+        var p = Path()
+        p.move(to: CGPoint(x: r.minX, y: r.minY))
+        p.addQuadCurve(to: CGPoint(x: r.maxX, y: r.minY), control: CGPoint(x: r.midX, y: r.maxY * 1.6))
+        return p
+    }
+}
+
+/// Bocadillo de Forgey: texto amable (en tinta, no gris) con una cola hacia la mascota.
+private struct Bubble: View {
+    let text: String
+    init(_ text: String) { self.text = text }
+    var body: some View {
+        VStack(spacing: 0) {
+            Triangle().fill(Color.white).frame(width: 22, height: 11)
+                .overlay(Triangle().stroke(Brand.line, lineWidth: 1).clipShape(Rectangle().offset(y: 1)))
+            Text(text)
+                .font(.system(size: 19, weight: .heavy)).foregroundColor(Brand.ink)
+                .multilineTextAlignment(.center).fixedSize(horizontal: false, vertical: true)
+                .padding(.horizontal, 18).padding(.vertical, 14)
+                .background(Color.white).clipShape(RoundedRectangle(cornerRadius: 16))
+                .overlay(RoundedRectangle(cornerRadius: 16).stroke(Brand.line))
+        }
+        .padding(.horizontal, 8)
+    }
+}
+
+private struct Triangle: Shape {
+    func path(in r: CGRect) -> Path {
+        var p = Path()
+        p.move(to: CGPoint(x: r.midX, y: r.minY))
+        p.addLine(to: CGPoint(x: r.minX, y: r.maxY))
+        p.addLine(to: CGPoint(x: r.maxX, y: r.maxY))
+        p.closeSubpath()
+        return p
     }
 }
