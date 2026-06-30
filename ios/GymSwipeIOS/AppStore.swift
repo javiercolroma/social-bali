@@ -19,6 +19,7 @@ final class AppStore: ObservableObject {
     @Published var notifications: [AppNotification] = []
     @Published var trainingPlans: [TrainingPlan] = []
     @Published var appliedKudos: Set<String> = []   // posts del muro a los que has dado aplausos
+    @Published var hiddenWorkoutIds: Set<String> = []   // entrenos por defecto que el usuario ha eliminado
 
     let people = AppStore.demoPeople
     let templates = AppStore.builtinTemplates
@@ -41,6 +42,7 @@ final class AppStore: ObservableObject {
             trainingPlans = snap.trainingPlans
             sessions = snap.sessions ?? []
             appliedKudos = Set(snap.appliedKudos ?? [])
+            hiddenWorkoutIds = Set(snap.hiddenWorkoutIds ?? [])
             // Migrate old "Mis entrenos" group to "Otros"
             savedWorkouts = savedWorkouts.map { w in
                 guard w.block == "Mis entrenos" else { return w }
@@ -67,6 +69,7 @@ final class AppStore: ObservableObject {
         var trainingPlans: [TrainingPlan]
         var sessions: [WorkoutSession]?
         var appliedKudos: [String]?
+        var hiddenWorkoutIds: [String]?
     }
 
     func persist() {
@@ -75,7 +78,7 @@ final class AppStore: ObservableObject {
             exercises: exercises, player: player, history: history, profile: profile,
             savedWorkouts: savedWorkouts, account: account, relationships: relationships,
             conversations: conversations, notifications: notifications, trainingPlans: trainingPlans,
-            sessions: sessions, appliedKudos: Array(appliedKudos)
+            sessions: sessions, appliedKudos: Array(appliedKudos), hiddenWorkoutIds: Array(hiddenWorkoutIds)
         )
         if let data = try? JSONEncoder().encode(snap) {
             UserDefaults.standard.set(data, forKey: storeKey)
@@ -86,7 +89,7 @@ final class AppStore: ObservableObject {
 
     var gymScore: GymScore { GymScoreEngine.calculate(history) }
     var activeExercise: Exercise? { exercises.first { $0.status == .pending } }
-    var allWorkouts: [WorkoutTemplate] { templates + savedWorkouts }
+    var allWorkouts: [WorkoutTemplate] { (templates + savedWorkouts).filter { !hiddenWorkoutIds.contains($0.id) } }
 
     /// Workouts the user trains most often (by past sessions), else the first templates.
     var frequentWorkouts: [WorkoutTemplate] {
@@ -429,7 +432,11 @@ final class AppStore: ObservableObject {
     }
 
     func deleteWorkout(_ id: String) {
-        savedWorkouts.removeAll { $0.id == id }
+        if savedWorkouts.contains(where: { $0.id == id }) {
+            savedWorkouts.removeAll { $0.id == id }   // entreno propio: se borra
+        } else {
+            hiddenWorkoutIds.insert(id)               // entreno por defecto: se oculta
+        }
         persist()
     }
 

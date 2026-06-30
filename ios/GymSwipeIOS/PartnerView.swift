@@ -48,9 +48,11 @@ struct PartnerView: View {
             if let p = store.person(item.id) { FriendProfileView(person: p).environmentObject(store) }
         }
         .sheet(isPresented: $showMe) { MeProfileView().environmentObject(store) }
-        .confirmationDialog("¿Eliminar este plan?", isPresented: Binding(get: { pendingDelete != nil }, set: { if !$0 { pendingDelete = nil } }), titleVisibility: .visible) {
-            Button("Eliminar", role: .destructive) { FX.warning(); if let p = pendingDelete { store.deletePlan(p.id) }; pendingDelete = nil }
+        .alert("¿Eliminar tu plan?", isPresented: Binding(get: { pendingDelete != nil }, set: { if !$0 { pendingDelete = nil } }), presenting: pendingDelete) { plan in
+            Button("Eliminar", role: .destructive) { FX.warning(); store.deletePlan(plan.id); pendingDelete = nil }
             Button("Cancelar", role: .cancel) { pendingDelete = nil }
+        } message: { plan in
+            Text("Dejarás de buscar compañero para “\(plan.title)”. Esta acción no se puede deshacer.")
         }
     }
 

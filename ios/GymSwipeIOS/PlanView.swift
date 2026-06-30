@@ -37,9 +37,7 @@ struct PlanView: View {
                                 .buttonStyle(.plain)
                                 .contextMenu {
                                     Button { preview = workout } label: { Label("Ver / Editar", systemImage: "pencil") }
-                                    if store.isSaved(workout.id) {
-                                        Button(role: .destructive) { pendingDelete = workout } label: { Label("Eliminar", systemImage: "trash") }
-                                    }
+                                    Button(role: .destructive) { pendingDelete = workout } label: { Label("Eliminar", systemImage: "trash") }
                                 }
                         }
                     }
@@ -50,9 +48,11 @@ struct PlanView: View {
         .background(Brand.bg)
         .sheet(item: $preview) { WorkoutPreview(workoutId: $0.id, onLoaded: onLoaded).environmentObject(store) }
         .sheet(isPresented: $creating) { CreateWorkoutView().environmentObject(store) }
-        .confirmationDialog("¿Eliminar “\(pendingDelete?.name ?? "")”?", isPresented: Binding(get: { pendingDelete != nil }, set: { if !$0 { pendingDelete = nil } }), titleVisibility: .visible) {
-            Button("Eliminar", role: .destructive) { FX.warning(); if let w = pendingDelete { store.deleteWorkout(w.id) }; pendingDelete = nil }
+        .alert("¿Eliminar entreno?", isPresented: Binding(get: { pendingDelete != nil }, set: { if !$0 { pendingDelete = nil } }), presenting: pendingDelete) { w in
+            Button("Eliminar", role: .destructive) { FX.warning(); store.deleteWorkout(w.id); pendingDelete = nil }
             Button("Cancelar", role: .cancel) { pendingDelete = nil }
+        } message: { w in
+            Text("Se quitará “\(w.name)” de tu lista de entrenos.")
         }
     }
 
@@ -79,7 +79,6 @@ struct WorkoutPreview: View {
     @State private var confirmDelete = false
 
     private var workout: WorkoutTemplate? { store.allWorkouts.first { $0.id == workoutId } }
-    private var isMine: Bool { store.isSaved(workoutId) }
 
     var body: some View {
         NavigationStack {
@@ -105,11 +104,9 @@ struct WorkoutPreview: View {
                                 Label("Editar", systemImage: "pencil").font(.system(size: 15, weight: .heavy)).foregroundColor(Brand.ink)
                                     .frame(maxWidth: .infinity).frame(minHeight: 48).background(Brand.chip).clipShape(RoundedRectangle(cornerRadius: 12))
                             }
-                            if isMine {
-                                Button(role: .destructive) { confirmDelete = true } label: {
-                                    Label("Eliminar entreno", systemImage: "trash").frame(maxWidth: .infinity)
-                                }.padding(.top, 2)
-                            }
+                            Button(role: .destructive) { confirmDelete = true } label: {
+                                Label("Eliminar entreno", systemImage: "trash").frame(maxWidth: .infinity)
+                            }.padding(.top, 2)
                         }.padding(16)
                     }
                     .navigationTitle(workout.name)
@@ -122,9 +119,11 @@ struct WorkoutPreview: View {
             .sheet(isPresented: $showEditor) {
                 if let workout { CreateWorkoutView(editing: workout).environmentObject(store) }
             }
-            .confirmationDialog("¿Eliminar este entreno?", isPresented: $confirmDelete, titleVisibility: .visible) {
+            .alert("¿Eliminar entreno?", isPresented: $confirmDelete) {
                 Button("Eliminar", role: .destructive) { FX.warning(); store.deleteWorkout(workoutId); dismiss() }
                 Button("Cancelar", role: .cancel) {}
+            } message: {
+                Text("Se quitará “\(workout?.name ?? "")” de tu lista de entrenos.")
             }
         }
     }
