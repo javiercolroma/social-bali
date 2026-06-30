@@ -71,6 +71,101 @@ struct Tag: View {
     }
 }
 
+// MARK: - Workout card building blocks (shared by feed, activity, profile, calendar)
+
+/// Calm greenSoft rounded tile with a dumbbell glyph — replaces the bare green dumbbell everywhere.
+struct WorkoutTypeBadge: View {
+    enum Size { case full, compact }
+    var size: Size = .full
+    private var side: CGFloat { size == .full ? 32 : 26 }
+    private var glyph: CGFloat { size == .full ? 14 : 12 }
+    var body: some View {
+        RoundedRectangle(cornerRadius: 9, style: .continuous)
+            .fill(Brand.greenSoft)
+            .frame(width: side, height: side)
+            .overlay(Image(systemName: "dumbbell.fill")
+                .font(.system(size: glyph, weight: .semibold))
+                .foregroundColor(Color(hex: "4f7a00")))
+    }
+}
+
+/// One metric in the stat strip. `tint` is ink except ppm (red). Icons only show in `.full`.
+struct WorkoutStat: Identifiable {
+    let id = UUID()
+    let value: String
+    let label: String
+    let icon: String
+    var tint: Color = Brand.ink
+
+    static func time(_ s: String) -> WorkoutStat { .init(value: s, label: "Tiempo", icon: "clock") }
+    static func sets(_ n: Int) -> WorkoutStat { .init(value: "\(n)", label: "Series", icon: "square.stack.3d.up") }
+    static func exercises(_ n: Int) -> WorkoutStat { .init(value: "\(n)", label: "Ejerc.", icon: "list.bullet") }
+    static func ppm(_ n: Int) -> WorkoutStat { .init(value: "\(n)", label: "ppm", icon: "heart.fill", tint: Brand.red) }
+}
+
+/// THE shared stat strip — one Brand.surface wash with hairline dividers (never gappy pills).
+/// `.full` (feed) = taller, micro-icons; `.compact` (history rows) = smaller, no icons.
+struct WorkoutStatStrip: View {
+    enum Style { case full, compact }
+    let stats: [WorkoutStat]
+    var style: Style = .full
+
+    private var valueSize: CGFloat { style == .full ? 16 : 14 }
+    private var vPad: CGFloat { style == .full ? 11 : 7 }
+    private var dividerH: CGFloat { style == .full ? 26 : 20 }
+    private var showIcons: Bool { style == .full }
+
+    var body: some View {
+        HStack(spacing: 0) {
+            ForEach(Array(stats.enumerated()), id: \.element.id) { idx, s in
+                if idx > 0 { Rectangle().fill(Brand.line).frame(width: 1, height: dividerH) }
+                cell(s)
+            }
+        }
+        .padding(.vertical, vPad)
+        .frame(maxWidth: .infinity)
+        .background(Brand.surface)
+        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+    }
+
+    private func cell(_ s: WorkoutStat) -> some View {
+        VStack(spacing: 3) {
+            HStack(spacing: 4) {
+                if showIcons {
+                    Image(systemName: s.icon).font(.system(size: 10, weight: .semibold))
+                        .foregroundColor(s.tint == Brand.ink ? Brand.soft : s.tint)
+                }
+                Text(s.value).font(.system(size: valueSize, weight: .heavy, design: .rounded))
+                    .foregroundColor(Brand.ink).monospacedDigit().lineLimit(1).minimumScaleFactor(0.8)
+            }
+            Text(s.label.uppercased()).font(.system(size: 9, weight: .bold)).tracking(0.4)
+                .foregroundColor(Brand.muted).lineLimit(1)
+        }
+        .frame(maxWidth: .infinity).contentShape(Rectangle())
+    }
+
+    /// Single source of truth for the metrics — no volume, no XP.
+    static func metrics(time: String, sets: Int, exercises: Int, ppm: Int?) -> [WorkoutStat] {
+        var m: [WorkoutStat] = [.time(time), .sets(sets), .exercises(exercises)]
+        if let ppm { m.append(.ppm(ppm)) }
+        return m
+    }
+}
+
+/// Uniform photo block (rounded + hairline so light images don't bleed on the cream bg).
+struct WorkoutPhoto: View {
+    let data: Data
+    var height: CGFloat = 190
+    var body: some View {
+        if let ui = UIImage(data: data) {
+            Image(uiImage: ui).resizable().scaledToFill()
+                .frame(maxWidth: .infinity).frame(height: height)
+                .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).stroke(Brand.line))
+        }
+    }
+}
+
 func shortTime(_ date: Date) -> String {
     let cal = Calendar.current
     let f = DateFormatter()

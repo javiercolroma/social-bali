@@ -324,27 +324,21 @@ struct SocialFeedView: View {
                 }
             }
 
+            Rectangle().fill(Brand.line).frame(height: 1)   // separa persona de contenido
+
             // Cuerpo: abre el DETALLE del entreno.
             Button { FX.tap(); activity = item } label: {
                 VStack(alignment: .leading, spacing: 12) {
-                    HStack(spacing: 8) {
-                        Image(systemName: "dumbbell.fill").font(.system(size: 13)).foregroundColor(Color(hex: "6ea300"))
-                        Text(item.title).font(.system(size: 16, weight: .heavy)).foregroundColor(Brand.ink)
+                    HStack(spacing: 10) {
+                        WorkoutTypeBadge(size: .full)
+                        Text(item.title).font(.system(size: 18, weight: .heavy)).foregroundColor(Brand.ink).lineLimit(1)
                     }
                     if !item.note.isEmpty {
                         Text(item.note).font(.system(size: 14)).foregroundColor(Color(hex: "2c3127")).lineLimit(2).fixedSize(horizontal: false, vertical: true)
                     }
-                    if let data = item.photo, let ui = UIImage(data: data) {
-                        Image(uiImage: ui).resizable().scaledToFill()
-                            .frame(maxWidth: .infinity).frame(height: 180).clipped()
-                            .clipShape(RoundedRectangle(cornerRadius: 12))
-                    }
-                    HStack(spacing: 8) {
-                        stat(durationText(item.elapsed), "Tiempo", "clock")
-                        stat("\(item.sets)", "Series", "checkmark.circle")
-                        stat("\(item.exercises)", "Ejerc.", "list.bullet")
-                        if let avg = item.avgHeartRate { stat("\(avg)", "ppm", "heart.fill") }
-                    }
+                    if let data = item.photo { WorkoutPhoto(data: data, height: 190) }
+                    WorkoutStatStrip(stats: WorkoutStatStrip.metrics(time: durationText(item.elapsed), sets: item.sets,
+                                                     exercises: item.exercises, ppm: item.avgHeartRate), style: .full)
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .contentShape(Rectangle())
@@ -435,13 +429,6 @@ struct SocialFeedView: View {
         } else {
             Avatar(emoji: item.avatarEmoji, size: 42)
         }
-    }
-
-    private func stat(_ value: String, _ label: String, _ icon: String) -> some View {
-        VStack(spacing: 2) {
-            Text(value).font(.system(size: 15, weight: .heavy)).foregroundColor(Brand.ink)
-            Text(label).font(.system(size: 9, weight: .bold)).foregroundColor(Brand.muted)
-        }.frame(maxWidth: .infinity).padding(.vertical, 8).background(Brand.surface).clipShape(RoundedRectangle(cornerRadius: 10))
     }
 
     private func durationText(_ s: Int) -> String {

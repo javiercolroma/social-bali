@@ -567,29 +567,19 @@ struct FriendProfileView: View {
     private func sessionPostCard(_ s: WorkoutSession) -> some View {
         Button { FX.tap(); detailSession = s } label: {
             PanelCard {
-                HStack(spacing: 8) {
-                    Image(systemName: "dumbbell.fill").font(.system(size: 13)).foregroundColor(Color(hex: "6ea300"))
-                    Text(s.name).font(.system(size: 16, weight: .heavy)).foregroundColor(Brand.ink).lineLimit(1)
+                HStack(spacing: 10) {
+                    WorkoutTypeBadge(size: .compact)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(s.name).font(.system(size: 16, weight: .heavy)).foregroundColor(Brand.ink).lineLimit(1)
+                        Text(relativeTime(s.date)).font(.system(size: 13)).foregroundColor(Brand.soft)
+                    }
                     Spacer()
                     Image(systemName: "chevron.right").font(.system(size: 12, weight: .bold)).foregroundColor(Brand.soft)
                 }
-                Text(relativeTime(s.date)).font(.caption).foregroundColor(Brand.soft).frame(maxWidth: .infinity, alignment: .leading)
-                HStack(spacing: 8) {
-                    miniStat(durationText(s.elapsed), "Tiempo")
-                    miniStat("\(s.sets)", "Series")
-                    miniStat("\(s.exercises)", "Ejerc.")
-                    if let avg = s.avgHeartRate { miniStat("\(avg)", "ppm") }
-                }
+                WorkoutStatStrip(stats: WorkoutStatStrip.metrics(time: durationText(s.elapsed), sets: s.sets,
+                                                 exercises: s.exercises, ppm: s.avgHeartRate), style: .compact)
             }
         }.buttonStyle(.plain)
-    }
-
-    private func miniStat(_ value: String, _ label: String) -> some View {
-        VStack(spacing: 2) {
-            Text(value).font(.system(size: 15, weight: .heavy)).foregroundColor(Brand.ink)
-            Text(label).font(.system(size: 9, weight: .bold)).foregroundColor(Brand.muted)
-        }.frame(maxWidth: .infinity).padding(.vertical, 8)
-            .background(Brand.surface).clipShape(RoundedRectangle(cornerRadius: 10))
     }
 
     private func durationText(_ s: Int) -> String {
@@ -806,19 +796,17 @@ struct MeProfileView: View {
     private func sessionPostCard(_ s: WorkoutSession) -> some View {
         Button { FX.tap(); detailSession = s } label: {
             PanelCard {
-                HStack(spacing: 8) {
-                    Image(systemName: "dumbbell.fill").font(.system(size: 13)).foregroundColor(Color(hex: "6ea300"))
-                    Text(s.name).font(.system(size: 16, weight: .heavy)).foregroundColor(Brand.ink).lineLimit(1)
+                HStack(spacing: 10) {
+                    WorkoutTypeBadge(size: .compact)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(s.name).font(.system(size: 16, weight: .heavy)).foregroundColor(Brand.ink).lineLimit(1)
+                        Text(relativeTime(s.date)).font(.system(size: 13)).foregroundColor(Brand.soft)
+                    }
                     Spacer()
                     Image(systemName: "chevron.right").font(.system(size: 12, weight: .bold)).foregroundColor(Brand.soft)
                 }
-                Text(relativeTime(s.date)).font(.caption).foregroundColor(Brand.soft).frame(maxWidth: .infinity, alignment: .leading)
-                HStack(spacing: 8) {
-                    miniStat(durationText(s.elapsed), "Tiempo")
-                    miniStat("\(s.sets)", "Series")
-                    miniStat("\(s.exercises)", "Ejerc.")
-                    if let avg = s.avgHeartRate { miniStat("\(avg)", "ppm") }
-                }
+                WorkoutStatStrip(stats: WorkoutStatStrip.metrics(time: durationText(s.elapsed), sets: s.sets,
+                                                 exercises: s.exercises, ppm: s.avgHeartRate), style: .compact)
             }
         }.buttonStyle(.plain)
     }
@@ -830,14 +818,6 @@ struct MeProfileView: View {
         }.frame(maxWidth: .infinity).padding(.vertical, 12)
         .background(Brand.panel).clipShape(RoundedRectangle(cornerRadius: 12))
         .overlay(RoundedRectangle(cornerRadius: 12).stroke(Brand.line))
-    }
-
-    private func miniStat(_ value: String, _ label: String) -> some View {
-        VStack(spacing: 2) {
-            Text(value).font(.system(size: 15, weight: .heavy)).foregroundColor(Brand.ink)
-            Text(label).font(.system(size: 9, weight: .bold)).foregroundColor(Brand.muted)
-        }.frame(maxWidth: .infinity).padding(.vertical, 8)
-            .background(Brand.surface).clipShape(RoundedRectangle(cornerRadius: 10))
     }
 
     private func durationText(_ s: Int) -> String {

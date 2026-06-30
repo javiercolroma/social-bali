@@ -196,32 +196,17 @@ struct DaySessionsSheet: View {
     private func card(_ s: WorkoutSession) -> some View {
         Button { FX.tap(); detail = s } label: {
             PanelCard {
-                HStack(spacing: 8) {
-                    Image(systemName: "dumbbell.fill").font(.system(size: 13)).foregroundColor(Color(hex: "6ea300"))
+                HStack(spacing: 10) {
+                    WorkoutTypeBadge(size: .compact)
                     Text(s.name).font(.system(size: 16, weight: .heavy)).foregroundColor(Brand.ink).lineLimit(1)
                     Spacer()
                     Image(systemName: "chevron.right").font(.system(size: 12, weight: .bold)).foregroundColor(Brand.soft)
                 }
-                if let data = s.photoData, let ui = UIImage(data: data) {
-                    Image(uiImage: ui).resizable().scaledToFill()
-                        .frame(maxWidth: .infinity).frame(height: 150).clipped()
-                        .clipShape(RoundedRectangle(cornerRadius: 12))
-                }
-                HStack(spacing: 8) {
-                    mini(durationText(s.elapsed), "Tiempo")
-                    mini("\(s.sets)", "Series")
-                    mini("\(s.exercises)", "Ejerc.")
-                }
+                if let data = s.photoData { WorkoutPhoto(data: data, height: 120) }
+                WorkoutStatStrip(stats: WorkoutStatStrip.metrics(time: durationText(s.elapsed), sets: s.sets,
+                                                 exercises: s.exercises, ppm: s.avgHeartRate), style: .compact)
             }
         }.buttonStyle(.plain)
-    }
-
-    private func mini(_ value: String, _ label: String) -> some View {
-        VStack(spacing: 2) {
-            Text(value).font(.system(size: 15, weight: .heavy)).foregroundColor(Brand.ink)
-            Text(label).font(.system(size: 9, weight: .bold)).foregroundColor(Brand.muted)
-        }.frame(maxWidth: .infinity).padding(.vertical, 8)
-            .background(Brand.surface).clipShape(RoundedRectangle(cornerRadius: 10))
     }
 
     private var title: String {
