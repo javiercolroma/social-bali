@@ -68,33 +68,42 @@ struct PartnerView: View {
         let isMine = plan.ownerId == "me"
         let owner = store.person(plan.ownerId)
         return PanelCard {
-            HStack {
-                Text(plan.title).font(.system(size: 16, weight: .heavy)).foregroundColor(Brand.ink)
-                Spacer()
-                HStack(spacing: 4) {
-                    Image(systemName: "calendar").font(.system(size: 11, weight: .bold))
-                    Text(plan.when).font(.system(size: 13, weight: .heavy))
-                }.foregroundColor(Brand.muted)
-            }
+            // Quién propone + distancia (toca para ver el perfil)
             Button {
                 FX.tap()
                 if isMine { showMe = true } else if let o = owner { profileTarget = IdString(id: o.id) }
             } label: {
-                HStack(spacing: 7) {
-                    Avatar(emoji: isMine ? "🙂" : (owner?.avatar ?? "👤"), size: 24)
-                    Text(isMine ? "Tu plan · \(store.account?.name ?? "Tú")" : "Propuesto por \(owner?.name ?? "Compañero")")
-                        .font(.system(size: 13, weight: .bold)).foregroundColor(Color(hex: "3f4837"))
+                HStack(spacing: 8) {
+                    Avatar(emoji: isMine ? "🙂" : (owner?.avatar ?? "👤"), size: 28)
+                    Text(isMine ? "Tu plan" : (owner?.name ?? "Compañero"))
+                        .font(.system(size: 14, weight: .heavy)).foregroundColor(Brand.ink)
+                    Spacer()
+                    if !isMine {
+                        Text("a \(Int(planKm(plan))) km").font(.system(size: 12, weight: .heavy)).foregroundColor(Brand.soft)
+                    }
+                    Tag(text: "Score \(plan.score)", highlight: true)
                 }
             }.buttonStyle(.plain)
-            HStack(spacing: 6) {
-                Image(systemName: "mappin.circle.fill").foregroundColor(Color(hex: "6ea300"))
-                Text(plan.place).font(.system(size: 13, weight: .bold)).foregroundColor(Color(hex: "3f4837"))
-                if !isMine { Text("· a \(Int(planKm(plan))) km").font(.system(size: 12, weight: .heavy)).foregroundColor(Brand.soft) }
-            }
+
+            // Foco del entreno
+            Text(plan.title).font(.system(size: 18, weight: .heavy)).foregroundColor(Brand.ink)
+
+            // Descripción (con peso) — la parte que de verdad cuenta
             if let note = plan.note, !note.isEmpty {
-                Text(note).font(.system(size: 13)).foregroundColor(Color(hex: "2c3127")).fixedSize(horizontal: false, vertical: true)
+                Text(note).font(.system(size: 15, weight: .semibold)).foregroundColor(Color(hex: "2c3127"))
+                    .fixedSize(horizontal: false, vertical: true)
             }
-            HStack(spacing: 6) { Tag(text: "Score \(plan.score)", highlight: true); Tag(text: plan.spots) }
+
+            // Meta compacta en una sola línea
+            HStack(spacing: 6) {
+                Image(systemName: "calendar").font(.system(size: 11, weight: .bold))
+                Text(plan.when)
+                Text("·")
+                Image(systemName: "mappin.and.ellipse").font(.system(size: 11, weight: .bold))
+                Text(plan.place).lineLimit(1)
+            }
+            .font(.system(size: 12, weight: .semibold)).foregroundColor(Brand.muted)
+
             if isMine {
                 HStack {
                     Text("Esperando compañero…").font(.system(size: 13, weight: .bold)).foregroundColor(Brand.muted)

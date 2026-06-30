@@ -766,6 +766,7 @@ Ajustes aplicados:
 - Se eliminaron los campos auto-inventados (intensidad y objetivo): la tarjeta solo muestra lo que el usuario define (titulo/que, cuando, lugar, plazas) + score.
 - Cualquier plan que no te interese se puede descartar (boton Descartar en planes de otros, Eliminar en los tuyos); la lista se persiste, asi que no se perpetuan.
 - Mientras se crea un plan (formulario "Buscar compañero" abierto) se oculta la lista de planes.
+- **Tarjeta de plan simplificada:** menos texto y la **descripción con más peso**. Orden: cabecera (avatar + nombre + distancia + chip "Score") → **título** (foco del entreno, grande) → **descripción** (el `note`, ahora 15pt semibold y oscuro, es lo segundo más prominente) → una sola línea meta compacta (📅 cuándo · 📍 dónde) → acciones. Se quitaron el prefijo "Propuesto por", la fila de lugar aparte y el tag de plazas.
 
 Aceptar entrenamiento (flujo actual):
 
