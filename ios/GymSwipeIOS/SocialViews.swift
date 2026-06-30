@@ -268,7 +268,7 @@ struct FriendsContent: View {
                 section("Resultados", people: results, empty: "Nadie coincide con “\(query)”.")
             } else {
                 if !incoming.isEmpty { section("Solicitudes recibidas", people: incoming, empty: "") }
-                section("Tus amigos", people: friends, empty: "Aún no tienes amigos. Busca arriba.")
+                if !friends.isEmpty { section("Tus amigos", people: friends, empty: "") }
                 section("Descubre compañeros", people: discover, empty: "Ya estás conectado con todos.")
             }
         }.padding(.horizontal, 14).padding(.bottom, 16)
