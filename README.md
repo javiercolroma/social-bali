@@ -58,6 +58,8 @@ Ultima actualizacion: 2026-06-30
 >
 > **Futuro (autenticacion):** hoy la cuenta es LOCAL (nombre + @handle + foto en el dispositivo, sin login). Para multiusuario real hara falta backend con auth: email+contraseña y/o **Sign in with Apple** (OBLIGATORIO por Apple si se ofrece login de terceros). Requiere servidor (usuarios, sesiones, recuperacion de contraseña) — pendiente de decidir stack (p. ej. Supabase/Firebase para ir rapido).
 >
+> **DEBUG — saltar login + onboarding:** mientras se depura, hay un flag `AppStore.debugSkipAuthOnboarding` (en `AppStore.swift`, **`true` por ahora**) que arranca la app directamente en `RootView` sin pasar por `AuthView` ni `OnboardingView`: si no hay sesión/cuenta guardadas, `init()` siembra una cuenta debug en memoria (`Auth(provider:"debug")` + `Account(name:"Debug", handle:"debug")`). Para volver al flujo real (login → onboarding → app) pon el flag en `false`; si ya se guardó una cuenta debug, reinstala/borra datos para ver de nuevo el flujo. Solo afecta al arranque; no toca la lógica de auth real (Sign in with Apple).
+>
 > **Comandos nativos:** `npm run ios:generate` (xcodegen) tras añadir archivos Swift; build con `xcodebuild -project ios/GymSwipeIOS.xcodeproj -scheme GymSwipeIOS -destination 'platform=iOS Simulator,name=iPhone 17 Pro' build`. Ya NO hace falta `npm run ios:sync`.
 
 

@@ -25,6 +25,11 @@ final class AppStore: ObservableObject {
     let people = AppStore.demoPeople
     let templates = AppStore.builtinTemplates
 
+    /// DEBUG: salta el login (AuthView) y el onboarding mientras se depura.
+    /// Pon en `false` para volver al flujo real (login → onboarding → app).
+    /// Si ya se guardó una cuenta debug, reinstala/borra datos para ver de nuevo el flujo.
+    static let debugSkipAuthOnboarding = true
+
     private var loaded = false
     private let storeKey = "forge-native-v1"
 
@@ -52,6 +57,11 @@ final class AppStore: ObservableObject {
             }
         } else {
             seedDemo()
+        }
+        // DEBUG: arranca directo en la app, sin login ni onboarding.
+        if Self.debugSkipAuthOnboarding {
+            if auth == nil { auth = Auth(provider: "debug", userId: "debug", email: nil, name: "Debug") }
+            if account == nil { account = Account(name: "Debug", handle: "debug") }
         }
         loaded = true
     }
