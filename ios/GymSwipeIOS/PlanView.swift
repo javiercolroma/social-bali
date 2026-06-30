@@ -147,6 +147,7 @@ struct CreateWorkoutView: View {
     @State private var group = ""
     @State private var drafts: [DraftExercise] = [DraftExercise()]
     @State private var didLoad = false
+    @FocusState private var nameFocused: Bool
     @FocusState private var groupFocused: Bool
     @FocusState private var focusedExercise: UUID?
 
@@ -224,9 +225,11 @@ struct CreateWorkoutView: View {
                 VStack(spacing: 14) {
                     labeled("NOMBRE") {
                         TextField("Mi entreno", text: $name)
+                            .focused($nameFocused)
+                            .submitLabel(.next)
                             .padding(.horizontal, 12).frame(height: 46).background(Color.white)
                             .clipShape(RoundedRectangle(cornerRadius: 10))
-                            .overlay(RoundedRectangle(cornerRadius: 10).stroke(Brand.line))
+                            .overlay(RoundedRectangle(cornerRadius: 10).stroke(nameFocused ? Brand.greenSoft : Brand.line, lineWidth: nameFocused ? 1.5 : 1))
                     }
 
                     labeled("GRUPO") { groupField }
@@ -245,7 +248,13 @@ struct CreateWorkoutView: View {
             }
             .background(Brand.bg)
             .navigationTitle(editing == nil ? "Crear entreno" : "Editar entreno").navigationBarTitleDisplayMode(.inline)
-            .onAppear(perform: prefill)
+            .onAppear {
+                prefill()
+                // Entreno nuevo: el cursor empieza en el Nombre para escribir directamente.
+                if editing == nil {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.45) { nameFocused = true }
+                }
+            }
         }
     }
 
@@ -268,6 +277,10 @@ struct CreateWorkoutView: View {
     private func exerciseCard(_ draft: Binding<DraftExercise>) -> some View {
         let id = draft.wrappedValue.id
         let suggestions = focusedExercise == id ? searchExercises(draft.wrappedValue.name) : []
+        let trimmed = draft.wrappedValue.name.trimmingCharacters(in: .whitespaces)
+        // Si escribes un ejercicio que no está en el catálogo, ofrecemos usarlo como personalizado.
+        let isCustom = focusedExercise == id && !trimmed.isEmpty
+            && !exerciseCatalog.contains { $0.caseInsensitiveCompare(trimmed) == .orderedSame }
         return VStack(spacing: 12) {
             HStack(spacing: 8) {
                 TextField("Nombre del ejercicio", text: draft.name)
@@ -282,8 +295,20 @@ struct CreateWorkoutView: View {
                     }
                 }
             }
-            if !suggestions.isEmpty {
+            if isCustom || !suggestions.isEmpty {
                 VStack(spacing: 0) {
+                    if isCustom {
+                        Button { focusedExercise = nil } label: {
+                            HStack(spacing: 10) {
+                                Image(systemName: "plus.circle.fill").font(.system(size: 14)).foregroundColor(Color(hex: "4b6211")).frame(width: 18)
+                                Text("Usar “\(trimmed)”").font(.system(size: 14, weight: .semibold)).foregroundColor(Brand.ink)
+                                Spacer()
+                                Text("nuevo").font(.system(size: 10, weight: .heavy)).foregroundColor(Brand.soft)
+                                    .padding(.horizontal, 7).padding(.vertical, 3).background(Brand.chip).clipShape(Capsule())
+                            }.padding(.horizontal, 12).frame(height: 44)
+                        }
+                        if !suggestions.isEmpty { Divider() }
+                    }
                     ForEach(Array(suggestions.prefix(6).enumerated()), id: \.element) { idx, name in
                         Button { draft.wrappedValue.name = name; focusedExercise = nil } label: {
                             HStack(spacing: 10) {
@@ -337,7 +362,12 @@ struct CreateWorkoutView: View {
     }
 
     private var addButton: some View {
-        Button { drafts.append(DraftExercise()) } label: {
+        Button {
+            let d = DraftExercise()
+            drafts.append(d)
+            // Deja el cursor listo en el nuevo ejercicio para escribir sin tener que tocar.
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { focusedExercise = d.id }
+        } label: {
             HStack(spacing: 8) {
                 Image(systemName: "plus.circle.fill")
                 Text("Añadir ejercicio")
