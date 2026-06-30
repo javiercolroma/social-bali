@@ -30,11 +30,11 @@ struct OnboardingView: View {
     @State private var city = ""
     @State private var gym = ""
 
-    // Encuesta tipo tarjeta (una pregunta por pantalla, selección única)
-    @State private var goalSel: String?
+    // Encuesta tipo tarjeta. Objetivo y motivación son MULTI-selección; nivel y días, única.
+    @State private var goalSel: Set<String> = []
     @State private var levelSel: String?
     @State private var daysSel: String?
-    @State private var motivSel: String?
+    @State private var motivSel: Set<String> = []
     @State private var shownBubbles: Set<Int> = []   // pasos cuyo bocadillo ya se escribió (no re-typear al volver)
     @State private var bounceTrigger = 0             // anima a Forgey al elegir
     @State private var reactionLine: String?         // chip de reacción de Forgey
@@ -124,10 +124,10 @@ struct OnboardingView: View {
         case .welcome: welcomeStep
         case .name: nameStep
         case .handle: handleStep
-        case .goal: surveyStep(OnboardingSurvey.goal, selection: $goalSel)
+        case .goal: surveyMultiStep(OnboardingSurvey.goal, selection: $goalSel)
         case .level: surveyStep(OnboardingSurvey.level, selection: $levelSel)
         case .days: surveyStep(OnboardingSurvey.days, selection: $daysSel)
-        case .motivation: surveyStep(OnboardingSurvey.motivation, selection: $motivSel, isLast: true)
+        case .motivation: surveyMultiStep(OnboardingSurvey.motivation, selection: $motivSel, isLast: true)
         case .photo: photoStep
         case .about: aboutStep
         case .place: placeStep
@@ -224,6 +224,44 @@ struct OnboardingView: View {
         }
     }
 
+    /// Igual que `surveyStep` pero de MULTI-selección (puedes marcar varias).
+    private func surveyMultiStep(_ q: SurveyQuestion, selection: Binding<Set<String>>, isLast: Bool = false) -> some View {
+        let done = shownBubbles.contains(step.rawValue)
+        return layout {
+            ZStack {
+                if let line = reactionLine {
+                    ReactionChip(text: line).transition(.scale(scale: 0.6).combined(with: .opacity))
+                }
+            }
+            .frame(height: 32)
+            .animation(.spring(response: 0.3, dampingFraction: 0.55), value: reactionLine)
+            Mascot(size: 88, bounceTrigger: bounceTrigger)
+            TypingBubble(q.prompt, typing: !done) { shownBubbles.insert(step.rawValue) }
+            VStack(spacing: 10) {
+                ForEach(Array(q.options.enumerated()), id: \.element.label) { idx, opt in
+                    SelectCard(emoji: opt.emoji, label: opt.label, selected: selection.wrappedValue.contains(opt.label)) {
+                        FX.selection()
+                        if selection.wrappedValue.contains(opt.label) {
+                            selection.wrappedValue.remove(opt.label)
+                        } else {
+                            selection.wrappedValue.insert(opt.label)
+                            bounceTrigger += 1
+                            withAnimation(.easeOut(duration: 0.2)) { reactionLine = q.reaction(opt.label) }
+                        }
+                    }
+                    .opacity(done ? 1 : 0).offset(y: done ? 0 : 10)
+                    .animation(.spring(response: 0.4, dampingFraction: 0.85).delay(done ? Double(idx) * 0.05 : 0), value: done)
+                    .allowsHitTesting(done)
+                }
+            }
+        } actions: {
+            primary("Continuar", enabled: !selection.wrappedValue.isEmpty) {
+                if isLast { FX.success() }
+                advance()
+            }
+        }
+    }
+
     private var photoStep: some View {
         layout {
             TypingBubble(firstName.isEmpty ? "¡Ya te conozco mejor! 🙌 ¿Le ponemos cara?" : "¡Ya te conozco mejor, \(firstName)! 🙌 ¿Le ponemos cara?",
@@ -283,9 +321,10 @@ struct OnboardingView: View {
     }
 
     /// Tras elegir foto: guarda los datos, resetea encuadre y abre el editor para encuadrar.
+    /// Se deja que el selector se cierre primero y luego sube el editor (transición limpia).
     private func onPhotoPicked(_ data: Data) {
         photoData = data; photoScale = 1; photoOffset = .zero; Haptics.soft()
-        showFramer = true
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) { showFramer = true }
     }
 
     private var aboutStep: some View {
@@ -432,6 +471,12 @@ struct OnboardingView: View {
         withAnimation(.spring(response: 0.5, dampingFraction: 0.7).delay(0.15)) { avatarIn = true }
     }
 
+    /// Une una multi-selección respetando el orden de las opciones de la pregunta.
+    private func ordered(_ set: Set<String>, _ q: SurveyQuestion) -> String? {
+        let list = q.options.map { $0.label }.filter { set.contains($0) }
+        return list.isEmpty ? nil : list.joined(separator: ", ")
+    }
+
     private func commit() {
         var acc = Account(name: name.trimmingCharacters(in: .whitespaces), handle: normalized)
         acc.photoData = photoData
@@ -447,10 +492,10 @@ struct OnboardingView: View {
         if !country.isEmpty { store.profile.country = country }
         if !city.isEmpty { store.profile.city = city }
         if !gym.trimmingCharacters(in: .whitespaces).isEmpty { store.profile.gym = gym.trimmingCharacters(in: .whitespaces) }
-        store.profile.goal = goalSel
+        store.profile.goal = ordered(goalSel, OnboardingSurvey.goal)
         store.profile.level = levelSel
         store.profile.weeklyDays = daysSel
-        store.profile.motivation = motivSel
+        store.profile.motivation = ordered(motivSel, OnboardingSurvey.motivation)
         store.persist()
         FX.success(sound: true)
     }
@@ -685,16 +730,17 @@ private struct TypingBubble: View {
     private func start() {
         if !typing || reduceMotion { shown = full; onDone?(); return }
         shown = ""
-        // Ritmo natural: ~45 ms/letra (con tope para frases largas) + pausa al final de frase.
-        let base = min(0.048, 1.6 / Double(max(1, full.count)))
+        // Ritmo CONSTANTE y natural (~33 letras/seg) — igual en todas las pantallas,
+        // con pausas suaves al final de frase. Tope total para frases muy largas.
+        let base = min(0.030, 2.0 / Double(max(1, full.count)))
         task = Task { @MainActor in
-            try? await Task.sleep(nanoseconds: 250_000_000)   // respira antes de empezar
+            try? await Task.sleep(nanoseconds: 120_000_000)   // respira un instante antes
             for ch in full {
                 if Task.isCancelled { return }
                 shown.append(ch)
                 var d = base
-                if ".!?…".contains(ch) { d += 0.22 }
-                else if ",;".contains(ch) { d += 0.12 }
+                if ".!?…".contains(ch) { d += 0.08 }
+                else if ",;".contains(ch) { d += 0.04 }
                 try? await Task.sleep(nanoseconds: UInt64(d * 1_000_000_000))
             }
             onDone?()
@@ -796,7 +842,7 @@ private struct SurveyQuestion {
 
 private enum OnboardingSurvey {
     static let goal = SurveyQuestion(
-        prompt: "¡Cuéntame un poco de ti! No hay respuestas malas 😉 ¿Cuál es tu objetivo?",
+        prompt: "¡Cuéntame de ti! ¿Qué quieres conseguir? Elige las que quieras 😉",
         options: [.init(emoji: "💪", label: "Ganar músculo"), .init(emoji: "🔥", label: "Perder grasa"),
                   .init(emoji: "🏋️", label: "Ganar fuerza"), .init(emoji: "⚡", label: "Mantenerme en forma"),
                   .init(emoji: "🧘", label: "Salud y bienestar")],
@@ -837,7 +883,7 @@ private enum OnboardingSurvey {
         })
 
     static let motivation = SurveyQuestion(
-        prompt: "Última 🔥 ¿Qué es lo que más te mueve?",
+        prompt: "Última 🔥 ¿Qué es lo que más te mueve? Marca las que quieras",
         options: [.init(emoji: "🪞", label: "Verme mejor"), .init(emoji: "🏆", label: "Superarme cada día"),
                   .init(emoji: "😌", label: "Despejar la mente"), .init(emoji: "🤝", label: "Entrenar con gente"),
                   .init(emoji: "💯", label: "Crear el hábito")],
