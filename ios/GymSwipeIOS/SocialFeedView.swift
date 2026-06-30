@@ -351,11 +351,7 @@ struct SocialFeedView: View {
 
             // Acciones estilo Instagram: like (corazón), comentario, compartir (avión), con contadores.
             HStack(spacing: 20) {
-                Button { FX.tap(); store.toggleKudo(item.id) } label: {
-                    let liked = store.appliedKudos.contains(item.id)
-                    actionIcon(liked ? "heart.fill" : "heart", "\(kudos(item) + (liked ? 1 : 0))",
-                               tint: liked ? Brand.red : Brand.ink)
-                }.buttonStyle(.plain)
+                LikeButton(id: item.id, baseCount: kudos(item)).environmentObject(store)
 
                 Button {
                     FX.tap()
@@ -377,7 +373,7 @@ struct SocialFeedView: View {
 
     private func actionIcon(_ icon: String, _ count: String, tint: Color) -> some View {
         HStack(spacing: 6) {
-            Image(systemName: icon).font(.system(size: 21, weight: .regular)).foregroundColor(tint)
+            Image(systemName: icon).font(.system(size: 22, weight: .semibold)).foregroundColor(tint)
             Text(count).font(.system(size: 14, weight: .semibold)).foregroundColor(Brand.ink)
         }
     }
@@ -735,5 +731,69 @@ private struct CommentsSheet: View {
                 return
             }
         }
+    }
+}
+
+/// Botón de like del muro con animación: el corazón hace pop y, al dar like,
+/// brota una pequeña explosión de corazones (estilo Instagram).
+private struct LikeButton: View {
+    @EnvironmentObject var store: AppStore
+    let id: String
+    let baseCount: Int
+    @State private var pop: CGFloat = 1
+    @State private var burst = false
+
+    private var liked: Bool { store.appliedKudos.contains(id) }
+
+    var body: some View {
+        Button {
+            let wasLiked = liked
+            store.toggleKudo(id)
+            if wasLiked {
+                FX.tap()
+            } else {
+                Haptics.rigid()
+                pop = 0.6
+                withAnimation(.spring(response: 0.28, dampingFraction: 0.38)) { pop = 1.35 }
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.18) {
+                    withAnimation(.spring(response: 0.35, dampingFraction: 0.6)) { pop = 1 }
+                }
+                burst = true
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) { burst = false }
+            }
+        } label: {
+            HStack(spacing: 6) {
+                ZStack {
+                    if burst { HeartBurst() }
+                    Image(systemName: liked ? "heart.fill" : "heart")
+                        .font(.system(size: 22, weight: .semibold))
+                        .foregroundColor(liked ? Brand.red : Brand.ink)
+                        .scaleEffect(pop)
+                }
+                Text("\(baseCount + (liked ? 1 : 0))")
+                    .font(.system(size: 14, weight: .semibold)).foregroundColor(Brand.ink)
+                    .contentTransition(.numericText())
+            }
+        }.buttonStyle(.plain)
+    }
+}
+
+/// Pequeños corazones que salen disparados al dar like.
+private struct HeartBurst: View {
+    @State private var go = false
+    var body: some View {
+        ZStack {
+            ForEach(0..<6, id: \.self) { i in
+                let angle = Double(i) / 6 * 2 * .pi
+                Image(systemName: "heart.fill")
+                    .font(.system(size: 8, weight: .black))
+                    .foregroundColor(Brand.red)
+                    .offset(x: go ? CGFloat(cos(angle)) * 22 : 0, y: go ? CGFloat(sin(angle)) * 22 : 0)
+                    .scaleEffect(go ? 0.3 : 0.9)
+                    .opacity(go ? 0 : 1)
+            }
+        }
+        .allowsHitTesting(false)
+        .onAppear { withAnimation(.easeOut(duration: 0.55)) { go = true } }
     }
 }
