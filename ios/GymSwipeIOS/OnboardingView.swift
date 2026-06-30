@@ -20,6 +20,9 @@ struct OnboardingView: View {
     @State private var handle = ""
     @State private var pickerItem: PhotosPickerItem?
     @State private var photoData: Data?
+    @State private var photoScale: CGFloat = 1
+    @State private var photoOffset: CGSize = .zero
+    @State private var showFramer = false
     @State private var birthYear = 1997
     @State private var sexSel = "Hombre"
     @State private var aboutDone = false
@@ -189,13 +192,15 @@ struct OnboardingView: View {
     private func surveyStep(_ q: SurveyQuestion, selection: Binding<String?>, isLast: Bool = false) -> some View {
         let done = shownBubbles.contains(step.rawValue)
         return layout {
-            Mascot(size: 88, bounceTrigger: bounceTrigger)
-                .overlay(alignment: .top) {
-                    if let line = reactionLine {
-                        ReactionChip(text: line).offset(y: -8)
-                            .transition(.scale(scale: 0.6).combined(with: .opacity))
-                    }
+            // Reacción de Forgey: en su PROPIO espacio, encima de la cabeza (no sobre la cara).
+            ZStack {
+                if let line = reactionLine {
+                    ReactionChip(text: line).transition(.scale(scale: 0.6).combined(with: .opacity))
                 }
+            }
+            .frame(height: 32)
+            .animation(.spring(response: 0.3, dampingFraction: 0.55), value: reactionLine)
+            Mascot(size: 88, bounceTrigger: bounceTrigger)
             TypingBubble(q.prompt, typing: !done) { shownBubbles.insert(step.rawValue) }
             VStack(spacing: 10) {
                 ForEach(Array(q.options.enumerated()), id: \.element.label) { idx, opt in
@@ -221,26 +226,35 @@ struct OnboardingView: View {
 
     private var photoStep: some View {
         layout {
-            Bubble(firstName.isEmpty ? "¡Ya te conozco mejor! 🙌 ¿Le ponemos cara?" : "¡Ya te conozco mejor, \(firstName)! 🙌 ¿Le ponemos cara?")
-            PhotoPickerLabel(item: $pickerItem, onPicked: { photoData = $0; Haptics.soft() }) {
-                ZStack(alignment: .bottomTrailing) {
-                    if let d = photoData, let ui = UIImage(data: d) {
-                        Image(uiImage: ui).resizable().scaledToFill().frame(width: 150, height: 150).clipShape(Circle())
-                    } else {
-                        ZStack {
-                            Circle().fill(Brand.chip).frame(width: 150, height: 150)
-                            Image(systemName: "camera.fill").font(.system(size: 40)).foregroundColor(Brand.soft)
+            TypingBubble(firstName.isEmpty ? "¡Ya te conozco mejor! 🙌 ¿Le ponemos cara?" : "¡Ya te conozco mejor, \(firstName)! 🙌 ¿Le ponemos cara?",
+                         typing: !shownBubbles.contains(Step.photo.rawValue)) { shownBubbles.insert(Step.photo.rawValue) }
+            // Tocar el círculo: si hay foto, reencuadra; si no, abre el selector.
+            Group {
+                if let d = photoData, let ui = UIImage(data: d) {
+                    Button { showFramer = true } label: {
+                        ZStack(alignment: .bottomTrailing) {
+                            Image(uiImage: ui).resizable().scaledToFill()
+                                .scaleEffect(photoScale)
+                                .offset(x: photoOffset.width * (150 / 240), y: photoOffset.height * (150 / 240))
+                                .frame(width: 150, height: 150).clipShape(Circle())
+                            badge("crop")
+                        }
+                    }.buttonStyle(.plain)
+                } else {
+                    PhotoPickerLabel(item: $pickerItem, onPicked: { onPhotoPicked($0) }) {
+                        ZStack(alignment: .bottomTrailing) {
+                            ZStack {
+                                Circle().fill(Brand.chip).frame(width: 150, height: 150)
+                                Image(systemName: "camera.fill").font(.system(size: 40)).foregroundColor(Brand.soft)
+                            }
+                            badge("plus")
                         }
                     }
-                    Image(systemName: "plus").font(.system(size: 16, weight: .heavy))
-                        .foregroundColor(Brand.ink).padding(11).background(Brand.green).clipShape(Circle())
-                        .overlay(Circle().stroke(Brand.bg, lineWidth: 4))
                 }
             }
         } actions: {
             if photoData == nil {
-                // "Elegir foto" abre el selector (no avanza); reusa el cargador de PhotoPickerLabel.
-                PhotoPickerLabel(item: $pickerItem, onPicked: { photoData = $0; Haptics.soft() }) {
+                PhotoPickerLabel(item: $pickerItem, onPicked: { onPhotoPicked($0) }) {
                     Text("Elegir foto")
                         .font(.system(size: 16, weight: .heavy)).foregroundColor(Color(hex: "10150a"))
                         .frame(maxWidth: .infinity).frame(minHeight: 50)
@@ -248,15 +262,37 @@ struct OnboardingView: View {
                 }
             } else {
                 primary("Usar esta foto") { advance() }
+                PhotoPickerLabel(item: $pickerItem, onPicked: { onPhotoPicked($0) }) {
+                    Text("Elegir otra").font(.system(size: 14, weight: .bold)).foregroundColor(Brand.soft)
+                        .frame(maxWidth: .infinity).frame(height: 36)
+                }
             }
             skip()
         }
+        .sheet(isPresented: $showFramer) {
+            if let d = photoData {
+                OnboardingPhotoFramer(data: d, scale: $photoScale, offset: $photoOffset) { showFramer = false }
+            }
+        }
+    }
+
+    private func badge(_ icon: String) -> some View {
+        Image(systemName: icon).font(.system(size: 16, weight: .heavy))
+            .foregroundColor(Brand.ink).padding(11).background(Brand.green).clipShape(Circle())
+            .overlay(Circle().stroke(Brand.bg, lineWidth: 4))
+    }
+
+    /// Tras elegir foto: guarda los datos, resetea encuadre y abre el editor para encuadrar.
+    private func onPhotoPicked(_ data: Data) {
+        photoData = data; photoScale = 1; photoOffset = .zero; Haptics.soft()
+        showFramer = true
     }
 
     private var aboutStep: some View {
         layout {
             Mascot(size: 88)
-            Bubble("Cuéntame un poco sobre ti")
+            TypingBubble("Cuéntame un poco sobre ti",
+                         typing: !shownBubbles.contains(Step.about.rawValue)) { shownBubbles.insert(Step.about.rawValue) }
             VStack(spacing: 0) {
                 wheelLabel("¿Cuándo naciste?")
                 Picker("Año", selection: $birthYear) {
@@ -280,7 +316,8 @@ struct OnboardingView: View {
     private var placeStep: some View {
         layout {
             Mascot(size: 88)
-            Bubble("¿Dónde sueles entrenar?")
+            TypingBubble("¿Dónde sueles entrenar?",
+                         typing: !shownBubbles.contains(Step.place.rawValue)) { shownBubbles.insert(Step.place.rawValue) }
             VStack(spacing: 10) {
                 CountryField(label: "", selected: country) { country = $0 }
                 CitySearchField(label: "", selected: city, country: country) { city = $0 }
@@ -300,8 +337,9 @@ struct OnboardingView: View {
     private var healthStep: some View {
         layout {
             Mascot(size: 96, holdsHeart: true)
-            Bubble(health.isAvailable ? "¿Conectamos con Salud para ver tu pulso en cada serie?"
-                                       : "Cuando tengas el iPhone a mano podrás conectar Salud desde tu perfil.")
+            TypingBubble(health.isAvailable ? "¿Conectamos con Salud para ver tu pulso en cada serie?"
+                                            : "Cuando tengas el iPhone a mano podrás conectar Salud desde tu perfil.",
+                         typing: !shownBubbles.contains(Step.health.rawValue)) { shownBubbles.insert(Step.health.rawValue) }
         } actions: {
             if health.isAvailable && !health.connected {
                 primary("Conectar con Salud") { Task { _ = await health.connect(); advance() } }
@@ -328,7 +366,11 @@ struct OnboardingView: View {
     }
 
     private var previewAccount: Account {
-        Account(name: name.trimmingCharacters(in: .whitespaces), handle: normalized, photoData: photoData)
+        var a = Account(name: name.trimmingCharacters(in: .whitespaces), handle: normalized, photoData: photoData)
+        a.photoScale = Double(photoScale)
+        a.photoOffsetX = Double(photoOffset.width)
+        a.photoOffsetY = Double(photoOffset.height)
+        return a
     }
 
     // MARK: - Layout helper (centrado, con acciones abajo)
@@ -393,6 +435,9 @@ struct OnboardingView: View {
     private func commit() {
         var acc = Account(name: name.trimmingCharacters(in: .whitespaces), handle: normalized)
         acc.photoData = photoData
+        acc.photoScale = Double(photoScale)
+        acc.photoOffsetX = Double(photoOffset.width)
+        acc.photoOffsetY = Double(photoOffset.height)
         store.saveAccount(acc)
         if aboutDone {
             var comp = DateComponents(); comp.year = birthYear; comp.month = 6; comp.day = 15
@@ -640,12 +685,17 @@ private struct TypingBubble: View {
     private func start() {
         if !typing || reduceMotion { shown = full; onDone?(); return }
         shown = ""
-        let interval = min(0.026, 0.9 / Double(max(1, full.count)))
+        // Ritmo natural: ~45 ms/letra (con tope para frases largas) + pausa al final de frase.
+        let base = min(0.048, 1.6 / Double(max(1, full.count)))
         task = Task { @MainActor in
+            try? await Task.sleep(nanoseconds: 250_000_000)   // respira antes de empezar
             for ch in full {
                 if Task.isCancelled { return }
                 shown.append(ch)
-                try? await Task.sleep(nanoseconds: UInt64(interval * 1_000_000_000))
+                var d = base
+                if ".!?…".contains(ch) { d += 0.22 }
+                else if ",;".contains(ch) { d += 0.12 }
+                try? await Task.sleep(nanoseconds: UInt64(d * 1_000_000_000))
             }
             onDone?()
         }
@@ -691,6 +741,47 @@ private struct ReactionChip: View {
             .background(Brand.greenSoft).clipShape(Capsule())
             .overlay(Capsule().stroke(Brand.green.opacity(0.45)))
             .shadow(color: .black.opacity(0.10), radius: 6, y: 3)
+    }
+}
+
+/// Encuadre manual de la foto (arrastrar + pellizcar) durante el onboarding.
+/// Devuelve escala y desplazamiento al estado del onboarding (no toca la cuenta todavía).
+private struct OnboardingPhotoFramer: View {
+    let data: Data
+    @Binding var scale: CGFloat
+    @Binding var offset: CGSize
+    var onDone: () -> Void
+    @Environment(\.dismiss) private var dismiss
+    @State private var lastScale: CGFloat = 1
+    @State private var lastOffset: CGSize = .zero
+    private let editSize: CGFloat = 240   // mismo espacio que MeAvatar para que el encuadre coincida
+
+    var body: some View {
+        NavigationStack {
+            VStack(spacing: 18) {
+                Text("Arrastra y pellizca para encuadrar").font(.footnote).foregroundColor(Brand.muted)
+                if let ui = UIImage(data: data) {
+                    Image(uiImage: ui).resizable().scaledToFill()
+                        .scaleEffect(scale).offset(offset)
+                        .frame(width: editSize, height: editSize).clipShape(Circle())
+                        .overlay(Circle().stroke(Brand.green, lineWidth: 3))
+                        .contentShape(Circle())
+                        .gesture(SimultaneousGesture(
+                            MagnificationGesture()
+                                .onChanged { scale = max(1, min(4, lastScale * $0)) }
+                                .onEnded { _ in lastScale = scale },
+                            DragGesture()
+                                .onChanged { offset = CGSize(width: lastOffset.width + $0.translation.width,
+                                                             height: lastOffset.height + $0.translation.height) }
+                                .onEnded { _ in lastOffset = offset }))
+                }
+                Button { onDone(); dismiss() } label: { Text("Listo") }.buttonStyle(PrimaryButtonStyle())
+                Spacer()
+            }
+            .padding(20).background(Brand.bg)
+            .navigationTitle("Encuadra tu foto").navigationBarTitleDisplayMode(.inline)
+            .onAppear { lastScale = scale; lastOffset = offset }
+        }
     }
 }
 
