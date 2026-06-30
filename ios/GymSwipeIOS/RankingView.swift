@@ -85,18 +85,22 @@ struct RankingView: View {
     }
 
     private func rankRow(_ idx: Int, _ row: RankRow) -> some View {
-        HStack(spacing: 10) {
+        let tier = ScoreTier.of(row.score)
+        return HStack(spacing: 10) {
             Text("\(idx + 1)").font(.system(size: 13, weight: .heavy)).foregroundColor(Brand.muted).frame(width: 20)
-            ZStack(alignment: .bottomTrailing) {
-                if row.isMe { MeAvatar(account: store.account, size: 34) } else { Avatar(emoji: row.emoji, size: 34) }
-                Text(row.flag).font(.system(size: 11))
-                    .frame(width: 17, height: 17).background(Circle().fill(.white))
-                    .overlay(Circle().stroke(Brand.line))
-                    .offset(x: 3, y: 3)
-            }
+            if row.isMe { MeAvatar(account: store.account, size: 34) } else { Avatar(emoji: row.emoji, size: 34) }
             Text(row.name).font(.system(size: 14, weight: row.isMe ? .heavy : .semibold)).foregroundColor(Brand.ink)
             Spacer()
-            Text("\(row.score)").font(.system(size: 15, weight: .heavy)).foregroundColor(Brand.ink)
+            // Puntuación con el efecto de su división (Hierro → Maestro).
+            HStack(spacing: 4) {
+                Image(systemName: tier.symbol).font(.system(size: 10, weight: .heavy))
+                Text("\(row.score)").font(.system(size: 14, weight: .heavy)).monospacedDigit()
+            }
+            .foregroundColor(tier.textColor)
+            .padding(.horizontal, 9).padding(.vertical, 4)
+            .background(tier.fill).clipShape(Capsule())
+            .overlay(Capsule().stroke(.white.opacity(0.5), lineWidth: 1))
+            .shadow(color: tier.glow.color.opacity(0.9), radius: tier.glow.radius)
         }
         .padding(.vertical, 5)
         .padding(.horizontal, 8)
