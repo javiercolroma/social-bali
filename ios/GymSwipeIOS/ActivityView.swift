@@ -251,8 +251,15 @@ struct ActivityView: View {
                         }.buttonStyle(.plain)
                     }
                     Text("\(s.total)").font(.system(size: 48, weight: .heavy)).foregroundColor(Brand.ink)
-                    Text(s.tier).font(.system(size: 12, weight: .heavy)).foregroundColor(Color(hex: "10150a"))
-                        .padding(.horizontal, 10).padding(.vertical, 3).background(Brand.greenSoft).clipShape(Capsule())
+                    let tier = ScoreTier.of(s.total)
+                    HStack(spacing: 5) {
+                        Image(systemName: tier.symbol).font(.system(size: 11, weight: .heavy))
+                        Text(tier.name).font(.system(size: 12, weight: .heavy))
+                    }
+                    .foregroundColor(tier.textColor)
+                    .padding(.horizontal, 10).padding(.vertical, 4)
+                    .background(tier.fill).clipShape(Capsule())
+                    .overlay(Capsule().stroke(.white.opacity(0.6), lineWidth: 1))
                 }
                 Spacer()
                 VStack(alignment: .trailing, spacing: 4) {
