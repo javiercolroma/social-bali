@@ -50,6 +50,11 @@ struct Profile: Codable {
     var instagram: String? = nil
     var tiktok: String? = nil
     var twitter: String? = nil
+    // Respuestas del onboarding (encuesta de tarjetas). Opcionales y decode-safe.
+    var goal: String? = nil
+    var level: String? = nil
+    var weeklyDays: String? = nil
+    var motivation: String? = nil
 }
 
 struct HistoryEntry: Identifiable, Codable {

@@ -8,7 +8,7 @@ struct OnboardingView: View {
     @ObservedObject private var health = HealthManager.shared
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
-    enum Step: Int, CaseIterable { case welcome, name, handle, photo, about, place, health, done }
+    enum Step: Int, CaseIterable { case welcome, name, handle, goal, level, days, motivation, photo, about, place, health, done }
     private enum Field { case name, handle }
 
     @State private var step: Step = .welcome
@@ -26,6 +26,15 @@ struct OnboardingView: View {
     @State private var country = "España"
     @State private var city = ""
     @State private var gym = ""
+
+    // Encuesta tipo tarjeta (una pregunta por pantalla, selección única)
+    @State private var goalSel: String?
+    @State private var levelSel: String?
+    @State private var daysSel: String?
+    @State private var motivSel: String?
+    @State private var shownBubbles: Set<Int> = []   // pasos cuyo bocadillo ya se escribió (no re-typear al volver)
+    @State private var bounceTrigger = 0             // anima a Forgey al elegir
+    @State private var reactionLine: String?         // chip de reacción de Forgey
 
     @State private var drawCheck: CGFloat = 0
     @State private var avatarIn = false
@@ -67,6 +76,7 @@ struct OnboardingView: View {
             }
         }
         .onChange(of: step) { _ in
+            reactionLine = nil   // la reacción de Forgey es por pantalla
             if step == .name { focusSoon(.name) }
             else if step == .handle { focusSoon(.handle) }
             else { focus = nil }
@@ -111,6 +121,10 @@ struct OnboardingView: View {
         case .welcome: welcomeStep
         case .name: nameStep
         case .handle: handleStep
+        case .goal: surveyStep(OnboardingSurvey.goal, selection: $goalSel)
+        case .level: surveyStep(OnboardingSurvey.level, selection: $levelSel)
+        case .days: surveyStep(OnboardingSurvey.days, selection: $daysSel)
+        case .motivation: surveyStep(OnboardingSurvey.motivation, selection: $motivSel, isLast: true)
         case .photo: photoStep
         case .about: aboutStep
         case .place: placeStep
@@ -122,7 +136,8 @@ struct OnboardingView: View {
     private var welcomeStep: some View {
         layout {
             Mascot(size: 150, wave: true)
-            Bubble("¡Hola! Soy Forgey 💪 Voy a acompañarte a montar tu perfil.")
+            TypingBubble("¡Hola! Soy Forgey 💪 Vamos a montar tu plan en un momento.",
+                         typing: !shownBubbles.contains(Step.welcome.rawValue)) { shownBubbles.insert(Step.welcome.rawValue) }
         } actions: {
             primary("Empezar") { advance() }
         }
@@ -169,9 +184,44 @@ struct OnboardingView: View {
         }
     }
 
+    /// Pregunta de encuesta (selección única, estilo conversacional): Forgey escribe
+    /// la pregunta, aparecen tarjetas, eliges una (con reacción de Forgey) y continúas.
+    private func surveyStep(_ q: SurveyQuestion, selection: Binding<String?>, isLast: Bool = false) -> some View {
+        let done = shownBubbles.contains(step.rawValue)
+        return layout {
+            Mascot(size: 88, bounceTrigger: bounceTrigger)
+                .overlay(alignment: .top) {
+                    if let line = reactionLine {
+                        ReactionChip(text: line).offset(y: -8)
+                            .transition(.scale(scale: 0.6).combined(with: .opacity))
+                    }
+                }
+            TypingBubble(q.prompt, typing: !done) { shownBubbles.insert(step.rawValue) }
+            VStack(spacing: 10) {
+                ForEach(Array(q.options.enumerated()), id: \.element.label) { idx, opt in
+                    SelectCard(emoji: opt.emoji, label: opt.label, selected: selection.wrappedValue == opt.label) {
+                        guard selection.wrappedValue != opt.label else { return }
+                        FX.selection()
+                        selection.wrappedValue = opt.label
+                        bounceTrigger += 1
+                        withAnimation(.easeOut(duration: 0.2)) { reactionLine = q.reaction(opt.label) }
+                    }
+                    .opacity(done ? 1 : 0).offset(y: done ? 0 : 10)
+                    .animation(.spring(response: 0.4, dampingFraction: 0.85).delay(done ? Double(idx) * 0.05 : 0), value: done)
+                    .allowsHitTesting(done)
+                }
+            }
+        } actions: {
+            primary("Continuar", enabled: selection.wrappedValue != nil) {
+                if isLast { FX.success() }
+                advance()
+            }
+        }
+    }
+
     private var photoStep: some View {
         layout {
-            Bubble(firstName.isEmpty ? "¿Le ponemos una foto?" : "\(firstName), ¿le ponemos cara?")
+            Bubble(firstName.isEmpty ? "¡Ya te conozco mejor! 🙌 ¿Le ponemos cara?" : "¡Ya te conozco mejor, \(firstName)! 🙌 ¿Le ponemos cara?")
             PhotoPickerLabel(item: $pickerItem, onPicked: { photoData = $0; Haptics.soft() }) {
                 ZStack(alignment: .bottomTrailing) {
                     if let d = photoData, let ui = UIImage(data: d) {
@@ -352,6 +402,10 @@ struct OnboardingView: View {
         if !country.isEmpty { store.profile.country = country }
         if !city.isEmpty { store.profile.city = city }
         if !gym.trimmingCharacters(in: .whitespaces).isEmpty { store.profile.gym = gym.trimmingCharacters(in: .whitespaces) }
+        store.profile.goal = goalSel
+        store.profile.level = levelSel
+        store.profile.weeklyDays = daysSel
+        store.profile.motivation = motivSel
         store.persist()
         FX.success(sound: true)
     }
@@ -365,9 +419,13 @@ private struct Mascot: View {
     var size: CGFloat = 110
     var wave = false
     var holdsHeart = false
+    var bounceTrigger: Int = 0   // al cambiar, Forgey hace squash + cara feliz
     @State private var bob = false
     @State private var blink = false
     @State private var waveAngle = false
+    @State private var squash: CGFloat = 1
+    @State private var happy = false
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     private let ink = Color(hex: "16240b")
 
@@ -399,7 +457,7 @@ private struct Mascot: View {
                 VStack(spacing: size * 0.10) {
                     HStack(spacing: size * 0.19) { eye; eye }
                     Smile().stroke(ink, style: StrokeStyle(lineWidth: size * 0.05, lineCap: .round))
-                        .frame(width: size * 0.34, height: size * 0.16)
+                        .frame(width: size * (happy ? 0.42 : 0.34), height: size * (happy ? 0.21 : 0.16))
                 }.offset(y: size * 0.05)
 
                 if wave {
@@ -416,6 +474,7 @@ private struct Mascot: View {
                         .scaleEffect(bob ? 1.14 : 0.94)
                 }
             }
+            .scaleEffect(x: 2 - squash, y: squash)   // squash & stretch al reaccionar
             .offset(y: bob ? -size * 0.03 : size * 0.03)
         }
         .frame(width: size * 1.2, height: size * 1.3)
@@ -424,17 +483,34 @@ private struct Mascot: View {
             if wave { waveAngle = true }
             scheduleBlink()
         }
+        .onChange(of: bounceTrigger) { _ in react() }
     }
 
-    // Ojo: óvalo oscuro con un destello blanco (le da vida)
+    // Ojo: feliz = arco "^" (ojitos contentos); normal = óvalo con destello.
     private var eye: some View {
-        Capsule().fill(ink)
-            .frame(width: size * 0.115, height: blink ? size * 0.025 : size * 0.215)
-            .overlay(alignment: .top) {
-                Circle().fill(Color.white.opacity(blink ? 0 : 0.9))
-                    .frame(width: size * 0.045, height: size * 0.045)
-                    .offset(y: size * 0.035)
+        Group {
+            if happy {
+                HappyEye().stroke(ink, style: StrokeStyle(lineWidth: size * 0.05, lineCap: .round))
+                    .frame(width: size * 0.14, height: size * 0.09)
+            } else {
+                Capsule().fill(ink)
+                    .frame(width: size * 0.115, height: blink ? size * 0.025 : size * 0.215)
+                    .overlay(alignment: .top) {
+                        Circle().fill(Color.white.opacity(blink ? 0 : 0.9))
+                            .frame(width: size * 0.045, height: size * 0.045)
+                            .offset(y: size * 0.035)
+                    }
             }
+        }
+    }
+
+    private func react() {
+        if reduceMotion { happy = true; DispatchQueue.main.asyncAfter(deadline: .now() + 0.9) { happy = false }; return }
+        happy = true
+        withAnimation(.spring(response: 0.15, dampingFraction: 0.5)) { squash = 0.90 }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.12) { withAnimation(.spring(response: 0.2, dampingFraction: 0.5)) { squash = 1.08 } }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.34) { withAnimation(.spring(response: 0.3, dampingFraction: 0.6)) { squash = 1.0 } }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.9) { withAnimation(.easeInOut(duration: 0.25)) { happy = false } }
     }
     private var cheek: some View {
         Circle().fill(Color(red: 1, green: 0.46, blue: 0.46).opacity(0.5))
@@ -510,4 +586,177 @@ private struct Triangle: Shape {
         p.closeSubpath()
         return p
     }
+}
+
+/// Ojo feliz: arco "^" (ojitos contentos al reaccionar).
+private struct HappyEye: Shape {
+    func path(in r: CGRect) -> Path {
+        var p = Path()
+        p.move(to: CGPoint(x: r.minX, y: r.maxY))
+        p.addQuadCurve(to: CGPoint(x: r.maxX, y: r.maxY), control: CGPoint(x: r.midX, y: r.minY))
+        return p
+    }
+}
+
+/// Bocadillo que se ESCRIBE letra a letra (la pregunta "habla" como Forgey).
+/// Toca para completar al instante; respeta Reduce Motion.
+private struct TypingBubble: View {
+    let full: String
+    var typing: Bool
+    var onDone: (() -> Void)?
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @State private var shown = ""
+    @State private var caret = false
+    @State private var task: Task<Void, Never>?
+
+    init(_ text: String, typing: Bool = true, onDone: (() -> Void)? = nil) {
+        self.full = text; self.typing = typing; self.onDone = onDone
+    }
+
+    var body: some View {
+        VStack(spacing: 0) {
+            Triangle().fill(Color.white).frame(width: 22, height: 11)
+                .overlay(Triangle().stroke(Brand.line, lineWidth: 1).clipShape(Rectangle().offset(y: 1)))
+            HStack(alignment: .center, spacing: 2) {
+                Text(shown).font(.system(size: 19, weight: .heavy)).foregroundColor(Brand.ink)
+                    .multilineTextAlignment(.center).fixedSize(horizontal: false, vertical: true)
+                if typing && shown.count < full.count {
+                    Capsule().fill(Brand.ink).frame(width: 2, height: 18).opacity(caret ? 1 : 0)
+                        .onAppear { withAnimation(.easeInOut(duration: 0.5).repeatForever(autoreverses: true)) { caret = true } }
+                }
+            }
+            .padding(.horizontal, 18).padding(.vertical, 14)
+            .frame(maxWidth: .infinity)
+            .background(Color.white).clipShape(RoundedRectangle(cornerRadius: 16))
+            .overlay(RoundedRectangle(cornerRadius: 16).stroke(Brand.line))
+        }
+        .padding(.horizontal, 8)
+        .contentShape(Rectangle())
+        .onTapGesture { finish() }
+        .onAppear { start() }
+        .onDisappear { task?.cancel() }
+    }
+
+    private func start() {
+        if !typing || reduceMotion { shown = full; onDone?(); return }
+        shown = ""
+        let interval = min(0.026, 0.9 / Double(max(1, full.count)))
+        task = Task { @MainActor in
+            for ch in full {
+                if Task.isCancelled { return }
+                shown.append(ch)
+                try? await Task.sleep(nanoseconds: UInt64(interval * 1_000_000_000))
+            }
+            onDone?()
+        }
+    }
+    private func finish() { task?.cancel(); if shown != full { shown = full }; onDone?() }
+}
+
+/// Tarjeta de respuesta de selección única (estilo conversacional).
+private struct SelectCard: View {
+    let emoji: String
+    let label: String
+    let selected: Bool
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 12) {
+                Text(emoji).font(.system(size: 24)).scaleEffect(selected ? 1.18 : 1).frame(width: 34)
+                Text(label).font(.system(size: 17, weight: .heavy))
+                    .foregroundColor(selected ? Color(hex: "10150a") : Brand.ink)
+                Spacer()
+                Image(systemName: selected ? "checkmark.circle.fill" : "circle")
+                    .font(.system(size: 22, weight: selected ? .bold : .regular))
+                    .foregroundColor(selected ? Color(hex: "10150a") : Brand.line)
+            }
+            .padding(.horizontal, 16).frame(minHeight: 60).frame(maxWidth: .infinity)
+            .background(selected ? Brand.green : Color.white)
+            .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).stroke(selected ? Color.clear : Brand.line))
+            .shadow(color: selected ? Brand.green.opacity(0.35) : .clear, radius: 9, y: 5)
+        }
+        .buttonStyle(PressableButtonStyle())
+        .animation(.spring(response: 0.3, dampingFraction: 0.55), value: selected)
+    }
+}
+
+/// Chip de reacción de Forgey ("¡A por esos músculos!").
+private struct ReactionChip: View {
+    let text: String
+    var body: some View {
+        Text(text).font(.system(size: 14, weight: .heavy)).foregroundColor(Brand.ink)
+            .padding(.horizontal, 12).padding(.vertical, 7)
+            .background(Brand.greenSoft).clipShape(Capsule())
+            .overlay(Capsule().stroke(Brand.green.opacity(0.45)))
+            .shadow(color: .black.opacity(0.10), radius: 6, y: 3)
+    }
+}
+
+// MARK: - Encuesta del onboarding (preguntas propias)
+
+private struct SurveyOption { let emoji: String; let label: String }
+private struct SurveyQuestion {
+    let prompt: String
+    let options: [SurveyOption]
+    let reaction: (String) -> String
+}
+
+private enum OnboardingSurvey {
+    static let goal = SurveyQuestion(
+        prompt: "¡Cuéntame un poco de ti! No hay respuestas malas 😉 ¿Cuál es tu objetivo?",
+        options: [.init(emoji: "💪", label: "Ganar músculo"), .init(emoji: "🔥", label: "Perder grasa"),
+                  .init(emoji: "🏋️", label: "Ganar fuerza"), .init(emoji: "⚡", label: "Mantenerme en forma"),
+                  .init(emoji: "🧘", label: "Salud y bienestar")],
+        reaction: { l in
+            switch l {
+            case "Ganar músculo": return "¡A por esos músculos! 💪"
+            case "Perder grasa": return "¡Vamos a quemar! 🔥"
+            case "Ganar fuerza": return "¡Más fuerte cada día! 🏋️"
+            case "Mantenerme en forma": return "¡La constancia es la clave! ⚡"
+            default: return "¡Tu cuerpo te lo agradecerá! 🧘"
+            }
+        })
+
+    static let level = SurveyQuestion(
+        prompt: "¿Cuánto tiempo llevas entrenando?",
+        options: [.init(emoji: "🌱", label: "Acabo de empezar"), .init(emoji: "📈", label: "Menos de un año"),
+                  .init(emoji: "💯", label: "Entre 1 y 3 años"), .init(emoji: "🔥", label: "Más de 3 años")],
+        reaction: { l in
+            switch l {
+            case "Acabo de empezar": return "¡Bienvenido/a al viaje! 🌱"
+            case "Menos de un año": return "¡Buen momento para crecer!"
+            case "Entre 1 y 3 años": return "¡Ya sabes lo que es bueno! 👌"
+            default: return "¡Toda una bestia! 🔥"
+            }
+        })
+
+    static let days = SurveyQuestion(
+        prompt: "¿Cuántos días quieres entrenar a la semana?",
+        options: [.init(emoji: "☕️", label: "1-2 días"), .init(emoji: "🗓️", label: "3 días"),
+                  .init(emoji: "🔁", label: "4 días"), .init(emoji: "🚀", label: "5 o más")],
+        reaction: { l in
+            switch l {
+            case "1-2 días": return "Constancia > intensidad ☕️"
+            case "3 días": return "El clásico que funciona 👌"
+            case "4 días": return "¡Buen ritmo!"
+            default: return "¡Qué máquina! 🚀"
+            }
+        })
+
+    static let motivation = SurveyQuestion(
+        prompt: "Última 🔥 ¿Qué es lo que más te mueve?",
+        options: [.init(emoji: "🪞", label: "Verme mejor"), .init(emoji: "🏆", label: "Superarme cada día"),
+                  .init(emoji: "😌", label: "Despejar la mente"), .init(emoji: "🤝", label: "Entrenar con gente"),
+                  .init(emoji: "💯", label: "Crear el hábito")],
+        reaction: { l in
+            switch l {
+            case "Verme mejor": return "¡Yo tampoco salgo del espejo! 😄"
+            case "Superarme cada día": return "¡Esa mentalidad! 🏆"
+            case "Despejar la mente": return "El gym también es mi terapia 😌"
+            case "Entrenar con gente": return "¡Mejor en equipo! 🤝"
+            default: return "Paso a paso, ¡así se hace! 💯"
+            }
+        })
 }
