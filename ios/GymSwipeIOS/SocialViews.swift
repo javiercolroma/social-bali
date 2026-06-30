@@ -109,11 +109,7 @@ struct FollowListSheet: View {
         return HStack(spacing: 11) {
             Button { profileTarget = IdString(id: p.id) } label: {
                 HStack(spacing: 11) {
-                    ZStack(alignment: .bottomTrailing) {
-                        Avatar(emoji: p.avatar)
-                        Text(p.flag).font(.system(size: 10)).frame(width: 16, height: 16)
-                            .background(Circle().fill(.white)).overlay(Circle().stroke(Brand.line)).offset(x: 3, y: 3)
-                    }
+                    ScoredAvatar(emoji: p.avatar, score: store.personScore(p.id))
                     VStack(alignment: .leading, spacing: 1) {
                         Text(p.name).font(.system(size: 14, weight: .heavy)).foregroundColor(Brand.ink)
                         Text("@\(p.handle)").font(.caption).foregroundColor(Brand.muted)
@@ -290,11 +286,7 @@ struct FriendsContent: View {
         return HStack(spacing: 11) {
             Button { onOpenProfile(person.id) } label: {
                 HStack(spacing: 11) {
-                    ZStack(alignment: .bottomTrailing) {
-                        Avatar(emoji: person.avatar)
-                        Text(person.flag).font(.system(size: 10)).frame(width: 16, height: 16)
-                            .background(Circle().fill(.white)).overlay(Circle().stroke(Brand.line)).offset(x: 3, y: 3)
-                    }
+                    ScoredAvatar(emoji: person.avatar, score: store.personScore(person.id))
                     VStack(alignment: .leading, spacing: 1) {
                         Text(person.name).font(.system(size: 14, weight: .heavy)).foregroundColor(Brand.ink)
                         Text("@\(person.handle)").font(.caption).foregroundColor(Brand.muted)
@@ -607,11 +599,7 @@ struct FriendProfileView: View {
 
     private func header(entrenos: Int, locked: Bool) -> some View {
         VStack(spacing: 12) {
-            ZStack(alignment: .bottomTrailing) {
-                Avatar(emoji: person.avatar, size: 84)
-                Text(person.flag).font(.system(size: 16)).frame(width: 24, height: 24)
-                    .background(Circle().fill(.white)).overlay(Circle().stroke(Brand.line)).offset(x: 4, y: 4)
-            }
+            ScoredAvatar(emoji: person.avatar, score: store.personScore(person.id), size: 84)
             VStack(spacing: 3) {
                 HStack(spacing: 6) {
                     Text(person.name).font(.system(size: 22, weight: .heavy)).foregroundColor(Brand.ink)
@@ -779,11 +767,7 @@ struct MeProfileView: View {
 
     private func header(entrenos: Int) -> some View {
         VStack(spacing: 12) {
-            ZStack(alignment: .bottomTrailing) {
-                MeAvatar(account: store.account, size: 84)
-                Text(countryFlag(store.profile.country)).font(.system(size: 16)).frame(width: 24, height: 24)
-                    .background(Circle().fill(.white)).overlay(Circle().stroke(Brand.line)).offset(x: 4, y: 4)
-            }
+            ScoredAvatar(account: store.account, score: store.gymScore.total, size: 84)
             VStack(spacing: 6) {
                 HStack(spacing: 6) {
                     Text(store.account?.name ?? "Tú").font(.system(size: 22, weight: .heavy)).foregroundColor(Brand.ink)

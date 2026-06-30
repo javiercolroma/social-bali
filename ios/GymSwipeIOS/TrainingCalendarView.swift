@@ -18,7 +18,7 @@ func meActivityData(_ s: WorkoutSession, _ store: AppStore) -> ActivityData {
         date: s.date, title: s.name, note: s.note, photo: s.photoData,
         elapsed: s.elapsed, exercises: s.exercises, sets: s.sets,
         volume: s.volume, items: s.items ?? [],
-        avgHeartRate: s.avgHeartRate, maxHeartRate: s.maxHeartRate)
+        avgHeartRate: s.avgHeartRate, maxHeartRate: s.maxHeartRate, score: store.gymScore.total)
 }
 
 /// ActivityData de la sesión de otra persona (autor = esa persona).
@@ -29,7 +29,8 @@ func personActivityData(_ s: WorkoutSession, _ p: SocialPerson) -> ActivityData 
         date: s.date, title: s.name, note: s.note, photo: s.photoData,
         elapsed: s.elapsed, exercises: s.exercises, sets: s.sets,
         volume: s.volume, items: s.items ?? [],
-        avgHeartRate: s.avgHeartRate, maxHeartRate: s.maxHeartRate)
+        avgHeartRate: s.avgHeartRate, maxHeartRate: s.maxHeartRate,
+        score: GymScoreEngine.calculate(buildFriendHistory(p)).total)
 }
 
 /// Calendario mensual que resalta los días entrenados. Tocar un día con

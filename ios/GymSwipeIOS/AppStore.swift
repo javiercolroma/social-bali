@@ -129,6 +129,18 @@ final class AppStore: ObservableObject {
     func relationship(_ personId: String) -> RelationshipStatus { relationships[personId] ?? .none }
     func person(_ id: String) -> SocialPerson? { people.first { $0.id == id } }
 
+    private var scoreCache: [String: Int] = [:]
+    /// Gym Score de cualquier perfil para el badge del avatar. El mío es el real;
+    /// el de los demás es determinista (su historial demo no cambia) y se cachea.
+    func personScore(_ id: String) -> Int {
+        if id == "me" { return gymScore.total }
+        if let c = scoreCache[id] { return c }
+        guard let p = person(id) else { return 0 }
+        let s = GymScoreEngine.calculate(buildFriendHistory(p)).total
+        scoreCache[id] = s
+        return s
+    }
+
     // MARK: - Training
 
     func loadWorkout(_ template: WorkoutTemplate) {

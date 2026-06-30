@@ -45,6 +45,39 @@ struct Avatar: View {
     }
 }
 
+/// Badge del Gym Score para la esquina inferior derecha de un avatar (sustituye la banderita).
+/// Úsalo como hijo de un `ZStack(alignment: .bottomTrailing)` junto al avatar de tamaño `avatarSize`.
+struct ScoreBadge: View {
+    let score: Int
+    var avatarSize: CGFloat = 42
+    var body: some View {
+        let f = max(9, avatarSize * 0.30)
+        Text("\(score)")
+            .font(.system(size: f, weight: .heavy)).foregroundColor(Color(hex: "10150a"))
+            .padding(.horizontal, f * 0.42).frame(minWidth: f * 1.6, minHeight: f * 1.5)
+            .background(Brand.green).clipShape(Capsule())
+            .overlay(Capsule().stroke(.white, lineWidth: max(1, avatarSize * 0.045)))
+            .offset(x: avatarSize * 0.16, y: avatarSize * 0.12)
+    }
+}
+
+/// Avatar (emoji o foto) con el Gym Score en la esquina inferior derecha.
+/// Reemplaza la antigua banderita en todos los perfiles de la app.
+struct ScoredAvatar: View {
+    var emoji: String = "🙂"
+    var account: Account? = nil   // si se pasa, usa la foto de la cuenta (MeAvatar)
+    let score: Int
+    var size: CGFloat = 42
+
+    var body: some View {
+        ZStack(alignment: .bottomTrailing) {
+            if let account { MeAvatar(account: account, size: size) }
+            else { Avatar(emoji: emoji, size: size) }
+            ScoreBadge(score: score, avatarSize: size)
+        }
+    }
+}
+
 struct PrimaryButtonStyle: ButtonStyle {
     var enabled = true
     func makeBody(configuration: Configuration) -> some View {

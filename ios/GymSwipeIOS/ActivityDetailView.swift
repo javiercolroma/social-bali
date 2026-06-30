@@ -17,6 +17,7 @@ struct ActivityData {
     let items: [SessionExercise]
     var avgHeartRate: Int? = nil
     var maxHeartRate: Int? = nil
+    var score: Int = 0   // Gym Score del autor, para el badge del avatar
 }
 
 struct ActivityDetailView: View {
@@ -35,8 +36,7 @@ struct ActivityDetailView: View {
                             } else {
                                 Avatar(emoji: item.avatarEmoji, size: 46)
                             }
-                            Text(item.flag).font(.system(size: 12)).frame(width: 18, height: 18)
-                                .background(Circle().fill(.white)).overlay(Circle().stroke(Brand.line)).offset(x: 3, y: 3)
+                            ScoreBadge(score: item.score, avatarSize: 46)
                         }
                         VStack(alignment: .leading, spacing: 2) {
                             Text(item.authorName).font(.system(size: 16, weight: .heavy)).foregroundColor(Brand.ink)

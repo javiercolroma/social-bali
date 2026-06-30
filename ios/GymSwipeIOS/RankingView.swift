@@ -221,11 +221,7 @@ struct MapUserSheet: View {
         let score = GymScoreEngine.calculate(buildFriendHistory(person)).total
         return NavigationStack {
             VStack(spacing: 16) {
-                ZStack(alignment: .bottomTrailing) {
-                    Avatar(emoji: person.avatar, size: 80)
-                    Text(person.flag).font(.system(size: 16)).frame(width: 24, height: 24)
-                        .background(Circle().fill(.white)).overlay(Circle().stroke(Brand.line)).offset(x: 4, y: 4)
-                }
+                ScoredAvatar(emoji: person.avatar, score: store.personScore(person.id), size: 80)
                 VStack(spacing: 3) {
                     Text(person.name).font(.system(size: 22, weight: .heavy)).foregroundColor(Brand.ink)
                     Text("@\(person.handle)").font(.subheadline).foregroundColor(Brand.muted)

@@ -81,38 +81,46 @@ struct SocialFeedView: View {
     @ViewBuilder
     private func postLikesSheet(_ item: FeedItem) -> some View {
         let liked = store.appliedKudos.contains(item.id)
-        let others = kudos(item)                      // likes de la comunidad (sin contar el tuyo)
-        let people = Array(postLikers(item).prefix(others))
-        let remaining = max(0, others - people.count)
+        let people = Array(postLikers(item).prefix(max(1, kudos(item))))
         NavigationStack {
             ScrollView {
                 VStack(spacing: 0) {
-                    if liked { likeRow(emoji: "", name: store.account?.name ?? "Tú", handle: store.account?.handle ?? "tu_usuario", isMe: true) }
-                    ForEach(people) { p in likeRow(emoji: p.avatar, name: p.name, handle: p.handle, isMe: false) }
-                    if remaining > 0 {
-                        Text("y \(remaining) persona\(remaining == 1 ? "" : "s") más")
-                            .font(.footnote).foregroundColor(Brand.muted)
-                            .frame(maxWidth: .infinity).padding(.vertical, 16)
+                    if liked {
+                        likeRow(ScoredAvatar(account: store.account, score: store.gymScore.total, size: 42),
+                                name: store.account?.name ?? "Tú", handle: store.account?.handle ?? "tu_usuario") {
+                            likesOfPost = nil
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) { onOpenMyProfile() }
+                        }
+                    }
+                    ForEach(people) { p in
+                        likeRow(ScoredAvatar(emoji: p.avatar, score: store.personScore(p.id), size: 42),
+                                name: p.name, handle: p.handle) {
+                            let pid = p.id; likesOfPost = nil
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) { onOpenProfile(pid) }
+                        }
                     }
                 }.padding(.vertical, 8)
             }
             .background(Brand.bg)
             .navigationTitle("Me gusta").navigationBarTitleDisplayMode(.inline)
         }
-        .presentationDetents([.medium, .large])
+        .presentationDetents([.large])
     }
 
-    private func likeRow(emoji: String, name: String, handle: String, isMe: Bool) -> some View {
-        HStack(spacing: 11) {
-            if isMe { MeAvatar(account: store.account, size: 40) } else { Avatar(emoji: emoji, size: 40) }
-            VStack(alignment: .leading, spacing: 2) {
-                Text(name).font(.system(size: 15, weight: .heavy)).foregroundColor(Brand.ink)
-                Text("@\(handle)").font(.caption2).foregroundColor(Brand.soft)
+    /// Fila de "Me gusta": avatar con su Gym Score, nombre y @usuario. Toca para ver el perfil.
+    private func likeRow<A: View>(_ avatar: A, name: String, handle: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            HStack(spacing: 12) {
+                avatar
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(name).font(.system(size: 15, weight: .heavy)).foregroundColor(Brand.ink)
+                    Text("@\(handle)").font(.caption2).foregroundColor(Brand.soft)
+                }
+                Spacer()
+                Image(systemName: "chevron.right").font(.system(size: 12, weight: .bold)).foregroundColor(Brand.soft)
             }
-            Spacer()
-            Image(systemName: "heart.fill").font(.system(size: 14)).foregroundColor(Brand.red)
-        }
-        .padding(.horizontal, 16).padding(.vertical, 8)
+            .padding(.horizontal, 16).padding(.vertical, 9).contentShape(Rectangle())
+        }.buttonStyle(.plain)
     }
 
     /// Lista determinista de quién dio like a una publicación (demo).
@@ -264,11 +272,7 @@ struct SocialFeedView: View {
     private func suggestionCard(_ p: SocialPerson) -> some View {
         VStack(spacing: 8) {
             Button { FX.tap(); onOpenProfile(p.id) } label: {
-                ZStack(alignment: .bottomTrailing) {
-                    Avatar(emoji: p.avatar, size: 60)
-                    Text(p.flag).font(.system(size: 12)).frame(width: 19, height: 19)
-                        .background(Circle().fill(.white)).overlay(Circle().stroke(Brand.line)).offset(x: 3, y: 3)
-                }
+                ScoredAvatar(emoji: p.avatar, score: store.personScore(p.id), size: 60)
             }.buttonStyle(.plain)
             VStack(spacing: 1) {
                 Text(p.name).font(.system(size: 14, weight: .heavy)).foregroundColor(Brand.ink).lineLimit(1)
@@ -343,7 +347,8 @@ struct SocialFeedView: View {
                      flag: item.flag, location: item.location, date: item.date, title: item.title, note: item.note,
                      photo: item.photo, elapsed: item.elapsed, exercises: item.exercises, sets: item.sets,
                      volume: item.volume, items: item.items,
-                     avgHeartRate: item.avgHeartRate, maxHeartRate: item.maxHeartRate)
+                     avgHeartRate: item.avgHeartRate, maxHeartRate: item.maxHeartRate,
+                     score: item.personId == nil ? store.gymScore.total : store.personScore(item.personId ?? ""))
     }
 
     private func card(_ item: FeedItem, showFollow: Bool = false) -> some View {
@@ -354,8 +359,7 @@ struct SocialFeedView: View {
                     HStack(spacing: 11) {
                         ZStack(alignment: .bottomTrailing) {
                             authorAvatar(item)
-                            Text(item.flag).font(.system(size: 11)).frame(width: 17, height: 17)
-                                .background(Circle().fill(.white)).overlay(Circle().stroke(Brand.line)).offset(x: 3, y: 3)
+                            ScoreBadge(score: item.personId == nil ? store.gymScore.total : store.personScore(item.personId ?? ""))
                         }
                         VStack(alignment: .leading, spacing: 2) {
                             Text(item.authorName).font(.system(size: 15, weight: .heavy)).foregroundColor(Brand.ink)
@@ -577,6 +581,7 @@ private struct CommentsSheet: View {
     @State private var replyTo: String?
     @State private var replyToName: String?
     @State private var likesOf: PostComment?
+    @State private var profileTarget: IdString?
     @FocusState private var focused: Bool
 
     var body: some View {
@@ -602,42 +607,50 @@ private struct CommentsSheet: View {
         }
         .presentationDetents([.large])
         .sheet(item: $likesOf) { likesSheet($0) }
+        .sheet(item: $profileTarget) { item in
+            if let p = store.person(item.id) { FriendProfileView(person: p).environmentObject(store) }
+        }
     }
 
     @ViewBuilder
     private func likesSheet(_ c: PostComment) -> some View {
-        let otherTarget = max(0, c.likes - (c.liked ? 1 : 0))
-        let people = Array(likers(for: c).prefix(otherTarget))
-        let remaining = max(0, otherTarget - people.count)
+        let people = Array(likers(for: c).prefix(max(1, c.likes)))
         NavigationStack {
             ScrollView {
                 VStack(spacing: 0) {
-                    if c.liked { likeRow(emoji: "", name: store.account?.name ?? "Tú", handle: store.account?.handle ?? "tu_usuario", isMe: true) }
-                    ForEach(people) { p in likeRow(emoji: p.avatar, name: p.name, handle: p.handle, isMe: false) }
-                    if remaining > 0 {
-                        Text("y \(remaining) persona\(remaining == 1 ? "" : "s") más")
-                            .font(.footnote).foregroundColor(Brand.muted)
-                            .frame(maxWidth: .infinity).padding(.vertical, 16)
+                    if c.liked {
+                        likeRow(ScoredAvatar(account: store.account, score: store.gymScore.total, size: 42),
+                                name: store.account?.name ?? "Tú", handle: store.account?.handle ?? "tu_usuario", action: nil)
+                    }
+                    ForEach(people) { p in
+                        likeRow(ScoredAvatar(emoji: p.avatar, score: store.personScore(p.id), size: 42),
+                                name: p.name, handle: p.handle) {
+                            let pid = p.id; likesOf = nil
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) { profileTarget = IdString(id: pid) }
+                        }
                     }
                 }.padding(.vertical, 8)
             }
             .background(Brand.bg)
             .navigationTitle("Me gusta").navigationBarTitleDisplayMode(.inline)
         }
-        .presentationDetents([.medium, .large])
+        .presentationDetents([.large])
     }
 
-    private func likeRow(emoji: String, name: String, handle: String, isMe: Bool) -> some View {
-        HStack(spacing: 11) {
-            if isMe { MeAvatar(account: store.account, size: 40) } else { Avatar(emoji: emoji, size: 40) }
-            VStack(alignment: .leading, spacing: 2) {
-                Text(name).font(.system(size: 15, weight: .heavy)).foregroundColor(Brand.ink)
-                Text("@\(handle)").font(.caption2).foregroundColor(Brand.soft)
+    /// Fila de "Me gusta": avatar con su Gym Score + nombre. Toca (si hay acción) para ver el perfil.
+    private func likeRow<A: View>(_ avatar: A, name: String, handle: String, action: (() -> Void)?) -> some View {
+        Button { action?() } label: {
+            HStack(spacing: 12) {
+                avatar
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(name).font(.system(size: 15, weight: .heavy)).foregroundColor(Brand.ink)
+                    Text("@\(handle)").font(.caption2).foregroundColor(Brand.soft)
+                }
+                Spacer()
+                if action != nil { Image(systemName: "chevron.right").font(.system(size: 12, weight: .bold)).foregroundColor(Brand.soft) }
             }
-            Spacer()
-            Image(systemName: "heart.fill").font(.system(size: 14)).foregroundColor(Brand.red)
-        }
-        .padding(.horizontal, 16).padding(.vertical, 8)
+            .padding(.horizontal, 16).padding(.vertical, 9).contentShape(Rectangle())
+        }.buttonStyle(.plain).disabled(action == nil)
     }
 
     /// Lista determinista de quién dio like a un comentario (demo).
