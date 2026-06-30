@@ -60,6 +60,7 @@ targets:
       - path: GymSwipeIOS/WorkoutActivityAttributes.swift
       - path: GymSwipeIOS/WorkoutRemote.swift
       - path: GymSwipeIOS/WorkoutIntents.swift
+      - path: GymSwipeIOS/LiveActivityManager.swift
     info:
       path: ForgeWidget/Info.plist
       properties:

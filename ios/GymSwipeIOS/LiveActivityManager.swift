@@ -6,15 +6,9 @@ import ActivityKit
 final class LiveActivityManager {
     static let shared = LiveActivityManager()
 
-    // Se guarda como Any para no exponer un tipo limitado a iOS 16.x en una clase del target iOS 16.0.
-    private var current: Any?
-
-    // Coalescencia de updates: ActivityKit limita la frecuencia, así que ráfagas de toques
-    // (reps/peso) se agrupan — se aplica el primero al instante y el último tras una ventana corta.
-    private var pendingState: Any?
-    private var lastFlush = Date.distantPast
-    private var flushScheduled = false
-    private let minInterval: TimeInterval = 0.16
+    // Se guardan como Any para no exponer tipos limitados a iOS 16.x en una clase del target iOS 16.0.
+    private var current: Any?        // Activity<WorkoutActivityAttributes>
+    private var currentState: Any?   // ContentState — fuente de verdad de lo que muestra el widget
 
     func start(name: String, startedAt: Date, closedSets: Int, totalSets: Int,
                currentExercise: String, reps: Int, weight: Double, setIndex: Int, exerciseSets: Int) {
@@ -25,53 +19,49 @@ final class LiveActivityManager {
             workoutName: name, startedAt: startedAt, closedSets: closedSets, totalSets: totalSets,
             currentExercise: currentExercise, reps: reps, weight: weight, setIndex: setIndex,
             exerciseSets: exerciseSets, bpm: nil, resting: false, restStartedAt: nil, restEndsAt: nil)
+        currentState = state
         do {
             current = try Activity.request(attributes: attrs,
                                            content: ActivityContent(state: state, staleDate: nil),
                                            pushType: nil)
         } catch {
-            current = nil
+            current = nil; currentState = nil
         }
     }
 
     func update(name: String, startedAt: Date, closedSets: Int, totalSets: Int,
                 currentExercise: String, reps: Int, weight: Double, setIndex: Int, exerciseSets: Int,
                 bpm: Int?, resting: Bool, restStartedAt: Date?, restEndsAt: Date?) {
-        guard #available(iOS 16.2, *), current is Activity<WorkoutActivityAttributes> else { return }
-        pendingState = WorkoutActivityAttributes.ContentState(
+        guard #available(iOS 16.2, *) else { return }
+        currentState = WorkoutActivityAttributes.ContentState(
             workoutName: name, startedAt: startedAt, closedSets: closedSets, totalSets: totalSets,
             currentExercise: currentExercise, reps: reps, weight: weight, setIndex: setIndex,
             exerciseSets: exerciseSets, bpm: bpm, resting: resting, restStartedAt: restStartedAt, restEndsAt: restEndsAt)
-        scheduleFlush()
+        push()
     }
 
-    /// Aplica el primer cambio al instante; los siguientes en una ráfaga se agrupan
-    /// y se manda solo el último tras `minInterval` (evita la cola/lag de ActivityKit).
-    private func scheduleFlush() {
-        let since = Date().timeIntervalSince(lastFlush)
-        if since >= minInterval {
-            flushNow()
-        } else if !flushScheduled {
-            flushScheduled = true
-            let delay = minInterval - since
-            Task { @MainActor in
-                try? await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000))
-                self.flushScheduled = false
-                self.flushNow()
-            }
-        }
+    /// Cambios DIRECTOS desde el App Intent del widget. Actualizan la Live Activity al instante,
+    /// sin pasar por la vista ni el store, que es lo que daba la sensación de lentitud.
+    func bumpReps(_ delta: Int) {
+        guard #available(iOS 16.2, *), var s = currentState as? WorkoutActivityAttributes.ContentState else { return }
+        s.reps = max(1, s.reps + delta)
+        currentState = s; push()
+    }
+    func bumpWeight(_ delta: Double) {
+        guard #available(iOS 16.2, *), var s = currentState as? WorkoutActivityAttributes.ContentState else { return }
+        let next = max(0, s.weight + delta)
+        s.weight = (next * 2).rounded() / 2
+        currentState = s; push()
     }
 
-    private func flushNow() {
+    private func push() {
         guard #available(iOS 16.2, *), let act = current as? Activity<WorkoutActivityAttributes>,
-              let state = pendingState as? WorkoutActivityAttributes.ContentState else { return }
-        pendingState = nil
-        lastFlush = Date()
-        Task { await act.update(ActivityContent(state: state, staleDate: nil)) }
+              let s = currentState as? WorkoutActivityAttributes.ContentState else { return }
+        Task { await act.update(ActivityContent(state: s, staleDate: nil)) }
     }
 
     func end() {
-        pendingState = nil
+        currentState = nil
         guard #available(iOS 16.2, *), let act = current as? Activity<WorkoutActivityAttributes> else { current = nil; return }
         current = nil
         Task { await act.end(nil, dismissalPolicy: .immediate) }

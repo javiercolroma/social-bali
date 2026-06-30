@@ -360,10 +360,12 @@ struct TrainView: View {
         switch command {
         case .done: register(ex, done: true)
         case .skip: register(ex, done: false)
-        case .repsUp:    store.adjustReps(ex.id, 1);     Haptics.soft(); syncLive()
-        case .repsDown:  store.adjustReps(ex.id, -1);    Haptics.soft(); syncLive()
-        case .weightUp:   store.adjustWeight(ex.id, 2.5);  Haptics.soft(); syncLive()
-        case .weightDown: store.adjustWeight(ex.id, -2.5); Haptics.soft(); syncLive()
+        // El widget ya se actualizó al instante en el App Intent (LiveActivityManager.bump*);
+        // aquí solo sincronizamos el store/UI de la app (sin re-empujar la Live Activity).
+        case .repsUp:    store.adjustReps(ex.id, 1);     Haptics.soft()
+        case .repsDown:  store.adjustReps(ex.id, -1);    Haptics.soft()
+        case .weightUp:   store.adjustWeight(ex.id, 2.5);  Haptics.soft()
+        case .weightDown: store.adjustWeight(ex.id, -2.5); Haptics.soft()
         case .restPlus:
             if resting { restTotal += 15; Haptics.soft(); syncLive() }
         case .restSkip:

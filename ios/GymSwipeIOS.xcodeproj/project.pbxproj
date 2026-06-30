@@ -43,6 +43,7 @@
 		C96DA3E9AC38A13BD8D381B1 /* PartnerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C6E2A074351DB17430CAE561 /* PartnerView.swift */; };
 		CF3EFCE5F7B166F143B9B408 /* PlanView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EF5C837837CFA069C8F53AE4 /* PlanView.swift */; };
 		D1A51AF5DF1BCC6CDABBD42C /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1596E5BECE9666DDA76867A /* Models.swift */; };
+		E35C82D5E1A78190A0815909 /* LiveActivityManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 51E3F8B26293A58B6A5DC2F4 /* LiveActivityManager.swift */; };
 		EF71FBCBDF30D20460C49750 /* TrainView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1DF8FC23C0BF2E64342C5D7 /* TrainView.swift */; };
 		FBCDEE4F608FFD8E2591F44A /* GymSwipeIOSApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9CAC012CB53EB545C20ED468 /* GymSwipeIOSApp.swift */; };
 		FF1D8080F80F010C04EB3609 /* Countries.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1D19B1F26226F79DC0669B52 /* Countries.swift */; };
@@ -295,6 +296,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				2D4EF03878DFDEE90C1B0C79 /* ForgeWidgetBundle.swift in Sources */,
+				E35C82D5E1A78190A0815909 /* LiveActivityManager.swift in Sources */,
 				8B6903E3599064FC5BE0BB2C /* WorkoutActivityAttributes.swift in Sources */,
 				62FA84AEC0A006A07E2C85A0 /* WorkoutIntents.swift in Sources */,
 				8A7861D45E3C7C5C05C90F80 /* WorkoutLiveActivity.swift in Sources */,

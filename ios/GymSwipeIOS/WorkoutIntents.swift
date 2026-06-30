@@ -17,6 +17,15 @@ struct WorkoutControlIntent: LiveActivityIntent {
     @MainActor
     func perform() async throws -> some IntentResult {
         if let command = WorkoutCommand(rawValue: action) {
+            // Reps/peso: actualiza la Live Activity AL INSTANTE aquí mismo (sin esperar a la
+            // vista ni al store) — es lo que se sentía lento. El store se sincroniza aparte.
+            switch command {
+            case .repsUp:     LiveActivityManager.shared.bumpReps(1)
+            case .repsDown:   LiveActivityManager.shared.bumpReps(-1)
+            case .weightUp:   LiveActivityManager.shared.bumpWeight(2.5)
+            case .weightDown: LiveActivityManager.shared.bumpWeight(-2.5)
+            default: break
+            }
             WorkoutRemote.shared.send(command)
         }
         return .result()
