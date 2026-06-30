@@ -85,22 +85,13 @@ struct RankingView: View {
     }
 
     private func rankRow(_ idx: Int, _ row: RankRow) -> some View {
-        let tier = ScoreTier.of(row.score)
-        return HStack(spacing: 10) {
+        HStack(spacing: 10) {
             Text("\(idx + 1)").font(.system(size: 13, weight: .heavy)).foregroundColor(Brand.muted).frame(width: 20)
             if row.isMe { MeAvatar(account: store.account, size: 34) } else { Avatar(emoji: row.emoji, size: 34) }
             Text(row.name).font(.system(size: 14, weight: row.isMe ? .heavy : .semibold)).foregroundColor(Brand.ink)
             Spacer()
             // Puntuación con el efecto de su división (Hierro → Maestro).
-            HStack(spacing: 4) {
-                Image(systemName: tier.symbol).font(.system(size: 10, weight: .heavy))
-                Text("\(row.score)").font(.system(size: 14, weight: .heavy)).monospacedDigit()
-            }
-            .foregroundColor(tier.textColor)
-            .padding(.horizontal, 9).padding(.vertical, 4)
-            .background(tier.fill).clipShape(Capsule())
-            .overlay(Capsule().stroke(.white.opacity(0.5), lineWidth: 1))
-            .shadow(color: tier.glow.color.opacity(0.9), radius: tier.glow.radius)
+            ScorePill(score: row.score)
         }
         .padding(.vertical, 5)
         .padding(.horizontal, 8)

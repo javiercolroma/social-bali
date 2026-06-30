@@ -142,6 +142,25 @@ struct ScoreBadge: View {
     }
 }
 
+/// Píldora de puntuación teñida con su división (Hierro→Maestro): gradiente metálico
+/// + icono de tier + glow que crece con el nivel. Para mostrar un score "en línea"
+/// (ranking, partner…) con el mismo efecto de rango que los badges de avatar.
+struct ScorePill: View {
+    let score: Int
+    var body: some View {
+        let t = ScoreTier.of(score)
+        HStack(spacing: 4) {
+            Image(systemName: t.symbol).font(.system(size: 10, weight: .heavy))
+            Text("\(score)").font(.system(size: 14, weight: .heavy)).monospacedDigit()
+        }
+        .foregroundColor(t.textColor)
+        .padding(.horizontal, 9).padding(.vertical, 4)
+        .background(t.fill).clipShape(Capsule())
+        .overlay(Capsule().stroke(.white.opacity(0.5), lineWidth: 1))
+        .shadow(color: t.glow.color.opacity(0.9), radius: t.glow.radius)
+    }
+}
+
 /// Avatar (emoji o foto) con el Gym Score en la esquina inferior derecha.
 /// Reemplaza la antigua banderita en todos los perfiles de la app.
 struct ScoredAvatar: View {

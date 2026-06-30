@@ -81,7 +81,7 @@ struct PartnerView: View {
                     if !isMine {
                         Text("a \(Int(planKm(plan))) km").font(.system(size: 12, weight: .heavy)).foregroundColor(Brand.soft)
                     }
-                    Tag(text: "Score \(plan.score)", highlight: true)
+                    ScorePill(score: plan.score)
                 }
             }.buttonStyle(.plain)
 
