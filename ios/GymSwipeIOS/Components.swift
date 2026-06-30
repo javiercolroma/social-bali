@@ -73,7 +73,7 @@ struct Tag: View {
 
 // MARK: - Workout card building blocks (shared by feed, activity, profile, calendar)
 
-/// Calm greenSoft rounded tile with a dumbbell glyph — replaces the bare green dumbbell everywhere.
+/// Discreto tile neutro con la mancuerna — afordance de "entreno" sin colores llamativos.
 struct WorkoutTypeBadge: View {
     enum Size { case full, compact }
     var size: Size = .full
@@ -81,11 +81,11 @@ struct WorkoutTypeBadge: View {
     private var glyph: CGFloat { size == .full ? 14 : 12 }
     var body: some View {
         RoundedRectangle(cornerRadius: 9, style: .continuous)
-            .fill(Brand.greenSoft)
+            .fill(Brand.chip)
             .frame(width: side, height: side)
             .overlay(Image(systemName: "dumbbell.fill")
                 .font(.system(size: glyph, weight: .semibold))
-                .foregroundColor(Color(hex: "4f7a00")))
+                .foregroundColor(Brand.soft))
     }
 }
 

@@ -20,12 +20,18 @@ func formatCount(_ n: Int) -> String {
 }
 
 /// Fila estilo Instagram: entrenos · seguidores · siguiendo (seguidores/siguiendo abren lista).
-func profileCountsRow(entrenos: Int, seguidores: Int, siguiendo: Int,
+func profileCountsRow(entrenos: Int, seguidores: Int, siguiendo: Int, locked: Bool = false,
                       onSeguidores: @escaping () -> Void, onSiguiendo: @escaping () -> Void) -> some View {
     HStack(spacing: 0) {
         profileCountTile(formatCount(entrenos), "Entrenos")
-        Button { onSeguidores() } label: { profileCountTile(formatCount(seguidores), "Seguidores") }.buttonStyle(.plain)
-        Button { onSiguiendo() } label: { profileCountTile(formatCount(siguiendo), "Siguiendo") }.buttonStyle(.plain)
+        // Cuenta privada que no sigues: los contadores no son tocables (no se ve la lista).
+        if locked {
+            profileCountTile(formatCount(seguidores), "Seguidores")
+            profileCountTile(formatCount(siguiendo), "Siguiendo")
+        } else {
+            Button { onSeguidores() } label: { profileCountTile(formatCount(seguidores), "Seguidores") }.buttonStyle(.plain)
+            Button { onSiguiendo() } label: { profileCountTile(formatCount(siguiendo), "Siguiendo") }.buttonStyle(.plain)
+        }
     }
     .padding(.vertical, 12)
     .background(Brand.panel).clipShape(RoundedRectangle(cornerRadius: 12))
@@ -526,7 +532,7 @@ struct FriendProfileView: View {
         return NavigationStack {
             ScrollView {
                 VStack(spacing: 14) {
-                    header(entrenos: sessionsList.count)
+                    header(entrenos: sessionsList.count, locked: locked)
                     if locked {
                         privateNotice
                     } else {
@@ -599,7 +605,7 @@ struct FriendProfileView: View {
         }
     }
 
-    private func header(entrenos: Int) -> some View {
+    private func header(entrenos: Int, locked: Bool) -> some View {
         VStack(spacing: 12) {
             ZStack(alignment: .bottomTrailing) {
                 Avatar(emoji: person.avatar, size: 84)
@@ -616,6 +622,7 @@ struct FriendProfileView: View {
             profileCountsRow(entrenos: entrenos,
                              seguidores: deterministicCount(person.id, salt: 7, lo: 40, hi: 1500) + (store.relationship(person.id) == .friends ? 1 : 0),
                              siguiendo: deterministicCount(person.id, salt: 13, lo: 30, hi: 700),
+                             locked: locked,
                              onSeguidores: { followList = FollowListData(title: "Seguidores", people: demoFollowList(store, seed: person.id, salt: 7, exclude: person.id)) },
                              onSiguiendo: { followList = FollowListData(title: "Siguiendo", people: demoFollowList(store, seed: person.id, salt: 13, exclude: person.id)) })
             followButton

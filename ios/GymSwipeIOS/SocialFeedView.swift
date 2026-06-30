@@ -47,6 +47,7 @@ struct SocialFeedView: View {
     // El feed es un snapshot: no se reorganiza al seguir a alguien; solo cambia al refrescar (pull-to-refresh).
     @State private var seguidosFeed: [FeedItem] = []
     @State private var seguidosLoaded = false
+    @State private var seguidosNewUser = true   // modo de layout congelado hasta el refresh
     @State private var showInterleavedSuggestions = false
     @State private var suggestionsSnapshot: [SocialPerson] = []
     @State private var paraTiFeed: [FeedItem] = []
@@ -99,8 +100,10 @@ struct SocialFeedView: View {
     private var seguidosTab: some View {
         ScrollView {
             LazyVStack(spacing: 12) {
-                if store.following.isEmpty {
+                if seguidosNewUser {
                     // Usuario nuevo: sugerencias arriba (activación) + feed de cercanos.
+                    // El modo se congela hasta el próximo refresh: seguir a alguien NO
+                    // reorganiza el muro al instante (las sugerencias solo se bajan al refrescar).
                     newUserHeader
                     if hasSuggestions { suggestionsStrip }
                     if seguidosFeed.isEmpty {
@@ -134,6 +137,8 @@ struct SocialFeedView: View {
     }
 
     private func refreshSeguidos(manual: Bool) {
+        // Congela el modo de layout (usuario nuevo vs con seguidos) en el momento del refresh.
+        seguidosNewUser = store.following.isEmpty
         seguidosFeed = store.following.isEmpty
             ? (myItems + discoverFeed).sorted { $0.date > $1.date }
             : followedFeed
