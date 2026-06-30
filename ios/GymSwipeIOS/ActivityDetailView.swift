@@ -104,10 +104,11 @@ struct ActivityDetailView: View {
         .background(Brand.surface).clipShape(RoundedRectangle(cornerRadius: 12))
     }
 
-    /// Per-set list for an exercise (uses logs when available, else uniform sets).
+    /// Per-set list for an exercise: SOLO las series hechas. Usa los logs (que solo
+    /// contienen las series completadas); si no hay logs, usa el conteo de hechas.
     private func expandedSets(_ ex: SessionExercise) -> [SetLog] {
         if let logs = ex.logs, !logs.isEmpty { return logs }
-        return Array(repeating: SetLog(reps: ex.reps, weight: ex.weight), count: max(1, ex.sets))
+        return Array(repeating: SetLog(reps: ex.reps, weight: ex.weight), count: max(0, ex.sets))
     }
 
     private func exerciseCard(_ ex: SessionExercise) -> some View {

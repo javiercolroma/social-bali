@@ -185,11 +185,15 @@ final class AppStore: ObservableObject {
             gained += xp
             if ex.completedSets > 0 { doneExercises += 1 }
             totalSets += ex.completedSets
-            let logs = ex.setLog ?? []
+            let logs = ex.setLog ?? []   // setLog solo guarda las series HECHAS
             totalVolume += logs.isEmpty
                 ? Double(ex.completedSets) * Double(ex.reps) * ex.weight
                 : logs.reduce(0) { $0 + Double($1.reps) * $1.weight }
-            sessionItems.append(SessionExercise(name: ex.name, sets: ex.completedSets > 0 ? ex.completedSets : ex.sets, reps: ex.reps, weight: ex.weight, logs: logs.isEmpty ? nil : logs))
+            // El detalle del entreno solo muestra las series HECHAS: no añadimos ejercicios
+            // saltados por completo, y el conteo es el de series completadas (no las planeadas).
+            if ex.completedSets > 0 {
+                sessionItems.append(SessionExercise(name: ex.name, sets: ex.completedSets, reps: ex.reps, weight: ex.weight, logs: logs.isEmpty ? nil : logs))
+            }
             history.insert(HistoryEntry(
                 id: "h-\(ex.id)-\(Int(Date().timeIntervalSince1970 * 1000))-\(Int.random(in: 0..<9999))",
                 exerciseName: ex.name, day: ex.day, status: status,
