@@ -22,6 +22,7 @@ struct TrainView: View {
     @AppStorage("fxHaptics") private var hapticsOn = true
     @ObservedObject private var health = HealthManager.shared
     @ObservedObject private var remote = WorkoutRemote.shared
+    @StateObject private var location = LocationManager()  // zona aproximada del entreno
 
     // Detalles de sesión (en memoria, no se persiste)
     @State private var lineSeed = 0              // rota la microcopia del coach
@@ -69,7 +70,7 @@ struct TrainView: View {
         }
         .background(Brand.bg)
         .sheet(item: $previewWorkout) { WorkoutPreview(workoutId: $0.id).environmentObject(store) }
-        .onAppear { if !store.exercises.isEmpty && sessionStart == nil { sessionStart = Date(); health.startSession(); startLive() } }
+        .onAppear { if !store.exercises.isEmpty && sessionStart == nil { sessionStart = Date(); health.startSession(); startLive(); location.request() } }
         // Reaccionar a la IDENTIDAD del entreno cargado: así cargar un entreno nuevo
         // (incluso encima de uno terminado-sin-guardar) reinicia tiempo + captura de FC.
         .onChange(of: store.exercises.first?.id) { id in
@@ -78,6 +79,7 @@ struct TrainView: View {
                 sessionStart = Date(); restActive = false; restElapsed = 0; showSummary = false
                 lineSeed = 0; lastEvent = .go; hitMilestones = []
                 health.startSession()
+                location.request()
                 LiveActivityManager.shared.end(); startLive()
             }
         }
@@ -427,26 +429,12 @@ struct TrainView: View {
                     }
                 }
 
-                summaryLabel("¿QUIÉN PUEDE VERLO?")
-                HStack(spacing: 8) {
-                    ForEach(WorkoutVisibility.allCases, id: \.self) { v in
-                        Button { FX.tap(); visibility = v } label: {
-                            HStack(spacing: 5) {
-                                Image(systemName: v.icon).font(.system(size: 11, weight: .bold))
-                                Text(v.label).font(.system(size: 12, weight: .heavy))
-                            }
-                            .frame(maxWidth: .infinity).frame(height: 38)
-                            .background(visibility == v ? Brand.greenSoft : Brand.chip)
-                            .foregroundColor(Brand.ink).clipShape(Capsule())
-                        }
-                    }
-                }
-
                 Button {
                     fxFinish()
                     let hr = health.endSession()
                     store.saveSession(name: sessionName, note: sessionNote, photoData: sessionPhoto, visibility: visibility,
-                                      elapsed: finalElapsed, avgHeartRate: hr.avg, maxHeartRate: hr.max)
+                                      elapsed: finalElapsed, avgHeartRate: hr.avg, maxHeartRate: hr.max,
+                                      location: location.placeName)
                     resetLocal()
                 } label: { Label("Guardar entrenamiento", systemImage: "checkmark") }
                     .buttonStyle(PrimaryButtonStyle()).padding(.top, 4)

@@ -265,7 +265,7 @@ struct FriendsContent: View {
             } else {
                 if !incoming.isEmpty { section("Solicitudes recibidas", people: incoming, empty: "") }
                 if !friends.isEmpty { section("Tus amigos", people: friends, empty: "") }
-                section("Descubre compañeros", people: discover, empty: "Ya estás conectado con todos.")
+                if !discover.isEmpty { section("Descubre compañeros", people: discover, empty: "") }
             }
         }.padding(.horizontal, 14).padding(.bottom, 16)
     }

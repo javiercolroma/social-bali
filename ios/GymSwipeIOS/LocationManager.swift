@@ -5,8 +5,11 @@ import CoreLocation
 final class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
     @Published var coordinate: CLLocationCoordinate2D?
     @Published var status = "Ubicación aproximada"
+    /// Nombre legible y aproximado (p. ej. "Chamberí, Madrid") de la última ubicación.
+    @Published var placeName: String?
 
     private let manager = CLLocationManager()
+    private let geocoder = CLGeocoder()
 
     override init() {
         super.init()
@@ -39,6 +42,25 @@ final class LocationManager: NSObject, ObservableObject, CLLocationManagerDelega
         Task { @MainActor in
             self.coordinate = loc.coordinate
             self.status = "Tu zona aproximada"
+            self.resolvePlaceName(for: loc)
+        }
+    }
+
+    /// Geocodificación inversa → zona aproximada (barrio + ciudad), sin calle ni número.
+    private func resolvePlaceName(for loc: CLLocation) {
+        geocoder.cancelGeocode()
+        geocoder.reverseGeocodeLocation(loc, preferredLocale: Locale(identifier: "es_ES")) { [weak self] marks, _ in
+            guard let self, let m = marks?.first else { return }
+            let area = m.subLocality ?? m.locality ?? m.subAdministrativeArea
+            let city = m.locality ?? m.subAdministrativeArea ?? m.administrativeArea
+            let parts = [area, city].compactMap { $0 }
+            // Quitar duplicados consecutivos (p. ej. barrio == ciudad).
+            var out: [String] = []
+            for p in parts where out.last != p { out.append(p) }
+            Task { @MainActor in
+                let name = out.joined(separator: ", ")
+                if !name.isEmpty { self.placeName = name }
+            }
         }
     }
 

@@ -105,6 +105,8 @@ struct WorkoutSession: Identifiable, Codable {
     var items: [SessionExercise]? = nil
     var avgHeartRate: Int? = nil
     var maxHeartRate: Int? = nil
+    /// Zona aproximada donde se hizo el entreno (GPS reverse-geocoded al guardar).
+    var location: String? = nil
 }
 
 struct WorkoutTemplate: Identifiable, Codable, Hashable {

@@ -375,7 +375,10 @@ struct ActivityView: View {
     private func fmt(_ w: Double) -> String { w == w.rounded() ? String(Int(w)) : String(format: "%.1f", w) }
 
     private func activityData(_ s: WorkoutSession) -> ActivityData {
-        let loc = [store.profile.city, store.profile.country].filter { !$0.isEmpty }.joined(separator: ", ")
+        // Zona aproximada donde se hizo el entreno (GPS). Para sesiones antiguas sin
+        // ubicación capturada, caemos en la ciudad del perfil.
+        let profileLoc = [store.profile.city, store.profile.country].filter { !$0.isEmpty }.joined(separator: ", ")
+        let loc = (s.location?.isEmpty == false) ? s.location! : profileLoc
         return ActivityData(
             authorName: store.account?.name ?? "Tú",
             avatarPhoto: store.account?.photoData, avatarEmoji: "🙂",

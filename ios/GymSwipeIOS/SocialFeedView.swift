@@ -501,9 +501,11 @@ struct SocialFeedView: View {
     // MARK: - Feed sources
 
     private var myItems: [FeedItem] {
-        let loc = [store.profile.city, store.profile.country].filter { !$0.isEmpty }.joined(separator: ", ")
+        let profileLoc = [store.profile.city, store.profile.country].filter { !$0.isEmpty }.joined(separator: ", ")
         return store.sessions.map { s in
-            FeedItem(
+            // Zona aproximada del entreno (GPS); fallback a la ciudad del perfil si no se capturó.
+            let loc = (s.location?.isEmpty == false) ? s.location! : profileLoc
+            return FeedItem(
                 id: s.id, personId: nil, authorName: store.account?.name ?? "Tú",
                 avatarPhoto: store.account?.photoData, avatarEmoji: "🙂",
                 flag: countryFlag(store.profile.country), location: loc,

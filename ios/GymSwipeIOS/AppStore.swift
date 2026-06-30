@@ -187,7 +187,7 @@ final class AppStore: ObservableObject {
 
     // Commit the session: write history + XP + a session record, then clear the workout.
     func saveSession(name: String, note: String, photoData: Data?, visibility: WorkoutVisibility, elapsed: Int,
-                     avgHeartRate: Int? = nil, maxHeartRate: Int? = nil) {
+                     avgHeartRate: Int? = nil, maxHeartRate: Int? = nil, location: String? = nil) {
         let sid = "session-\(Int(Date().timeIntervalSince1970))"
         var gained = 0
         var doneExercises = 0
@@ -222,7 +222,8 @@ final class AppStore: ObservableObject {
             note: note.trimmingCharacters(in: .whitespaces), date: Date(), elapsed: elapsed,
             exercises: doneExercises, sets: totalSets, volume: totalVolume, xp: gained,
             photoData: photoData, visibility: visibility, items: sessionItems,
-            avgHeartRate: avgHeartRate, maxHeartRate: maxHeartRate), at: 0)
+            avgHeartRate: avgHeartRate, maxHeartRate: maxHeartRate,
+            location: location?.trimmingCharacters(in: .whitespaces)), at: 0)
         player.xp += gained
         player.streak = currentStreak()
         exercises = []
