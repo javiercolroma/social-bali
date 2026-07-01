@@ -13,6 +13,7 @@ struct RootView: View {
     @State private var profilePerson: IdString?
     @State private var showProfile = false
     @State private var activeTour: Int?   // sección cuyo tutorial se está mostrando
+    @State private var tourTarget: String?   // componente resaltado en el paso actual del tour
 
     private let titles = ["Social", "Plan", "Entreno", "Comunidad", "Actividad"]
 
@@ -59,19 +60,38 @@ struct RootView: View {
             }
         }
         .animation(.easeInOut(duration: 0.28), value: chatPerson?.id)
-        .overlay {
-            if let s = activeTour {
-                CoachTour(section: s, onFinish: {
-                    store.markTourSeen("tour-\(s)")
-                    activeTour = nil
-                }, onStep: { st in
-                    // En Comunidad, el tour lleva al usuario a Partner mientras se lo explica.
-                    if s == 3 { withAnimation(.easeInOut(duration: 0.3)) { store.communitySection = st >= 1 ? 1 : 0 } }
-                })
-                .environmentObject(store)
-                .transition(.opacity)
-                .zIndex(8)
+        .overlayPreferenceValue(TourAnchorKey.self) { anchors in
+            GeometryReader { geo in
+                if let s = activeTour {
+                    let rect: CGRect? = tourTarget.flatMap { id in anchors[id].map { geo[$0] } }
+                    ZStack {
+                        // Velo con foco (spotlight) sobre el componente a usar.
+                        CoachDim(target: rect)
+                        if let r = rect {
+                            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                .stroke(Brand.green, lineWidth: 3)
+                                .frame(width: r.width + 16, height: r.height + 16)
+                                .position(x: r.midX, y: r.midY)
+                                .shadow(color: Brand.green.opacity(0.7), radius: 9)
+                                .allowsHitTesting(false)
+                        }
+                        CoachTour(section: s, onFinish: {
+                            store.markTourSeen("tour-\(s)")
+                            tourTarget = nil
+                            activeTour = nil
+                        }, onStep: { st in
+                            // En Comunidad, el tour lleva al usuario a Partner mientras se lo explica.
+                            if s == 3 { withAnimation(.easeInOut(duration: 0.3)) { store.communitySection = st >= 1 ? 1 : 0 } }
+                        }, onTarget: { t in
+                            withAnimation(.spring(response: 0.42, dampingFraction: 0.82)) { tourTarget = t }
+                        })
+                        .environmentObject(store)
+                    }
+                    .ignoresSafeArea()
+                    .transition(.opacity)
+                }
             }
+            .ignoresSafeArea()
         }
         .animation(.easeInOut(duration: 0.25), value: activeTour)
         .sheet(item: $profilePerson) { item in

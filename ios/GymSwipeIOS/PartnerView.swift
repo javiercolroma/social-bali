@@ -15,6 +15,9 @@ struct PartnerView: View {
             .sorted { planKm($0) < planKm($1) }   // los más cercanos primero
     }
 
+    /// Primera tarjeta de otra persona (para anclar el tutorial de Aceptar/Descartar).
+    private var firstOtherPlanId: String? { visiblePlans.first { $0.ownerId != "me" }?.id }
+
     var body: some View {
         ScrollView {
             VStack(spacing: 12) {
@@ -22,13 +25,18 @@ struct PartnerView: View {
                     Button { FX.tap(); showCreator = true } label: {
                         Label("Buscar compañero", systemImage: "person.2.fill")
                     }.buttonStyle(PrimaryButtonStyle())
+                    .tourAnchor("partner.create")
 
-                    HStack {
-                        Label("Cerca de mí", systemImage: "location.fill").font(.system(size: 13, weight: .heavy)).foregroundColor(Brand.muted)
-                        Spacer()
-                        Text(maxKm >= 99.5 ? "Sin límite" : "Hasta \(Int(maxKm.rounded())) km").font(.system(size: 13, weight: .heavy)).foregroundColor(Color(hex: "4b6211"))
-                    }.padding(.top, 4)
-                    DistanceSlider(value: $maxKm, range: 1...100)   // mín 1 km, pulgar circular pequeño, continuo
+                    VStack(spacing: 8) {
+                        HStack {
+                            Label("Cerca de mí", systemImage: "location.fill").font(.system(size: 13, weight: .heavy)).foregroundColor(Brand.muted)
+                            Spacer()
+                            Text(maxKm >= 99.5 ? "Sin límite" : "Hasta \(Int(maxKm.rounded())) km").font(.system(size: 13, weight: .heavy)).foregroundColor(Color(hex: "4b6211"))
+                        }
+                        DistanceSlider(value: $maxKm, range: 1...100)   // mín 1 km, pulgar circular pequeño, continuo
+                    }
+                    .padding(.top, 4)
+                    .tourAnchor("partner.distance")
                 }
 
                 if visiblePlans.isEmpty {
@@ -119,10 +127,12 @@ struct PartnerView: View {
                         onOpenChat(plan.ownerId)
                     } label: { Text("Aceptar entrenamiento").font(.system(size: 14, weight: .heavy)).frame(maxWidth: .infinity) }
                         .buttonStyle(PrimaryButtonStyle())
+                        .tourAnchor("partner.accept", if: plan.id == firstOtherPlanId)
                     Button { FX.warning(); store.deletePlan(plan.id) } label: {
                         Image(systemName: "xmark").font(.system(size: 14, weight: .heavy)).foregroundColor(Color(hex: "a73232"))
                             .frame(width: 50, height: 50).background(Brand.redSoft).clipShape(RoundedRectangle(cornerRadius: 12))
                     }
+                    .tourAnchor("partner.discard", if: plan.id == firstOtherPlanId)
                 }
             }
         }

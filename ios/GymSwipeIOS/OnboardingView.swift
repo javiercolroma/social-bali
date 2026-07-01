@@ -903,19 +903,69 @@ private enum OnboardingSurvey {
 
 // MARK: - Tutorial guiado por sección (Forgey te acompaña)
 
+/// Un paso del tour: texto de Forgey + (opcional) el id del componente a resaltar.
+struct CoachStep {
+    let text: String
+    var target: String? = nil
+    init(_ text: String, target: String? = nil) { self.text = text; self.target = target }
+}
+
+/// Recoge los marcos (frames) de los componentes marcados con `.tourAnchor(id)` para
+/// que el tour pueda dibujar un foco (spotlight) sobre el que hay que usar en cada paso.
+struct TourAnchorKey: PreferenceKey {
+    static var defaultValue: [String: Anchor<CGRect>] = [:]
+    static func reduce(value: inout [String: Anchor<CGRect>], nextValue: () -> [String: Anchor<CGRect>]) {
+        value.merge(nextValue(), uniquingKeysWith: { $1 })
+    }
+}
+
+extension View {
+    /// Marca este componente como diana de un paso del tutorial (`CoachTour`).
+    func tourAnchor(_ id: String) -> some View {
+        anchorPreference(key: TourAnchorKey.self, value: .bounds) { [id: $0] }
+    }
+    @ViewBuilder func tourAnchor(_ id: String, if condition: Bool) -> some View {
+        if condition { tourAnchor(id) } else { self }
+    }
+    /// Máscara inversa: recorta un "agujero" en la vista (para el foco del spotlight).
+    @ViewBuilder func reverseMask<M: View>(@ViewBuilder _ mask: () -> M) -> some View {
+        self.mask { Rectangle().overlay(mask().blendMode(.destinationOut)) }
+    }
+}
+
+/// Velo oscuro que atenúa la pantalla dejando un hueco iluminado sobre el componente
+/// diana (o atenúa todo si no hay diana). El hueco se anima al cambiar de paso.
+struct CoachDim: View {
+    let target: CGRect?
+    var body: some View {
+        Rectangle().fill(Brand.ink.opacity(target == nil ? 0.3 : 0.55))
+            .reverseMask {
+                if let t = target {
+                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                        .frame(width: t.width + 16, height: t.height + 16)
+                        .position(x: t.midX, y: t.midY)
+                }
+            }
+            .allowsHitTesting(false)
+    }
+}
+
 /// Tour de bienvenida a cada una de las 5 secciones del menú: Forgey asoma desde el
-/// lateral y te acompaña con 1-2 consejos escritos a máquina. Profesional y saltable,
-/// se muestra una sola vez por sección (persistido en `store.seenTours`).
+/// lateral y te acompaña con consejos escritos a máquina, resaltando el componente
+/// que hay que usar en cada paso. Profesional y saltable, una sola vez por sección.
 struct CoachTour: View {
     let section: Int
     var onFinish: () -> Void
-    var onStep: ((Int) -> Void)? = nil   // se llama con el paso actual (para efectos como cambiar de sub-pestaña)
+    var onStep: ((Int) -> Void)? = nil     // paso actual (para efectos como cambiar de sub-pestaña)
+    var onTarget: ((String?) -> Void)? = nil   // id del componente a resaltar en el paso actual
 
     // `startStep` permite arrancar en un paso concreto (previews / verificación); producción usa 0.
-    init(section: Int, startStep: Int = 0, onFinish: @escaping () -> Void, onStep: ((Int) -> Void)? = nil) {
+    init(section: Int, startStep: Int = 0, onFinish: @escaping () -> Void,
+         onStep: ((Int) -> Void)? = nil, onTarget: ((String?) -> Void)? = nil) {
         self.section = section
         self.onFinish = onFinish
         self.onStep = onStep
+        self.onTarget = onTarget
         _step = State(initialValue: startStep)
     }
 
@@ -926,15 +976,15 @@ struct CoachTour: View {
     @State private var appear = false
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
-    private var lines: [String] { CoachTour.content[section] ?? [] }
-    private var current: String { lines.indices.contains(step) ? lines[step] : "" }
-    private var isLast: Bool { step >= lines.count - 1 }
+    private var steps: [CoachStep] { CoachTour.content[section] ?? [] }
+    private var current: String { steps.indices.contains(step) ? steps[step].text : "" }
+    private var currentTarget: String? { steps.indices.contains(step) ? steps[step].target : nil }
+    private var isLast: Bool { step >= steps.count - 1 }
 
     var body: some View {
+        // Sin velo propio: RootView dibuja el atenuado + spotlight detrás de esta tarjeta.
         ZStack(alignment: .bottom) {
-            Brand.ink.opacity(0.22).ignoresSafeArea()
-                .onTapGesture { if !typingDone { finishTyping() } }
-
+            Color.clear
             ZStack(alignment: .topLeading) {
                 card
                 // Forgey asoma sobre la esquina superior izquierda de la tarjeta,
@@ -947,13 +997,16 @@ struct CoachTour: View {
             .padding(.horizontal, 14)
             .padding(.bottom, 12)
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .contentShape(Rectangle())
+        .onTapGesture { if !typingDone { finishTyping() } }   // modal: bloquea toques al contenido
         .onAppear {
             withAnimation(reduceMotion ? .easeOut(duration: 0.25)
                                        : .spring(response: 0.52, dampingFraction: 0.72)) { appear = true }
-            onStep?(step)
+            onStep?(step); onTarget?(currentTarget)
             startTyping()
         }
-        .onChange(of: step) { s in onStep?(s); startTyping() }
+        .onChange(of: step) { s in onStep?(s); onTarget?(currentTarget); startTyping() }
         .onDisappear { typeTask?.cancel() }
     }
 
@@ -975,7 +1028,7 @@ struct CoachTour: View {
 
             HStack(spacing: 8) {
                 // Puntos de progreso
-                ForEach(0..<max(1, lines.count), id: \.self) { i in
+                ForEach(0..<max(1, steps.count), id: \.self) { i in
                     Capsule().fill(i == step ? Brand.green : Brand.ink.opacity(0.16))
                         .frame(width: i == step ? 18 : 6, height: 6)
                 }
@@ -1036,19 +1089,20 @@ struct CoachTour: View {
     private func finishTyping() { typeTask?.cancel(); shown = current; typingDone = true }
 
     static let names = ["Social", "Plan", "Entreno", "Comunidad", "Actividad"]
-    static let content: [Int: [String]] = [
-        0: ["Bienvenido a tu muro. Aquí ves lo que entrenan tus colegas al momento.",
-            "Reacciona, comenta y comparte tus sesiones. La motivación se contagia 🔥"],
-        1: ["Aquí guardas tus rutinas: créalas a tu medida o elige una de las mías.",
-            "Cuando toque entrenar, pulsa «Cargar» y la llevo directa a tu sesión 💪"],
-        2: ["Tu entreno en vivo: apunta cada serie con su peso y sus repeticiones.",
-            "Al cerrar una serie te arranco el descanso y te aviso cuando toca seguir."],
-        3: ["Compites por divisiones, de Hierro a Maestro: cada entreno sube tu Gym Score y tu liga.",
-            "Y esto es Partner 🤝 tu sitio para no entrenar solo. Deja que te lo enseñe.",
-            "Cada tarjeta es alguien que busca compañero cerca de ti: ves qué entrena, cuándo y dónde. Si te encaja, pulsa «Aceptar entrenamiento» y se abre un chat para quedar.",
-            "¿Prefieres proponer tú? Pulsa «Buscar compañero», elige cuándo, dónde y qué harás, y espera a que alguien se una."],
-        4: ["Tu racha y tu Gym Score viven aquí: cada sesión los hace crecer.",
-            "Mira el calendario y tu historial para ver todo lo que has forjado 📈"],
+    static let content: [Int: [CoachStep]] = [
+        0: [CoachStep("Bienvenido a tu muro. Aquí ves lo que entrenan tus colegas al momento."),
+            CoachStep("Reacciona, comenta y comparte tus sesiones. La motivación se contagia 🔥")],
+        1: [CoachStep("Aquí guardas tus rutinas: créalas a tu medida o elige una de las mías."),
+            CoachStep("Cuando toque entrenar, pulsa «Cargar» y la llevo directa a tu sesión 💪")],
+        2: [CoachStep("Tu entreno en vivo: apunta cada serie con su peso y sus repeticiones."),
+            CoachStep("Al cerrar una serie te arranco el descanso y te aviso cuando toca seguir.")],
+        3: [CoachStep("Compites por divisiones, de Hierro a Maestro: cada entreno sube tu Gym Score y tu liga."),
+            CoachStep("Esto es Partner 🤝 Con esta barra eliges a qué distancia buscar compañero, de cerca de ti a sin límite.", target: "partner.distance"),
+            CoachStep("Con este botón publicas tu propio plan: dices cuándo, dónde y qué entrenas, y esperas a que alguien se una.", target: "partner.create"),
+            CoachStep("Cada tarjeta es alguien buscando compañero. Si te encaja, pulsa «Aceptar entrenamiento» y se abre un chat para quedar.", target: "partner.accept"),
+            CoachStep("¿No te convence un plan? Descártalo con la ✕ y sigue viendo más.", target: "partner.discard")],
+        4: [CoachStep("Tu racha y tu Gym Score viven aquí: cada sesión los hace crecer."),
+            CoachStep("Mira el calendario y tu historial para ver todo lo que has forjado 📈")],
     ]
 }
 
