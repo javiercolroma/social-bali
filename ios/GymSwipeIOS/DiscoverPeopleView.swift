@@ -10,15 +10,17 @@ struct DiscoverPeopleView: View {
     @State private var following: Set<String> = []
     @State private var loading = false
     @State private var searched = false
+    @State private var searchTask: Task<Void, Never>?
 
     var body: some View {
         NavigationStack {
             VStack(spacing: 12) {
                 HStack(spacing: 10) {
                     Image(systemName: "magnifyingglass").foregroundColor(Brand.soft)
-                    TextField("Buscar por @usuario", text: $query)
+                    TextField("Buscar por @usuario o nombre", text: $query)
                         .textInputAutocapitalization(.never).autocorrectionDisabled()
-                        .submitLabel(.search).onSubmit { search() }
+                        .submitLabel(.search)
+                        .onChange(of: query) { _ in scheduleSearch() }
                     if !query.isEmpty {
                         Button { query = ""; results = []; searched = false } label: {
                             Image(systemName: "xmark.circle.fill").foregroundColor(Brand.soft)
@@ -98,12 +100,18 @@ struct DiscoverPeopleView: View {
         .padding(10).background(Brand.surface).clipShape(RoundedRectangle(cornerRadius: 12))
     }
 
-    private func search() {
+    /// Búsqueda en vivo mientras se escribe, con un pequeño retardo (debounce) para
+    /// no lanzar una petición por cada tecla. Cancela la búsqueda anterior.
+    private func scheduleSearch() {
+        searchTask?.cancel()
         let q = query.trimmingCharacters(in: .whitespaces)
-        guard !q.isEmpty else { return }
+        guard !q.isEmpty else { results = []; searched = false; loading = false; return }
         loading = true
-        Task {
+        searchTask = Task {
+            try? await Task.sleep(nanoseconds: 300_000_000)
+            if Task.isCancelled { return }
             let r = (try? await Backend.shared.searchProfiles(q)) ?? []
+            if Task.isCancelled { return }
             let meId = Backend.shared.currentUserId
             results = r.filter { $0.id != meId }
             loading = false; searched = true
