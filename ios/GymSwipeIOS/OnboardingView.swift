@@ -1090,19 +1090,19 @@ struct CoachTour: View {
 
     static let names = ["Social", "Plan", "Entreno", "Comunidad", "Actividad"]
     static let content: [Int: [CoachStep]] = [
-        0: [CoachStep("Bienvenido a tu muro. Aquí ves lo que entrenan tus colegas al momento."),
-            CoachStep("Reacciona, comenta y comparte tus sesiones. La motivación se contagia 🔥")],
-        1: [CoachStep("Aquí guardas tus rutinas: créalas a tu medida o elige una de las mías."),
-            CoachStep("Cuando toque entrenar, pulsa «Cargar» y la llevo directa a tu sesión 💪")],
-        2: [CoachStep("Tu entreno en vivo: apunta cada serie con su peso y sus repeticiones."),
-            CoachStep("Al cerrar una serie te arranco el descanso y te aviso cuando toca seguir.")],
-        3: [CoachStep("Compites por divisiones, de Hierro a Maestro: cada entreno sube tu Gym Score y tu liga."),
-            CoachStep("Esto es Partner 🤝 Con esta barra eliges a qué distancia buscar compañero, de cerca de ti a sin límite.", target: "partner.distance"),
-            CoachStep("Con este botón publicas tu propio plan: dices cuándo, dónde y qué entrenas, y esperas a que alguien se una.", target: "partner.create"),
-            CoachStep("Cada tarjeta es alguien buscando compañero. Si te encaja, pulsa «Aceptar entrenamiento» y se abre un chat para quedar.", target: "partner.accept"),
-            CoachStep("¿No te convence un plan? Descártalo con la ✕ y sigue viendo más.", target: "partner.discard")],
-        4: [CoachStep("Tu racha y tu Gym Score viven aquí: cada sesión los hace crecer."),
-            CoachStep("Mira el calendario y tu historial para ver todo lo que has forjado 📈")],
+        0: [CoachStep("Aquí ves lo que entrenan tus colegas.", target: "social.switch"),
+            CoachStep("Dale like o comenta sus entrenos.", target: "social.card")],
+        1: [CoachStep("Crea tu propio entreno con este botón.", target: "plan.create"),
+            CoachStep("O toca un entreno para cargarlo.", target: "plan.item")],
+        2: [CoachStep("Aquí entrenas. Empieza eligiendo un entreno.", target: "train.choose"),
+            CoachStep("Luego marcas cada serie y yo llevo la cuenta.")],
+        3: [CoachStep("Aquí subes de división, de Hierro a Maestro."),
+            CoachStep("Con esta barra eliges la distancia para buscar compañero.", target: "partner.distance"),
+            CoachStep("Con este botón publicas tu plan y buscas compañero.", target: "partner.create"),
+            CoachStep("Si un plan te encaja, pulsa «Aceptar» y se abre un chat.", target: "partner.accept"),
+            CoachStep("¿No te va? Descártalo con la ✕.", target: "partner.discard")],
+        4: [CoachStep("Cambia entre tu progreso y tus entrenos.", target: "activity.switch"),
+            CoachStep("Aquí ves tu racha y tu Gym Score.", target: "activity.progress")],
     ]
 }
 

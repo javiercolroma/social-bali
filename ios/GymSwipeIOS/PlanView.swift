@@ -19,11 +19,15 @@ struct PlanView: View {
             }
     }
 
+    /// Primer entreno de la lista (para anclar el tutorial de "cargar entreno").
+    private var firstWorkoutId: String? { grouped.first?.workouts.first?.id }
+
     var body: some View {
         ScrollView {
             VStack(spacing: 16) {
                 Button { creating = true } label: { Label("Crear entrenamiento", systemImage: "plus") }
                     .buttonStyle(PrimaryButtonStyle())
+                    .tourAnchor("plan.create")
 
                 ForEach(grouped, id: \.group) { section in
                     VStack(alignment: .leading, spacing: 8) {
@@ -35,6 +39,7 @@ struct PlanView: View {
                         ForEach(section.workouts) { workout in
                             Button { preview = workout } label: { workoutRow(workout) }
                                 .buttonStyle(.plain)
+                                .tourAnchor("plan.item", if: workout.id == firstWorkoutId)
                                 .contextMenu {
                                     Button { preview = workout } label: { Label("Ver / Editar", systemImage: "pencil") }
                                     Button(role: .destructive) { pendingDelete = workout } label: { Label("Eliminar", systemImage: "trash") }

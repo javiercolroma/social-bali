@@ -152,6 +152,7 @@ struct SocialFeedView: View {
             }
         }
         .padding(.horizontal, 14).padding(.top, 2).padding(.bottom, 8)
+        .tourAnchor("social.switch")
     }
 
     // MARK: - SEGUIDOS
@@ -168,7 +169,9 @@ struct SocialFeedView: View {
                     if seguidosFeed.isEmpty {
                         emptyFeed("Sigue a atletas o registra un entreno para llenar tu muro.")
                     } else {
-                        ForEach(seguidosFeed) { item in feedCard(item) }
+                        ForEach(seguidosFeed) { item in
+                            feedCard(item).tourAnchor("social.card", if: item.id == seguidosFeed.first?.id)
+                        }
                     }
                 } else if seguidosFeed.isEmpty {
                     if hasSuggestions { suggestionsStrip }
@@ -177,7 +180,7 @@ struct SocialFeedView: View {
                     // Con seguidos: las sugerencias se INTERCALAN entre posts, pero solo tras refrescar (no automático).
                     let insertAt = min(2, seguidosFeed.count - 1)
                     ForEach(Array(seguidosFeed.enumerated()), id: \.element.id) { idx, item in
-                        feedCard(item)
+                        feedCard(item).tourAnchor("social.card", if: item.id == seguidosFeed.first?.id)
                         if showInterleavedSuggestions && hasSuggestions && idx == insertAt { suggestionsStrip }
                     }
                 }

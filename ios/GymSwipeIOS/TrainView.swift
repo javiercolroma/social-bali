@@ -499,6 +499,7 @@ struct TrainView: View {
             }
             Button { onGoToPlan() } label: { Label("Elegir entreno", systemImage: "square.grid.2x2") }
                 .buttonStyle(PrimaryButtonStyle())
+                .tourAnchor("train.choose")
                 .padding(.horizontal, 24)
             Spacer()
         }

@@ -53,13 +53,14 @@ struct ActivityView: View {
             }
         }
         .padding(.horizontal, 14).padding(.top, 2).padding(.bottom, 8)
+        .tourAnchor("activity.switch")
     }
 
     // MARK: - PROGRESO
 
     @ViewBuilder
     private var progressContent: some View {
-        rachaCard
+        rachaCard.tourAnchor("activity.progress")
         gymScoreCard
         TrainingCalendarView(sessions: sessions) { date, daySessions in
             daySheet = DayPayload(id: date, date: date, sessions: daySessions)
