@@ -32,6 +32,10 @@ final class AppStore: ObservableObject {
     @Published var prCount: Int = 0                        // nº de récords batidos (para logros)
     @Published var pendingPRs: [PersonalBest] = []         // cola de récords a celebrar (efímero)
     @Published var claimedQuests: Set<String> = []         // misiones reclamadas ("semana:idMision")
+    @Published var streakFreezes: Int = 0                   // congeladores para proteger la racha
+    @Published var shieldedDays: Set<String> = []          // días cubiertos por un congelador (yyyy-MM-dd)
+    @Published var streakMilestones: Set<Int> = []          // hitos de racha ya celebrados
+    @Published var streakCelebration: Int? = nil           // hito de racha a celebrar (efímero)
 
     let people = AppStore.demoPeople
     let templates = AppStore.builtinTemplates
@@ -67,6 +71,9 @@ final class AppStore: ObservableObject {
             personalBests = snap.personalBests ?? [:]
             prCount = snap.prCount ?? 0
             claimedQuests = Set(snap.claimedQuests ?? [])
+            streakFreezes = snap.streakFreezes ?? 0
+            shieldedDays = Set(snap.shieldedDays ?? [])
+            streakMilestones = Set(snap.streakMilestones ?? [])
             // Migrate old "Mis entrenos" group to "Otros"
             savedWorkouts = savedWorkouts.map { w in
                 guard w.block == "Mis entrenos" else { return w }
@@ -108,6 +115,9 @@ final class AppStore: ObservableObject {
         var personalBests: [String: PersonalBest]?
         var prCount: Int?
         var claimedQuests: [String]?
+        var streakFreezes: Int?
+        var shieldedDays: [String]?
+        var streakMilestones: [Int]?
     }
 
     func persist() {
@@ -118,7 +128,8 @@ final class AppStore: ObservableObject {
             conversations: conversations, notifications: notifications, trainingPlans: trainingPlans,
             sessions: sessions, appliedKudos: Array(appliedKudos), hiddenWorkoutIds: Array(hiddenWorkoutIds),
             seenTours: Array(seenTours), coins: coins, unlockedAchievements: Array(unlockedAchievements),
-            personalBests: personalBests, prCount: prCount, claimedQuests: Array(claimedQuests)
+            personalBests: personalBests, prCount: prCount, claimedQuests: Array(claimedQuests),
+            streakFreezes: streakFreezes, shieldedDays: Array(shieldedDays), streakMilestones: Array(streakMilestones)
         )
         if let data = try? JSONEncoder().encode(snap) {
             UserDefaults.standard.set(data, forKey: storeKey)
@@ -262,7 +273,9 @@ final class AppStore: ObservableObject {
             avgHeartRate: avgHeartRate, maxHeartRate: maxHeartRate,
             location: location?.trimmingCharacters(in: .whitespaces)), at: 0)
         player.xp += gained
+        applyStreakFreeze()                    // protege la racha con congeladores si hubo un hueco
         player.streak = currentStreak()
+        checkStreakMilestones()                // hitos de racha (celebra + monedas + congelador)
         detectPRs(sessionItems)                // récords personales (antes de vaciar)
         exercises = []
         lastAction = "Entreno guardado"
@@ -300,13 +313,46 @@ final class AppStore: ObservableObject {
         persist()
     }
 
+    /// Si el hueco desde el último día entrenado rompería la racha, consume congeladores
+    /// (cada uno cubre una ventana de 3 días) marcando días "protegidos" que puentean el hueco.
+    private func applyStreakFreeze() {
+        guard streakFreezes > 0 else { return }
+        let cal = Calendar.current
+        let f = DateFormatter(); f.dateFormat = "yyyy-MM-dd"
+        let realDays = Set(history.filter { $0.status == .done }.map { cal.startOfDay(for: $0.completedAt) }).sorted(by: >)
+        guard realDays.count >= 2 else { return }
+        let today = realDays[0]
+        var prev = realDays[1]
+        var gap = cal.dateComponents([.day], from: prev, to: today).day ?? 0
+        while gap > 3 && streakFreezes > 0 {
+            guard let shieldDate = cal.date(byAdding: .day, value: 3, to: prev) else { break }
+            if shieldDate >= today { break }
+            shieldedDays.insert(f.string(from: shieldDate))
+            streakFreezes -= 1
+            prev = shieldDate
+            gap = cal.dateComponents([.day], from: prev, to: today).day ?? 0
+        }
+    }
+
+    private func checkStreakMilestones() {
+        for m in [7, 14, 30, 60, 100] where player.streak >= m && !streakMilestones.contains(m) {
+            streakMilestones.insert(m)
+            coins += m * 3
+            if m == 7 || m == 30 { streakFreezes += 1 }   // regala congeladores en hitos clave
+            streakCelebration = m
+        }
+    }
+
     // Racha "de gimnasio": no exige entrenar a diario. Se mantiene mientras no
     // pasen más de 3 días entre entrenos (y el último sea de los últimos 3 días).
     // Cada día entrenado dentro de esa ventana suma +1.
     private func currentStreak() -> Int {
         let cal = Calendar.current
+        let f = DateFormatter(); f.dateFormat = "yyyy-MM-dd"
+        // Los días protegidos por un congelador cuentan como entrenados (puentean el hueco).
+        let shielded = shieldedDays.compactMap { f.date(from: $0).map { cal.startOfDay(for: $0) } }
         let trainedDays = Set(history.filter { $0.status == .done }
-            .map { cal.startOfDay(for: $0.completedAt) }).sorted(by: >)
+            .map { cal.startOfDay(for: $0.completedAt) } + shielded).sorted(by: >)
         guard let mostRecent = trainedDays.first else { return 0 }
         let today = cal.startOfDay(for: Date())
         let sinceLast = cal.dateComponents([.day], from: mostRecent, to: today).day ?? 0

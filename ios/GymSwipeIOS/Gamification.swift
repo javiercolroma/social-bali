@@ -414,6 +414,49 @@ struct PRCelebration: View {
     private func fmt(_ v: Double) -> String { v == v.rounded() ? String(Int(v)) : String(format: "%.1f", v) }
 }
 
+// MARK: - Celebración de hito de racha
+
+struct StreakCelebration: View {
+    let days: Int
+    let gotFreeze: Bool
+    var onDismiss: () -> Void
+    @State private var pop: CGFloat = 0.4
+
+    var body: some View {
+        ZStack {
+            Color.black.opacity(0.55).ignoresSafeArea().onTapGesture { onDismiss() }
+            ConfettiView().frame(maxWidth: .infinity, maxHeight: .infinity).allowsHitTesting(false)
+            VStack(spacing: 14) {
+                Text("¡RACHA EN LLAMAS!").font(.system(size: 13, weight: .heavy)).kerning(1).foregroundColor(Color(hex: "f2760c"))
+                ZStack {
+                    Circle().fill(LinearGradient(colors: [Color(hex: "ffb03a"), Color(hex: "f2600c")], startPoint: .top, endPoint: .bottom))
+                        .frame(width: 118, height: 118)
+                        .overlay(Circle().stroke(.white.opacity(0.7), lineWidth: 3))
+                        .shadow(color: Color(hex: "f2600c").opacity(0.7), radius: 18)
+                    Image(systemName: "flame.fill").font(.system(size: 52, weight: .heavy)).foregroundColor(.white)
+                }.scaleEffect(pop)
+                Text("\(days) días de racha").font(.system(size: 22, weight: .heavy)).foregroundColor(Brand.ink)
+                Text("¡Sigue así, no la pierdas!").font(.system(size: 14, weight: .semibold)).foregroundColor(Brand.muted)
+                HStack(spacing: 6) {
+                    Text("🪙 +\(days * 3)").font(.system(size: 14, weight: .heavy)).foregroundColor(Color(hex: "b0824a"))
+                    if gotFreeze {
+                        Text("·").foregroundColor(Brand.soft)
+                        Text("🧊 +1 congelador").font(.system(size: 14, weight: .heavy)).foregroundColor(Color(hex: "2b8fd6"))
+                    }
+                }
+                .padding(.horizontal, 14).padding(.vertical, 8).background(Brand.chip).clipShape(Capsule())
+                Button { onDismiss() } label: { Text("¡A por más!").frame(maxWidth: .infinity) }
+                    .buttonStyle(PrimaryButtonStyle()).padding(.top, 4)
+            }
+            .padding(24)
+            .background(Color.white).clipShape(RoundedRectangle(cornerRadius: 26, style: .continuous))
+            .shadow(color: .black.opacity(0.25), radius: 30, y: 12)
+            .padding(.horizontal, 34)
+        }
+        .onAppear { withAnimation(.spring(response: 0.5, dampingFraction: 0.55)) { pop = 1 }; FX.success(sound: true) }
+    }
+}
+
 // MARK: - Tarjeta de récords (para Actividad ▸ Progreso)
 
 struct RecordsCard: View {

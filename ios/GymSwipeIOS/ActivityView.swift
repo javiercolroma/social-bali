@@ -229,6 +229,12 @@ struct ActivityView: View {
                         .fixedSize(horizontal: false, vertical: true)
                 }
                 Spacer()
+                // Congeladores: protegen la racha si te saltas algún día.
+                VStack(spacing: 3) {
+                    Text("🧊").font(.system(size: 22))
+                    Text("\(store.streakFreezes)").font(.system(size: 15, weight: .heavy)).foregroundColor(Brand.ink)
+                    Text("protege").font(.system(size: 9, weight: .heavy)).foregroundColor(Brand.soft)
+                }
             }
             .frame(maxWidth: .infinity)
         }
