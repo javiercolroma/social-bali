@@ -121,16 +121,17 @@ struct WeeklyQuest: Identifiable {
     let goal: Int
     let unit: String              // "días", "series", "min"…
     let reward: Int               // monedas
+    let xpReward: Int             // XP (alimenta nivel + liga)
     let progress: @MainActor (AppStore) -> Int
 }
 
 enum Quests {
     static let weekly: [WeeklyQuest] = [
-        WeeklyQuest(id: "days3", title: "Entrena 3 días", icon: "calendar", goal: 3, unit: "días", reward: 50,
+        WeeklyQuest(id: "days3", title: "Entrena 3 días", icon: "calendar", goal: 3, unit: "días", reward: 50, xpReward: 30,
                     progress: { $0.weekTrainingDays() }),
-        WeeklyQuest(id: "sets40", title: "Completa 40 series", icon: "square.stack.3d.up.fill", goal: 40, unit: "series", reward: 50,
+        WeeklyQuest(id: "sets40", title: "Completa 40 series", icon: "square.stack.3d.up.fill", goal: 40, unit: "series", reward: 80, xpReward: 50,
                     progress: { $0.weekSessions().reduce(0) { $0 + $1.sets } }),
-        WeeklyQuest(id: "min90", title: "Acumula 90 minutos", icon: "clock.fill", goal: 90, unit: "min", reward: 50,
+        WeeklyQuest(id: "min90", title: "Acumula 90 minutos", icon: "clock.fill", goal: 90, unit: "min", reward: 100, xpReward: 60,
                     progress: { Int($0.weekSessions().reduce(0) { $0 + $1.elapsed } / 60) }),
     ]
 }
@@ -142,7 +143,7 @@ extension AppStore {
         return "\(c.yearForWeekOfYear ?? 0)-W\(c.weekOfYear ?? 0)"
     }
     func weekSessions() -> [WorkoutSession] {
-        sessions.filter { Calendar.current.isDate($0.date, equalTo: Date(), toGranularity: .weekOfYear) }
+        sessions.filter { weekIdFor($0.date) == weekId }   // año-seguro (semana ISO + año)
     }
     func weekTrainingDays() -> Int {
         let f = DateFormatter(); f.dateFormat = "yyyy-MM-dd"
@@ -154,7 +155,10 @@ extension AppStore {
     func claimQuest(_ q: WeeklyQuest) {
         guard questDone(q), !questClaimed(q) else { return }
         coins += q.reward
+        player.xp += q.xpReward
         claimedQuests.insert("\(weekId):\(q.id)")
+        // Si la misión estaba en la cola de "recién completada", la quitamos.
+        questCompleted.removeAll { $0.id == q.id }
         FX.success(sound: true)
         persist()
     }
@@ -162,12 +166,15 @@ extension AppStore {
 
 struct WeeklyQuestsCard: View {
     @EnvironmentObject var store: AppStore
+    @State private var flash: String? = nil   // id de la misión con destello "+🪙"
+
     var body: some View {
         PanelCard {
             HStack(spacing: 7) {
                 Image(systemName: "target").font(.system(size: 13)).foregroundColor(Brand.green)
                 Text("MISIONES DE LA SEMANA").font(.caption2).fontWeight(.heavy).foregroundColor(Brand.muted)
                 Spacer()
+                Text("Nuevas el lunes · \(store.leagueDaysLeft)d").font(.system(size: 11, weight: .heavy)).foregroundColor(Brand.soft)
             }
             ForEach(Quests.weekly) { q in
                 questRow(q)
@@ -194,19 +201,70 @@ struct WeeklyQuestsCard: View {
                             .frame(width: max(6, geo.size.width * min(1, Double(value) / Double(q.goal))))
                     }
                 }.frame(height: 6)
+                .accessibilityValue("\(value) de \(q.goal) \(q.unit)")
                 Text("\(value)/\(q.goal) \(q.unit)").font(.system(size: 11, weight: .bold)).foregroundColor(Brand.soft)
             }
             if claimed {
                 Image(systemName: "checkmark.circle.fill").font(.system(size: 24)).foregroundColor(Brand.green)
             } else if done {
-                Button { FX.tap(); withAnimation { store.claimQuest(q) } } label: {
+                Button {
+                    FX.tap()
+                    flash = q.id
+                    withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) { store.claimQuest(q) }
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { if flash == q.id { flash = nil } }
+                } label: {
                     Text("🪙 \(q.reward)").font(.system(size: 13, weight: .heavy)).foregroundColor(Color(hex: "10150a"))
                         .padding(.horizontal, 11).frame(height: 34).background(Brand.green).clipShape(Capsule())
                 }.buttonStyle(.plain)
+                .accessibilityLabel("Reclamar \(q.reward) monedas y \(q.xpReward) XP")
+                .overlay(alignment: .top) {
+                    if flash == q.id {
+                        Text("+🪙\(q.reward)").font(.system(size: 12, weight: .heavy)).foregroundColor(Color(hex: "b0824a"))
+                            .offset(y: -22).transition(.move(edge: .bottom).combined(with: .opacity))
+                    }
+                }
             } else {
                 Text("🪙 \(q.reward)").font(.system(size: 12, weight: .heavy)).foregroundColor(Brand.soft)
             }
         }
+    }
+}
+
+// MARK: - Aviso de misión completada (reclamar sin abrir Actividad)
+
+struct QuestCompleteCelebration: View {
+    let quest: WeeklyQuest
+    var onClaim: () -> Void
+    var onDismiss: () -> Void
+    @State private var pop: CGFloat = 0.4
+
+    var body: some View {
+        ZStack {
+            Color.black.opacity(0.55).ignoresSafeArea().onTapGesture { onDismiss() }
+            ConfettiView().frame(maxWidth: .infinity, maxHeight: .infinity).allowsHitTesting(false)
+            VStack(spacing: 14) {
+                Text("¡MISIÓN COMPLETA!").font(.system(size: 13, weight: .heavy)).kerning(1).foregroundColor(Color(hex: "6ea300"))
+                ZStack {
+                    Circle().fill(LinearGradient(colors: [Color(hex: "b4ec51"), Color(hex: "8ed11d")], startPoint: .top, endPoint: .bottom))
+                        .frame(width: 112, height: 112).overlay(Circle().stroke(.white.opacity(0.7), lineWidth: 3))
+                        .shadow(color: Brand.green.opacity(0.7), radius: 16)
+                    Image(systemName: quest.icon).font(.system(size: 46, weight: .heavy)).foregroundColor(Color(hex: "10150a"))
+                }.scaleEffect(pop)
+                Text(quest.title).font(.system(size: 21, weight: .heavy)).foregroundColor(Brand.ink).multilineTextAlignment(.center)
+                HStack(spacing: 6) {
+                    Text("🪙 \(quest.reward)").font(.system(size: 14, weight: .heavy)).foregroundColor(Color(hex: "b0824a"))
+                    Text("·").foregroundColor(Brand.soft)
+                    Text("\(quest.xpReward) XP").font(.system(size: 14, weight: .heavy)).foregroundColor(Color(hex: "6ea300"))
+                }
+                .padding(.horizontal, 14).padding(.vertical, 8).background(Brand.chip).clipShape(Capsule())
+                Button { onClaim() } label: { Text("Reclamar recompensa").frame(maxWidth: .infinity) }
+                    .buttonStyle(PrimaryButtonStyle()).padding(.top, 4)
+                Button { onDismiss() } label: { Text("Ahora no").font(.system(size: 14, weight: .heavy)).foregroundColor(Brand.soft) }
+            }
+            .padding(24).background(Color.white).clipShape(RoundedRectangle(cornerRadius: 26, style: .continuous))
+            .shadow(color: .black.opacity(0.25), radius: 30, y: 12).padding(.horizontal, 34)
+        }
+        .onAppear { withAnimation(.spring(response: 0.5, dampingFraction: 0.55)) { pop = 1 }; FX.success(sound: true) }
     }
 }
 
@@ -252,7 +310,8 @@ extension AppStore {
     }
     /// XP ganada en la semana ISO de `date` (suma del XP de las sesiones de esa semana).
     func weekXP(for date: Date = Date()) -> Int {
-        sessions.filter { Calendar.current.isDate($0.date, equalTo: date, toGranularity: .weekOfYear) }
+        // Solo cuentan para la liga las sesiones plausibles (anti-fake).
+        sessions.filter { weekIdFor($0.date) == weekIdFor(date) && $0.verified }
             .reduce(0) { $0 + $1.xp }
     }
     /// Días que faltan para el reinicio de la liga (próximo lunes).

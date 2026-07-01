@@ -107,6 +107,8 @@ struct WorkoutSession: Identifiable, Codable {
     var maxHeartRate: Int? = nil
     /// Zona aproximada donde se hizo el entreno (GPS reverse-geocoded al guardar).
     var location: String? = nil
+    /// ¿Sesión plausible? Las demasiado rápidas no cuentan para liga/récords públicos.
+    var verified: Bool = true
 }
 
 struct WorkoutTemplate: Identifiable, Codable, Hashable {

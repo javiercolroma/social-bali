@@ -32,6 +32,8 @@ final class AppStore: ObservableObject {
     @Published var prCount: Int = 0                        // nº de récords batidos (para logros)
     @Published var pendingPRs: [PersonalBest] = []         // cola de récords a celebrar (efímero)
     @Published var claimedQuests: Set<String> = []         // misiones reclamadas ("semana:idMision")
+    @Published var questCompleted: [WeeklyQuest] = []       // misiones recién completadas a avisar (efímero)
+    @Published var flashMessage: String? = nil             // aviso breve tipo toast (efímero)
     @Published var streakFreezes: Int = 0                   // congeladores para proteger la racha
     @Published var shieldedDays: Set<String> = []          // días cubiertos por un congelador (yyyy-MM-dd)
     @Published var streakMilestones: Set<Int> = []          // hitos de racha ya celebrados
@@ -104,6 +106,7 @@ final class AppStore: ObservableObject {
         // Da por conseguidos (sin celebrar) los logros que ya cumplas al abrir.
         refreshAchievements(celebrate: false)
         resolveLeagueIfNeeded()   // ascenso/descenso si ha cambiado de semana
+        claimedQuests = claimedQuests.filter { $0.hasPrefix("\(weekId):") }   // poda misiones de semanas pasadas
     }
 
     // MARK: - Persistence
@@ -229,13 +232,13 @@ final class AppStore: ObservableObject {
 
     func adjustReps(_ id: String, _ delta: Int) {
         guard let i = exercises.firstIndex(where: { $0.id == id }) else { return }
-        exercises[i].reps = max(1, exercises[i].reps + delta)
+        exercises[i].reps = min(50, max(1, exercises[i].reps + delta))   // tope realista (anti-fake)
         persistSoon()   // ráfagas de toques: no recodificar todo el estado en cada uno
     }
 
     func adjustWeight(_ id: String, _ delta: Double) {
         guard let i = exercises.firstIndex(where: { $0.id == id }) else { return }
-        let next = max(0, exercises[i].weight + delta)
+        let next = min(500, max(0, exercises[i].weight + delta))         // tope realista (anti-fake)
         exercises[i].weight = (next * 2).rounded() / 2   // keep .5 steps clean
         persistSoon()
     }
@@ -260,6 +263,8 @@ final class AppStore: ObservableObject {
     func saveSession(name: String, note: String, photoData: Data?, visibility: WorkoutVisibility, elapsed: Int,
                      avgHeartRate: Int? = nil, maxHeartRate: Int? = nil, location: String? = nil) {
         let sid = "session-\(Int(Date().timeIntervalSince1970))"
+        // Estado de las misiones ANTES de esta sesión (para avisar de las que se completen).
+        let questsBefore = Dictionary(uniqueKeysWithValues: Quests.weekly.map { ($0.id, questDone($0)) })
         var gained = 0
         var doneExercises = 0
         var totalSets = 0
@@ -287,6 +292,9 @@ final class AppStore: ObservableObject {
                 volume: Double(ex.completedSets) * Double(ex.reps) * ex.weight,
                 xp: xp, completedAt: Date(), sessionId: sid), at: 0)
         }
+        // Plausibilidad (anti-fake): una sesión demasiado rápida no cuenta para liga/récords públicos.
+        // ~20 s por serie (incluye descanso, permite EMOM/superseries) + topes por sesión.
+        let verified = elapsed >= totalSets * 20 && totalSets <= 60 && gained <= 600
         let trimmed = name.trimmingCharacters(in: .whitespaces)
         sessions.insert(WorkoutSession(
             id: sid, name: trimmed.isEmpty ? (exercises.first?.day ?? "Entreno") : trimmed,
@@ -294,21 +302,26 @@ final class AppStore: ObservableObject {
             exercises: doneExercises, sets: totalSets, volume: totalVolume, xp: gained,
             photoData: photoData, visibility: visibility, items: sessionItems,
             avgHeartRate: avgHeartRate, maxHeartRate: maxHeartRate,
-            location: location?.trimmingCharacters(in: .whitespaces)), at: 0)
+            location: location?.trimmingCharacters(in: .whitespaces), verified: verified), at: 0)
         player.xp += gained
         applyStreakFreeze()                    // protege la racha con congeladores si hubo un hueco
         player.streak = currentStreak()
         checkStreakMilestones()                // hitos de racha (celebra + monedas + congelador)
-        detectPRs(sessionItems)                // récords personales (antes de vaciar)
+        detectPRs(sessionItems, verified: verified)   // récords personales (solo se celebran si es plausible)
         exercises = []
         lastAction = "Entreno guardado"
+        // Misiones recién completadas por esta sesión → aviso para reclamar.
+        for q in Quests.weekly where questDone(q) && !(questsBefore[q.id] ?? false) && !questClaimed(q) {
+            questCompleted.append(q)
+        }
+        if !verified { flashMessage = "Entreno guardado. Por ser muy rápido, no cuenta para la liga ni para récords." }
         persist()
         refreshAchievements(celebrate: true)   // desbloquea + celebra logros nuevos
     }
 
     /// Detecta récords personales (mejor 1RM estimado por ejercicio). Registra el mejor
     /// de cada ejercicio y celebra solo cuando SUPERA un récord previo (no la primera vez).
-    private func detectPRs(_ items: [SessionExercise]) {
+    private func detectPRs(_ items: [SessionExercise], verified: Bool) {
         for item in items {
             let key = item.name.folding(options: .diacriticInsensitive, locale: .current).lowercased()
             let sets: [(w: Double, r: Int)] = (item.logs?.map { ($0.weight, $0.reps) }) ?? [(item.weight, item.reps)]
@@ -322,7 +335,8 @@ final class AppStore: ObservableObject {
             if prev == nil || b.e > prev!.e1rm + 0.01 {
                 let pb = PersonalBest(exercise: item.name, weight: b.w, reps: b.r, e1rm: b.e, date: Date())
                 personalBests[key] = pb
-                if prev != nil {   // celebrar solo si bate un récord anterior
+                // Solo se celebra/cuenta como récord público si la sesión es plausible.
+                if prev != nil && verified {
                     pendingPRs.append(pb)
                     prCount += 1
                 }

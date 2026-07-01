@@ -572,6 +572,9 @@ struct FriendProfileView: View {
                         Text(relativeTime(s.date)).font(.system(size: 13)).foregroundColor(Brand.soft)
                     }
                     Spacer()
+                    if !s.verified {
+                        Image(systemName: "shield.slash").font(.system(size: 13, weight: .bold)).foregroundColor(Brand.soft)
+                    }
                     Image(systemName: "chevron.right").font(.system(size: 12, weight: .bold)).foregroundColor(Brand.soft)
                 }
                 WorkoutStatStrip(stats: WorkoutStatStrip.metrics(time: durationText(s.elapsed), sets: s.sets,
@@ -809,6 +812,9 @@ struct MeProfileView: View {
                         Text(relativeTime(s.date)).font(.system(size: 13)).foregroundColor(Brand.soft)
                     }
                     Spacer()
+                    if !s.verified {
+                        Image(systemName: "shield.slash").font(.system(size: 13, weight: .bold)).foregroundColor(Brand.soft)
+                    }
                     Image(systemName: "chevron.right").font(.system(size: 12, weight: .bold)).foregroundColor(Brand.soft)
                 }
                 WorkoutStatStrip(stats: WorkoutStatStrip.metrics(time: durationText(s.elapsed), sets: s.sets,

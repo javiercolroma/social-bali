@@ -120,12 +120,36 @@ struct RootView: View {
                 .environmentObject(store)
                 .transition(.opacity)
                 .zIndex(9)
+            } else if let q = store.questCompleted.first {
+                QuestCompleteCelebration(quest: q,
+                    onClaim: { store.claimQuest(q); store.questCompleted.removeAll { $0.id == q.id } },
+                    onDismiss: { if !store.questCompleted.isEmpty { store.questCompleted.removeFirst() } })
+                .environmentObject(store)
+                .transition(.opacity)
+                .zIndex(8)
             }
         }
         .animation(.easeInOut(duration: 0.2), value: store.celebrations.count)
         .animation(.easeInOut(duration: 0.2), value: store.pendingPRs.count)
         .animation(.easeInOut(duration: 0.2), value: store.streakCelebration)
         .animation(.easeInOut(duration: 0.2), value: store.leaguePromoted)
+        .animation(.easeInOut(duration: 0.2), value: store.questCompleted.count)
+        // Aviso breve (toast) para avisos como "sesión no válida para la liga".
+        .overlay(alignment: .bottom) {
+            if let msg = store.flashMessage {
+                Text(msg)
+                    .font(.system(size: 13, weight: .heavy)).foregroundColor(.white)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 16).padding(.vertical, 12)
+                    .background(Color(hex: "16240b").opacity(0.94)).clipShape(RoundedRectangle(cornerRadius: 14))
+                    .padding(.horizontal, 24).padding(.bottom, 96)
+                    .shadow(color: .black.opacity(0.2), radius: 12, y: 6)
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
+                    .zIndex(20)
+                    .onAppear { DispatchQueue.main.asyncAfter(deadline: .now() + 3.2) { store.flashMessage = nil } }
+            }
+        }
+        .animation(.easeInOut(duration: 0.25), value: store.flashMessage)
         .sheet(item: $profilePerson) { item in
             if let person = store.person(item.id) {
                 FriendProfileView(person: person).environmentObject(store)
