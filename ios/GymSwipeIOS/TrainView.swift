@@ -36,8 +36,6 @@ struct TrainView: View {
     @State private var pulse: CGFloat = 1          // sobreimpulso de escala del botón Hecho
 
     private let ticker = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
-    // TODO: pruebas — descanso fijo a 10s. Volver a `ex.rest` para producción.
-    private let testRestSeconds = 10
 
     private var totalSets: Int { store.exercises.reduce(0) { $0 + $1.sets } }
     private var closedSets: Int { store.exercises.reduce(0) { $0 + $1.completedSets + $1.skippedSets } }
@@ -275,7 +273,7 @@ struct TrainView: View {
     private func register(_ ex: Exercise, done: Bool) {
         if sessionStart == nil { sessionStart = Date() }
         let willClose = (ex.completedSets + ex.skippedSets + 1) >= ex.sets
-        if done { restActive = true; restTotal = testRestSeconds; restElapsed = 0 } else { restActive = false }
+        if done { restActive = true; restTotal = max(1, ex.rest); restElapsed = 0 } else { restActive = false }
 
         lineSeed += 1
         lastEvent = done ? .done : .skip

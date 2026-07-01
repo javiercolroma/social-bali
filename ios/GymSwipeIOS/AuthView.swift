@@ -1,5 +1,6 @@
 import SwiftUI
 import AuthenticationServices
+import GoogleSignIn
 
 /// Pantalla de inicio de sesión / registro. Sin backend todavía: la identidad del
 /// proveedor se guarda localmente (`store.signIn`). Tras entrar, el onboarding monta el perfil.
@@ -39,7 +40,7 @@ struct AuthView: View {
                         .signInWithAppleButtonStyle(.black)
                         .frame(height: 52).clipShape(RoundedRectangle(cornerRadius: 14))
 
-                    Button { FX.tap(); googleNote = true } label: {
+                    Button { handleGoogle() } label: {
                         HStack(spacing: 10) {
                             Image(systemName: "globe").font(.system(size: 17, weight: .bold))
                             Text("Continuar con Google").font(.system(size: 16, weight: .heavy))
@@ -76,10 +77,27 @@ struct AuthView: View {
             }
             .padding(24)
         }
-        .alert("Google llegará pronto", isPresented: $googleNote) {
+        .alert("Falta configurar Google", isPresented: $googleNote) {
             Button("Vale", role: .cancel) {}
         } message: {
-            Text("El inicio de sesión con Google estará disponible en cuanto conectemos las credenciales. De momento usa Apple o email.")
+            Text("Para activar Google hay que crear un OAuth Client ID de iOS en Google Cloud y pegarlo en AuthConfig.swift (instrucciones dentro). Mientras, entra con Apple o email.")
+        }
+    }
+
+    /// Inicia sesión con Google (SDK oficial). Si aún no hay client ID configurado,
+    /// muestra la ayuda en vez de fallar. Sin backend todavía: guardamos la identidad
+    /// del proveedor en local (`store.signIn`) y el onboarding monta el perfil.
+    private func handleGoogle() {
+        FX.tap()
+        guard GoogleAuth.isConfigured else { googleNote = true; return }
+        guard let root = UIApplication.shared.activeRootViewController else { return }
+        GIDSignIn.sharedInstance.configuration = GIDConfiguration(clientID: GoogleAuth.clientID)
+        GIDSignIn.sharedInstance.signIn(withPresenting: root) { result, error in
+            guard error == nil, let user = result?.user else { return }
+            let profile = user.profile
+            let uid = user.userID ?? profile?.email ?? UUID().uuidString
+            FX.success(sound: true)
+            withAnimation { store.signIn(provider: "google", userId: uid, email: profile?.email, name: profile?.name) }
         }
     }
 

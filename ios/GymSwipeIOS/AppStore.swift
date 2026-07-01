@@ -52,7 +52,7 @@ final class AppStore: ObservableObject {
     /// DEBUG: salta el login (AuthView) y el onboarding mientras se depura.
     /// Pon en `false` para volver al flujo real (login → onboarding → app).
     /// Si ya se guardó una cuenta debug, reinstala/borra datos para ver de nuevo el flujo.
-    static let debugSkipAuthOnboarding = true
+    static let debugSkipAuthOnboarding = false
 
     private var loaded = false
     private let storeKey = "forge-native-v1"
