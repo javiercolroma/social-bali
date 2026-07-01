@@ -22,6 +22,7 @@ private struct FeedItem: Identifiable {
     var maxHeartRate: Int? = nil
     var kudosCount: Int = 0     // likes REALES del servidor (0 si nadie ha dado like)
     var commentCount: Int = 0   // comentarios REALES del servidor
+    var avatarURL: String? = nil // foto real del autor (Storage)
 }
 
 /// Comentario de un post (local). Soporta respuestas (1 nivel), likes y fecha.
@@ -233,7 +234,8 @@ struct SocialFeedView: View {
             elapsed: r.elapsed, exercises: r.exercises, sets: r.sets, volume: r.volume,
             items: r.items, avgHeartRate: r.avg_hr, maxHeartRate: r.max_hr,
             kudosCount: r.kudos?.first?.count ?? 0,
-            commentCount: r.comments?.first?.count ?? 0)
+            commentCount: r.comments?.first?.count ?? 0,
+            avatarURL: isMe ? nil : r.author?.avatar_url)
     }
 
     private func feedCard(_ item: FeedItem) -> some View {
@@ -609,6 +611,9 @@ struct SocialFeedView: View {
     private func authorAvatar(_ item: FeedItem) -> some View {
         if let d = item.avatarPhoto, let ui = UIImage(data: d) {
             Image(uiImage: ui).resizable().scaledToFill().frame(width: 42, height: 42).clipShape(Circle())
+        } else if let a = item.avatarURL, let u = URL(string: a) {
+            AsyncImage(url: u) { img in img.resizable().scaledToFill() } placeholder: { Avatar(emoji: item.avatarEmoji, size: 42) }
+                .frame(width: 42, height: 42).clipShape(Circle())
         } else {
             Avatar(emoji: item.avatarEmoji, size: 42)
         }

@@ -163,7 +163,7 @@ struct MessagesSheet: View {
             .background(Brand.bg)
             .navigationTitle("").navigationBarTitleDisplayMode(.inline)
             .onAppear { tab = initialTab }
-            .task { store.loadFollowing() }
+            .task { store.loadFollowing(); store.loadConversations() }
             .sheet(item: $profileTarget) { item in
                 if let p = store.person(item.id) { FriendProfileView(person: p).environmentObject(store) }
             }

@@ -60,6 +60,8 @@ final class AppStore: ObservableObject {
     /// A quién sigues / quién te sigue DE VERDAD (usuarios reales). Vacío sin backend.
     @Published var followingPeople: [SocialPerson] = []
     @Published var followerPeople: [SocialPerson] = []
+    /// Personas con las que tienes conversación real (para resolver nombre/avatar en Mensajes).
+    @Published var messagedPeople: [SocialPerson] = []
 
     /// DEBUG: salta el login (AuthView) y el onboarding mientras se depura.
     /// Pon en `false` para volver al flujo real (login → onboarding → app).
@@ -218,7 +220,32 @@ final class AppStore: ObservableObject {
         return relationships[personId] ?? .none
     }
     func person(_ id: String) -> SocialPerson? {
-        people.first { $0.id == id } ?? followingPeople.first { $0.id == id }
+        people.first { $0.id == id } ?? followingPeople.first { $0.id == id } ?? messagedPeople.first { $0.id == id }
+    }
+
+    /// Construye la lista de conversaciones REALES a partir de tus mensajes del servidor.
+    func loadConversations() {
+        guard BackendConfig.isConfigured else { return }
+        Task {
+            guard let me = await Backend.shared.currentUserIdAsync() else { return }
+            let meStr = me.uuidString.lowercased()
+            let msgs = (try? await Backend.shared.fetchRecentMessages()) ?? []
+            var byPartner: [String: [MessageRow]] = [:]
+            for m in msgs {
+                let partner = m.sender_id.lowercased() == meStr ? m.recipient_id : m.sender_id
+                byPartner[partner, default: []].append(m)
+            }
+            let ids = byPartner.keys.compactMap { UUID(uuidString: $0) }
+            messagedPeople = Self.asPeople((try? await Backend.shared.fetchProfiles(ids: ids)) ?? [])
+            conversations = byPartner.map { (partner, rows) in
+                let msgs = rows.sorted { $0.created_at < $1.created_at }.map { r in
+                    ChatMessage(id: r.id, fromMe: r.sender_id.lowercased() == meStr,
+                                text: r.text, at: BackendDate.parse(r.created_at) ?? Date())
+                }
+                return Conversation(id: conversationId(partner), personId: partner,
+                                    messages: msgs, unread: 0, lastAt: msgs.last?.at ?? Date())
+            }.sorted { $0.lastAt > $1.lastAt }
+        }
     }
 
     private var scoreCache: [String: Int] = [:]

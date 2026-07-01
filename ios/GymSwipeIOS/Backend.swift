@@ -259,6 +259,15 @@ final class Backend {
             .execute().value
     }
 
+    /// Todos mis mensajes recientes (para construir la lista de conversaciones).
+    func fetchRecentMessages(limit: Int = 300) async throws -> [MessageRow] {
+        guard let client, let me = await currentUserIdAsync() else { return [] }
+        let m = me.uuidString
+        return try await client.from("messages").select()
+            .or("sender_id.eq.\(m),recipient_id.eq.\(m)")
+            .order("created_at", ascending: false).limit(limit).execute().value
+    }
+
     /// Envía un mensaje a otro usuario.
     func sendMessage(to otherUserId: UUID, text: String) async throws {
         guard let client, let me = await currentUserIdAsync() else { throw BackendError.notConfigured }
