@@ -57,8 +57,9 @@ final class AppStore: ObservableObject {
     /// enseñar el onboarding a alguien que ya se registró). Efímero (no se persiste).
     @Published var checkingProfile = false
 
-    /// A quién sigues DE VERDAD (usuarios reales del servidor). Vacío sin backend.
+    /// A quién sigues / quién te sigue DE VERDAD (usuarios reales). Vacío sin backend.
     @Published var followingPeople: [SocialPerson] = []
+    @Published var followerPeople: [SocialPerson] = []
 
     /// DEBUG: salta el login (AuthView) y el onboarding mientras se depura.
     /// Pon en `false` para volver al flujo real (login → onboarding → app).
@@ -612,18 +613,25 @@ final class AppStore: ObservableObject {
         BackendConfig.isConfigured ? followingPeople : people.filter { relationship($0.id) == .friends }
     }
 
-    /// Carga de verdad a quién sigues (follows aceptados → perfiles), best-effort.
+    /// Carga de verdad a quién sigues Y quién te sigue (aceptados → perfiles), best-effort.
     func loadFollowing() {
         guard BackendConfig.isConfigured else { return }
         Task {
             let follows = (try? await Backend.shared.fetchFollowing()) ?? []
             let ids = follows.filter { $0.status == "accepted" }.compactMap { UUID(uuidString: $0.following_id) }
-            let profiles = (try? await Backend.shared.fetchProfiles(ids: ids)) ?? []
-            followingPeople = profiles.map { p in
-                SocialPerson(id: p.id.uuidString, name: p.name ?? p.handle ?? "Atleta",
-                             handle: p.handle ?? "", avatar: "🙂", gym: p.gym ?? "",
-                             city: p.city ?? "", country: p.country ?? "", isPrivate: p.is_private ?? false)
-            }
+            followingPeople = Self.asPeople((try? await Backend.shared.fetchProfiles(ids: ids)) ?? [])
+
+            let followers = (try? await Backend.shared.fetchFollowers()) ?? []
+            let fids = followers.filter { $0.status == "accepted" }.compactMap { UUID(uuidString: $0.follower_id) }
+            followerPeople = Self.asPeople((try? await Backend.shared.fetchProfiles(ids: fids)) ?? [])
+        }
+    }
+
+    private static func asPeople(_ profiles: [ProfileRow]) -> [SocialPerson] {
+        profiles.map { p in
+            SocialPerson(id: p.id.uuidString, name: p.name ?? p.handle ?? "Atleta",
+                         handle: p.handle ?? "", avatar: "🙂", gym: p.gym ?? "",
+                         city: p.city ?? "", country: p.country ?? "", isPrivate: p.is_private ?? false)
         }
     }
 

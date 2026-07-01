@@ -797,9 +797,12 @@ struct MeProfileView: View {
                 socialPills
             }
             profileCountsRow(entrenos: entrenos,
-                             seguidores: deterministicCount(store.account?.handle ?? "me", salt: 7, lo: 40, hi: 1500),
+                             seguidores: BackendConfig.isConfigured ? store.followerPeople.count : deterministicCount(store.account?.handle ?? "me", salt: 7, lo: 40, hi: 1500),
                              siguiendo: store.following.count,
-                             onSeguidores: { followList = FollowListData(title: "Seguidores", people: demoFollowList(store, seed: store.account?.handle ?? "me", salt: 7, exclude: nil)) },
+                             onSeguidores: {
+                                 let list = BackendConfig.isConfigured ? store.followerPeople : demoFollowList(store, seed: store.account?.handle ?? "me", salt: 7, exclude: nil)
+                                 followList = FollowListData(title: "Seguidores", people: list)
+                             },
                              onSiguiendo: { followList = FollowListData(title: "Siguiendo", people: store.following) })
         }
     }
