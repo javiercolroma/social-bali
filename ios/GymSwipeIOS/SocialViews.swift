@@ -684,6 +684,7 @@ struct MeProfileView: View {
     @State private var detailSession: WorkoutSession?
     @State private var showSettings = false
     @State private var followList: FollowListData?
+    @State private var showLogros = false
 
     var body: some View {
         let score = store.gymScore
@@ -696,6 +697,7 @@ struct MeProfileView: View {
                         statTile("GYM SCORE", "\(score.total)")
                         statTile("RACHA", "\(store.player.streak) 🔥")
                     }
+                    GamificationCard(onOpenLogros: { showLogros = true })
                     PanelCard {
                         Text(score.tier).font(.system(size: 13, weight: .heavy)).foregroundColor(Color(hex: "10150a"))
                             .padding(.horizontal, 10).padding(.vertical, 3).background(Brand.greenSoft).clipShape(Capsule())
@@ -728,6 +730,7 @@ struct MeProfileView: View {
             .sheet(item: $detailSession) { s in ActivityDetailView(item: meActivityData(s, store)).environmentObject(store) }
             .sheet(item: $followList) { FollowListSheet(title: $0.title, people: $0.people).environmentObject(store) }
             .sheet(isPresented: $showSettings) { SettingsView().environmentObject(store) }
+            .sheet(isPresented: $showLogros) { LogrosView().environmentObject(store) }
             .onChange(of: store.account?.handle) { _ in if store.account == nil { dismiss() } }
         }
     }

@@ -24,6 +24,11 @@ final class AppStore: ObservableObject {
     @Published var seenTours: Set<String> = []   // secciones cuyo tutorial guiado ya se vio
     @Published var communitySection = 0   // 0 = Ranking, 1 = Partner (efímero; el tour lo dirige)
 
+    // MARK: - Gamificación
+    @Published var coins: Int = 0                          // moneda para la tienda de cosméticos
+    @Published var unlockedAchievements: Set<String> = []  // logros conseguidos
+    @Published var celebrations: [Achievement] = []        // cola de logros a celebrar (efímero)
+
     let people = AppStore.demoPeople
     let templates = AppStore.builtinTemplates
 
@@ -53,6 +58,8 @@ final class AppStore: ObservableObject {
             appliedKudos = Set(snap.appliedKudos ?? [])
             hiddenWorkoutIds = Set(snap.hiddenWorkoutIds ?? [])
             seenTours = Set(snap.seenTours ?? [])
+            coins = snap.coins ?? 0
+            unlockedAchievements = Set(snap.unlockedAchievements ?? [])
             // Migrate old "Mis entrenos" group to "Otros"
             savedWorkouts = savedWorkouts.map { w in
                 guard w.block == "Mis entrenos" else { return w }
@@ -67,6 +74,8 @@ final class AppStore: ObservableObject {
             if account == nil { account = Account(name: "Debug", handle: "debug") }
         }
         loaded = true
+        // Da por conseguidos (sin celebrar) los logros que ya cumplas al abrir.
+        refreshAchievements(celebrate: false)
     }
 
     // MARK: - Persistence
@@ -87,6 +96,8 @@ final class AppStore: ObservableObject {
         var appliedKudos: [String]?
         var hiddenWorkoutIds: [String]?
         var seenTours: [String]?
+        var coins: Int?
+        var unlockedAchievements: [String]?
     }
 
     func persist() {
@@ -96,7 +107,7 @@ final class AppStore: ObservableObject {
             savedWorkouts: savedWorkouts, auth: auth, account: account, relationships: relationships,
             conversations: conversations, notifications: notifications, trainingPlans: trainingPlans,
             sessions: sessions, appliedKudos: Array(appliedKudos), hiddenWorkoutIds: Array(hiddenWorkoutIds),
-            seenTours: Array(seenTours)
+            seenTours: Array(seenTours), coins: coins, unlockedAchievements: Array(unlockedAchievements)
         )
         if let data = try? JSONEncoder().encode(snap) {
             UserDefaults.standard.set(data, forKey: storeKey)
@@ -244,6 +255,7 @@ final class AppStore: ObservableObject {
         exercises = []
         lastAction = "Entreno guardado"
         persist()
+        refreshAchievements(celebrate: true)   // desbloquea + celebra logros nuevos
     }
 
     func discardSession() {

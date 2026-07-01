@@ -94,6 +94,17 @@ struct RootView: View {
             .ignoresSafeArea()
         }
         .animation(.easeInOut(duration: 0.16), value: activeTour)
+        .overlay {
+            if let ach = store.celebrations.first {
+                AchievementCelebration(achievement: ach, onDismiss: {
+                    if !store.celebrations.isEmpty { store.celebrations.removeFirst() }
+                })
+                .environmentObject(store)
+                .transition(.opacity)
+                .zIndex(9)
+            }
+        }
+        .animation(.easeInOut(duration: 0.2), value: store.celebrations.count)
         .sheet(item: $profilePerson) { item in
             if let person = store.person(item.id) {
                 FriendProfileView(person: person).environmentObject(store)

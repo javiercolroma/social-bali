@@ -44,6 +44,7 @@
 		C96DA3E9AC38A13BD8D381B1 /* PartnerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C6E2A074351DB17430CAE561 /* PartnerView.swift */; };
 		CF3EFCE5F7B166F143B9B408 /* PlanView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EF5C837837CFA069C8F53AE4 /* PlanView.swift */; };
 		D1A51AF5DF1BCC6CDABBD42C /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1596E5BECE9666DDA76867A /* Models.swift */; };
+		E16DCF8706F165D2CD3C5A8C /* Gamification.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3ED686425803AD9C87827576 /* Gamification.swift */; };
 		E35C82D5E1A78190A0815909 /* LiveActivityManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 51E3F8B26293A58B6A5DC2F4 /* LiveActivityManager.swift */; };
 		EF71FBCBDF30D20460C49750 /* TrainView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1DF8FC23C0BF2E64342C5D7 /* TrainView.swift */; };
 		FBCDEE4F608FFD8E2591F44A /* GymSwipeIOSApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9CAC012CB53EB545C20ED468 /* GymSwipeIOSApp.swift */; };
@@ -80,6 +81,7 @@
 		29747A9B85AA4E6D8D9D3843 /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
 		351AF069FE04261E1DB0C543 /* RankingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RankingView.swift; sourceTree = "<group>"; };
 		3A318726DFFA74FF768BA96D /* PhotoSupport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhotoSupport.swift; sourceTree = "<group>"; };
+		3ED686425803AD9C87827576 /* Gamification.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Gamification.swift; sourceTree = "<group>"; };
 		43FB86BA08732C17FD45EDF6 /* GymSwipeIOS.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = GymSwipeIOS.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		45AAAB98E146869DA2747469 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		48EC08BA00B1509F5F295C62 /* HealthManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HealthManager.swift; sourceTree = "<group>"; };
@@ -179,6 +181,7 @@
 				A415A6402658DC75C3C37C3C /* Components.swift */,
 				1D19B1F26226F79DC0669B52 /* Countries.swift */,
 				AC0D952E1A0BC084FD9FDB7C /* Exercises.swift */,
+				3ED686425803AD9C87827576 /* Gamification.swift */,
 				1250C29A42354C7EA62ADC58 /* GymScore.swift */,
 				6D844158ED27007A7D1CBEDB /* GymSwipeIOS.entitlements */,
 				9CAC012CB53EB545C20ED468 /* GymSwipeIOSApp.swift */,
@@ -319,6 +322,7 @@
 				2A71043ED4BBAF7A09523AFF /* Components.swift in Sources */,
 				FF1D8080F80F010C04EB3609 /* Countries.swift in Sources */,
 				942CEB3E1BDC0BABD1CB038F /* Exercises.swift in Sources */,
+				E16DCF8706F165D2CD3C5A8C /* Gamification.swift in Sources */,
 				46248B5DA3F8CE7CF349D01C /* GymScore.swift in Sources */,
 				FBCDEE4F608FFD8E2591F44A /* GymSwipeIOSApp.swift in Sources */,
 				421F6C2695009D7F54A7128C /* HealthManager.swift in Sources */,
