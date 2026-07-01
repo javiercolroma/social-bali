@@ -148,6 +148,15 @@ final class Backend {
             .execute().value
     }
 
+    /// El perfil del usuario autenticado (para saber si ya se onboardeó).
+    func fetchMyProfile() async throws -> ProfileRow? {
+        guard let client, let uid = await currentUserIdAsync() else { return nil }
+        let rows: [ProfileRow] = try await client.from("profiles")
+            .select("id,handle,name,avatar_url,country,city,gym,is_private")
+            .eq("id", value: uid.uuidString).limit(1).execute().value
+        return rows.first
+    }
+
     func fetchProfiles(ids: [UUID]) async throws -> [ProfileRow] {
         guard let client, !ids.isEmpty else { return [] }
         return try await client.from("profiles")

@@ -53,6 +53,10 @@ final class AppStore: ObservableObject {
     /// Clasificación real de la semana (XP), cargada del servidor. Vacía sin backend.
     @Published var realLeaderboard: [LeaderRow] = []
 
+    /// True mientras comprobamos en el servidor si el usuario ya tiene perfil (para no
+    /// enseñar el onboarding a alguien que ya se registró). Efímero (no se persiste).
+    @Published var checkingProfile = false
+
     /// DEBUG: salta el login (AuthView) y el onboarding mientras se depura.
     /// Pon en `false` para volver al flujo real (login → onboarding → app).
     /// Si ya se guardó una cuenta debug, reinstala/borra datos para ver de nuevo el flujo.
@@ -486,12 +490,40 @@ final class AppStore: ObservableObject {
     /// Inicia sesión con un proveedor (Apple / email / Google). Sin backend: se guarda local.
     func signIn(provider: String, userId: String, email: String?, name: String?) {
         auth = Auth(provider: provider, userId: userId, email: email, name: name)
+        // Si hay backend y aún no hay cuenta local, marcamos "comprobando" para NO enseñar
+        // el onboarding mientras miramos si ya tienes perfil en el servidor.
+        if BackendConfig.isConfigured && account == nil { checkingProfile = true }
         persist()
     }
 
-    /// Cerrar sesión: vuelve a la pantalla de login (se conserva el perfil para reentrar).
+    /// Si el usuario YA tiene perfil en Supabase, reconstruye la cuenta local → se salta el
+    /// onboarding. Si no (usuario nuevo), deja `account == nil` para que haga el onboarding.
+    func hydrateAccountFromBackend() {
+        guard BackendConfig.isConfigured, account == nil else { checkingProfile = false; return }
+        checkingProfile = true
+        Task {
+            let found = (try? await Backend.shared.fetchMyProfile()) ?? nil
+            if let p = found, let handle = p.handle, !handle.isEmpty {
+                account = Account(name: p.name ?? handle, handle: handle)
+                if let c = p.country { profile.country = c }
+                if let c = p.city { profile.city = c }
+                if let g = p.gym { profile.gym = g }
+                if let pv = p.is_private { profile.isPrivate = pv }
+                persist()
+            }
+            checkingProfile = false
+        }
+    }
+
+    /// Cerrar sesión: limpia la cuenta/histórico local (para no mezclar entre cuentas). El
+    /// próximo login rehidrata desde el servidor (o hace onboarding si es un usuario nuevo).
     func logout() {
-        auth = nil; persist()
+        auth = nil
+        account = nil
+        sessions = []
+        realLeaderboard = []
+        checkingProfile = false
+        persist()
         Task { await Backend.shared.signOut() }
     }
 

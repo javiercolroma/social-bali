@@ -19,7 +19,11 @@ struct GymSwipeIOSApp: App {
             // Devuelve el callback de OAuth de Google al SDK.
             .onOpenURL { url in GIDSignIn.sharedInstance.handle(url) }
             // Arranque: si ya hay sesión Supabase, trae el histórico y el ranking real (gateado).
-            .task { store.syncSessionsFromBackend(); store.loadLeaderboard() }
+            // Y si hay sesión pero no cuenta local, rehidrata el perfil (evita repetir onboarding).
+            .task {
+                if store.auth != nil && store.account == nil { store.hydrateAccountFromBackend() }
+                store.syncSessionsFromBackend(); store.loadLeaderboard()
+            }
         }
     }
 }

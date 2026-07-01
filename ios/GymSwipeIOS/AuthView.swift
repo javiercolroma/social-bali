@@ -132,8 +132,8 @@ struct AuthView: View {
                 Task {
                     do { let uid = try await Backend.shared.signInWithGoogle(idToken: idToken)
                          print("[Backend] sesión Supabase (Google) abierta: \(uid)")
-                         store.syncProfileToBackend(); store.syncSessionsFromBackend() }
-                    catch { print("[Backend] Google → Supabase falló:", error) }
+                         store.hydrateAccountFromBackend(); store.syncSessionsFromBackend() }
+                    catch { print("[Backend] Google → Supabase falló:", error); store.checkingProfile = false }
                 }
             }
         }
@@ -152,8 +152,8 @@ struct AuthView: View {
             Task {
                 do { let uid = try await Backend.shared.signInWithApple(idToken: idToken, nonce: nonce)
                      print("[Backend] sesión Supabase (Apple) abierta: \(uid)")
-                     store.syncProfileToBackend(); store.syncSessionsFromBackend() }
-                catch { print("[Backend] Apple → Supabase falló:", error) }
+                     store.hydrateAccountFromBackend(); store.syncSessionsFromBackend() }
+                catch { print("[Backend] Apple → Supabase falló:", error); store.checkingProfile = false }
             }
         }
     }
@@ -189,7 +189,7 @@ struct AuthView: View {
                 print("[Backend] sesión Supabase (email) abierta: \(uid)")
                 FX.success(sound: true)
                 withAnimation { store.signIn(provider: "email", userId: uid.uuidString, email: e, name: nil) }
-                store.syncProfileToBackend(); store.syncSessionsFromBackend()
+                store.hydrateAccountFromBackend(); store.syncSessionsFromBackend()
             } catch {
                 print("[Backend] email → Supabase falló:", error)
                 emailError = "No pudimos entrar. Revisa el correo y la contraseña."

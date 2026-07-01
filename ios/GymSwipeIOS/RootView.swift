@@ -159,7 +159,7 @@ struct RootView: View {
             MeProfileView().environmentObject(store)
         }
         .fullScreenCover(isPresented: Binding(
-            get: { store.account == nil || editingAccount },
+            get: { (store.account == nil && !store.checkingProfile) || editingAccount },
             set: { if !$0 { editingAccount = false } }
         )) {
             // Usuario nuevo: acompañamiento cálido paso a paso. Edición: el formulario simple de siempre.
@@ -168,6 +168,18 @@ struct RootView: View {
             } else {
                 AccountSetupView(allowCancel: true, onCancel: { editingAccount = false })
                     .environmentObject(store)
+            }
+        }
+        // Mientras comprobamos si ya tienes perfil en el servidor (para no repetir el onboarding).
+        .overlay {
+            if store.checkingProfile {
+                ZStack {
+                    Brand.bg.ignoresSafeArea()
+                    VStack(spacing: 14) {
+                        ProgressView().scaleEffect(1.3)
+                        Text("Cargando tu perfil…").font(.system(size: 15, weight: .heavy)).foregroundColor(Brand.soft)
+                    }
+                }
             }
         }
     }
