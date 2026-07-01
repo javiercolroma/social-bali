@@ -33,8 +33,10 @@ struct RankingView: View {
         ScrollView {
             VStack(spacing: 12) {
                 // La competición semanal (Duolingo-style, por XP) es el corazón de Comunidad.
+                // Con backend real, la Liga ya es el ranking (usuarios reales por XP); el
+                // "ranking de amigos por Gym Score" se ocultará hasta sincronizar el score.
                 LeagueCard(onOpen: { showLeague = true })
-                rankingCard
+                if !BackendConfig.isConfigured { rankingCard }
                 mapCard
             }
             .padding(.horizontal, 14).padding(.vertical, 12)

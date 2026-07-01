@@ -56,6 +56,7 @@ struct SocialFeedView: View {
     @State private var paraTiFeed: [FeedItem] = []
     @State private var paraTiLoaded = false
     @State private var showDiscover = false
+    @State private var realFeed: [FeedItem] = []   // posts reales (tuyos + de a quien sigues), del servidor
 
     private let tabs: [(title: String, icon: String)] = [("Seguidos", "person.2.fill"), ("Para ti", "sparkles")]
 
@@ -199,10 +200,35 @@ struct SocialFeedView: View {
             .padding(.horizontal, 14).padding(.vertical, 12)
         }
         .refreshable {
-            try? await Task.sleep(nanoseconds: 500_000_000)
+            await loadRealFeed()
             await MainActor.run { refreshSeguidos(manual: true) }
         }
         .onAppear { if !seguidosLoaded { refreshSeguidos(manual: false) } }
+        .task { await loadRealFeed() }
+    }
+
+    /// Carga el feed real (tuyo + de a quien sigues) desde Supabase y reconstruye la lista.
+    private func loadRealFeed() async {
+        guard BackendConfig.isConfigured else { return }
+        let rows = (try? await Backend.shared.fetchFeedWithAuthors()) ?? []
+        realFeed = rows.map { feedItem(from: $0) }
+        refreshSeguidos(manual: false)
+    }
+
+    private func feedItem(from r: FeedRow) -> FeedItem {
+        let me = Backend.shared.currentUserId?.uuidString.lowercased()
+        let isMe = r.user_id.lowercased() == me
+        return FeedItem(
+            id: r.id,
+            personId: isMe ? nil : r.user_id,
+            authorName: isMe ? (store.account?.name ?? "Tú") : (r.author?.name ?? r.author?.handle ?? "Atleta"),
+            avatarPhoto: isMe ? store.account?.photoData : nil,
+            avatarEmoji: "🙂",
+            flag: "", location: r.location ?? "",
+            date: BackendDate.parse(r.date) ?? Date(),
+            title: r.name, note: r.note ?? "", photo: nil, photoURL: r.photo_url,
+            elapsed: r.elapsed, exercises: r.exercises, sets: r.sets, volume: r.volume,
+            items: r.items, avgHeartRate: r.avg_hr, maxHeartRate: r.max_hr)
     }
 
     private func feedCard(_ item: FeedItem) -> some View {
@@ -210,6 +236,16 @@ struct SocialFeedView: View {
     }
 
     private func refreshSeguidos(manual: Bool) {
+        // Con backend real: el feed son posts REALES (tuyos + de a quien sigues), del servidor,
+        // más tus sesiones locales aún no sincronizadas.
+        if BackendConfig.isConfigured {
+            let localExtra = myItems.filter { m in !realFeed.contains { $0.id == m.id } }
+            seguidosFeed = (realFeed + localExtra).sorted { $0.date > $1.date }
+            seguidosNewUser = seguidosFeed.isEmpty
+            suggestionsSnapshot = []
+            seguidosLoaded = true
+            return
+        }
         // Congela el modo de layout (usuario nuevo vs con seguidos) en el momento del refresh.
         seguidosNewUser = store.following.isEmpty
         seguidosFeed = store.following.isEmpty

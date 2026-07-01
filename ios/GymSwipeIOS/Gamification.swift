@@ -457,6 +457,7 @@ struct LeagueView: View {
             .background(Brand.bg)
             .navigationTitle("Liga semanal").navigationBarTitleDisplayMode(.inline)
         }
+        .task { store.loadLeaderboard() }
     }
 
     private func leagueRow(_ rank: Int, _ m: LeagueMember, total: Int) -> some View {

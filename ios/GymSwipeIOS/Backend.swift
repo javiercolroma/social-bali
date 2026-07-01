@@ -170,7 +170,7 @@ final class Backend {
     func fetchFeedWithAuthors(limit: Int = 50) async throws -> [FeedRow] {
         guard let client else { return [] }
         return try await client.from("workout_sessions")
-            .select("id,user_id,name,note,date,elapsed,exercises,sets,volume,xp,avg_hr,max_hr,location,photo_url,visibility,verified,items,author:profiles(handle,name,avatar_url)")
+            .select("id,user_id,name,note,date,elapsed,exercises,sets,volume,xp,avg_hr,max_hr,location,photo_url,visibility,verified,items,author:profiles!workout_sessions_user_id_fkey(handle,name,avatar_url)")
             .order("date", ascending: false)
             .limit(limit)
             .execute().value
