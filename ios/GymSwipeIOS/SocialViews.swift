@@ -326,9 +326,24 @@ struct ChatView: View {
     var onClose: () -> Void = {}
     @State private var draft = ""
     @State private var profileTarget: IdString?
+    @State private var realMessages: [ChatMessage] = []
+    @State private var realMode = false
 
     private var person: SocialPerson? { store.person(personId) }
     private var conversation: Conversation? { store.conversations.first { $0.personId == personId } }
+    private var messages: [ChatMessage] { realMode ? realMessages : (conversation?.messages ?? []) }
+
+    /// Carga los mensajes REALES con este usuario desde el servidor.
+    private func loadReal() async {
+        guard BackendConfig.isConfigured, let uid = UUID(uuidString: personId) else { return }
+        realMode = true
+        let rows = (try? await Backend.shared.fetchMessages(with: uid)) ?? []
+        let me = Backend.shared.currentUserId?.uuidString.lowercased()
+        realMessages = rows.map { r in
+            ChatMessage(id: r.id, fromMe: r.sender_id.lowercased() == me,
+                        text: r.text, at: BackendDate.parse(r.created_at) ?? Date())
+        }
+    }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -351,15 +366,15 @@ struct ChatView: View {
             ScrollViewReader { proxy in
                 ScrollView {
                     VStack(spacing: 8) {
-                        if let msgs = conversation?.messages, !msgs.isEmpty {
-                            ForEach(msgs) { m in bubble(m).id(m.id) }
+                        if !messages.isEmpty {
+                            ForEach(messages) { m in bubble(m).id(m.id) }
                         } else {
                             emptyState(icon: "message", title: "Sin mensajes", body: "Escribe el primer mensaje.")
                         }
                     }.padding(16)
                 }
-                .onChange(of: conversation?.messages.count ?? 0) { _ in
-                    if let last = conversation?.messages.last { withAnimation { proxy.scrollTo(last.id, anchor: .bottom) } }
+                .onChange(of: messages.count) { _ in
+                    if let last = messages.last { withAnimation { proxy.scrollTo(last.id, anchor: .bottom) } }
                     store.markConversationRead(personId)
                 }
             }
@@ -379,15 +394,29 @@ struct ChatView: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Brand.bg.ignoresSafeArea())
         .onAppear { store.openConversation(personId) }
+        .task {
+            await loadReal()
+            // Sondeo ligero para ver los mensajes nuevos del otro (sin websockets).
+            while !Task.isCancelled {
+                try? await Task.sleep(nanoseconds: 3_500_000_000)
+                await loadReal()
+            }
+        }
         .sheet(item: $profileTarget) { item in
             if let p = store.person(item.id) { FriendProfileView(person: p).environmentObject(store) }
         }
     }
 
     private func send() {
-        guard !draft.trimmingCharacters(in: .whitespaces).isEmpty else { return }
+        let t = draft.trimmingCharacters(in: .whitespaces)
+        guard !t.isEmpty else { return }
         FX.tap()
-        store.sendMessage(personId, draft, activeConversation: conversationId(personId))
+        if realMode, let uid = UUID(uuidString: personId) {
+            realMessages.append(ChatMessage(id: UUID().uuidString, fromMe: true, text: t, at: Date()))
+            Task { try? await Backend.shared.sendMessage(to: uid, text: t) }
+        } else {
+            store.sendMessage(personId, draft, activeConversation: conversationId(personId))
+        }
         draft = ""
     }
 
