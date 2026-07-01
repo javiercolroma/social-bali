@@ -106,7 +106,8 @@ struct AuthView: View {
             if Backend.shared.isConfigured, let idToken = user.idToken?.tokenString {
                 Task {
                     do { let uid = try await Backend.shared.signInWithGoogle(idToken: idToken)
-                         print("[Backend] sesión Supabase (Google) abierta: \(uid)"); store.syncProfileToBackend() }
+                         print("[Backend] sesión Supabase (Google) abierta: \(uid)")
+                         store.syncProfileToBackend(); store.syncSessionsFromBackend() }
                     catch { print("[Backend] Google → Supabase falló:", error) }
                 }
             }
@@ -125,7 +126,8 @@ struct AuthView: View {
             let nonce = appleNonce
             Task {
                 do { let uid = try await Backend.shared.signInWithApple(idToken: idToken, nonce: nonce)
-                     print("[Backend] sesión Supabase (Apple) abierta: \(uid)"); store.syncProfileToBackend() }
+                     print("[Backend] sesión Supabase (Apple) abierta: \(uid)")
+                     store.syncProfileToBackend(); store.syncSessionsFromBackend() }
                 catch { print("[Backend] Apple → Supabase falló:", error) }
             }
         }

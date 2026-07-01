@@ -262,7 +262,7 @@ final class AppStore: ObservableObject {
     // Commit the session: write history + XP + a session record, then clear the workout.
     func saveSession(name: String, note: String, photoData: Data?, visibility: WorkoutVisibility, elapsed: Int,
                      avgHeartRate: Int? = nil, maxHeartRate: Int? = nil, location: String? = nil) {
-        let sid = "session-\(Int(Date().timeIntervalSince1970))"
+        let sid = UUID().uuidString   // UUID: mismo id local y en el servidor (Supabase)
         // Estado de las misiones ANTES de esta sesión (para avisar de las que se completen).
         let questsBefore = Dictionary(uniqueKeysWithValues: Quests.weekly.map { ($0.id, questDone($0)) })
         var gained = 0
@@ -296,13 +296,14 @@ final class AppStore: ObservableObject {
         // ~20 s por serie (incluye descanso, permite EMOM/superseries) + topes por sesión.
         let verified = elapsed >= totalSets * 20 && totalSets <= 60 && gained <= 600
         let trimmed = name.trimmingCharacters(in: .whitespaces)
-        sessions.insert(WorkoutSession(
+        let newSession = WorkoutSession(
             id: sid, name: trimmed.isEmpty ? (exercises.first?.day ?? "Entreno") : trimmed,
             note: note.trimmingCharacters(in: .whitespaces), date: Date(), elapsed: elapsed,
             exercises: doneExercises, sets: totalSets, volume: totalVolume, xp: gained,
             photoData: photoData, visibility: visibility, items: sessionItems,
             avgHeartRate: avgHeartRate, maxHeartRate: maxHeartRate,
-            location: location?.trimmingCharacters(in: .whitespaces), verified: verified), at: 0)
+            location: location?.trimmingCharacters(in: .whitespaces), verified: verified)
+        sessions.insert(newSession, at: 0)
         player.xp += gained
         applyStreakFreeze()                    // protege la racha con congeladores si hubo un hueco
         player.streak = currentStreak()
@@ -316,7 +317,38 @@ final class AppStore: ObservableObject {
         }
         if !verified { flashMessage = "Entreno guardado. Por ser muy rápido, no cuenta para la liga ni para récords." }
         persist()
+        pushSessionToBackend(newSession)       // sube la sesión a Supabase (best-effort, gateado)
         refreshAchievements(celebrate: true)   // desbloquea + celebra logros nuevos
+    }
+
+    /// Sube una sesión recién guardada al servidor (best-effort; requiere backend + sesión Supabase).
+    func pushSessionToBackend(_ s: WorkoutSession) {
+        guard Backend.shared.isConfigured else { return }
+        Task {
+            guard let uid = await Backend.shared.currentUserIdAsync() else { return }
+            do { try await Backend.shared.upsertSession(SessionRow(s, userId: uid)); print("[Backend] sesión subida: \(s.id)") }
+            catch { print("[Backend] subir sesión falló:", error) }
+        }
+    }
+
+    /// Fusiona el histórico local con el del servidor (server como fuente de verdad; sube las locales
+    /// que aún no estén). Se llama tras iniciar sesión y en el arranque si ya hay sesión Supabase.
+    func syncSessionsFromBackend() {
+        guard Backend.shared.isConfigured else { return }
+        Task {
+            guard let uid = await Backend.shared.currentUserIdAsync() else { return }
+            do {
+                let server = try await Backend.shared.fetchMySessions().map { $0.asWorkoutSession }
+                let serverIds = Set(server.map { $0.id })
+                let localOnly = sessions.filter { !serverIds.contains($0.id) }
+                for s in localOnly where UUID(uuidString: s.id) != nil {
+                    try? await Backend.shared.upsertSession(SessionRow(s, userId: uid))
+                }
+                sessions = (server + localOnly).sorted { $0.date > $1.date }
+                persist()
+                print("[Backend] sesiones sincronizadas: \(server.count) servidor + \(localOnly.count) locales")
+            } catch { print("[Backend] sync sesiones falló:", error) }
+        }
     }
 
     /// Detecta récords personales (mejor 1RM estimado por ejercicio). Registra el mejor

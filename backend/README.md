@@ -52,8 +52,8 @@ Compila y entra con Apple o Google. Deberías ver una fila nueva en
 
 - [x] **Fase 0** — Esquema + RLS + SDK iOS + config gateada.
 - [x] **Backend provisionado** — proyecto `xdczilodphmejbzvfdye`: migraciones aplicadas (6 tablas + RLS + buckets) y **proveedor Apple activo** (`external_apple_client_id = com.javiercolroma.gymswipeios`). Credenciales en `BackendConfig.swift`.
-- [~] **Fase 1** — Auth real (Apple/Google → Supabase) + upsert de perfil. *Apple: cableado y backend listo; falta la prueba interactiva de login con un Apple ID real. Google: pendiente del OAuth Client ID.*
-- [ ] **Fase 2** — Guardar/leer `workout_sessions` (tu histórico vive en el servidor).
+- [~] **Fase 1** — Auth real (Apple/Google → Supabase) + upsert de perfil. *Apple: cableado y backend listo; falta la prueba interactiva de login con un Apple ID real. Google: pendiente del OAuth Client ID (paso del usuario en Google Cloud).*
+- [x] **Fase 2** — `workout_sessions` en el servidor: cada entreno guardado se sube (`upsertSession`, `id` UUID compartido local↔servidor); al iniciar sesión/arrancar se fusiona el histórico (`syncSessionsFromBackend`, server como fuente de verdad + sube las locales que falten). Shape validado contra el esquema en vivo (PostgREST acepta la fila; RLS la bloquea solo por `auth.uid()`). Falta la foto (llega con Storage, Fase 5).
 - [ ] **Fase 3** — Follows reales + feed (sustituye bots/demo).
 - [ ] **Fase 4** — Ranking de amigos + Liga desde datos reales (vistas/RPC por XP semanal).
 - [ ] **Fase 5** — Storage de fotos (avatar + entreno), Realtime para chat.

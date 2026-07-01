@@ -25,6 +25,12 @@ final class Backend {
     /// ID del usuario autenticado en Supabase (nil si no hay sesión o no está configurado).
     var currentUserId: UUID? { client?.auth.currentSession?.user.id }
 
+    /// Igual, pero espera a que el SDK restaure la sesión persistida (útil en el arranque en frío).
+    func currentUserIdAsync() async -> UUID? {
+        if let s = client?.auth.currentSession { return s.user.id }
+        return try? await client?.auth.session.user.id
+    }
+
     // MARK: - Auth (ID token nativo → sesión Supabase)
 
     /// Inicia sesión en Supabase con el ID token de Apple (requiere el `nonce` en crudo).
@@ -56,6 +62,25 @@ final class Backend {
         guard let client else { throw BackendError.notConfigured }
         try await client.from("profiles").upsert(profile).execute()
     }
+
+    // MARK: - Sesiones de entreno
+
+    /// Sube (o actualiza) una sesión de entreno. Idempotente por `id`.
+    func upsertSession(_ row: SessionRow) async throws {
+        guard let client else { throw BackendError.notConfigured }
+        try await client.from("workout_sessions").upsert(row).execute()
+    }
+
+    /// Trae las sesiones del usuario actual, más recientes primero.
+    func fetchMySessions() async throws -> [SessionRow] {
+        guard let client, let uid = await currentUserIdAsync() else { return [] }
+        return try await client.from("workout_sessions")
+            .select()
+            .eq("user_id", value: uid.uuidString)
+            .order("date", ascending: false)
+            .execute()
+            .value
+    }
 }
 
 enum BackendError: Error { case notConfigured }
@@ -83,4 +108,73 @@ struct ProfileRow: Encodable {
     var city: String?
     var gym: String?
     var is_private: Bool?
+}
+
+/// Fecha ↔ `timestamptz`. Escribimos ISO8601 con milisegundos; al leer somos tolerantes
+/// porque Postgres devuelve microsegundos (6 dígitos), que el parser estricto rechaza.
+enum BackendDate {
+    static let iso: ISO8601DateFormatter = {
+        let f = ISO8601DateFormatter()
+        f.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        return f
+    }()
+
+    static func parse(_ s: String) -> Date? {
+        if let d = iso.date(from: s) { return d }
+        // Quita la parte fraccionaria de cualquier longitud y reintenta sin ella.
+        let plain = ISO8601DateFormatter()
+        plain.formatOptions = [.withInternetDateTime]
+        let stripped = s.replacingOccurrences(of: #"\.\d+"#, with: "", options: .regularExpression)
+        return plain.date(from: stripped)
+    }
+}
+
+/// Fila de `public.workout_sessions`. `id` es el mismo id (UUID) que la sesión local.
+struct SessionRow: Codable {
+    let id: String
+    let user_id: String
+    let name: String
+    let note: String?
+    let date: String
+    let elapsed: Int
+    let exercises: Int
+    let sets: Int
+    let volume: Double
+    let xp: Int
+    let avg_hr: Int?
+    let max_hr: Int?
+    let location: String?
+    let visibility: String
+    let verified: Bool
+    let items: [SessionExercise]
+
+    init(_ s: WorkoutSession, userId: UUID) {
+        id = s.id
+        user_id = userId.uuidString
+        name = s.name
+        note = s.note.isEmpty ? nil : s.note
+        date = BackendDate.iso.string(from: s.date)
+        elapsed = s.elapsed
+        exercises = s.exercises
+        sets = s.sets
+        volume = s.volume
+        xp = s.xp
+        avg_hr = s.avgHeartRate
+        max_hr = s.maxHeartRate
+        location = s.location
+        visibility = s.visibility.rawValue
+        verified = s.verified
+        items = s.items ?? []
+    }
+
+    /// Sesión local a partir de la fila del servidor (la foto llegará con Storage, Fase 5).
+    var asWorkoutSession: WorkoutSession {
+        WorkoutSession(
+            id: id, name: name, note: note ?? "",
+            date: BackendDate.parse(date) ?? Date(),
+            elapsed: elapsed, exercises: exercises, sets: sets, volume: volume, xp: xp,
+            photoData: nil, visibility: WorkoutVisibility(rawValue: visibility) ?? .all,
+            items: items, avgHeartRate: avg_hr, maxHeartRate: max_hr,
+            location: location, verified: verified)
+    }
 }
