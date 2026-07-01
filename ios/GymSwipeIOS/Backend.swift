@@ -103,6 +103,21 @@ final class Backend {
             .value
     }
 
+    /// Sesiones de OTRO usuario (la RLS ya filtra a lo que puedes ver de él).
+    func fetchUserSessions(_ userId: String) async throws -> [SessionRow] {
+        guard let client else { return [] }
+        return try await client.from("workout_sessions").select()
+            .eq("user_id", value: userId).order("date", ascending: false).execute().value
+    }
+
+    /// Contadores públicos de seguidores/seguidos de un usuario (RPC).
+    func followCounts(_ userId: String) async throws -> (followers: Int, following: Int) {
+        guard let client else { return (0, 0) }
+        let rows: [FollowCountRow] = try await client.rpc("follow_counts", params: ["uid": userId]).execute().value
+        guard let r = rows.first else { return (0, 0) }
+        return (r.followers, r.following)
+    }
+
     // MARK: - Grafo social (follows) y feed
 
     /// Seguir / solicitar (privadas → status "pending" hasta que acepten).
@@ -353,6 +368,9 @@ struct KudosRow: Codable {
     let user_id: String
     let session_id: String
 }
+
+/// Resultado del RPC `follow_counts`.
+struct FollowCountRow: Codable { let followers: Int; let following: Int }
 
 /// Alta de comentario (sin id/fecha: los pone el servidor).
 struct CommentInsert: Encodable {

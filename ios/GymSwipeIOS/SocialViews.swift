@@ -515,11 +515,41 @@ struct FriendProfileView: View {
     @State private var daySheet: DayPayload?
     @State private var detailSession: WorkoutSession?
     @State private var followList: FollowListData?
+    @State private var realSessions: [WorkoutSession]?
+    @State private var realFollowers: Int?
+    @State private var realFollowing: Int?
+
+    /// Carga los datos REALES del usuario (sus sesiones + contadores) cuando hay backend.
+    private func loadReal() async {
+        guard BackendConfig.isConfigured, UUID(uuidString: person.id) != nil else { return }
+        let s = (try? await Backend.shared.fetchUserSessions(person.id)) ?? []
+        realSessions = s.map { $0.asWorkoutSession }
+        if let c = try? await Backend.shared.followCounts(person.id) {
+            realFollowers = c.followers; realFollowing = c.following
+        }
+    }
+
+    /// Historial (para el Gym Score) a partir de sus sesiones reales.
+    private func historyFromSessions(_ sessions: [WorkoutSession]) -> [HistoryEntry] {
+        var out: [HistoryEntry] = []
+        for s in sessions {
+            for ex in s.items ?? [] {
+                let logs = ex.logs ?? []
+                let vol = logs.isEmpty ? Double(ex.sets) * Double(ex.reps) * ex.weight
+                                       : logs.reduce(0) { $0 + Double($1.reps) * $1.weight }
+                out.append(HistoryEntry(id: "\(s.id)-\(ex.name)", exerciseName: ex.name, day: "",
+                    status: .done, sets: ex.sets, reps: ex.reps, weight: ex.weight, volume: vol,
+                    xp: 0, completedAt: s.date, sessionId: s.id))
+            }
+        }
+        return out
+    }
 
     var body: some View {
-        let history = buildFriendHistory(person)
+        // Usuario real: sus datos del servidor. Sin backend: demo determinista.
+        let history: [HistoryEntry] = realSessions.map { historyFromSessions($0) } ?? buildFriendHistory(person)
         let score = GymScoreEngine.calculate(history)
-        let sessionsList = friendSessions(history)
+        let sessionsList: [WorkoutSession] = realSessions ?? friendSessions(history)
         // Cuenta privada y aún no la sigues → contenido oculto (estilo Instagram).
         let locked = person.isPrivate && store.relationship(person.id) != .friends
 
@@ -562,6 +592,7 @@ struct FriendProfileView: View {
             }
             .sheet(item: $followList) { FollowListSheet(title: $0.title, people: $0.people).environmentObject(store) }
         }
+        .task { await loadReal() }
     }
 
     private func sessionPostCard(_ s: WorkoutSession) -> some View {
@@ -613,11 +644,12 @@ struct FriendProfileView: View {
                 Text("@\(person.handle)").font(.subheadline).foregroundColor(Brand.muted)
             }
             profileCountsRow(entrenos: entrenos,
-                             seguidores: deterministicCount(person.id, salt: 7, lo: 40, hi: 1500) + (store.relationship(person.id) == .friends ? 1 : 0),
-                             siguiendo: deterministicCount(person.id, salt: 13, lo: 30, hi: 700),
+                             seguidores: realFollowers ?? (deterministicCount(person.id, salt: 7, lo: 40, hi: 1500) + (store.relationship(person.id) == .friends ? 1 : 0)),
+                             siguiendo: realFollowing ?? deterministicCount(person.id, salt: 13, lo: 30, hi: 700),
                              locked: locked,
-                             onSeguidores: { followList = FollowListData(title: "Seguidores", people: demoFollowList(store, seed: person.id, salt: 7, exclude: person.id)) },
-                             onSiguiendo: { followList = FollowListData(title: "Siguiendo", people: demoFollowList(store, seed: person.id, salt: 13, exclude: person.id)) })
+                             // Con backend real, las listas de seguidores/seguidos ajenas no son públicas: solo el número.
+                             onSeguidores: { if !BackendConfig.isConfigured { followList = FollowListData(title: "Seguidores", people: demoFollowList(store, seed: person.id, salt: 7, exclude: person.id)) } },
+                             onSiguiendo: { if !BackendConfig.isConfigured { followList = FollowListData(title: "Siguiendo", people: demoFollowList(store, seed: person.id, salt: 13, exclude: person.id)) } })
             followButton
         }
     }
