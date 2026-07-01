@@ -13,9 +13,9 @@ import Foundation
 /// en local (UserDefaults), sin tocar Supabase.
 enum BackendConfig {
     /// p. ej. "https://xxxxxxxx.supabase.co"
-    static let supabaseURL = ""
-    /// La clave **anon public** (NO la service_role).
-    static let supabaseAnonKey = ""
+    static let supabaseURL = "https://xdczilodphmejbzvfdye.supabase.co"
+    /// La clave **publishable / anon** (pública por diseño, protegida por RLS; NO la secret/service_role).
+    static let supabaseAnonKey = "sb_publishable_d1GJ_D2L9RC7mJgBTiUgBA_sn4BmET5"
 
     static var isConfigured: Bool {
         !supabaseURL.isEmpty && !supabaseAnonKey.isEmpty && URL(string: supabaseURL) != nil
