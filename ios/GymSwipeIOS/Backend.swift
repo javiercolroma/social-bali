@@ -133,12 +133,17 @@ final class Backend {
         return try await client.from("follows").select().eq("following_id", value: me.uuidString).execute().value
     }
 
-    /// Busca usuarios reales por @handle.
+    /// Busca usuarios reales por @handle o por nombre.
     func searchProfiles(_ query: String, limit: Int = 20) async throws -> [ProfileRow] {
-        guard let client, !query.isEmpty else { return [] }
+        guard let client else { return [] }
+        // Quita comas/paréntesis que romperían el filtro `or` de PostgREST.
+        let q = query.trimmingCharacters(in: .whitespaces)
+            .replacingOccurrences(of: ",", with: "")
+            .replacingOccurrences(of: "(", with: "").replacingOccurrences(of: ")", with: "")
+        guard !q.isEmpty else { return [] }
         return try await client.from("profiles")
             .select("id,handle,name,avatar_url,country,city,gym,is_private")
-            .ilike("handle", value: "%\(query)%")
+            .or("handle.ilike.%\(q)%,name.ilike.%\(q)%")
             .limit(limit)
             .execute().value
     }
