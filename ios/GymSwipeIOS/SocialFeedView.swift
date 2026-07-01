@@ -20,7 +20,8 @@ private struct FeedItem: Identifiable {
     let items: [SessionExercise]
     var avgHeartRate: Int? = nil
     var maxHeartRate: Int? = nil
-    var kudosCount: Int = 0   // likes REALES del servidor (0 si nadie ha dado like)
+    var kudosCount: Int = 0     // likes REALES del servidor (0 si nadie ha dado like)
+    var commentCount: Int = 0   // comentarios REALES del servidor
 }
 
 /// Comentario de un post (local). Soporta respuestas (1 nivel), likes y fecha.
@@ -73,7 +74,7 @@ struct SocialFeedView: View {
         .overlay(alignment: .bottom) { toastView }
         .sheet(item: $activity) { ActivityDetailView(item: feedItemView($0)).environmentObject(store) }
         .sheet(item: $commentTarget) { item in
-            CommentsSheet(title: item.title, comments: Binding(
+            CommentsSheet(title: item.title, sessionId: item.id, comments: Binding(
                 get: { comments[item.id] ?? [] },
                 set: { comments[item.id] = $0 }))
                 .environmentObject(store)
@@ -231,7 +232,8 @@ struct SocialFeedView: View {
             title: r.name, note: r.note ?? "", photo: nil, photoURL: r.photo_url,
             elapsed: r.elapsed, exercises: r.exercises, sets: r.sets, volume: r.volume,
             items: r.items, avgHeartRate: r.avg_hr, maxHeartRate: r.max_hr,
-            kudosCount: r.kudos?.first?.count ?? 0)
+            kudosCount: r.kudos?.first?.count ?? 0,
+            commentCount: r.comments?.first?.count ?? 0)
     }
 
     private func feedCard(_ item: FeedItem) -> some View {
@@ -532,7 +534,12 @@ struct SocialFeedView: View {
     }
 
     private func commentTotal(_ item: FeedItem) -> Int {
-        commentList(item).reduce(0) { $0 + 1 + $1.replies.count }
+        // Real: si ya cargamos los comentarios de este post, cuéntalos; si no, el contador del servidor.
+        if store.people.isEmpty {
+            if let loaded = comments[item.id] { return loaded.reduce(0) { $0 + 1 + $1.replies.count } }
+            return item.commentCount
+        }
+        return commentList(item).reduce(0) { $0 + 1 + $1.replies.count }
     }
 
     /// Comentarios demo deterministas por post (de gente de la comunidad), para que el muro se sienta vivo.
@@ -672,6 +679,7 @@ struct SocialFeedView: View {
 private struct CommentsSheet: View {
     @EnvironmentObject var store: AppStore
     let title: String
+    var sessionId: String? = nil
     @Binding var comments: [PostComment]
     @State private var draft = ""
     @State private var replyTo: String?
@@ -702,10 +710,33 @@ private struct CommentsSheet: View {
             .navigationTitle("Comentarios").navigationBarTitleDisplayMode(.inline)
         }
         .presentationDetents([.large])
+        .task { await loadReal() }
         .sheet(item: $likesOf) { likesSheet($0) }
         .sheet(item: $profileTarget) { item in
             if let p = store.person(item.id) { FriendProfileView(person: p).environmentObject(store) }
         }
+    }
+
+    /// Carga los comentarios REALES del servidor (con autor) para esta publicación.
+    private func loadReal() async {
+        guard BackendConfig.isConfigured, let sid = sessionId else { return }
+        let rows = (try? await Backend.shared.fetchCommentsWithAuthors(sessionId: sid)) ?? []
+        let me = Backend.shared.currentUserId?.uuidString.lowercased()
+        func make(_ r: CommentAuthorRow) -> PostComment {
+            let isMe = r.user_id.lowercased() == me
+            return PostComment(id: r.id,
+                authorName: isMe ? (store.account?.name ?? "Tú") : (r.author?.name ?? r.author?.handle ?? "Atleta"),
+                authorEmoji: isMe ? "" : "🙂", isMe: isMe, text: r.text,
+                date: BackendDate.parse(r.created_at) ?? Date(), likes: 0, liked: false,
+                replies: [], personId: isMe ? nil : r.user_id)
+        }
+        var byId: [String: PostComment] = [:]
+        var order: [String] = []
+        for r in rows where r.parent_id == nil { byId[r.id] = make(r); order.append(r.id) }
+        for r in rows where r.parent_id != nil {
+            if let pid = r.parent_id, byId[pid] != nil { byId[pid]!.replies.append(make(r)) }
+        }
+        comments = order.compactMap { byId[$0] }
     }
 
     @ViewBuilder
@@ -897,6 +928,11 @@ private struct CommentsSheet: View {
             comments[i].replies.append(new)
         } else {
             comments.append(new)
+        }
+        // Escribe el comentario REAL en el servidor (best-effort).
+        if BackendConfig.isConfigured, let sid = sessionId {
+            let parent = replyTo
+            Task { try? await Backend.shared.addComment(sessionId: sid, text: t, parentId: parent) }
         }
         draft = ""; replyTo = nil; replyToName = nil; focused = false
     }

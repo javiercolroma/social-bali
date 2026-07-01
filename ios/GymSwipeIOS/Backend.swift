@@ -239,6 +239,14 @@ final class Backend {
             .eq("session_id", value: sessionId).order("created_at", ascending: true).execute().value
     }
 
+    /// Comentarios con el autor incrustado (para pintar nombre/@usuario reales).
+    func fetchCommentsWithAuthors(sessionId: String) async throws -> [CommentAuthorRow] {
+        guard let client else { return [] }
+        return try await client.from("comments")
+            .select("id,user_id,parent_id,text,created_at,author:profiles!comments_user_id_fkey(handle,name,avatar_url)")
+            .eq("session_id", value: sessionId).order("created_at", ascending: true).execute().value
+    }
+
     // MARK: - Mensajería 1:1
 
     /// Historial de la conversación con otro usuario (ambos sentidos), cronológico.
@@ -378,6 +386,16 @@ struct CommentInsert: Encodable {
     let user_id: String
     let parent_id: String?
     let text: String
+}
+
+/// Comentario con autor incrustado (para el feed).
+struct CommentAuthorRow: Codable {
+    let id: String
+    let user_id: String
+    let parent_id: String?
+    let text: String
+    let created_at: String
+    let author: FeedAuthor?
 }
 
 /// Comentario leído de `public.comments`.
