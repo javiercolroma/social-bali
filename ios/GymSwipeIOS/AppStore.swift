@@ -266,8 +266,10 @@ final class AppStore: ObservableObject {
                     ChatMessage(id: r.id, fromMe: r.sender_id.lowercased() == meStr,
                                 text: r.text, at: BackendDate.parse(r.created_at) ?? Date())
                 }
+                // No leídos = mensajes que ME ha mandado el otro y aún no marcados como leídos.
+                let unread = rows.filter { $0.sender_id.lowercased() == partner.lowercased() && $0.read != true }.count
                 return Conversation(id: conversationId(partner), personId: partner,
-                                    messages: msgs, unread: 0, lastAt: msgs.last?.at ?? Date())
+                                    messages: msgs, unread: unread, lastAt: msgs.last?.at ?? Date())
             }.sorted { $0.lastAt > $1.lastAt }
         }
     }
@@ -731,6 +733,10 @@ final class AppStore: ObservableObject {
             var copy = c; copy.unread = 0; return copy
         }
         persist()
+        // Marca leídos en el servidor (para que no vuelva a contar en otro dispositivo).
+        if BackendConfig.isConfigured, let uid = UUID(uuidString: personId) {
+            Task { await Backend.shared.markMessagesRead(from: uid) }
+        }
     }
 
     func sendMessage(_ personId: String, _ text: String, activeConversation: String?) {

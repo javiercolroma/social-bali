@@ -268,6 +268,16 @@ final class Backend {
             .order("created_at", ascending: false).limit(limit).execute().value
     }
 
+    /// Marca como leídos los mensajes que te ha enviado ese usuario.
+    func markMessagesRead(from otherUserId: UUID) async {
+        guard let client, let me = await currentUserIdAsync() else { return }
+        _ = try? await client.from("messages").update(["read": true])
+            .eq("recipient_id", value: me.uuidString)
+            .eq("sender_id", value: otherUserId.uuidString)
+            .eq("read", value: false)
+            .execute()
+    }
+
     /// Envía un mensaje a otro usuario.
     func sendMessage(to otherUserId: UUID, text: String) async throws {
         guard let client, let me = await currentUserIdAsync() else { throw BackendError.notConfigured }
@@ -473,6 +483,7 @@ struct MessageRow: Codable {
     let recipient_id: String
     let text: String
     let created_at: String
+    var read: Bool? = nil
 }
 
 /// Fecha ↔ `timestamptz`. Escribimos ISO8601 con milisegundos; al leer somos tolerantes
