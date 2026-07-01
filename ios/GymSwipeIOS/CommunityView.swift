@@ -5,8 +5,11 @@ import SwiftUI
 /// búsqueda de compañeros (Partner). Ambas vistas viven en un ZStack para
 /// conservar su estado (scroll, mapa, ubicación) al cambiar de sección.
 struct CommunityView: View {
+    @EnvironmentObject var store: AppStore
     var onOpenChat: (String) -> Void
-    @State private var section = 0
+    // La sección activa vive en el store para que el tutorial guiado (CoachTour)
+    // pueda llevar al usuario hasta Partner mientras se lo explica.
+    private var section: Int { store.communitySection }
 
     private let items: [(title: String, icon: String)] = [
         ("Ranking", "trophy.fill"),
@@ -25,6 +28,7 @@ struct CommunityView: View {
                     .allowsHitTesting(section == 1)
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .animation(.easeInOut(duration: 0.28), value: section)
         }
         .background(Brand.bg)
     }
@@ -35,7 +39,7 @@ struct CommunityView: View {
                 let active = section == idx
                 Button {
                     FX.selection()
-                    section = idx
+                    withAnimation(.easeInOut(duration: 0.28)) { store.communitySection = idx }
                 } label: {
                     HStack(spacing: 6) {
                         Image(systemName: item.icon).font(.system(size: 13, weight: .heavy))

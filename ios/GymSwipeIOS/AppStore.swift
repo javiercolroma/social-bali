@@ -22,6 +22,7 @@ final class AppStore: ObservableObject {
     @Published var appliedKudos: Set<String> = []   // posts del muro a los que has dado aplausos
     @Published var hiddenWorkoutIds: Set<String> = []   // entrenos por defecto que el usuario ha eliminado
     @Published var seenTours: Set<String> = []   // secciones cuyo tutorial guiado ya se vio
+    @Published var communitySection = 0   // 0 = Ranking, 1 = Partner (efímero; el tour lo dirige)
 
     let people = AppStore.demoPeople
     let templates = AppStore.builtinTemplates

@@ -909,6 +909,15 @@ private enum OnboardingSurvey {
 struct CoachTour: View {
     let section: Int
     var onFinish: () -> Void
+    var onStep: ((Int) -> Void)? = nil   // se llama con el paso actual (para efectos como cambiar de sub-pestaña)
+
+    // `startStep` permite arrancar en un paso concreto (previews / verificación); producción usa 0.
+    init(section: Int, startStep: Int = 0, onFinish: @escaping () -> Void, onStep: ((Int) -> Void)? = nil) {
+        self.section = section
+        self.onFinish = onFinish
+        self.onStep = onStep
+        _step = State(initialValue: startStep)
+    }
 
     @State private var step = 0
     @State private var shown = ""
@@ -941,9 +950,10 @@ struct CoachTour: View {
         .onAppear {
             withAnimation(reduceMotion ? .easeOut(duration: 0.25)
                                        : .spring(response: 0.52, dampingFraction: 0.72)) { appear = true }
+            onStep?(step)
             startTyping()
         }
-        .onChange(of: step) { _ in startTyping() }
+        .onChange(of: step) { s in onStep?(s); startTyping() }
         .onDisappear { typeTask?.cancel() }
     }
 
@@ -1033,8 +1043,10 @@ struct CoachTour: View {
             "Cuando toque entrenar, pulsa «Cargar» y la llevo directa a tu sesión 💪"],
         2: ["Tu entreno en vivo: apunta cada serie con su peso y sus repeticiones.",
             "Al cerrar una serie te arranco el descanso y te aviso cuando toca seguir."],
-        3: ["Compites por divisiones, de Hierro a Maestro. Entrena para subir de liga.",
-            "¿Sin compañía? Con Partner te empareja con alguien que entrena como tú 🤝"],
+        3: ["Compites por divisiones, de Hierro a Maestro: cada entreno sube tu Gym Score y tu liga.",
+            "Y esto es Partner 🤝 tu sitio para no entrenar solo. Deja que te lo enseñe.",
+            "Cada tarjeta es alguien que busca compañero cerca de ti: ves qué entrena, cuándo y dónde. Si te encaja, pulsa «Aceptar entrenamiento» y se abre un chat para quedar.",
+            "¿Prefieres proponer tú? Pulsa «Buscar compañero», elige cuándo, dónde y qué harás, y espera a que alguien se una."],
         4: ["Tu racha y tu Gym Score viven aquí: cada sesión los hace crecer.",
             "Mira el calendario y tu historial para ver todo lo que has forjado 📈"],
     ]

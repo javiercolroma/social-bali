@@ -64,6 +64,9 @@ struct RootView: View {
                 CoachTour(section: s, onFinish: {
                     store.markTourSeen("tour-\(s)")
                     activeTour = nil
+                }, onStep: { st in
+                    // En Comunidad, el tour lleva al usuario a Partner mientras se lo explica.
+                    if s == 3 { withAnimation(.easeInOut(duration: 0.3)) { store.communitySection = st >= 1 ? 1 : 0 } }
                 })
                 .environmentObject(store)
                 .transition(.opacity)
