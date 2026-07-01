@@ -1001,8 +1001,8 @@ struct CoachTour: View {
         .contentShape(Rectangle())
         .onTapGesture { if !typingDone { finishTyping() } }   // modal: bloquea toques al contenido
         .onAppear {
-            withAnimation(reduceMotion ? .easeOut(duration: 0.25)
-                                       : .spring(response: 0.52, dampingFraction: 0.72)) { appear = true }
+            withAnimation(reduceMotion ? .easeOut(duration: 0.18)
+                                       : .spring(response: 0.34, dampingFraction: 0.74)) { appear = true }
             onStep?(step); onTarget?(currentTarget)
             startTyping()
         }
@@ -1075,7 +1075,7 @@ struct CoachTour: View {
         if reduceMotion { shown = full; typingDone = true; return }
         let perChar = min(0.04, 2.4 / Double(max(1, full.count)))
         typeTask = Task { @MainActor in
-            try? await Task.sleep(nanoseconds: 220_000_000)
+            try? await Task.sleep(nanoseconds: 110_000_000)
             for ch in full {
                 if Task.isCancelled { return }
                 shown.append(ch)

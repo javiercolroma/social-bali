@@ -93,7 +93,7 @@ struct RootView: View {
             }
             .ignoresSafeArea()
         }
-        .animation(.easeInOut(duration: 0.25), value: activeTour)
+        .animation(.easeInOut(duration: 0.16), value: activeTour)
         .sheet(item: $profilePerson) { item in
             if let person = store.person(item.id) {
                 FriendProfileView(person: person).environmentObject(store)
@@ -129,7 +129,7 @@ struct RootView: View {
         guard store.account != nil, activeTour == nil else { return }
         let key = "tour-\(t)"
         guard !store.tourSeen(key) else { return }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.55) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.18) {
             guard tab == t, activeTour == nil, !store.tourSeen(key),
                   chatPerson == nil, profilePerson == nil, !showMessages, !showNotifications, !showProfile else { return }
             activeTour = t
