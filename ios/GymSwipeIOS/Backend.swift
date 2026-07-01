@@ -179,7 +179,7 @@ final class Backend {
     func fetchFeedWithAuthors(limit: Int = 50) async throws -> [FeedRow] {
         guard let client else { return [] }
         return try await client.from("workout_sessions")
-            .select("id,user_id,name,note,date,elapsed,exercises,sets,volume,xp,avg_hr,max_hr,location,photo_url,visibility,verified,items,author:profiles!workout_sessions_user_id_fkey(handle,name,avatar_url)")
+            .select("id,user_id,name,note,date,elapsed,exercises,sets,volume,xp,avg_hr,max_hr,location,photo_url,visibility,verified,items,author:profiles!workout_sessions_user_id_fkey(handle,name,avatar_url),kudos(count),comments(count)")
             .order("date", ascending: false)
             .limit(limit)
             .execute().value
@@ -304,6 +304,9 @@ struct FollowRow: Codable {
 /// Autor incrustado en el feed.
 struct FeedAuthor: Codable { let handle: String?; let name: String?; let avatar_url: String? }
 
+/// Contador incrustado (PostgREST `tabla(count)` → `[{count: N}]`).
+struct CountRow: Codable { let count: Int }
+
 /// Fila del feed = sesión + autor (join a profiles).
 struct FeedRow: Codable {
     let id: String
@@ -324,6 +327,8 @@ struct FeedRow: Codable {
     let verified: Bool
     let items: [SessionExercise]
     let author: FeedAuthor?
+    let kudos: [CountRow]?
+    let comments: [CountRow]?
 }
 
 /// Fila del ranking semanal (RPC `weekly_xp_leaderboard`).

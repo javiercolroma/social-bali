@@ -57,6 +57,9 @@ final class AppStore: ObservableObject {
     /// enseñar el onboarding a alguien que ya se registró). Efímero (no se persiste).
     @Published var checkingProfile = false
 
+    /// A quién sigues DE VERDAD (usuarios reales del servidor). Vacío sin backend.
+    @Published var followingPeople: [SocialPerson] = []
+
     /// DEBUG: salta el login (AuthView) y el onboarding mientras se depura.
     /// Pon en `false` para volver al flujo real (login → onboarding → app).
     /// Si ya se guardó una cuenta debug, reinstala/borra datos para ver de nuevo el flujo.
@@ -208,8 +211,14 @@ final class AppStore: ObservableObject {
     var unreadMessages: Int { conversations.reduce(0) { $0 + $1.unread } }
     var unreadNotifications: Int { notifications.filter { !$0.read }.count }
 
-    func relationship(_ personId: String) -> RelationshipStatus { relationships[personId] ?? .none }
-    func person(_ id: String) -> SocialPerson? { people.first { $0.id == id } }
+    func relationship(_ personId: String) -> RelationshipStatus {
+        // Los usuarios reales que sigues cuentan como "amigos" aunque no estén en relationships.
+        if relationships[personId] == nil && followingPeople.contains(where: { $0.id == personId }) { return .friends }
+        return relationships[personId] ?? .none
+    }
+    func person(_ id: String) -> SocialPerson? {
+        people.first { $0.id == id } ?? followingPeople.first { $0.id == id }
+    }
 
     private var scoreCache: [String: Int] = [:]
     /// Gym Score de cualquier perfil para el badge del avatar. El mío es el real;
@@ -598,8 +607,25 @@ final class AppStore: ObservableObject {
     func follow(_ personId: String) { relationships[personId] = .friends; persist() }
     func unfollow(_ personId: String) { relationships[personId] = .none; persist() }
 
-    /// Personas que sigues (tu red).
-    var following: [SocialPerson] { people.filter { relationship($0.id) == .friends } }
+    /// Personas que sigues (tu red). Con backend: usuarios REALES; sin backend: demo.
+    var following: [SocialPerson] {
+        BackendConfig.isConfigured ? followingPeople : people.filter { relationship($0.id) == .friends }
+    }
+
+    /// Carga de verdad a quién sigues (follows aceptados → perfiles), best-effort.
+    func loadFollowing() {
+        guard BackendConfig.isConfigured else { return }
+        Task {
+            let follows = (try? await Backend.shared.fetchFollowing()) ?? []
+            let ids = follows.filter { $0.status == "accepted" }.compactMap { UUID(uuidString: $0.following_id) }
+            let profiles = (try? await Backend.shared.fetchProfiles(ids: ids)) ?? []
+            followingPeople = profiles.map { p in
+                SocialPerson(id: p.id.uuidString, name: p.name ?? p.handle ?? "Atleta",
+                             handle: p.handle ?? "", avatar: "🙂", gym: p.gym ?? "",
+                             city: p.city ?? "", country: p.country ?? "", isPrivate: p.is_private ?? false)
+            }
+        }
+    }
 
     func toggleKudo(_ id: String) {
         if appliedKudos.contains(id) { appliedKudos.remove(id) } else { appliedKudos.insert(id) }

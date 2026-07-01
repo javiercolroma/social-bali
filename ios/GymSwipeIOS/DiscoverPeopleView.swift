@@ -83,6 +83,7 @@ struct DiscoverPeopleView: View {
                         } else {
                             try await Backend.shared.unfollow(p.id)
                         }
+                        store.loadFollowing()   // refresca "tus amigos" con el follow real
                     } catch {
                         // Falló la red → revierte el estado optimista.
                         if willFollow { following.remove(uid) } else { following.insert(uid) }

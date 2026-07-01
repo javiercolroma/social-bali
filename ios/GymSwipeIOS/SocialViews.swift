@@ -163,6 +163,7 @@ struct MessagesSheet: View {
             .background(Brand.bg)
             .navigationTitle("").navigationBarTitleDisplayMode(.inline)
             .onAppear { tab = initialTab }
+            .task { store.loadFollowing() }
             .sheet(item: $profileTarget) { item in
                 if let p = store.person(item.id) { FriendProfileView(person: p).environmentObject(store) }
             }
@@ -239,7 +240,8 @@ struct FriendsContent: View {
 
     private func rel(_ id: String) -> RelationshipStatus { store.relationship(id) }
     private var incoming: [SocialPerson] { store.people.filter { rel($0.id) == .incoming } }
-    private var friends: [SocialPerson] { store.people.filter { rel($0.id) == .friends } }
+    // Con backend real, "tus amigos" = a quién sigues DE VERDAD; sin backend, demo.
+    private var friends: [SocialPerson] { store.following }
     private var discover: [SocialPerson] { store.people.filter { rel($0.id) == .none || rel($0.id) == .outgoing } }
     private var results: [SocialPerson] {
         let q = query.folding(options: .diacriticInsensitive, locale: .current).lowercased().replacingOccurrences(of: "@", with: "")

@@ -20,6 +20,7 @@ private struct FeedItem: Identifiable {
     let items: [SessionExercise]
     var avgHeartRate: Int? = nil
     var maxHeartRate: Int? = nil
+    var kudosCount: Int = 0   // likes REALES del servidor (0 si nadie ha dado like)
 }
 
 /// Comentario de un post (local). Soporta respuestas (1 nivel), likes y fecha.
@@ -228,7 +229,8 @@ struct SocialFeedView: View {
             date: BackendDate.parse(r.date) ?? Date(),
             title: r.name, note: r.note ?? "", photo: nil, photoURL: r.photo_url,
             elapsed: r.elapsed, exercises: r.exercises, sets: r.sets, volume: r.volume,
-            items: r.items, avgHeartRate: r.avg_hr, maxHeartRate: r.max_hr)
+            items: r.items, avgHeartRate: r.avg_hr, maxHeartRate: r.max_hr,
+            kudosCount: r.kudos?.first?.count ?? 0)
     }
 
     private func feedCard(_ item: FeedItem) -> some View {
@@ -521,6 +523,7 @@ struct SocialFeedView: View {
     }
 
     private func shareBase(_ item: FeedItem) -> Int {
+        if store.people.isEmpty { return 0 }   // sin datos inventados con backend real
         var s: UInt64 = 5
         for ch in item.id.unicodeScalars { s = s &* 17 &+ UInt64(ch.value) }
         return 1 + Int(s % 9)
@@ -580,6 +583,8 @@ struct SocialFeedView: View {
     }
 
     private func kudos(_ item: FeedItem) -> Int {
+        // Con backend real: likes REALES (0 si nadie ha dado). Sin backend: número demo.
+        if store.people.isEmpty { return item.kudosCount }
         var seed: UInt64 = 0
         for ch in item.id.unicodeScalars { seed = seed &* 31 &+ UInt64(ch.value) }
         return 3 + Int(seed % 22)
