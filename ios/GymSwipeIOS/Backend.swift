@@ -151,6 +151,14 @@ final class Backend {
             .limit(limit)
             .execute().value
     }
+
+    // MARK: - Ranking / Liga (XP semanal real)
+
+    /// Clasificación por XP de la semana en curso (RPC `weekly_xp_leaderboard`, solo verificado).
+    func fetchWeeklyLeaderboard() async throws -> [LeaderRow] {
+        guard let client else { return [] }
+        return try await client.rpc("weekly_xp_leaderboard").execute().value
+    }
 }
 
 enum BackendError: Error { case notConfigured }
@@ -185,6 +193,15 @@ struct FollowRow: Codable {
     let follower_id: String
     let following_id: String
     let status: String
+}
+
+/// Fila del ranking semanal (RPC `weekly_xp_leaderboard`).
+struct LeaderRow: Codable {
+    let user_id: UUID
+    let handle: String?
+    let name: String?
+    let avatar_url: String?
+    let weekly_xp: Int
 }
 
 /// Fecha ↔ `timestamptz`. Escribimos ISO8601 con milisegundos; al leer somos tolerantes
