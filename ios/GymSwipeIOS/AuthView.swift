@@ -104,7 +104,11 @@ struct AuthView: View {
             withAnimation { store.signIn(provider: "google", userId: uid, email: profile?.email, name: profile?.name) }
             // Best-effort: si hay backend configurado, abre también la sesión en Supabase.
             if Backend.shared.isConfigured, let idToken = user.idToken?.tokenString {
-                Task { try? await Backend.shared.signInWithGoogle(idToken: idToken) }
+                Task {
+                    do { let uid = try await Backend.shared.signInWithGoogle(idToken: idToken)
+                         print("[Backend] sesión Supabase (Google) abierta: \(uid)"); store.syncProfileToBackend() }
+                    catch { print("[Backend] Google → Supabase falló:", error) }
+                }
             }
         }
     }
@@ -119,7 +123,11 @@ struct AuthView: View {
         if Backend.shared.isConfigured, let tokenData = c.identityToken,
            let idToken = String(data: tokenData, encoding: .utf8) {
             let nonce = appleNonce
-            Task { try? await Backend.shared.signInWithApple(idToken: idToken, nonce: nonce) }
+            Task {
+                do { let uid = try await Backend.shared.signInWithApple(idToken: idToken, nonce: nonce)
+                     print("[Backend] sesión Supabase (Apple) abierta: \(uid)"); store.syncProfileToBackend() }
+                catch { print("[Backend] Apple → Supabase falló:", error) }
+            }
         }
     }
 

@@ -427,7 +427,10 @@ final class AppStore: ObservableObject {
             city: profile.city.isEmpty ? nil : profile.city,
             gym: profile.gym.isEmpty ? nil : profile.gym,
             is_private: profile.isPrivate)
-        Task { try? await Backend.shared.upsertProfile(row) }
+        Task {
+            do { try await Backend.shared.upsertProfile(row); print("[Backend] perfil sincronizado: @\(row.handle ?? "")") }
+            catch { print("[Backend] upsert perfil falló:", error) }
+        }
     }
 
     /// Inicia sesión con un proveedor (Apple / email / Google). Sin backend: se guarda local.

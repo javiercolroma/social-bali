@@ -51,7 +51,8 @@ Compila y entra con Apple o Google. Deberías ver una fila nueva en
 ## Roadmap de migración (local → servidor)
 
 - [x] **Fase 0** — Esquema + RLS + SDK iOS + config gateada.
-- [ ] **Fase 1** — Auth real (Apple/Google → Supabase) + upsert de perfil. *(en curso)*
+- [x] **Backend provisionado** — proyecto `xdczilodphmejbzvfdye`: migraciones aplicadas (6 tablas + RLS + buckets) y **proveedor Apple activo** (`external_apple_client_id = com.javiercolroma.gymswipeios`). Credenciales en `BackendConfig.swift`.
+- [~] **Fase 1** — Auth real (Apple/Google → Supabase) + upsert de perfil. *Apple: cableado y backend listo; falta la prueba interactiva de login con un Apple ID real. Google: pendiente del OAuth Client ID.*
 - [ ] **Fase 2** — Guardar/leer `workout_sessions` (tu histórico vive en el servidor).
 - [ ] **Fase 3** — Follows reales + feed (sustituye bots/demo).
 - [ ] **Fase 4** — Ranking de amigos + Liga desde datos reales (vistas/RPC por XP semanal).
