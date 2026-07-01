@@ -12,7 +12,6 @@ struct ActivityView: View {
     @State private var daySheet: DayPayload?
     @State private var showEpleyInfo = false
     @State private var showScoreInfo = false
-    @State private var showLeague = false
 
     private let tabs: [(title: String, icon: String)] = [
         ("Progreso", "chart.line.uptrend.xyaxis"),
@@ -35,7 +34,6 @@ struct ActivityView: View {
         .background(Brand.bg)
         .sheet(item: $detail) { ActivityDetailView(item: activityData($0)).environmentObject(store) }
         .sheet(item: $daySheet) { DaySessionsSheet(date: $0.date, sessions: $0.sessions).environmentObject(store) }
-        .sheet(isPresented: $showLeague) { LeagueView().environmentObject(store) }
     }
 
     private var switcher: some View {
@@ -60,20 +58,24 @@ struct ActivityView: View {
 
     // MARK: - PROGRESO
 
+    // Estructura clara de arriba a abajo: quién eres ahora (resumen) → objetivos de
+    // la semana → récords y análisis de carga → historial. La competición (Liga /
+    // ranking) vive en Comunidad; aquí solo va TU progreso personal.
     @ViewBuilder
     private var progressContent: some View {
+        sectionHeader("RESUMEN")
         rachaCard.tourAnchor("activity.progress")
-        LeagueCard(onOpen: { showLeague = true })
-        WeeklyQuestsCard()
         gymScoreCard
+
+        sectionHeader("ESTA SEMANA")
+        WeeklyQuestsCard()
+
+        sectionHeader("RÉCORDS Y PROGRESO")
         RecordsCard()
-        TrainingCalendarView(sessions: sessions) { date, daySessions in
-            daySheet = DayPayload(id: date, date: date, sessions: daySessions)
-        }
         if store.sessions.isEmpty {
             Text("Completa y guarda entrenos para medir tu evolución de carga.")
                 .font(.footnote).foregroundColor(Brand.muted)
-                .frame(maxWidth: .infinity, alignment: .center).padding(.top, 6)
+                .frame(maxWidth: .infinity, alignment: .center).padding(.top, 2)
         } else {
             trendCard
             strengthCard
@@ -83,6 +85,21 @@ struct ActivityView: View {
                     .frame(maxWidth: .infinity, alignment: .center).padding(.top, 2)
             }
         }
+
+        sectionHeader("HISTORIAL")
+        TrainingCalendarView(sessions: sessions) { date, daySessions in
+            daySheet = DayPayload(id: date, date: date, sessions: daySessions)
+        }
+    }
+
+    /// Cabecera de grupo (un nivel por encima de los títulos internos de cada tarjeta)
+    /// para que la pantalla se lea como secciones claras y no como una pila de tarjetas.
+    private func sectionHeader(_ title: String) -> some View {
+        Text(title)
+            .font(.system(size: 13, weight: .heavy))
+            .foregroundColor(Brand.ink)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.top, 4).padding(.leading, 4)
     }
 
     /// Tendencia general: progreso de carga (1RM medio) + volumen semanal.
