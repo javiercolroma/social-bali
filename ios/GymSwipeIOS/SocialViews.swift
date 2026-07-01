@@ -1,5 +1,6 @@
 import SwiftUI
 import PhotosUI
+import Supabase
 
 func normalizeHandle(_ value: String) -> String {
     let lower = value.folding(options: .diacriticInsensitive, locale: .current).lowercased()
@@ -328,6 +329,30 @@ struct ChatView: View {
     @State private var profileTarget: IdString?
     @State private var realMessages: [ChatMessage] = []
     @State private var realMode = false
+    @State private var channel: RealtimeChannelV2?
+
+    /// Suscripción Realtime: los mensajes del otro llegan al instante (sin esperar al sondeo).
+    private func subscribeRealtime() async {
+        guard BackendConfig.isConfigured, let client = Backend.shared.client,
+              let me = await Backend.shared.currentUserIdAsync() else { return }
+        let ch = client.channel("chat:\(personId)")
+        let inserts = ch.postgresChange(InsertAction.self, schema: "public", table: "messages",
+                                        filter: "recipient_id=eq.\(me.uuidString)")
+        await ch.subscribe()
+        channel = ch
+        for await change in inserts {
+            guard let row = try? change.decodeRecord(as: MessageRow.self, decoder: JSONDecoder()),
+                  row.sender_id.lowercased() == personId.lowercased() else { continue }
+            let msg = ChatMessage(id: row.id, fromMe: false, text: row.text,
+                                  at: BackendDate.parse(row.created_at) ?? Date())
+            if !realMessages.contains(where: { $0.id == msg.id }) { realMessages.append(msg) }
+        }
+    }
+
+    private func unsubscribe() async {
+        if let ch = channel, let client = Backend.shared.client { await client.removeChannel(ch) }
+        channel = nil
+    }
 
     private var person: SocialPerson? { store.person(personId) }
     private var conversation: Conversation? { store.conversations.first { $0.personId == personId } }
@@ -396,12 +421,14 @@ struct ChatView: View {
         .onAppear { store.openConversation(personId) }
         .task {
             await loadReal()
-            // Sondeo ligero para ver los mensajes nuevos del otro (sin websockets).
+            Task { await subscribeRealtime() }   // mensajes del otro AL INSTANTE
+            // Fallback: sondeo lento por si el Realtime no conecta.
             while !Task.isCancelled {
-                try? await Task.sleep(nanoseconds: 3_500_000_000)
+                try? await Task.sleep(nanoseconds: 8_000_000_000)
                 await loadReal()
             }
         }
+        .onDisappear { Task { await unsubscribe() } }
         .sheet(item: $profileTarget) { item in
             if let p = store.person(item.id) { FriendProfileView(person: p).environmentObject(store) }
         }
