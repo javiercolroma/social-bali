@@ -58,8 +58,11 @@ final class Backend {
         do {
             return try await client.auth.signIn(email: email, password: password).user.id
         } catch {
+            // No existe / contraseña incorrecta → intenta registrarlo. Exigimos SESIÓN real:
+            // si signUp no la devuelve (email ya existe, obfuscado), es un fallo, no un login fantasma.
             let res = try await client.auth.signUp(email: email, password: password)
-            return res.session?.user.id ?? res.user.id
+            guard let session = res.session else { throw BackendError.noSession }
+            return session.user.id
         }
     }
 
@@ -240,7 +243,7 @@ final class Backend {
     }
 }
 
-enum BackendError: Error { case notConfigured }
+enum BackendError: Error { case notConfigured, noSession }
 
 /// Nonce para Sign in with Apple → Supabase: se envía el SHA256 a Apple y el crudo a Supabase.
 enum AuthNonce {
@@ -376,7 +379,7 @@ struct SessionRow: Codable {
         avg_hr = s.avgHeartRate
         max_hr = s.maxHeartRate
         location = s.location
-        photo_url = photoURL
+        photo_url = photoURL ?? s.photoURL   // nunca borres una URL ya conocida
         visibility = s.visibility.rawValue
         verified = s.verified
         items = s.items ?? []

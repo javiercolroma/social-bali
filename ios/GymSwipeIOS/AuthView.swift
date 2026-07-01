@@ -163,8 +163,12 @@ struct AuthView: View {
         guard validEmail, Backend.shared.isConfigured else { return }
         FX.tap()
         Task {
-            try? await Backend.shared.resetPassword(email: e)
-            resetMsg = "Si el correo existe, te enviamos un enlace para restablecer la contraseña."
+            do {
+                try await Backend.shared.resetPassword(email: e)
+                resetMsg = "Si el correo existe, te enviamos un enlace para restablecer la contraseña."
+            } catch {
+                resetMsg = "No pudimos enviar el correo. Inténtalo de nuevo."
+            }
         }
     }
 

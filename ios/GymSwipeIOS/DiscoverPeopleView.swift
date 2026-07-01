@@ -54,7 +54,8 @@ struct DiscoverPeopleView: View {
     }
 
     private func row(_ p: ProfileRow) -> some View {
-        let uid = p.id.uuidString
+        // Postgres devuelve los UUID en minúscula; UUID.uuidString los da en mayúscula → normaliza.
+        let uid = p.id.uuidString.lowercased()
         let isFollowing = following.contains(uid)
         return HStack(spacing: 12) {
             if let a = p.avatar_url, let u = URL(string: a) {
@@ -70,10 +71,20 @@ struct DiscoverPeopleView: View {
             Spacer()
             Button {
                 FX.tap()
-                if isFollowing { following.remove(uid) } else { following.insert(uid) }
+                let willFollow = !isFollowing
+                if willFollow { following.insert(uid) } else { following.remove(uid) }
                 Task {
-                    if isFollowing { try? await Backend.shared.unfollow(p.id) }
-                    else { try? await Backend.shared.setFollow(p.id) }
+                    do {
+                        if willFollow {
+                            // Cuentas privadas → solicitud (el server igual lo fuerza a 'pending').
+                            try await Backend.shared.setFollow(p.id, status: (p.is_private ?? false) ? "pending" : "accepted")
+                        } else {
+                            try await Backend.shared.unfollow(p.id)
+                        }
+                    } catch {
+                        // Falló la red → revierte el estado optimista.
+                        if willFollow { following.remove(uid) } else { following.insert(uid) }
+                    }
                 }
             } label: {
                 Text(isFollowing ? "Siguiendo" : "Seguir")
@@ -101,6 +112,6 @@ struct DiscoverPeopleView: View {
 
     private func loadFollowing() async {
         let f = (try? await Backend.shared.fetchFollowing()) ?? []
-        following = Set(f.map { $0.following_id })
+        following = Set(f.map { $0.following_id.lowercased() })
     }
 }

@@ -59,3 +59,15 @@ Compila y entra con Apple o Google. Deberías ver una fila nueva en
 - [x] **Fase 5** — **Storage de fotos** (`uploadAvatar`/`uploadSessionPhoto` → `avatar_url`/`photo_url`; RLS por carpeta `<uid>/…`, validado) **+ fotos remotas en la UI** (`WorkoutPhoto` con `AsyncImage`, `photoURL` en el modelo). Likes/comentarios backend (`kudos`/`comments`) hechos y validados.
 - [~] **Mensajería (chat)** — tabla `messages` + RLS + **Realtime habilitado** (migración `0004`); `Backend.sendMessage`/`fetchMessages`. Validado: envío 201, el participante lo lee, un tercero ve `[]` (RLS). Pendiente: **suscripción Realtime en vivo + enchufar la UI del chat**, que necesita un destinatario real (UUID) → llega con el grafo social real.
 - [x] **Fase 6** — Anti-trampas v2: **trigger `recompute_verified`** en `workout_sessions` (before insert/update) recalcula `verified` en el servidor con la misma heurística (≥20 s/serie, ≤60 series, XP ≤600) → el cliente ya no puede marcar `verified=true` a mano. Validado: sesión rápida enviada como `true` → el server la deja en `false`; la legítima queda `true`. (Mejora futura: timestamps por serie para blindar `elapsed`.)
+
+## Revisión de seguridad (migración `0005`)
+
+Tras una **revisión adversarial multi-agente** (5 lentes + verificación) se corrigieron (código + `0005_security_hardening.sql`, validado en vivo):
+- **Privacidad de follows**: trigger `enforce_follow_privacy` fuerza `status='pending'` al seguir a una cuenta privada (el cliente ya no puede auto-aceptarse); el dueño acepta con un UPDATE. Validado: `accepted`→`pending`, sesión oculta hasta aceptar.
+- **Likes/comentarios** respetan la visibilidad de la sesión (`can_see_session`); antes eran legibles/insertables por cualquiera.
+- **Pérdida silenciosa de fotos** en `syncSessionsFromBackend` (ahora sube la foto en el bucle; `photo_url = photoURL ?? s.photoURL` nunca borra una URL conocida).
+- **Login fantasma** con contraseña incorrecta (email): se exige **sesión real** (`BackendError.noSession`).
+- **Estado de follow** no aparecía por mayúsculas de UUID (Postgres minúscula vs `uuidString` mayúscula) → normalizado; follow optimista con **rollback** si falla la red.
+- **Carrera** en el merge de sync (recalcula "solo locales" al reasignar) y **reset de contraseña** con manejo de error.
+
+**Conocidos / diferidos (no bloqueantes):** `history` (racha/score/PRs) no se sincroniza entre dispositivos (se reconstruirá desde `workout_sessions`); sesiones antiguas con id no-UUID no suben; reset de contraseña sin deep-link de vuelta; bucket de fotos público (URLs no adivinables pero públicas si se filtran); `verified`/XP dependen del cliente (mitigado con el trigger; el blindaje real son timestamps por serie); `mailer_autoconfirm` ON permite registrar cualquier email (tradeoff de bring-up).
