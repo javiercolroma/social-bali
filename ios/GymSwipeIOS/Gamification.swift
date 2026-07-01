@@ -1,5 +1,16 @@
 import SwiftUI
 
+// MARK: - Récords personales (PRs)
+
+struct PersonalBest: Codable, Equatable, Identifiable {
+    var exercise: String
+    var weight: Double
+    var reps: Int
+    var e1rm: Double
+    var date: Date
+    var id: String { exercise }
+}
+
 // MARK: - Logros (achievements)
 
 enum AchTier {
@@ -71,6 +82,10 @@ enum Achievements {
                     value: { $0.sessions.contains { Calendar.current.component(.hour, from: $0.date) >= 22 } ? 1 : 0 }),
         Achievement(id: "social", title: "Sociable", detail: "Sigue a alguien",
                     icon: "person.2.fill", tier: .bronze, coins: 30, goal: 1, value: { min(1, $0.following.count) }),
+        Achievement(id: "pr1", title: "Rompe-récords", detail: "Bate tu primer récord",
+                    icon: "trophy.fill", tier: .silver, coins: 60, goal: 1, value: { $0.prCount }),
+        Achievement(id: "pr10", title: "Máquina de récords", detail: "Bate 10 récords",
+                    icon: "trophy.fill", tier: .gold, coins: 170, goal: 10, value: { $0.prCount }),
     ]
     static func by(_ id: String) -> Achievement? { all.first { $0.id == id } }
 }
@@ -260,4 +275,74 @@ struct AchievementCelebration: View {
             FX.success(sound: true)
         }
     }
+}
+
+// MARK: - Celebración de récord personal
+
+struct PRCelebration: View {
+    let pr: PersonalBest
+    var onDismiss: () -> Void
+    @State private var pop: CGFloat = 0.4
+
+    var body: some View {
+        ZStack {
+            Color.black.opacity(0.55).ignoresSafeArea().onTapGesture { onDismiss() }
+            ConfettiView().frame(maxWidth: .infinity, maxHeight: .infinity).allowsHitTesting(false)
+            VStack(spacing: 14) {
+                Text("¡NUEVO RÉCORD!").font(.system(size: 13, weight: .heavy)).kerning(1).foregroundColor(Color(hex: "6ea300"))
+                ZStack {
+                    Circle().fill(LinearGradient(colors: [Color(hex: "b4ec51"), Color(hex: "8ed11d")], startPoint: .top, endPoint: .bottom))
+                        .frame(width: 112, height: 112)
+                        .overlay(Circle().stroke(.white.opacity(0.7), lineWidth: 3))
+                        .shadow(color: Brand.green.opacity(0.7), radius: 16)
+                    Image(systemName: "trophy.fill").font(.system(size: 46, weight: .heavy)).foregroundColor(Color(hex: "10150a"))
+                }.scaleEffect(pop)
+                Text(pr.exercise).font(.system(size: 21, weight: .heavy)).foregroundColor(Brand.ink).multilineTextAlignment(.center)
+                Text("\(fmt(pr.weight)) kg × \(pr.reps)").font(.system(size: 26, weight: .heavy)).foregroundColor(Brand.ink)
+                Text("1RM estimado ~\(Int(pr.e1rm.rounded())) kg").font(.system(size: 13, weight: .bold)).foregroundColor(Brand.soft)
+                Button { onDismiss() } label: { Text("¡Vamos!").frame(maxWidth: .infinity) }
+                    .buttonStyle(PrimaryButtonStyle()).padding(.top, 4)
+            }
+            .padding(24)
+            .background(Color.white).clipShape(RoundedRectangle(cornerRadius: 26, style: .continuous))
+            .shadow(color: .black.opacity(0.25), radius: 30, y: 12)
+            .padding(.horizontal, 34)
+        }
+        .onAppear {
+            withAnimation(.spring(response: 0.5, dampingFraction: 0.55)) { pop = 1 }
+            FX.success(sound: true)
+        }
+    }
+    private func fmt(_ v: Double) -> String { v == v.rounded() ? String(Int(v)) : String(format: "%.1f", v) }
+}
+
+// MARK: - Tarjeta de récords (para Actividad ▸ Progreso)
+
+struct RecordsCard: View {
+    @EnvironmentObject var store: AppStore
+    var body: some View {
+        let records = store.personalBests.values.sorted { $0.e1rm > $1.e1rm }
+        PanelCard {
+            HStack(spacing: 7) {
+                Image(systemName: "trophy.fill").font(.system(size: 13)).foregroundColor(Color(hex: "e2a915"))
+                Text("TUS RÉCORDS").font(.caption2).fontWeight(.heavy).foregroundColor(Brand.muted)
+                Spacer()
+            }
+            if records.isEmpty {
+                Text("Registra entrenos para batir tus primeros récords 💪")
+                    .font(.footnote).foregroundColor(Brand.muted).frame(maxWidth: .infinity, alignment: .leading).padding(.vertical, 4)
+            } else {
+                ForEach(Array(records.prefix(6))) { r in
+                    HStack {
+                        Text(r.exercise).font(.system(size: 14, weight: .heavy)).foregroundColor(Brand.ink).lineLimit(1)
+                        Spacer()
+                        Text("\(fmt(r.weight)) kg × \(r.reps)").font(.system(size: 14, weight: .heavy)).foregroundColor(Brand.ink).monospacedDigit()
+                        Text("· 1RM \(Int(r.e1rm.rounded()))").font(.system(size: 12, weight: .semibold)).foregroundColor(Brand.soft).monospacedDigit()
+                    }
+                    if r.id != records.prefix(6).last?.id { Divider() }
+                }
+            }
+        }
+    }
+    private func fmt(_ v: Double) -> String { v == v.rounded() ? String(Int(v)) : String(format: "%.1f", v) }
 }

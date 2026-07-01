@@ -28,6 +28,9 @@ final class AppStore: ObservableObject {
     @Published var coins: Int = 0                          // moneda para la tienda de cosméticos
     @Published var unlockedAchievements: Set<String> = []  // logros conseguidos
     @Published var celebrations: [Achievement] = []        // cola de logros a celebrar (efímero)
+    @Published var personalBests: [String: PersonalBest] = [:]  // récord por ejercicio (clave normalizada)
+    @Published var prCount: Int = 0                        // nº de récords batidos (para logros)
+    @Published var pendingPRs: [PersonalBest] = []         // cola de récords a celebrar (efímero)
 
     let people = AppStore.demoPeople
     let templates = AppStore.builtinTemplates
@@ -60,6 +63,8 @@ final class AppStore: ObservableObject {
             seenTours = Set(snap.seenTours ?? [])
             coins = snap.coins ?? 0
             unlockedAchievements = Set(snap.unlockedAchievements ?? [])
+            personalBests = snap.personalBests ?? [:]
+            prCount = snap.prCount ?? 0
             // Migrate old "Mis entrenos" group to "Otros"
             savedWorkouts = savedWorkouts.map { w in
                 guard w.block == "Mis entrenos" else { return w }
@@ -98,6 +103,8 @@ final class AppStore: ObservableObject {
         var seenTours: [String]?
         var coins: Int?
         var unlockedAchievements: [String]?
+        var personalBests: [String: PersonalBest]?
+        var prCount: Int?
     }
 
     func persist() {
@@ -107,7 +114,8 @@ final class AppStore: ObservableObject {
             savedWorkouts: savedWorkouts, auth: auth, account: account, relationships: relationships,
             conversations: conversations, notifications: notifications, trainingPlans: trainingPlans,
             sessions: sessions, appliedKudos: Array(appliedKudos), hiddenWorkoutIds: Array(hiddenWorkoutIds),
-            seenTours: Array(seenTours), coins: coins, unlockedAchievements: Array(unlockedAchievements)
+            seenTours: Array(seenTours), coins: coins, unlockedAchievements: Array(unlockedAchievements),
+            personalBests: personalBests, prCount: prCount
         )
         if let data = try? JSONEncoder().encode(snap) {
             UserDefaults.standard.set(data, forKey: storeKey)
@@ -252,10 +260,35 @@ final class AppStore: ObservableObject {
             location: location?.trimmingCharacters(in: .whitespaces)), at: 0)
         player.xp += gained
         player.streak = currentStreak()
+        detectPRs(sessionItems)                // récords personales (antes de vaciar)
         exercises = []
         lastAction = "Entreno guardado"
         persist()
         refreshAchievements(celebrate: true)   // desbloquea + celebra logros nuevos
+    }
+
+    /// Detecta récords personales (mejor 1RM estimado por ejercicio). Registra el mejor
+    /// de cada ejercicio y celebra solo cuando SUPERA un récord previo (no la primera vez).
+    private func detectPRs(_ items: [SessionExercise]) {
+        for item in items {
+            let key = item.name.folding(options: .diacriticInsensitive, locale: .current).lowercased()
+            let sets: [(w: Double, r: Int)] = (item.logs?.map { ($0.weight, $0.reps) }) ?? [(item.weight, item.reps)]
+            var best: (w: Double, r: Int, e: Double)?
+            for s in sets where s.w > 0 {
+                let e = s.w * (1 + Double(min(20, s.r)) / 30)
+                if best == nil || e > best!.e { best = (s.w, s.r, e) }
+            }
+            guard let b = best else { continue }
+            let prev = personalBests[key]
+            if prev == nil || b.e > prev!.e1rm + 0.01 {
+                let pb = PersonalBest(exercise: item.name, weight: b.w, reps: b.r, e1rm: b.e, date: Date())
+                personalBests[key] = pb
+                if prev != nil {   // celebrar solo si bate un récord anterior
+                    pendingPRs.append(pb)
+                    prCount += 1
+                }
+            }
+        }
     }
 
     func discardSession() {

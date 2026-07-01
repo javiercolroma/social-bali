@@ -95,7 +95,15 @@ struct RootView: View {
         }
         .animation(.easeInOut(duration: 0.16), value: activeTour)
         .overlay {
-            if let ach = store.celebrations.first {
+            // Récords primero, luego logros (uno cada vez).
+            if let pr = store.pendingPRs.first {
+                PRCelebration(pr: pr, onDismiss: {
+                    if !store.pendingPRs.isEmpty { store.pendingPRs.removeFirst() }
+                })
+                .environmentObject(store)
+                .transition(.opacity)
+                .zIndex(10)
+            } else if let ach = store.celebrations.first {
                 AchievementCelebration(achievement: ach, onDismiss: {
                     if !store.celebrations.isEmpty { store.celebrations.removeFirst() }
                 })
@@ -105,6 +113,7 @@ struct RootView: View {
             }
         }
         .animation(.easeInOut(duration: 0.2), value: store.celebrations.count)
+        .animation(.easeInOut(duration: 0.2), value: store.pendingPRs.count)
         .sheet(item: $profilePerson) { item in
             if let person = store.person(item.id) {
                 FriendProfileView(person: person).environmentObject(store)
