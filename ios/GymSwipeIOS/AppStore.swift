@@ -326,7 +326,10 @@ final class AppStore: ObservableObject {
         guard Backend.shared.isConfigured else { return }
         Task {
             guard let uid = await Backend.shared.currentUserIdAsync() else { return }
-            do { try await Backend.shared.upsertSession(SessionRow(s, userId: uid)); print("[Backend] sesión subida: \(s.id)") }
+            // Sube la foto del entreno a Storage (si hay) y guarda su URL en la fila.
+            var photoURL: String? = nil
+            if let photo = s.photoData { photoURL = try? await Backend.shared.uploadSessionPhoto(photo, sessionId: s.id) }
+            do { try await Backend.shared.upsertSession(SessionRow(s, userId: uid, photoURL: photoURL)); print("[Backend] sesión subida: \(s.id)") }
             catch { print("[Backend] subir sesión falló:", error) }
         }
     }
@@ -449,17 +452,21 @@ final class AppStore: ObservableObject {
     /// Best-effort: sube el perfil a Supabase si hay backend configurado y sesión abierta.
     /// (La foto/avatar_url llegará en la fase de Storage; aquí van los campos de texto.)
     func syncProfileToBackend() {
-        guard Backend.shared.isConfigured, let acc = account, let uid = Backend.shared.currentUserId else { return }
-        let row = ProfileRow(
-            id: uid,
-            handle: acc.handle,
-            name: acc.name,
-            avatar_url: nil,
-            country: profile.country.isEmpty ? nil : profile.country,
-            city: profile.city.isEmpty ? nil : profile.city,
-            gym: profile.gym.isEmpty ? nil : profile.gym,
-            is_private: profile.isPrivate)
+        guard Backend.shared.isConfigured, let acc = account else { return }
         Task {
+            guard let uid = await Backend.shared.currentUserIdAsync() else { return }
+            // Sube el avatar a Storage (si hay) y usa su URL pública en el perfil.
+            var avatarURL: String? = nil
+            if let photo = acc.photoData { avatarURL = try? await Backend.shared.uploadAvatar(photo) }
+            let row = ProfileRow(
+                id: uid,
+                handle: acc.handle,
+                name: acc.name,
+                avatar_url: avatarURL,
+                country: profile.country.isEmpty ? nil : profile.country,
+                city: profile.city.isEmpty ? nil : profile.city,
+                gym: profile.gym.isEmpty ? nil : profile.gym,
+                is_private: profile.isPrivate)
             do { try await Backend.shared.upsertProfile(row); print("[Backend] perfil sincronizado: @\(row.handle ?? "")") }
             catch { print("[Backend] upsert perfil falló:", error) }
         }

@@ -159,6 +159,28 @@ final class Backend {
         guard let client else { return [] }
         return try await client.rpc("weekly_xp_leaderboard").execute().value
     }
+
+    // MARK: - Storage (fotos). Cada archivo va bajo `<uid>/…` (lo exige la RLS de Storage).
+
+    /// Sube el avatar del usuario y devuelve su URL pública.
+    @discardableResult
+    func uploadAvatar(_ data: Data) async throws -> String {
+        guard let client, let uid = await currentUserIdAsync() else { throw BackendError.notConfigured }
+        let path = "\(uid.uuidString)/avatar.jpg"
+        _ = try await client.storage.from("avatars")
+            .upload(path, data: data, options: FileOptions(contentType: "image/jpeg", upsert: true))
+        return try client.storage.from("avatars").getPublicURL(path: path).absoluteString
+    }
+
+    /// Sube la foto de un entreno y devuelve su URL pública.
+    @discardableResult
+    func uploadSessionPhoto(_ data: Data, sessionId: String) async throws -> String {
+        guard let client, let uid = await currentUserIdAsync() else { throw BackendError.notConfigured }
+        let path = "\(uid.uuidString)/\(sessionId).jpg"
+        _ = try await client.storage.from("session-photos")
+            .upload(path, data: data, options: FileOptions(contentType: "image/jpeg", upsert: true))
+        return try client.storage.from("session-photos").getPublicURL(path: path).absoluteString
+    }
 }
 
 enum BackendError: Error { case notConfigured }
@@ -238,11 +260,12 @@ struct SessionRow: Codable {
     let avg_hr: Int?
     let max_hr: Int?
     let location: String?
+    let photo_url: String?
     let visibility: String
     let verified: Bool
     let items: [SessionExercise]
 
-    init(_ s: WorkoutSession, userId: UUID) {
+    init(_ s: WorkoutSession, userId: UUID, photoURL: String? = nil) {
         id = s.id
         user_id = userId.uuidString
         name = s.name
@@ -256,6 +279,7 @@ struct SessionRow: Codable {
         avg_hr = s.avgHeartRate
         max_hr = s.maxHeartRate
         location = s.location
+        photo_url = photoURL
         visibility = s.visibility.rawValue
         verified = s.verified
         items = s.items ?? []
