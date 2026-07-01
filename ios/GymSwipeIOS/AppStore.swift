@@ -46,8 +46,12 @@ final class AppStore: ObservableObject {
     @Published var equippedForgey: String? = nil           // accesorio de Forgey equipado
     @Published var equippedTitle: String? = nil            // título mostrado en el perfil
 
-    let people = AppStore.demoPeople
+    // Con backend real NO hay bots/personas demo: la app usa usuarios reales.
+    let people: [SocialPerson] = BackendConfig.isConfigured ? [] : AppStore.demoPeople
     let templates = AppStore.builtinTemplates
+
+    /// Clasificación real de la semana (XP), cargada del servidor. Vacía sin backend.
+    @Published var realLeaderboard: [LeaderRow] = []
 
     /// DEBUG: salta el login (AuthView) y el onboarding mientras se depura.
     /// Pon en `false` para volver al flujo real (login → onboarding → app).
@@ -726,6 +730,9 @@ final class AppStore: ObservableObject {
     // MARK: - Demo seed
 
     private func seedDemo() {
+        // Con backend real: nada de bots ni conversaciones/planes/notificaciones demo.
+        // El estado social arranca vacío y se llena con usuarios reales.
+        guard !Backend.shared.isConfigured else { return }
         let now = Date()
         // Empieza SIN seguidos para mostrar el onboarding de usuario nuevo en Social.
         // Mika aparece como recomendación; Leo, como solicitud entrante ("te quiere seguir").

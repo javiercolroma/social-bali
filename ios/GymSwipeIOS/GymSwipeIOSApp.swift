@@ -18,8 +18,8 @@ struct GymSwipeIOSApp: App {
             .tint(Color(hex: "5e910e"))
             // Devuelve el callback de OAuth de Google al SDK.
             .onOpenURL { url in GIDSignIn.sharedInstance.handle(url) }
-            // Arranque: si ya hay sesión Supabase, trae el histórico del servidor (gateado).
-            .task { store.syncSessionsFromBackend() }
+            // Arranque: si ya hay sesión Supabase, trae el histórico y el ranking real (gateado).
+            .task { store.syncSessionsFromBackend(); store.loadLeaderboard() }
         }
     }
 }

@@ -320,11 +320,28 @@ extension AppStore {
         guard let next = cal.nextDate(after: Date(), matching: DateComponents(weekday: 2), matchingPolicy: .nextTime) else { return 0 }
         return max(0, cal.dateComponents([.day], from: cal.startOfDay(for: Date()), to: cal.startOfDay(for: next)).day ?? 0)
     }
-    /// Clasificación de la liga de esta semana (bots deterministas + tú, por XP semanal).
+    /// Clasificación de la liga de esta semana. Con backend: usuarios REALES por XP
+    /// semanal (RPC `weekly_xp_leaderboard`). Sin backend: bots deterministas + tú.
     func leagueStandings() -> [LeagueMember] {
+        if Backend.shared.isConfigured {
+            let meId = Backend.shared.currentUserId
+            return realLeaderboard.map { r in
+                LeagueMember(id: r.user_id.uuidString, name: r.name ?? r.handle ?? "Atleta",
+                             emoji: "🙂", xp: r.weekly_xp, isMe: r.user_id == meId)
+            }
+        }
         var m = League.bots(weekId: weekId, tier: leagueTier)
         m.append(LeagueMember(id: "me", name: account?.name ?? "Tú", emoji: "🙂", xp: weekXP(), isMe: true))
         return m.sorted { $0.xp > $1.xp }
+    }
+
+    /// Carga la clasificación real del servidor (best-effort).
+    func loadLeaderboard() {
+        guard Backend.shared.isConfigured else { return }
+        Task {
+            let rows = (try? await Backend.shared.fetchWeeklyLeaderboard()) ?? []
+            realLeaderboard = rows
+        }
     }
     var myLeagueRank: Int {
         (leagueStandings().firstIndex { $0.isMe }.map { $0 + 1 }) ?? 0

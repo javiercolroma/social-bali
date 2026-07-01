@@ -166,6 +166,16 @@ final class Backend {
             .execute().value
     }
 
+    /// Feed con el autor incrustado (join a profiles) para pintar nombre/avatar reales.
+    func fetchFeedWithAuthors(limit: Int = 50) async throws -> [FeedRow] {
+        guard let client else { return [] }
+        return try await client.from("workout_sessions")
+            .select("id,user_id,name,note,date,elapsed,exercises,sets,volume,xp,avg_hr,max_hr,location,photo_url,visibility,verified,items,author:profiles(handle,name,avatar_url)")
+            .order("date", ascending: false)
+            .limit(limit)
+            .execute().value
+    }
+
     // MARK: - Likes (kudos) y comentarios
 
     func likeSession(_ sessionId: String) async throws {
@@ -280,6 +290,31 @@ struct FollowRow: Codable {
     let follower_id: String
     let following_id: String
     let status: String
+}
+
+/// Autor incrustado en el feed.
+struct FeedAuthor: Codable { let handle: String?; let name: String?; let avatar_url: String? }
+
+/// Fila del feed = sesión + autor (join a profiles).
+struct FeedRow: Codable {
+    let id: String
+    let user_id: String
+    let name: String
+    let note: String?
+    let date: String
+    let elapsed: Int
+    let exercises: Int
+    let sets: Int
+    let volume: Double
+    let xp: Int
+    let avg_hr: Int?
+    let max_hr: Int?
+    let location: String?
+    let photo_url: String?
+    let visibility: String
+    let verified: Bool
+    let items: [SessionExercise]
+    let author: FeedAuthor?
 }
 
 /// Fila del ranking semanal (RPC `weekly_xp_leaderboard`).
