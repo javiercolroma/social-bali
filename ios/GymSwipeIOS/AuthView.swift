@@ -8,9 +8,14 @@ struct AuthView: View {
     @EnvironmentObject var store: AppStore
     @State private var showEmail = false
     @State private var email = ""
+    @State private var password = ""
+    @State private var emailError: String?
+    @State private var emailBusy = false
     @State private var googleNote = false
     @State private var appleNonce = ""   // nonce en crudo para el login Apple → Supabase
     @FocusState private var emailFocused: Bool
+
+    private var canEmail: Bool { validEmail && password.count >= 6 }
 
     private var validEmail: Bool {
         let e = email.trimmingCharacters(in: .whitespaces)
@@ -59,14 +64,26 @@ struct AuthView: View {
                             Image(systemName: "envelope.fill").foregroundColor(Brand.soft)
                             TextField("tu@email.com", text: $email)
                                 .keyboardType(.emailAddress).textInputAutocapitalization(.never)
-                                .autocorrectionDisabled().focused($emailFocused).submitLabel(.go)
-                                .onSubmit { if validEmail { signInEmail() } }
+                                .autocorrectionDisabled().focused($emailFocused).submitLabel(.next)
                         }
                         .padding(.horizontal, 14).frame(height: 52).background(Color.white)
                         .clipShape(RoundedRectangle(cornerRadius: 14))
                         .overlay(RoundedRectangle(cornerRadius: 14).stroke(emailFocused ? Brand.greenSoft : Brand.line, lineWidth: emailFocused ? 1.5 : 1))
-                        Button { signInEmail() } label: { Text("Continuar") }
-                            .buttonStyle(PrimaryButtonStyle(enabled: validEmail)).disabled(!validEmail)
+                        HStack(spacing: 10) {
+                            Image(systemName: "lock.fill").foregroundColor(Brand.soft)
+                            SecureField("Contraseña (mín. 6)", text: $password)
+                                .textInputAutocapitalization(.never).autocorrectionDisabled()
+                                .submitLabel(.go).onSubmit { signInEmail() }
+                        }
+                        .padding(.horizontal, 14).frame(height: 52).background(Color.white)
+                        .clipShape(RoundedRectangle(cornerRadius: 14))
+                        .overlay(RoundedRectangle(cornerRadius: 14).stroke(Brand.line))
+                        if let emailError {
+                            Text(emailError).font(.caption).foregroundColor(Color(hex: "a73232"))
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                        }
+                        Button { signInEmail() } label: { Text(emailBusy ? "Entrando…" : "Continuar") }
+                            .buttonStyle(PrimaryButtonStyle(enabled: canEmail && !emailBusy)).disabled(!canEmail || emailBusy)
                     } else {
                         Button { withAnimation { showEmail = true }; DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { emailFocused = true } } label: {
                             Text("Continuar con email").font(.system(size: 15, weight: .bold)).foregroundColor(Brand.soft)
@@ -135,8 +152,27 @@ struct AuthView: View {
 
     private func signInEmail() {
         let e = email.trimmingCharacters(in: .whitespaces).lowercased()
-        guard validEmail else { return }
-        FX.success(sound: true)
-        withAnimation { store.signIn(provider: "email", userId: e, email: e, name: nil) }
+        guard canEmail, !emailBusy else { return }
+        emailError = nil
+        // Sin backend configurado: identidad local simple (como antes).
+        guard Backend.shared.isConfigured else {
+            FX.success(sound: true)
+            withAnimation { store.signIn(provider: "email", userId: e, email: e, name: nil) }
+            return
+        }
+        emailBusy = true
+        Task {
+            do {
+                let uid = try await Backend.shared.signInOrSignUpEmail(e, password: password)
+                print("[Backend] sesión Supabase (email) abierta: \(uid)")
+                FX.success(sound: true)
+                withAnimation { store.signIn(provider: "email", userId: uid.uuidString, email: e, name: nil) }
+                store.syncProfileToBackend(); store.syncSessionsFromBackend()
+            } catch {
+                print("[Backend] email → Supabase falló:", error)
+                emailError = "No pudimos entrar. Revisa el correo y la contraseña."
+            }
+            emailBusy = false
+        }
     }
 }

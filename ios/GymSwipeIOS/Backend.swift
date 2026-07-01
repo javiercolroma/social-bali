@@ -51,6 +51,18 @@ final class Backend {
         return session.user.id
     }
 
+    /// Entra con email/contraseña; si el usuario no existe, lo crea. Devuelve el uid.
+    @discardableResult
+    func signInOrSignUpEmail(_ email: String, password: String) async throws -> UUID {
+        guard let client else { throw BackendError.notConfigured }
+        do {
+            return try await client.auth.signIn(email: email, password: password).user.id
+        } catch {
+            let res = try await client.auth.signUp(email: email, password: password)
+            return res.session?.user.id ?? res.user.id
+        }
+    }
+
     func signOut() async {
         try? await client?.auth.signOut()
     }
