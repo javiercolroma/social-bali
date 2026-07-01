@@ -636,8 +636,23 @@ final class AppStore: ObservableObject {
     }
 
     func toggleKudo(_ id: String) {
-        if appliedKudos.contains(id) { appliedKudos.remove(id) } else { appliedKudos.insert(id) }
+        let nowLiked: Bool
+        if appliedKudos.contains(id) { appliedKudos.remove(id); nowLiked = false }
+        else { appliedKudos.insert(id); nowLiked = true }
         persist()
+        // Persiste el like REAL en el servidor (best-effort).
+        if BackendConfig.isConfigured {
+            Task {
+                if nowLiked { try? await Backend.shared.likeSession(id) }
+                else { try? await Backend.shared.unlikeSession(id) }
+            }
+        }
+    }
+
+    /// Carga qué sesiones he "likeado" de verdad (para el corazón relleno).
+    func loadMyLikes() {
+        guard BackendConfig.isConfigured else { return }
+        Task { if let ids = try? await Backend.shared.likedSessionIds() { appliedKudos = Set(ids) } }
     }
 
     // MARK: - Conversations

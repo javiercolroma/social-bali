@@ -201,6 +201,14 @@ final class Backend {
         return try await client.from("kudos").select().eq("session_id", value: sessionId).execute().value
     }
 
+    /// IDs de sesiones a las que YO he dado like (para pintar el corazón relleno).
+    func likedSessionIds() async throws -> [String] {
+        guard let client, let me = await currentUserIdAsync() else { return [] }
+        let rows: [KudosRow] = try await client.from("kudos")
+            .select("user_id,session_id").eq("user_id", value: me.uuidString).execute().value
+        return rows.map { $0.session_id }
+    }
+
     @discardableResult
     func addComment(sessionId: String, text: String, parentId: String? = nil) async throws -> CommentRow {
         guard let client, let me = await currentUserIdAsync() else { throw BackendError.notConfigured }

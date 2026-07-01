@@ -213,6 +213,7 @@ struct SocialFeedView: View {
         guard BackendConfig.isConfigured else { return }
         let rows = (try? await Backend.shared.fetchFeedWithAuthors()) ?? []
         realFeed = rows.map { feedItem(from: $0) }
+        store.loadMyLikes()
         refreshSeguidos(manual: false)
     }
 
@@ -458,7 +459,8 @@ struct SocialFeedView: View {
 
             // Acciones estilo Instagram: like (corazón), comentario, compartir (avión), con contadores.
             HStack(spacing: 20) {
-                LikeButton(id: item.id, baseCount: kudos(item), onShowLikes: { likesOfPost = item }).environmentObject(store)
+                // baseCount = likes de OTROS (el mío lo suma LikeButton según mi estado real).
+                LikeButton(id: item.id, baseCount: max(0, kudos(item) - (store.appliedKudos.contains(item.id) ? 1 : 0)), onShowLikes: { likesOfPost = item }).environmentObject(store)
 
                 Button { openComments(item) } label: {
                     actionIcon("bubble.right", "\(commentTotal(item))", tint: Brand.ink)
