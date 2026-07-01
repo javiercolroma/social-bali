@@ -10,6 +10,7 @@ struct AuthView: View {
     @State private var email = ""
     @State private var password = ""
     @State private var emailError: String?
+    @State private var resetMsg: String?
     @State private var emailBusy = false
     @State private var googleNote = false
     @State private var appleNonce = ""   // nonce en crudo para el login Apple → Supabase
@@ -84,6 +85,13 @@ struct AuthView: View {
                         }
                         Button { signInEmail() } label: { Text(emailBusy ? "Entrando…" : "Continuar") }
                             .buttonStyle(PrimaryButtonStyle(enabled: canEmail && !emailBusy)).disabled(!canEmail || emailBusy)
+                        Button { forgotPassword() } label: {
+                            Text("¿Olvidaste la contraseña?").font(.system(size: 13, weight: .semibold)).foregroundColor(Brand.soft)
+                        }.buttonStyle(.plain).disabled(!validEmail)
+                        if let resetMsg {
+                            Text(resetMsg).font(.caption).foregroundColor(Color(hex: "3f7d12"))
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                        }
                     } else {
                         Button { withAnimation { showEmail = true }; DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { emailFocused = true } } label: {
                             Text("Continuar con email").font(.system(size: 15, weight: .bold)).foregroundColor(Brand.soft)
@@ -150,10 +158,20 @@ struct AuthView: View {
         }
     }
 
+    private func forgotPassword() {
+        let e = email.trimmingCharacters(in: .whitespaces).lowercased()
+        guard validEmail, Backend.shared.isConfigured else { return }
+        FX.tap()
+        Task {
+            try? await Backend.shared.resetPassword(email: e)
+            resetMsg = "Si el correo existe, te enviamos un enlace para restablecer la contraseña."
+        }
+    }
+
     private func signInEmail() {
         let e = email.trimmingCharacters(in: .whitespaces).lowercased()
         guard canEmail, !emailBusy else { return }
-        emailError = nil
+        emailError = nil; resetMsg = nil
         // Sin backend configurado: identidad local simple (como antes).
         guard Backend.shared.isConfigured else {
             FX.success(sound: true)

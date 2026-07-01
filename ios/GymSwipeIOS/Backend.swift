@@ -67,6 +67,12 @@ final class Backend {
         try? await client?.auth.signOut()
     }
 
+    /// Envía un correo para restablecer la contraseña.
+    func resetPassword(email: String) async throws {
+        guard let client else { throw BackendError.notConfigured }
+        try await client.auth.resetPasswordForEmail(email)
+    }
+
     // MARK: - Perfil
 
     /// Crea/actualiza la fila de perfil del usuario actual. Solo los campos no nulos.
@@ -152,6 +158,37 @@ final class Backend {
             .execute().value
     }
 
+    // MARK: - Likes (kudos) y comentarios
+
+    func likeSession(_ sessionId: String) async throws {
+        guard let client, let me = await currentUserIdAsync() else { throw BackendError.notConfigured }
+        try await client.from("kudos").upsert(KudosRow(user_id: me.uuidString, session_id: sessionId)).execute()
+    }
+    func unlikeSession(_ sessionId: String) async throws {
+        guard let client, let me = await currentUserIdAsync() else { throw BackendError.notConfigured }
+        try await client.from("kudos").delete()
+            .eq("user_id", value: me.uuidString).eq("session_id", value: sessionId).execute()
+    }
+    func fetchKudos(sessionId: String) async throws -> [KudosRow] {
+        guard let client else { return [] }
+        return try await client.from("kudos").select().eq("session_id", value: sessionId).execute().value
+    }
+
+    @discardableResult
+    func addComment(sessionId: String, text: String, parentId: String? = nil) async throws -> CommentRow {
+        guard let client, let me = await currentUserIdAsync() else { throw BackendError.notConfigured }
+        let rows: [CommentRow] = try await client.from("comments")
+            .insert(CommentInsert(session_id: sessionId, user_id: me.uuidString, parent_id: parentId, text: text))
+            .select().execute().value
+        guard let first = rows.first else { throw BackendError.notConfigured }
+        return first
+    }
+    func fetchComments(sessionId: String) async throws -> [CommentRow] {
+        guard let client else { return [] }
+        return try await client.from("comments").select()
+            .eq("session_id", value: sessionId).order("created_at", ascending: true).execute().value
+    }
+
     // MARK: - Ranking / Liga (XP semanal real)
 
     /// Clasificación por XP de la semana en curso (RPC `weekly_xp_leaderboard`, solo verificado).
@@ -224,6 +261,30 @@ struct LeaderRow: Codable {
     let name: String?
     let avatar_url: String?
     let weekly_xp: Int
+}
+
+/// Like de `public.kudos`.
+struct KudosRow: Codable {
+    let user_id: String
+    let session_id: String
+}
+
+/// Alta de comentario (sin id/fecha: los pone el servidor).
+struct CommentInsert: Encodable {
+    let session_id: String
+    let user_id: String
+    let parent_id: String?
+    let text: String
+}
+
+/// Comentario leído de `public.comments`.
+struct CommentRow: Codable {
+    let id: String
+    let session_id: String
+    let user_id: String
+    let parent_id: String?
+    let text: String
+    let created_at: String
 }
 
 /// Fecha ↔ `timestamptz`. Escribimos ISO8601 con milisegundos; al leer somos tolerantes
