@@ -267,6 +267,33 @@ final class Backend {
             .execute()
     }
 
+    // MARK: - Moderación (reportar / bloquear)
+
+    /// Reporta contenido ('session' | 'comment' | 'user'). Idempotente por reporter+target.
+    func report(targetType: String, targetId: String, reportedUserId: String?, reason: String) async throws {
+        guard let client, let me = await currentUserIdAsync() else { throw BackendError.notConfigured }
+        try await client.from("reports")
+            .upsert(ReportInsert(reporter_id: me.uuidString, target_type: targetType, target_id: targetId,
+                                 reported_user_id: reportedUserId, reason: reason),
+                    onConflict: "reporter_id,target_type,target_id")
+            .execute()
+    }
+
+    func blockUser(_ userId: String) async throws {
+        guard let client, let me = await currentUserIdAsync() else { throw BackendError.notConfigured }
+        try await client.from("blocks").upsert(BlockRow(blocker_id: me.uuidString, blocked_id: userId)).execute()
+    }
+    func unblockUser(_ userId: String) async throws {
+        guard let client, let me = await currentUserIdAsync() else { throw BackendError.notConfigured }
+        try await client.from("blocks").delete()
+            .eq("blocker_id", value: me.uuidString).eq("blocked_id", value: userId).execute()
+    }
+    func blockedIds() async throws -> [String] {
+        guard let client, let me = await currentUserIdAsync() else { return [] }
+        let rows: [BlockRow] = try await client.from("blocks").select().eq("blocker_id", value: me.uuidString).execute().value
+        return rows.map { $0.blocked_id }
+    }
+
     // MARK: - Ranking / Liga (XP semanal real)
 
     /// Clasificación por XP de la semana en curso (RPC `weekly_xp_leaderboard`, solo verificado).
@@ -379,6 +406,21 @@ struct KudosRow: Codable {
 
 /// Resultado del RPC `follow_counts`.
 struct FollowCountRow: Codable { let followers: Int; let following: Int }
+
+/// Alta de reporte de contenido.
+struct ReportInsert: Encodable {
+    let reporter_id: String
+    let target_type: String
+    let target_id: String
+    let reported_user_id: String?
+    let reason: String?
+}
+
+/// Bloqueo de usuario.
+struct BlockRow: Codable {
+    let blocker_id: String
+    let blocked_id: String
+}
 
 /// Alta de comentario (sin id/fecha: los pone el servidor).
 struct CommentInsert: Encodable {

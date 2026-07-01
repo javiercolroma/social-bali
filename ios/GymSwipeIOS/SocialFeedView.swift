@@ -407,6 +407,24 @@ struct SocialFeedView: View {
                      score: item.personId == nil ? store.gymScore.total : store.personScore(item.personId ?? ""))
     }
 
+    private func reportPost(_ item: FeedItem) {
+        FX.tap()
+        if let pid = item.personId {
+            Task { try? await Backend.shared.report(targetType: "session", targetId: item.id, reportedUserId: pid, reason: "reported from feed") }
+        }
+        showToast("Gracias. Revisaremos esta publicación en 24 h.")
+    }
+
+    private func blockAuthor(_ item: FeedItem, pid: String) {
+        FX.tap()
+        Task {
+            try? await Backend.shared.blockUser(pid)
+            await loadRealFeed()   // desaparece el contenido del bloqueado
+            store.loadFollowing()
+        }
+        showToast("Has bloqueado a \(item.authorName). No verás su contenido.")
+    }
+
     private func card(_ item: FeedItem, showFollow: Bool = false) -> some View {
         PanelCard {
             // Cabecera: avatar/nombre abre el PERFIL (zona de toque propia).
@@ -429,11 +447,22 @@ struct SocialFeedView: View {
                     }
                 }.buttonStyle(.plain)
                 Spacer()
-                if showFollow, let pid = item.personId, let p = store.person(pid) {
-                    Button { followPerson(p) } label: {
-                        Text("Seguir").font(.system(size: 12, weight: .heavy)).foregroundColor(Color(hex: "10150a"))
-                            .padding(.horizontal, 12).frame(height: 30).background(Brand.green).clipShape(Capsule())
-                    }.buttonStyle(.plain)
+                if let pid = item.personId {
+                    HStack(spacing: 8) {
+                        if showFollow, let p = store.person(pid) {
+                            Button { followPerson(p) } label: {
+                                Text("Seguir").font(.system(size: 12, weight: .heavy)).foregroundColor(Color(hex: "10150a"))
+                                    .padding(.horizontal, 12).frame(height: 30).background(Brand.green).clipShape(Capsule())
+                            }.buttonStyle(.plain)
+                        }
+                        // Moderación (App Store): reportar publicación / bloquear al autor.
+                        Menu {
+                            Button(role: .destructive) { reportPost(item) } label: { Label("Reportar publicación", systemImage: "flag") }
+                            Button(role: .destructive) { blockAuthor(item, pid: pid) } label: { Label("Bloquear a \(item.authorName)", systemImage: "hand.raised") }
+                        } label: {
+                            Image(systemName: "ellipsis").font(.system(size: 16, weight: .bold)).foregroundColor(Brand.soft).frame(width: 28, height: 34)
+                        }
+                    }
                 } else {
                     Image(systemName: "chevron.right").font(.system(size: 12, weight: .bold)).foregroundColor(Brand.soft)
                 }

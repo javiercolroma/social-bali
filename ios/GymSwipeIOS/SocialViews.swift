@@ -615,6 +615,16 @@ struct FriendProfileView: View {
             }
             .background(Brand.bg)
             .navigationTitle("").navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                if BackendConfig.isConfigured, UUID(uuidString: person.id) != nil {
+                    ToolbarItem(placement: .navigationBarTrailing) {
+                        Menu {
+                            Button(role: .destructive) { reportUser() } label: { Label("Reportar usuario", systemImage: "flag") }
+                            Button(role: .destructive) { blockUser() } label: { Label("Bloquear a \(person.name)", systemImage: "hand.raised") }
+                        } label: { Image(systemName: "ellipsis").foregroundColor(Brand.ink) }
+                    }
+                }
+            }
             .sheet(item: $daySheet) { DaySessionsSheet(date: $0.date, sessions: $0.sessions, author: person).environmentObject(store) }
             .sheet(item: $detailSession) { s in
                 ActivityDetailView(item: personActivityData(s, person)).environmentObject(store)
@@ -622,6 +632,20 @@ struct FriendProfileView: View {
             .sheet(item: $followList) { FollowListSheet(title: $0.title, people: $0.people).environmentObject(store) }
         }
         .task { await loadReal() }
+    }
+
+    private func reportUser() {
+        FX.tap()
+        Task { try? await Backend.shared.report(targetType: "user", targetId: person.id, reportedUserId: person.id, reason: "reported from profile") }
+    }
+    private func blockUser() {
+        FX.tap()
+        Task {
+            if let uid = UUID(uuidString: person.id) { try? await Backend.shared.unfollow(uid) }
+            try? await Backend.shared.blockUser(person.id)
+            store.loadFollowing()
+        }
+        dismiss()
     }
 
     private func sessionPostCard(_ s: WorkoutSession) -> some View {

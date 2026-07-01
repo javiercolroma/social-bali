@@ -222,6 +222,8 @@ struct SettingsView: View {
                         Divider()
                         NavigationLink { LegalView(kind: .terms) } label: { settingsRow("Términos de uso", "doc.text.fill", chevron: true) }.buttonStyle(.plain)
                         Divider()
+                        NavigationLink { LegalView(kind: .community) } label: { settingsRow("Normas de la comunidad", "person.2.fill", chevron: true) }.buttonStyle(.plain)
+                        Divider()
                         if let url = URL(string: "mailto:soporte@forgeloop.app") {
                             Link(destination: url) { settingsRow("Soporte", "questionmark.circle.fill", chevron: true) }
                         }
@@ -270,7 +272,7 @@ struct SettingsView: View {
 
 // MARK: - Legal
 
-enum LegalKind { case privacy, terms }
+enum LegalKind { case privacy, terms, community }
 
 struct LegalView: View {
     let kind: LegalKind
@@ -283,7 +285,7 @@ struct LegalView: View {
                 .padding(16)
         }
         .background(Brand.bg)
-        .navigationTitle(kind == .privacy ? "Política de privacidad" : "Términos de uso")
+        .navigationTitle(kind == .privacy ? "Política de privacidad" : (kind == .community ? "Normas de la comunidad" : "Términos de uso"))
         .navigationBarTitleDisplayMode(.inline)
     }
 
@@ -319,14 +321,42 @@ struct LegalView: View {
             Salud y seguridad
             • El contenido de la app es informativo y no sustituye el consejo de un profesional. Entrena de forma segura y consulta a un médico antes de empezar un programa.
 
-            Comunidad
-            • Trata con respeto al resto de usuarios. Nos reservamos el derecho de retirar contenido o cuentas que incumplan estas normas.
+            Comunidad y contenido de usuarios
+            • Trata con respeto al resto de usuarios. Aplicamos TOLERANCIA CERO con el contenido objetable y los comportamientos abusivos.
+            • Está prohibido publicar contenido ilegal, acoso, discurso de odio, amenazas, desnudos o contenido sexual, violencia, spam, suplantación o cualquier material que infrinja derechos de terceros.
+            • Puedes REPORTAR cualquier publicación o usuario (menú ⋯) y BLOQUEAR a quien no quieras ver. Revisamos los reportes y retiramos el contenido infractor y a los usuarios abusivos en un plazo máximo de 24 horas. El contenido con múltiples reportes se oculta automáticamente.
+            • Consulta las "Normas de la comunidad" para el detalle. Nos reservamos el derecho de retirar contenido o cuentas que las incumplan.
 
             Responsabilidad
             • La app se ofrece "tal cual". En la medida que permita la ley, no nos hacemos responsables de daños derivados del uso de la app.
 
             Contacto
             • soporte@forgeloop.app
+            """
+        case .community:
+            return """
+            Normas de la comunidad de Forge Loop.
+
+            Queremos una comunidad segura y motivadora. Al usar la app aceptas estas normas. Aplicamos TOLERANCIA CERO con el contenido objetable y los usuarios abusivos.
+
+            Contenido PROHIBIDO
+            • Acoso, intimidación o amenazas a otras personas.
+            • Discurso de odio o discriminación por raza, etnia, religión, sexo, orientación, discapacidad, etc.
+            • Desnudos, contenido sexual o sexualmente sugerente.
+            • Violencia, autolesiones o contenido que promueva trastornos alimentarios o sustancias peligrosas.
+            • Contenido ilegal, spam, estafas, o suplantación de identidad.
+            • Material que infrinja derechos de autor o de terceros.
+
+            Cómo mantenemos la comunidad segura
+            • REPORTAR: en cualquier publicación o perfil, abre el menú ⋯ y pulsa "Reportar".
+            • BLOQUEAR: desde el mismo menú puedes bloquear a un usuario; dejarás de ver su contenido y él el tuyo.
+            • MODERACIÓN: revisamos los reportes y retiramos el contenido infractor y expulsamos a los usuarios abusivos en un máximo de 24 horas. El contenido con varios reportes se oculta automáticamente mientras se revisa.
+
+            Consecuencias
+            • Incumplir estas normas puede suponer la retirada del contenido, la limitación de funciones o la eliminación de la cuenta.
+
+            Reportar un problema o apelar
+            • Escríbenos a soporte@forgeloop.app.
             """
         }
     }
