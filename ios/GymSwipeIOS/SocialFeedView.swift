@@ -12,6 +12,7 @@ private struct FeedItem: Identifiable {
     let title: String
     let note: String
     let photo: Data?
+    var photoURL: String? = nil
     let elapsed: Int
     let exercises: Int
     let sets: Int
@@ -399,7 +400,7 @@ struct SocialFeedView: View {
                     if !item.note.isEmpty {
                         Text(item.note).font(.system(size: 14)).foregroundColor(Color(hex: "2c3127")).lineLimit(2).fixedSize(horizontal: false, vertical: true)
                     }
-                    if let data = item.photo { WorkoutPhoto(data: data, height: 190) }
+                    WorkoutPhoto(data: item.photo, url: item.photoURL, height: 190)
                     WorkoutStatStrip(stats: WorkoutStatStrip.metrics(time: durationText(item.elapsed), sets: item.sets,
                                                      exercises: item.exercises, ppm: item.avgHeartRate), style: .full)
                 }
@@ -549,7 +550,7 @@ struct SocialFeedView: View {
                 id: s.id, personId: nil, authorName: store.account?.name ?? "Tú",
                 avatarPhoto: store.account?.photoData, avatarEmoji: "🙂",
                 flag: countryFlag(store.profile.country), location: loc,
-                date: s.date, title: s.name, note: s.note, photo: s.photoData,
+                date: s.date, title: s.name, note: s.note, photo: s.photoData, photoURL: s.photoURL,
                 elapsed: s.elapsed, exercises: s.exercises, sets: s.sets, volume: s.volume,
                 items: s.items ?? [], avgHeartRate: s.avgHeartRate, maxHeartRate: s.maxHeartRate)
         }

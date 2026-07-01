@@ -109,6 +109,8 @@ struct WorkoutSession: Identifiable, Codable {
     var location: String? = nil
     /// ¿Sesión plausible? Las demasiado rápidas no cuentan para liga/récords públicos.
     var verified: Bool = true
+    /// URL pública de la foto en Storage (para verla en otro dispositivo cuando no hay `photoData` local).
+    var photoURL: String? = nil
 }
 
 struct WorkoutTemplate: Identifiable, Codable, Hashable {

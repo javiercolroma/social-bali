@@ -344,7 +344,7 @@ struct ActivityView: View {
                     Spacer()
                     Image(systemName: "chevron.right").font(.system(size: 12, weight: .bold)).foregroundColor(Brand.soft)
                 }
-                if let data = s.photoData { WorkoutPhoto(data: data, height: 120) }
+                WorkoutPhoto(data: s.photoData, url: s.photoURL, height: 120)
                 WorkoutStatStrip(stats: WorkoutStatStrip.metrics(time: durationText(s.elapsed), sets: s.sets,
                                                  exercises: s.exercises, ppm: s.avgHeartRate), style: .compact)
             }
@@ -412,7 +412,7 @@ struct ActivityView: View {
             authorName: store.account?.name ?? "Tú",
             avatarPhoto: store.account?.photoData, avatarEmoji: "🙂",
             flag: countryFlag(store.profile.country), location: loc,
-            date: s.date, title: s.name, note: s.note, photo: s.photoData,
+            date: s.date, title: s.name, note: s.note, photo: s.photoData, photoURL: s.photoURL,
             elapsed: s.elapsed, exercises: s.exercises, sets: s.sets,
             volume: s.volume, items: s.items ?? [],
             avgHeartRate: s.avgHeartRate, maxHeartRate: s.maxHeartRate, score: store.gymScore.total)

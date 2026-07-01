@@ -287,14 +287,24 @@ struct WorkoutStatStrip: View {
 
 /// Uniform photo block (rounded + hairline so light images don't bleed on the cream bg).
 struct WorkoutPhoto: View {
-    let data: Data
+    var data: Data? = nil
+    var url: String? = nil
     var height: CGFloat = 190
+    private var uiImage: UIImage? { data.flatMap(UIImage.init) }
+    private var remote: URL? { data == nil ? url.flatMap(URL.init(string:)) : nil }
     var body: some View {
-        if let ui = UIImage(data: data) {
-            Image(uiImage: ui).resizable().scaledToFill()
+        if uiImage != nil || remote != nil {
+            content
                 .frame(maxWidth: .infinity).frame(height: height)
                 .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
                 .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).stroke(Brand.line))
+        }
+    }
+    @ViewBuilder private var content: some View {
+        if let ui = uiImage {
+            Image(uiImage: ui).resizable().scaledToFill()
+        } else if let u = remote {
+            AsyncImage(url: u) { img in img.resizable().scaledToFill() } placeholder: { Brand.chip }
         }
     }
 }

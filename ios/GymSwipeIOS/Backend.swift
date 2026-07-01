@@ -354,6 +354,6 @@ struct SessionRow: Codable {
             elapsed: elapsed, exercises: exercises, sets: sets, volume: volume, xp: xp,
             photoData: nil, visibility: WorkoutVisibility(rawValue: visibility) ?? .all,
             items: items, avgHeartRate: avg_hr, maxHeartRate: max_hr,
-            location: location, verified: verified)
+            location: location, verified: verified, photoURL: photo_url)
     }
 }

@@ -10,6 +10,7 @@ struct ActivityData {
     let title: String
     let note: String
     let photo: Data?
+    var photoURL: String? = nil
     let elapsed: Int
     let exercises: Int
     let sets: Int
@@ -58,11 +59,7 @@ struct ActivityDetailView: View {
                             .frame(maxWidth: .infinity, alignment: .leading)
                     }
 
-                    if let data = item.photo, let ui = UIImage(data: data) {
-                        Image(uiImage: ui).resizable().scaledToFill()
-                            .frame(maxWidth: .infinity).frame(height: 220).clipped()
-                            .clipShape(RoundedRectangle(cornerRadius: 14))
-                    }
+                    WorkoutPhoto(data: item.photo, url: item.photoURL, height: 220)
 
                     // Metrics
                     HStack(spacing: 10) {
