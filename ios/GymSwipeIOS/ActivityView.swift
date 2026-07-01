@@ -61,6 +61,7 @@ struct ActivityView: View {
     @ViewBuilder
     private var progressContent: some View {
         rachaCard.tourAnchor("activity.progress")
+        WeeklyQuestsCard()
         gymScoreCard
         RecordsCard()
         TrainingCalendarView(sessions: sessions) { date, daySessions in

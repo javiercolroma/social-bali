@@ -112,6 +112,104 @@ extension AppStore {
     }
 }
 
+// MARK: - Misiones semanales
+
+struct WeeklyQuest: Identifiable {
+    let id: String
+    let title: String
+    let icon: String
+    let goal: Int
+    let unit: String              // "días", "series", "min"…
+    let reward: Int               // monedas
+    let progress: @MainActor (AppStore) -> Int
+}
+
+enum Quests {
+    static let weekly: [WeeklyQuest] = [
+        WeeklyQuest(id: "days3", title: "Entrena 3 días", icon: "calendar", goal: 3, unit: "días", reward: 50,
+                    progress: { $0.weekTrainingDays() }),
+        WeeklyQuest(id: "sets40", title: "Completa 40 series", icon: "square.stack.3d.up.fill", goal: 40, unit: "series", reward: 50,
+                    progress: { $0.weekSessions().reduce(0) { $0 + $1.sets } }),
+        WeeklyQuest(id: "min90", title: "Acumula 90 minutos", icon: "clock.fill", goal: 90, unit: "min", reward: 50,
+                    progress: { Int($0.weekSessions().reduce(0) { $0 + $1.elapsed } / 60) }),
+    ]
+}
+
+extension AppStore {
+    /// Identificador de la semana ISO actual (para reiniciar misiones cada lunes).
+    var weekId: String {
+        let c = Calendar.current.dateComponents([.yearForWeekOfYear, .weekOfYear], from: Date())
+        return "\(c.yearForWeekOfYear ?? 0)-W\(c.weekOfYear ?? 0)"
+    }
+    func weekSessions() -> [WorkoutSession] {
+        sessions.filter { Calendar.current.isDate($0.date, equalTo: Date(), toGranularity: .weekOfYear) }
+    }
+    func weekTrainingDays() -> Int {
+        let f = DateFormatter(); f.dateFormat = "yyyy-MM-dd"
+        return Set(weekSessions().map { f.string(from: $0.date) }).count
+    }
+    func questProgress(_ q: WeeklyQuest) -> Int { min(q.goal, q.progress(self)) }
+    func questDone(_ q: WeeklyQuest) -> Bool { q.progress(self) >= q.goal }
+    func questClaimed(_ q: WeeklyQuest) -> Bool { claimedQuests.contains("\(weekId):\(q.id)") }
+    func claimQuest(_ q: WeeklyQuest) {
+        guard questDone(q), !questClaimed(q) else { return }
+        coins += q.reward
+        claimedQuests.insert("\(weekId):\(q.id)")
+        FX.success(sound: true)
+        persist()
+    }
+}
+
+struct WeeklyQuestsCard: View {
+    @EnvironmentObject var store: AppStore
+    var body: some View {
+        PanelCard {
+            HStack(spacing: 7) {
+                Image(systemName: "target").font(.system(size: 13)).foregroundColor(Brand.green)
+                Text("MISIONES DE LA SEMANA").font(.caption2).fontWeight(.heavy).foregroundColor(Brand.muted)
+                Spacer()
+            }
+            ForEach(Quests.weekly) { q in
+                questRow(q)
+                if q.id != Quests.weekly.last?.id { Divider() }
+            }
+        }
+    }
+
+    private func questRow(_ q: WeeklyQuest) -> some View {
+        let value = store.questProgress(q)
+        let done = store.questDone(q)
+        let claimed = store.questClaimed(q)
+        return HStack(spacing: 11) {
+            ZStack {
+                Circle().fill(done ? Brand.green : Brand.chip).frame(width: 34, height: 34)
+                Image(systemName: q.icon).font(.system(size: 14, weight: .heavy)).foregroundColor(done ? Color(hex: "10150a") : Brand.soft)
+            }
+            VStack(alignment: .leading, spacing: 5) {
+                Text(q.title).font(.system(size: 14, weight: .heavy)).foregroundColor(Brand.ink)
+                GeometryReader { geo in
+                    ZStack(alignment: .leading) {
+                        Capsule().fill(Brand.chip)
+                        Capsule().fill(done ? Brand.green : Brand.green.opacity(0.7))
+                            .frame(width: max(6, geo.size.width * min(1, Double(value) / Double(q.goal))))
+                    }
+                }.frame(height: 6)
+                Text("\(value)/\(q.goal) \(q.unit)").font(.system(size: 11, weight: .bold)).foregroundColor(Brand.soft)
+            }
+            if claimed {
+                Image(systemName: "checkmark.circle.fill").font(.system(size: 24)).foregroundColor(Brand.green)
+            } else if done {
+                Button { FX.tap(); withAnimation { store.claimQuest(q) } } label: {
+                    Text("🪙 \(q.reward)").font(.system(size: 13, weight: .heavy)).foregroundColor(Color(hex: "10150a"))
+                        .padding(.horizontal, 11).frame(height: 34).background(Brand.green).clipShape(Capsule())
+                }.buttonStyle(.plain)
+            } else {
+                Text("🪙 \(q.reward)").font(.system(size: 12, weight: .heavy)).foregroundColor(Brand.soft)
+            }
+        }
+    }
+}
+
 // MARK: - Tarjeta de perfil: nivel + monedas + logros
 
 struct GamificationCard: View {

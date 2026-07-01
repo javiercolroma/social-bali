@@ -31,6 +31,7 @@ final class AppStore: ObservableObject {
     @Published var personalBests: [String: PersonalBest] = [:]  // récord por ejercicio (clave normalizada)
     @Published var prCount: Int = 0                        // nº de récords batidos (para logros)
     @Published var pendingPRs: [PersonalBest] = []         // cola de récords a celebrar (efímero)
+    @Published var claimedQuests: Set<String> = []         // misiones reclamadas ("semana:idMision")
 
     let people = AppStore.demoPeople
     let templates = AppStore.builtinTemplates
@@ -65,6 +66,7 @@ final class AppStore: ObservableObject {
             unlockedAchievements = Set(snap.unlockedAchievements ?? [])
             personalBests = snap.personalBests ?? [:]
             prCount = snap.prCount ?? 0
+            claimedQuests = Set(snap.claimedQuests ?? [])
             // Migrate old "Mis entrenos" group to "Otros"
             savedWorkouts = savedWorkouts.map { w in
                 guard w.block == "Mis entrenos" else { return w }
@@ -105,6 +107,7 @@ final class AppStore: ObservableObject {
         var unlockedAchievements: [String]?
         var personalBests: [String: PersonalBest]?
         var prCount: Int?
+        var claimedQuests: [String]?
     }
 
     func persist() {
@@ -115,7 +118,7 @@ final class AppStore: ObservableObject {
             conversations: conversations, notifications: notifications, trainingPlans: trainingPlans,
             sessions: sessions, appliedKudos: Array(appliedKudos), hiddenWorkoutIds: Array(hiddenWorkoutIds),
             seenTours: Array(seenTours), coins: coins, unlockedAchievements: Array(unlockedAchievements),
-            personalBests: personalBests, prCount: prCount
+            personalBests: personalBests, prCount: prCount, claimedQuests: Array(claimedQuests)
         )
         if let data = try? JSONEncoder().encode(snap) {
             UserDefaults.standard.set(data, forKey: storeKey)
