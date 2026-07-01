@@ -215,12 +215,22 @@ final class AppStore: ObservableObject {
     var unreadNotifications: Int { notifications.filter { !$0.read }.count }
 
     func relationship(_ personId: String) -> RelationshipStatus {
-        // Los usuarios reales que sigues cuentan como "amigos" aunque no estén en relationships.
-        if relationships[personId] == nil && followingPeople.contains(where: { $0.id == personId }) { return .friends }
+        // Los usuarios reales que sigues cuentan como "amigos". Insensible a mayúsculas del UUID.
+        let key = personId.lowercased()
+        if relationships[personId] == nil && followingPeople.contains(where: { $0.id.lowercased() == key }) { return .friends }
         return relationships[personId] ?? .none
     }
     func person(_ id: String) -> SocialPerson? {
-        people.first { $0.id == id } ?? followingPeople.first { $0.id == id } ?? messagedPeople.first { $0.id == id }
+        // Insensible a mayúsculas (Postgres da el UUID en minúscula; Swift en mayúscula).
+        let key = id.lowercased()
+        let all = people + followingPeople + followerPeople + messagedPeople
+        if let p = all.first(where: { $0.id.lowercased() == key }) { return p }
+        // Usuario real no cacheado: placeholder para que SIEMPRE se abra el perfil;
+        // FriendProfileView carga sus datos reales (nombre, sesiones, contadores).
+        if BackendConfig.isConfigured, UUID(uuidString: id) != nil {
+            return SocialPerson(id: id, name: "Atleta", handle: "", avatar: "🙂", gym: "")
+        }
+        return nil
     }
 
     /// Construye la lista de conversaciones REALES a partir de tus mensajes del servidor.
@@ -253,12 +263,18 @@ final class AppStore: ObservableObject {
     /// el de los demás es determinista (su historial demo no cambia) y se cachea.
     func personScore(_ id: String) -> Int {
         if id == "me" { return gymScore.total }
-        if let c = scoreCache[id] { return c }
+        if let c = scoreCache[id.lowercased()] { return c }
+        // Usuario real: NO inventamos su score. Se calcula de sus sesiones reales al abrir
+        // su perfil (y se cachea con setPersonScore). Hasta entonces, 0.
+        if BackendConfig.isConfigured, UUID(uuidString: id) != nil { return 0 }
         guard let p = person(id) else { return 0 }
         let s = GymScoreEngine.calculate(buildFriendHistory(p)).total
-        scoreCache[id] = s
+        scoreCache[id.lowercased()] = s
         return s
     }
+
+    /// Cachea el Gym Score REAL de un usuario (calculado de sus sesiones) para pintarlo en avatares.
+    func setPersonScore(_ id: String, _ score: Int) { scoreCache[id.lowercased()] = score }
 
     // MARK: - Training
 

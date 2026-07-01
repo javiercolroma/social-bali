@@ -574,12 +574,20 @@ struct FriendProfileView: View {
     @State private var realSessions: [WorkoutSession]?
     @State private var realFollowers: Int?
     @State private var realFollowing: Int?
+    @State private var realName: String?
+    @State private var realHandle: String?
 
-    /// Carga los datos REALES del usuario (sus sesiones + contadores) cuando hay backend.
+    /// Carga los datos REALES del usuario (perfil + sesiones + contadores + score) cuando hay backend.
     private func loadReal() async {
-        guard BackendConfig.isConfigured, UUID(uuidString: person.id) != nil else { return }
+        guard BackendConfig.isConfigured, let uid = UUID(uuidString: person.id) else { return }
+        if let profs = try? await Backend.shared.fetchProfiles(ids: [uid]), let p = profs.first {
+            realName = p.name ?? p.handle
+            realHandle = p.handle
+        }
         let s = (try? await Backend.shared.fetchUserSessions(person.id)) ?? []
         realSessions = s.map { $0.asWorkoutSession }
+        // Cachea su Gym Score REAL (de sus sesiones) para que los avatares dejen de inventarlo.
+        store.setPersonScore(person.id, GymScoreEngine.calculate(historyFromSessions(realSessions ?? [])).total)
         if let c = try? await Backend.shared.followCounts(person.id) {
             realFollowers = c.followers; realFollowing = c.following
         }
@@ -718,10 +726,10 @@ struct FriendProfileView: View {
             ScoredAvatar(emoji: person.avatar, score: store.personScore(person.id), size: 84)
             VStack(spacing: 3) {
                 HStack(spacing: 6) {
-                    Text(person.name).font(.system(size: 22, weight: .heavy)).foregroundColor(Brand.ink)
+                    Text(realName ?? person.name).font(.system(size: 22, weight: .heavy)).foregroundColor(Brand.ink)
                     if person.isPrivate { Image(systemName: "lock.fill").font(.system(size: 13)).foregroundColor(Brand.soft) }
                 }
-                Text("@\(person.handle)").font(.subheadline).foregroundColor(Brand.muted)
+                Text("@\(realHandle ?? person.handle)").font(.subheadline).foregroundColor(Brand.muted)
             }
             profileCountsRow(entrenos: entrenos,
                              seguidores: realFollowers ?? (deterministicCount(person.id, salt: 7, lo: 40, hi: 1500) + (store.relationship(person.id) == .friends ? 1 : 0)),
