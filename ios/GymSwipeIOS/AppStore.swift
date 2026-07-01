@@ -339,7 +339,7 @@ final class AppStore: ObservableObject {
     // Commit the session: write history + XP + a session record, then clear the workout.
     func saveSession(name: String, note: String, photoData: Data?, visibility: WorkoutVisibility, elapsed: Int,
                      avgHeartRate: Int? = nil, maxHeartRate: Int? = nil, location: String? = nil) {
-        let sid = UUID().uuidString   // UUID: mismo id local y en el servidor (Supabase)
+        let sid = UUID().uuidString.lowercased()   // minúsculas: mismo id local y en Postgres (evita duplicados en la sync)
         // Estado de las misiones ANTES de esta sesión (para avisar de las que se completen).
         let questsBefore = Dictionary(uniqueKeysWithValues: Quests.weekly.map { ($0.id, questDone($0)) })
         var gained = 0
@@ -419,18 +419,18 @@ final class AppStore: ObservableObject {
             guard let uid = await Backend.shared.currentUserIdAsync() else { return }
             do {
                 let server = try await Backend.shared.fetchMySessions().map { $0.asWorkoutSession }
-                let serverIds = Set(server.map { $0.id })
-                // Sube las locales que faltan, subiendo también su foto (si no está ya en Storage).
-                for s in sessions where !serverIds.contains(s.id) && UUID(uuidString: s.id) != nil {
+                // Comparación insensible a mayúsculas (Postgres guarda el UUID en minúscula).
+                let serverIds = Set(server.map { $0.id.lowercased() })
+                // Sube las locales que faltan en el servidor (con su foto si la hay).
+                for s in sessions where !serverIds.contains(s.id.lowercased()) && UUID(uuidString: s.id) != nil {
                     var url = s.photoURL
                     if url == nil, let photo = s.photoData {
                         url = try? await Backend.shared.uploadSessionPhoto(photo, sessionId: s.id)
                     }
                     try? await Backend.shared.upsertSession(SessionRow(s, userId: uid, photoURL: url))
                 }
-                // Recalcula "solo locales" desde el estado ACTUAL (puede haberse guardado una sesión
-                // durante los await de arriba), para no perderla al reasignar.
-                let localOnly = sessions.filter { !serverIds.contains($0.id) }
+                // Merge SIN duplicados: server (fuente de verdad) + las locales que aún no están.
+                let localOnly = sessions.filter { !serverIds.contains($0.id.lowercased()) }
                 sessions = (server + localOnly).sorted { $0.date > $1.date }
                 persist()
                 print("[Backend] sesiones sincronizadas: \(server.count) servidor + \(localOnly.count) locales")

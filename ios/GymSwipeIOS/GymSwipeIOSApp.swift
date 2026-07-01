@@ -4,6 +4,7 @@ import GoogleSignIn
 @main
 struct GymSwipeIOSApp: App {
     @StateObject private var store = AppStore()
+    @Environment(\.scenePhase) private var scenePhase
 
     var body: some Scene {
         WindowGroup {
@@ -24,6 +25,13 @@ struct GymSwipeIOSApp: App {
                 if store.auth != nil && store.account == nil { store.hydrateAccountFromBackend() }
                 store.syncSessionsFromBackend(); store.loadLeaderboard()
                 store.loadFollowing(); store.loadConversations()
+            }
+            // Al volver a primer plano: re-sincroniza (SUBE cualquier entreno que no subiera en su
+            // momento) y refresca no leídos. Así el muro del otro ve TODOS los entrenos.
+            .onChange(of: scenePhase) { phase in
+                if phase == .active {
+                    store.syncSessionsFromBackend(); store.loadConversations()
+                }
             }
         }
     }

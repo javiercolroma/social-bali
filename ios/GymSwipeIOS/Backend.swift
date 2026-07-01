@@ -526,7 +526,7 @@ struct SessionRow: Codable {
     let items: [SessionExercise]
 
     init(_ s: WorkoutSession, userId: UUID, photoURL: String? = nil) {
-        id = s.id
+        id = s.id.lowercased()   // determinista: Postgres normaliza el UUID a minúscula
         user_id = userId.uuidString
         name = s.name
         note = s.note.isEmpty ? nil : s.note
