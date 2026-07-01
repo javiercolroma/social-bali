@@ -11,6 +11,7 @@
 		06A9A3B220C039C2F0656AB2 /* WorkoutRemote.swift in Sources */ = {isa = PBXBuildFile; fileRef = 896F243436BE8AEDD8406091 /* WorkoutRemote.swift */; };
 		0B44BA771BBDD065482CD7C3 /* Backend.swift in Sources */ = {isa = PBXBuildFile; fileRef = 525FBF89172E34D317FCAF44 /* Backend.swift */; };
 		0C13CF2C45615798373A8B62 /* GoogleSignIn in Frameworks */ = {isa = PBXBuildFile; productRef = A833925758C2164FA36A9245 /* GoogleSignIn */; };
+		1844C711EF657BFC211693C5 /* DiscoverPeopleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 470412DEE02D5F1B63B07DF7 /* DiscoverPeopleView.swift */; };
 		19543B83A219C184F8AEC8FB /* Shop.swift in Sources */ = {isa = PBXBuildFile; fileRef = A630EAE69588CF040DC98CE6 /* Shop.swift */; };
 		27B6D8D9F090BE9793602AA9 /* CommunityView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B553BE8FEA6DE363E4659DB /* CommunityView.swift */; };
 		2A369E47736FA626323CEF25 /* ProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E53E08D1A4CF0DE70074A344 /* ProfileView.swift */; };
@@ -90,6 +91,7 @@
 		3ED686425803AD9C87827576 /* Gamification.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Gamification.swift; sourceTree = "<group>"; };
 		43FB86BA08732C17FD45EDF6 /* GymSwipeIOS.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = GymSwipeIOS.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		45AAAB98E146869DA2747469 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		470412DEE02D5F1B63B07DF7 /* DiscoverPeopleView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiscoverPeopleView.swift; sourceTree = "<group>"; };
 		48EC08BA00B1509F5F295C62 /* HealthManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HealthManager.swift; sourceTree = "<group>"; };
 		49AFF7AA78F4C4E8A92223C7 /* WorkoutIntents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutIntents.swift; sourceTree = "<group>"; };
 		4B553BE8FEA6DE363E4659DB /* CommunityView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommunityView.swift; sourceTree = "<group>"; };
@@ -195,6 +197,7 @@
 				4B553BE8FEA6DE363E4659DB /* CommunityView.swift */,
 				A415A6402658DC75C3C37C3C /* Components.swift */,
 				1D19B1F26226F79DC0669B52 /* Countries.swift */,
+				470412DEE02D5F1B63B07DF7 /* DiscoverPeopleView.swift */,
 				AC0D952E1A0BC084FD9FDB7C /* Exercises.swift */,
 				3ED686425803AD9C87827576 /* Gamification.swift */,
 				1250C29A42354C7EA62ADC58 /* GymScore.swift */,
@@ -346,6 +349,7 @@
 				27B6D8D9F090BE9793602AA9 /* CommunityView.swift in Sources */,
 				2A71043ED4BBAF7A09523AFF /* Components.swift in Sources */,
 				FF1D8080F80F010C04EB3609 /* Countries.swift in Sources */,
+				1844C711EF657BFC211693C5 /* DiscoverPeopleView.swift in Sources */,
 				942CEB3E1BDC0BABD1CB038F /* Exercises.swift in Sources */,
 				E16DCF8706F165D2CD3C5A8C /* Gamification.swift in Sources */,
 				46248B5DA3F8CE7CF349D01C /* GymScore.swift in Sources */,

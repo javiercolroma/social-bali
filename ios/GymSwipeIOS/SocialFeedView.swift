@@ -55,6 +55,7 @@ struct SocialFeedView: View {
     @State private var suggestionsSnapshot: [SocialPerson] = []
     @State private var paraTiFeed: [FeedItem] = []
     @State private var paraTiLoaded = false
+    @State private var showDiscover = false
 
     private let tabs: [(title: String, icon: String)] = [("Seguidos", "person.2.fill"), ("Para ti", "sparkles")]
 
@@ -76,6 +77,7 @@ struct SocialFeedView: View {
                 .environmentObject(store)
         }
         .sheet(item: $likesOfPost) { postLikesSheet($0) }
+        .sheet(isPresented: $showDiscover) { DiscoverPeopleView().environmentObject(store) }
     }
 
     // MARK: - Me gusta de una publicación
@@ -149,6 +151,14 @@ struct SocialFeedView: View {
                     .frame(maxWidth: .infinity).frame(height: 40)
                     .background(active ? Brand.green : Brand.chip)
                     .clipShape(RoundedRectangle(cornerRadius: 12)).contentShape(Rectangle())
+                }.buttonStyle(.plain)
+            }
+            // Buscar usuarios reales (solo con backend): abre el grafo social real.
+            if Backend.shared.isConfigured {
+                Button { FX.tap(); showDiscover = true } label: {
+                    Image(systemName: "person.badge.plus").font(.system(size: 15, weight: .heavy))
+                        .foregroundColor(Brand.ink).frame(width: 46, height: 40)
+                        .background(Brand.chip).clipShape(RoundedRectangle(cornerRadius: 12))
                 }.buttonStyle(.plain)
             }
         }
