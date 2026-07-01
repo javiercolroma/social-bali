@@ -81,6 +81,64 @@ final class Backend {
             .execute()
             .value
     }
+
+    // MARK: - Grafo social (follows) y feed
+
+    /// Seguir / solicitar (privadas → status "pending" hasta que acepten).
+    func setFollow(_ userId: UUID, status: String = "accepted") async throws {
+        guard let client, let me = await currentUserIdAsync() else { throw BackendError.notConfigured }
+        try await client.from("follows")
+            .upsert(FollowRow(follower_id: me.uuidString, following_id: userId.uuidString, status: status))
+            .execute()
+    }
+
+    func unfollow(_ userId: UUID) async throws {
+        guard let client, let me = await currentUserIdAsync() else { throw BackendError.notConfigured }
+        try await client.from("follows").delete()
+            .eq("follower_id", value: me.uuidString)
+            .eq("following_id", value: userId.uuidString)
+            .execute()
+    }
+
+    /// A quién sigo (con su estado pendiente/aceptado).
+    func fetchFollowing() async throws -> [FollowRow] {
+        guard let client, let me = await currentUserIdAsync() else { return [] }
+        return try await client.from("follows").select().eq("follower_id", value: me.uuidString).execute().value
+    }
+
+    /// Quién me sigue.
+    func fetchFollowers() async throws -> [FollowRow] {
+        guard let client, let me = await currentUserIdAsync() else { return [] }
+        return try await client.from("follows").select().eq("following_id", value: me.uuidString).execute().value
+    }
+
+    /// Busca usuarios reales por @handle.
+    func searchProfiles(_ query: String, limit: Int = 20) async throws -> [ProfileRow] {
+        guard let client, !query.isEmpty else { return [] }
+        return try await client.from("profiles")
+            .select("id,handle,name,avatar_url,country,city,gym,is_private")
+            .ilike("handle", value: "%\(query)%")
+            .limit(limit)
+            .execute().value
+    }
+
+    func fetchProfiles(ids: [UUID]) async throws -> [ProfileRow] {
+        guard let client, !ids.isEmpty else { return [] }
+        return try await client.from("profiles")
+            .select("id,handle,name,avatar_url,country,city,gym,is_private")
+            .in("id", values: ids.map { $0.uuidString })
+            .execute().value
+    }
+
+    /// Feed: la RLS ya filtra a lo que puedes ver (lo tuyo + público + a quien sigues).
+    func fetchFeed(limit: Int = 50) async throws -> [SessionRow] {
+        guard let client else { return [] }
+        return try await client.from("workout_sessions")
+            .select()
+            .order("date", ascending: false)
+            .limit(limit)
+            .execute().value
+    }
 }
 
 enum BackendError: Error { case notConfigured }
@@ -99,7 +157,7 @@ enum AuthNonce {
 }
 
 /// Fila de `public.profiles`. `id` debe ser el `auth.uid()` del usuario.
-struct ProfileRow: Encodable {
+struct ProfileRow: Codable {
     let id: UUID
     var handle: String?
     var name: String?
@@ -108,6 +166,13 @@ struct ProfileRow: Encodable {
     var city: String?
     var gym: String?
     var is_private: Bool?
+}
+
+/// Fila de `public.follows` (grafo social estilo Instagram).
+struct FollowRow: Codable {
+    let follower_id: String
+    let following_id: String
+    let status: String
 }
 
 /// Fecha ↔ `timestamptz`. Escribimos ISO8601 con milisegundos; al leer somos tolerantes
