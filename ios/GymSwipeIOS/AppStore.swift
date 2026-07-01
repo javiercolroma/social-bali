@@ -233,6 +233,20 @@ final class AppStore: ObservableObject {
         return nil
     }
 
+    /// Refleja un mensaje (enviado o recibido) en la lista de conversaciones al instante.
+    func appendLocalMessage(_ personId: String, _ msg: ChatMessage) {
+        if let i = conversations.firstIndex(where: { $0.personId == personId }) {
+            if !conversations[i].messages.contains(where: { $0.id == msg.id }) {
+                conversations[i].messages.append(msg)
+                conversations[i].lastAt = msg.at
+            }
+        } else {
+            conversations.insert(Conversation(id: conversationId(personId), personId: personId,
+                                              messages: [msg], unread: 0, lastAt: msg.at), at: 0)
+        }
+        conversations.sort { $0.lastAt > $1.lastAt }
+    }
+
     /// Construye la lista de conversaciones REALES a partir de tus mensajes del servidor.
     func loadConversations() {
         guard BackendConfig.isConfigured else { return }
@@ -702,7 +716,9 @@ final class AppStore: ObservableObject {
 
     @discardableResult
     func openConversation(_ personId: String) -> String {
-        if !conversations.contains(where: { $0.personId == personId }) {
+        // Con backend NO creamos conversaciones vacías (saldrían como "Sin mensajes todavía"):
+        // la conversación aparece en la lista al enviar/recibir el primer mensaje real.
+        if !BackendConfig.isConfigured && !conversations.contains(where: { $0.personId == personId }) {
             conversations.insert(Conversation(id: conversationId(personId), personId: personId, messages: [], unread: 0, lastAt: Date()), at: 0)
         }
         markConversationRead(personId)

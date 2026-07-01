@@ -159,7 +159,8 @@ struct RootView: View {
             MeProfileView().environmentObject(store)
         }
         .fullScreenCover(isPresented: Binding(
-            get: { (store.account == nil && !store.checkingProfile) || editingAccount },
+            // Solo con sesión iniciada: al cerrar sesión (auth=nil) NO debe salir el onboarding.
+            get: { store.auth != nil && ((store.account == nil && !store.checkingProfile) || editingAccount) },
             set: { if !$0 { editingAccount = false } }
         )) {
             // Usuario nuevo: acompañamiento cálido paso a paso. Edición: el formulario simple de siempre.

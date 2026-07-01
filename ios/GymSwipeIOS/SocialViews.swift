@@ -345,7 +345,10 @@ struct ChatView: View {
                   row.sender_id.lowercased() == personId.lowercased() else { continue }
             let msg = ChatMessage(id: row.id, fromMe: false, text: row.text,
                                   at: BackendDate.parse(row.created_at) ?? Date())
-            if !realMessages.contains(where: { $0.id == msg.id }) { realMessages.append(msg) }
+            if !realMessages.contains(where: { $0.id == msg.id }) {
+                realMessages.append(msg)
+                store.appendLocalMessage(personId, msg)   // último mensaje recibido en la lista
+            }
         }
     }
 
@@ -439,7 +442,9 @@ struct ChatView: View {
         guard !t.isEmpty else { return }
         FX.tap()
         if realMode, let uid = UUID(uuidString: personId) {
-            realMessages.append(ChatMessage(id: UUID().uuidString, fromMe: true, text: t, at: Date()))
+            let msg = ChatMessage(id: UUID().uuidString, fromMe: true, text: t, at: Date())
+            realMessages.append(msg)
+            store.appendLocalMessage(personId, msg)   // refleja el último mensaje en la lista
             Task { try? await Backend.shared.sendMessage(to: uid, text: t) }
         } else {
             store.sendMessage(personId, draft, activeConversation: conversationId(personId))
@@ -452,7 +457,16 @@ struct ChatView: View {
             if m.fromMe { Spacer(minLength: 50) }
             VStack(alignment: m.fromMe ? .trailing : .leading, spacing: 2) {
                 Text(m.text).font(.system(size: 15)).foregroundColor(m.fromMe ? Color(hex: "10150a") : Color(hex: "2c3127"))
-                Text(shortTime(m.at)).font(.system(size: 10, weight: .semibold)).opacity(0.5)
+                HStack(spacing: 3) {
+                    Text(shortTime(m.at)).font(.system(size: 10, weight: .semibold)).opacity(0.5)
+                    if m.fromMe {
+                        // Doble check estilo WhatsApp (enviado; sin confirmación de lectura).
+                        ZStack {
+                            Image(systemName: "checkmark").offset(x: -2.5)
+                            Image(systemName: "checkmark").offset(x: 1.5)
+                        }.font(.system(size: 8, weight: .bold)).opacity(0.55)
+                    }
+                }
             }
             .padding(.horizontal, 11).padding(.vertical, 8)
             .background(m.fromMe ? Brand.greenSoft : Brand.chip)
