@@ -168,6 +168,7 @@ struct SettingsView: View {
     @AppStorage("fxHaptics") private var hapticsOn = true
     @ObservedObject private var health = HealthManager.shared
     @State private var confirmLogout = false
+    @State private var toursReset = false
 
     var body: some View {
         NavigationStack {
@@ -225,6 +226,10 @@ struct SettingsView: View {
                             Link(destination: url) { settingsRow("Soporte", "questionmark.circle.fill", chevron: true) }
                         }
                         Divider()
+                        Button { FX.tap(); store.resetTours(); toursReset = true } label: {
+                            settingsRow("Ver tutoriales de nuevo", "sparkles", chevron: false)
+                        }.buttonStyle(.plain)
+                        Divider()
                         HStack { Label("Versión", systemImage: "info.circle"); Spacer(); Text("1.0").foregroundColor(Brand.soft) }
                             .font(.system(size: 15, weight: .semibold)).foregroundColor(Brand.ink)
                     }
@@ -240,6 +245,11 @@ struct SettingsView: View {
             }
             .background(Brand.bg)
             .navigationTitle("Ajustes").navigationBarTitleDisplayMode(.inline)
+            .alert("Tutoriales reactivados", isPresented: $toursReset) {
+                Button("Entendido", role: .cancel) {}
+            } message: {
+                Text("Forgey te volverá a guiar la próxima vez que entres en cada sección.")
+            }
             .confirmationDialog("¿Cerrar sesión?", isPresented: $confirmLogout, titleVisibility: .visible) {
                 Button("Cerrar sesión", role: .destructive) { FX.warning(); store.logout(); dismiss() }
                 Button("Cancelar", role: .cancel) {}

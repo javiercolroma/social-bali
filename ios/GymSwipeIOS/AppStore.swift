@@ -21,6 +21,7 @@ final class AppStore: ObservableObject {
     @Published var trainingPlans: [TrainingPlan] = []
     @Published var appliedKudos: Set<String> = []   // posts del muro a los que has dado aplausos
     @Published var hiddenWorkoutIds: Set<String> = []   // entrenos por defecto que el usuario ha eliminado
+    @Published var seenTours: Set<String> = []   // secciones cuyo tutorial guiado ya se vio
 
     let people = AppStore.demoPeople
     let templates = AppStore.builtinTemplates
@@ -50,6 +51,7 @@ final class AppStore: ObservableObject {
             sessions = snap.sessions ?? []
             appliedKudos = Set(snap.appliedKudos ?? [])
             hiddenWorkoutIds = Set(snap.hiddenWorkoutIds ?? [])
+            seenTours = Set(snap.seenTours ?? [])
             // Migrate old "Mis entrenos" group to "Otros"
             savedWorkouts = savedWorkouts.map { w in
                 guard w.block == "Mis entrenos" else { return w }
@@ -83,6 +85,7 @@ final class AppStore: ObservableObject {
         var sessions: [WorkoutSession]?
         var appliedKudos: [String]?
         var hiddenWorkoutIds: [String]?
+        var seenTours: [String]?
     }
 
     func persist() {
@@ -91,7 +94,8 @@ final class AppStore: ObservableObject {
             exercises: exercises, player: player, history: history, profile: profile,
             savedWorkouts: savedWorkouts, auth: auth, account: account, relationships: relationships,
             conversations: conversations, notifications: notifications, trainingPlans: trainingPlans,
-            sessions: sessions, appliedKudos: Array(appliedKudos), hiddenWorkoutIds: Array(hiddenWorkoutIds)
+            sessions: sessions, appliedKudos: Array(appliedKudos), hiddenWorkoutIds: Array(hiddenWorkoutIds),
+            seenTours: Array(seenTours)
         )
         if let data = try? JSONEncoder().encode(snap) {
             UserDefaults.standard.set(data, forKey: storeKey)
@@ -283,6 +287,12 @@ final class AppStore: ObservableObject {
 
     /// Cerrar sesión: vuelve a la pantalla de login (se conserva el perfil para reentrar).
     func logout() { auth = nil; persist() }
+
+    // MARK: - Tutorial guiado por sección
+    func tourSeen(_ key: String) -> Bool { seenTours.contains(key) }
+    func markTourSeen(_ key: String) { seenTours.insert(key); persist() }
+    /// Reinicia todos los tutoriales (para volver a verlos desde Ajustes).
+    func resetTours() { seenTours = []; persist() }
 
     // MARK: - Seguir / solicitudes (estilo Instagram)
 

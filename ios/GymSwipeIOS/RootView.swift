@@ -12,6 +12,7 @@ struct RootView: View {
     @State private var chatPerson: IdString?
     @State private var profilePerson: IdString?
     @State private var showProfile = false
+    @State private var activeTour: Int?   // sección cuyo tutorial se está mostrando
 
     private let titles = ["Social", "Plan", "Entreno", "Comunidad", "Actividad"]
 
@@ -27,11 +28,14 @@ struct RootView: View {
                 screen(4) { ActivityView() }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .onChange(of: tab) { _ in FX.selection() }
+            .onChange(of: tab) { t in FX.selection(); maybeShowTour(t) }
 
             CustomTabBar(tab: tab, onSelect: { tab = $0 }).id(tab)
         }
         .background(Brand.bg.ignoresSafeArea())
+        .onAppear { maybeShowTour(tab) }
+        // Tras el onboarding (la cuenta pasa a existir), muestra el tour de Social.
+        .onChange(of: store.account == nil) { isNil in if !isNil { maybeShowTour(tab) } }
         .sheet(isPresented: $showMessages) {
             MessagesSheet(initialTab: messagesTab,
                           onOpenChat: { showMessages = false; chatPerson = IdString(id: $0) },
@@ -55,6 +59,18 @@ struct RootView: View {
             }
         }
         .animation(.easeInOut(duration: 0.28), value: chatPerson?.id)
+        .overlay {
+            if let s = activeTour {
+                CoachTour(section: s, onFinish: {
+                    store.markTourSeen("tour-\(s)")
+                    activeTour = nil
+                })
+                .environmentObject(store)
+                .transition(.opacity)
+                .zIndex(8)
+            }
+        }
+        .animation(.easeInOut(duration: 0.25), value: activeTour)
         .sheet(item: $profilePerson) { item in
             if let person = store.person(item.id) {
                 FriendProfileView(person: person).environmentObject(store)
@@ -82,6 +98,19 @@ struct RootView: View {
         content()
             .opacity(tab == index ? 1 : 0)
             .allowsHitTesting(tab == index)
+    }
+
+    /// La primera vez que entras en una sección, Forgey te da un tour (una sola vez por sección).
+    /// Espera a que la pantalla asiente y no interrumpe si ya hay un tour o una hoja abierta.
+    private func maybeShowTour(_ t: Int) {
+        guard store.account != nil, activeTour == nil else { return }
+        let key = "tour-\(t)"
+        guard !store.tourSeen(key) else { return }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.55) {
+            guard tab == t, activeTour == nil, !store.tourSeen(key),
+                  chatPerson == nil, profilePerson == nil, !showMessages, !showNotifications, !showProfile else { return }
+            activeTour = t
+        }
     }
 
     private var header: some View {

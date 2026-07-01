@@ -900,3 +900,146 @@ private enum OnboardingSurvey {
             }
         })
 }
+
+// MARK: - Tutorial guiado por sección (Forgey te acompaña)
+
+/// Tour de bienvenida a cada una de las 5 secciones del menú: Forgey asoma desde el
+/// lateral y te acompaña con 1-2 consejos escritos a máquina. Profesional y saltable,
+/// se muestra una sola vez por sección (persistido en `store.seenTours`).
+struct CoachTour: View {
+    let section: Int
+    var onFinish: () -> Void
+
+    @State private var step = 0
+    @State private var shown = ""
+    @State private var typingDone = false
+    @State private var typeTask: Task<Void, Never>?
+    @State private var appear = false
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    private var lines: [String] { CoachTour.content[section] ?? [] }
+    private var current: String { lines.indices.contains(step) ? lines[step] : "" }
+    private var isLast: Bool { step >= lines.count - 1 }
+
+    var body: some View {
+        ZStack(alignment: .bottom) {
+            Brand.ink.opacity(0.22).ignoresSafeArea()
+                .onTapGesture { if !typingDone { finishTyping() } }
+
+            ZStack(alignment: .topLeading) {
+                card
+                // Forgey asoma sobre la esquina superior izquierda de la tarjeta,
+                // entrando deslizándose desde el lateral y saludando al llegar.
+                Mascot(size: 82, wave: appear, bounceTrigger: reduceMotion ? 0 : step)
+                    .offset(x: 14, y: -44)
+                    .offset(x: appear ? 0 : -210)
+                    .allowsHitTesting(false)
+            }
+            .padding(.horizontal, 14)
+            .padding(.bottom, 12)
+        }
+        .onAppear {
+            withAnimation(reduceMotion ? .easeOut(duration: 0.25)
+                                       : .spring(response: 0.52, dampingFraction: 0.72)) { appear = true }
+            startTyping()
+        }
+        .onChange(of: step) { _ in startTyping() }
+        .onDisappear { typeTask?.cancel() }
+    }
+
+    private var card: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Text(CoachTour.names[safe: section] ?? "")
+                .font(.system(size: 12, weight: .heavy)).foregroundColor(Color(hex: "6ea300"))
+                .textCase(.uppercase).kerning(0.5)
+            // Consejo escrito a máquina; el texto completo (invisible) reserva la altura
+            // para que la tarjeta no salte mientras aparecen las letras.
+            ZStack(alignment: .topLeading) {
+                Text(current).font(.system(size: 16, weight: .heavy)).foregroundColor(.clear)
+                Text(shown).font(.system(size: 16, weight: .heavy)).foregroundColor(Brand.ink)
+            }
+            .fixedSize(horizontal: false, vertical: true)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .contentShape(Rectangle())
+            .onTapGesture { if !typingDone { finishTyping() } }
+
+            HStack(spacing: 8) {
+                // Puntos de progreso
+                ForEach(0..<max(1, lines.count), id: \.self) { i in
+                    Capsule().fill(i == step ? Brand.green : Brand.ink.opacity(0.16))
+                        .frame(width: i == step ? 18 : 6, height: 6)
+                }
+                Spacer()
+                Button { next() } label: {
+                    Text(isLast ? "¡Entendido!" : "Siguiente")
+                        .font(.system(size: 15, weight: .heavy)).foregroundColor(Color(hex: "10150a"))
+                        .padding(.horizontal, 22).frame(height: 44)
+                        .background(Brand.green).clipShape(Capsule())
+                        .shadow(color: Brand.green.opacity(0.35), radius: 8, y: 4)
+                }
+            }
+        }
+        .padding(18)
+        .padding(.top, 34)   // hueco para Forgey asomando arriba a la izquierda
+        .frame(maxWidth: .infinity)
+        .background(Color.white)
+        .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 24, style: .continuous).stroke(Brand.line))
+        .overlay(alignment: .topTrailing) {
+            Button { finishAll() } label: {
+                Text("Saltar").font(.system(size: 13, weight: .heavy)).foregroundColor(Brand.muted)
+                    .padding(.top, 12).padding(.trailing, 16)
+            }
+        }
+        .shadow(color: Brand.ink.opacity(0.16), radius: 22, y: 12)
+    }
+
+    private func next() {
+        FX.tap()
+        if isLast { finishAll() } else { step += 1 }
+    }
+
+    private func finishAll() {
+        FX.tap()
+        typeTask?.cancel()
+        withAnimation(.easeIn(duration: 0.2)) { appear = false }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.18) { onFinish() }
+    }
+
+    private func startTyping() {
+        typeTask?.cancel(); typingDone = false; shown = ""
+        let full = current
+        if reduceMotion { shown = full; typingDone = true; return }
+        let perChar = min(0.04, 2.4 / Double(max(1, full.count)))
+        typeTask = Task { @MainActor in
+            try? await Task.sleep(nanoseconds: 220_000_000)
+            for ch in full {
+                if Task.isCancelled { return }
+                shown.append(ch)
+                var d = perChar * Double.random(in: 0.7...1.4)
+                if ".!?…".contains(ch) { d += 0.11 } else if ",;".contains(ch) { d += 0.05 }
+                try? await Task.sleep(nanoseconds: UInt64(d * 1_000_000_000))
+            }
+            typingDone = true
+        }
+    }
+    private func finishTyping() { typeTask?.cancel(); shown = current; typingDone = true }
+
+    static let names = ["Social", "Plan", "Entreno", "Comunidad", "Actividad"]
+    static let content: [Int: [String]] = [
+        0: ["Bienvenido a tu muro. Aquí ves lo que entrenan tus colegas al momento.",
+            "Reacciona, comenta y comparte tus sesiones. La motivación se contagia 🔥"],
+        1: ["Aquí guardas tus rutinas: créalas a tu medida o elige una de las mías.",
+            "Cuando toque entrenar, pulsa «Cargar» y la llevo directa a tu sesión 💪"],
+        2: ["Tu entreno en vivo: apunta cada serie con su peso y sus repeticiones.",
+            "Al cerrar una serie te arranco el descanso y te aviso cuando toca seguir."],
+        3: ["Compites por divisiones, de Hierro a Maestro. Entrena para subir de liga.",
+            "¿Sin compañía? Con Partner te empareja con alguien que entrena como tú 🤝"],
+        4: ["Tu racha y tu Gym Score viven aquí: cada sesión los hace crecer.",
+            "Mira el calendario y tu historial para ver todo lo que has forjado 📈"],
+    ]
+}
+
+private extension Array {
+    subscript(safe i: Int) -> Element? { indices.contains(i) ? self[i] : nil }
+}
