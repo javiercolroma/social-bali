@@ -189,6 +189,26 @@ final class Backend {
             .eq("session_id", value: sessionId).order("created_at", ascending: true).execute().value
     }
 
+    // MARK: - Mensajería 1:1
+
+    /// Historial de la conversación con otro usuario (ambos sentidos), cronológico.
+    func fetchMessages(with otherUserId: UUID) async throws -> [MessageRow] {
+        guard let client, let me = await currentUserIdAsync() else { return [] }
+        let a = me.uuidString, b = otherUserId.uuidString
+        return try await client.from("messages").select()
+            .or("and(sender_id.eq.\(a),recipient_id.eq.\(b)),and(sender_id.eq.\(b),recipient_id.eq.\(a))")
+            .order("created_at", ascending: true)
+            .execute().value
+    }
+
+    /// Envía un mensaje a otro usuario.
+    func sendMessage(to otherUserId: UUID, text: String) async throws {
+        guard let client, let me = await currentUserIdAsync() else { throw BackendError.notConfigured }
+        try await client.from("messages")
+            .insert(MessageInsert(sender_id: me.uuidString, recipient_id: otherUserId.uuidString, text: text))
+            .execute()
+    }
+
     // MARK: - Ranking / Liga (XP semanal real)
 
     /// Clasificación por XP de la semana en curso (RPC `weekly_xp_leaderboard`, solo verificado).
@@ -283,6 +303,22 @@ struct CommentRow: Codable {
     let session_id: String
     let user_id: String
     let parent_id: String?
+    let text: String
+    let created_at: String
+}
+
+/// Alta de mensaje (sin id/fecha).
+struct MessageInsert: Encodable {
+    let sender_id: String
+    let recipient_id: String
+    let text: String
+}
+
+/// Mensaje leído de `public.messages`.
+struct MessageRow: Codable {
+    let id: String
+    let sender_id: String
+    let recipient_id: String
     let text: String
     let created_at: String
 }
