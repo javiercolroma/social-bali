@@ -39,6 +39,10 @@ final class AppStore: ObservableObject {
     @Published var leagueTier: Int = 0                      // liga actual (0 = Bronce … 6 = Leyenda)
     @Published var leagueWeekId: String = ""               // semana a la que pertenece la liga actual
     @Published var leaguePromoted: Int? = nil              // nueva liga al ascender (efímero, para celebrar)
+    @Published var ownedCosmetics: Set<String> = []        // cosméticos comprados
+    @Published var equippedFrame: String? = nil            // marco de avatar equipado
+    @Published var equippedForgey: String? = nil           // accesorio de Forgey equipado
+    @Published var equippedTitle: String? = nil            // título mostrado en el perfil
 
     let people = AppStore.demoPeople
     let templates = AppStore.builtinTemplates
@@ -79,6 +83,10 @@ final class AppStore: ObservableObject {
             streakMilestones = Set(snap.streakMilestones ?? [])
             leagueTier = snap.leagueTier ?? 0
             leagueWeekId = snap.leagueWeekId ?? ""
+            ownedCosmetics = Set(snap.ownedCosmetics ?? [])
+            equippedFrame = snap.equippedFrame
+            equippedForgey = snap.equippedForgey
+            equippedTitle = snap.equippedTitle
             // Migrate old "Mis entrenos" group to "Otros"
             savedWorkouts = savedWorkouts.map { w in
                 guard w.block == "Mis entrenos" else { return w }
@@ -126,6 +134,10 @@ final class AppStore: ObservableObject {
         var streakMilestones: [Int]?
         var leagueTier: Int?
         var leagueWeekId: String?
+        var ownedCosmetics: [String]?
+        var equippedFrame: String?
+        var equippedForgey: String?
+        var equippedTitle: String?
     }
 
     func persist() {
@@ -138,7 +150,9 @@ final class AppStore: ObservableObject {
             seenTours: Array(seenTours), coins: coins, unlockedAchievements: Array(unlockedAchievements),
             personalBests: personalBests, prCount: prCount, claimedQuests: Array(claimedQuests),
             streakFreezes: streakFreezes, shieldedDays: Array(shieldedDays), streakMilestones: Array(streakMilestones),
-            leagueTier: leagueTier, leagueWeekId: leagueWeekId
+            leagueTier: leagueTier, leagueWeekId: leagueWeekId,
+            ownedCosmetics: Array(ownedCosmetics), equippedFrame: equippedFrame,
+            equippedForgey: equippedForgey, equippedTitle: equippedTitle
         )
         if let data = try? JSONEncoder().encode(snap) {
             UserDefaults.standard.set(data, forKey: storeKey)

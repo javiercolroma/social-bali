@@ -406,6 +406,8 @@ struct LeagueView: View {
 struct GamificationCard: View {
     @EnvironmentObject var store: AppStore
     var onOpenLogros: () -> Void
+    var onOpenShop: () -> Void = {}
+    var onOpenTitles: () -> Void = {}
 
     var body: some View {
         let lv = getLevelProgress(store.player.xp)
@@ -434,16 +436,24 @@ struct GamificationCard: View {
                 }
             }
             Divider()
-            Button { FX.tap(); onOpenLogros() } label: {
-                HStack(spacing: 8) {
-                    Image(systemName: "trophy.fill").font(.system(size: 14)).foregroundColor(Color(hex: "e2a915"))
-                    Text("Logros").font(.system(size: 15, weight: .heavy)).foregroundColor(Brand.ink)
-                    Spacer()
-                    Text("\(store.unlockedCount)/\(store.totalAchievements)").font(.system(size: 14, weight: .heavy)).foregroundColor(Brand.soft)
-                    Image(systemName: "chevron.right").font(.system(size: 12, weight: .bold)).foregroundColor(Brand.soft)
-                }.contentShape(Rectangle())
-            }.buttonStyle(.plain)
+            gamRow("Logros", "trophy.fill", Color(hex: "e2a915"), trailing: "\(store.unlockedCount)/\(store.totalAchievements)", action: onOpenLogros)
+            Divider()
+            gamRow("Tienda", "bag.fill", Brand.green, trailing: "🪙 \(store.coins)", action: onOpenShop)
+            Divider()
+            gamRow("Títulos", "seal.fill", Color(hex: "9b6cf2"), trailing: store.equippedTitle ?? "elegir", action: onOpenTitles)
         }
+    }
+
+    private func gamRow(_ title: String, _ icon: String, _ tint: Color, trailing: String, action: @escaping () -> Void) -> some View {
+        Button { FX.tap(); action() } label: {
+            HStack(spacing: 8) {
+                Image(systemName: icon).font(.system(size: 14)).foregroundColor(tint).frame(width: 18)
+                Text(title).font(.system(size: 15, weight: .heavy)).foregroundColor(Brand.ink)
+                Spacer()
+                Text(trailing).font(.system(size: 13, weight: .heavy)).foregroundColor(Brand.soft).lineLimit(1)
+                Image(systemName: "chevron.right").font(.system(size: 12, weight: .bold)).foregroundColor(Brand.soft)
+            }.contentShape(Rectangle())
+        }.buttonStyle(.plain)
     }
 }
 

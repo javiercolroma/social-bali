@@ -508,10 +508,11 @@ struct OnboardingView: View {
 
 /// Mascota amistosa de Forge Loop: cuerpo "blob" con degradado, brillo, ojos con
 /// destello y mejillas suaves. Acompaña en cada paso del onboarding.
-private struct Mascot: View {
+struct Mascot: View {
     var size: CGFloat = 110
     var wave = false
     var holdsHeart = false
+    var accessory: String? = nil   // accesorio de la tienda (corona, gorro, auriculares…)
     var bounceTrigger: Int = 0   // al cambiar, Forgey hace squash + cara feliz
     @State private var bob = false
     @State private var blink = false
@@ -521,6 +522,17 @@ private struct Mascot: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     private let ink = Color(hex: "16240b")
+
+    /// Accesorios de Forgey (tienda): símbolo, tamaño relativo, color y desplazamiento sobre la cabeza.
+    static func accessory(_ id: String) -> (symbol: String, scale: CGFloat, color: Color, offset: CGFloat)? {
+        switch id {
+        case "corona":      return ("crown.fill", 0.34, Color(hex: "f2c015"), 0.60)
+        case "gorro":       return ("graduationcap.fill", 0.40, Color(hex: "16240b"), 0.58)
+        case "auriculares": return ("headphones", 0.62, Color(hex: "3a3a3c"), 0.10)
+        case "aureola":     return ("circle.dashed", 0.44, Color(hex: "f2c015"), 0.66)
+        default: return nil
+        }
+    }
 
     var body: some View {
         ZStack {
@@ -553,6 +565,11 @@ private struct Mascot: View {
                         .frame(width: size * (happy ? 0.42 : 0.34), height: size * (happy ? 0.21 : 0.16))
                 }.offset(y: size * 0.05)
 
+                if let acc = accessory, let a = Mascot.accessory(acc) {
+                    Image(systemName: a.symbol).font(.system(size: size * a.scale, weight: .heavy))
+                        .foregroundColor(a.color)
+                        .offset(y: -size * a.offset)
+                }
                 if wave {
                     Image(systemName: "hand.wave.fill")
                         .font(.system(size: size * 0.20)).foregroundColor(Color(hex: "f2b134"))

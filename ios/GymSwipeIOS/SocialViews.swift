@@ -685,6 +685,8 @@ struct MeProfileView: View {
     @State private var showSettings = false
     @State private var followList: FollowListData?
     @State private var showLogros = false
+    @State private var showShop = false
+    @State private var showTitles = false
 
     var body: some View {
         let score = store.gymScore
@@ -697,7 +699,9 @@ struct MeProfileView: View {
                         statTile("GYM SCORE", "\(score.total)")
                         statTile("RACHA", "\(store.player.streak) 🔥")
                     }
-                    GamificationCard(onOpenLogros: { showLogros = true })
+                    GamificationCard(onOpenLogros: { showLogros = true },
+                                     onOpenShop: { showShop = true },
+                                     onOpenTitles: { showTitles = true })
                     PanelCard {
                         Text(score.tier).font(.system(size: 13, weight: .heavy)).foregroundColor(Color(hex: "10150a"))
                             .padding(.horizontal, 10).padding(.vertical, 3).background(Brand.greenSoft).clipShape(Capsule())
@@ -731,6 +735,8 @@ struct MeProfileView: View {
             .sheet(item: $followList) { FollowListSheet(title: $0.title, people: $0.people).environmentObject(store) }
             .sheet(isPresented: $showSettings) { SettingsView().environmentObject(store) }
             .sheet(isPresented: $showLogros) { LogrosView().environmentObject(store) }
+            .sheet(isPresented: $showShop) { ShopView().environmentObject(store) }
+            .sheet(isPresented: $showTitles) { TitlesView().environmentObject(store) }
             .onChange(of: store.account?.handle) { _ in if store.account == nil { dismiss() } }
         }
     }
@@ -771,7 +777,13 @@ struct MeProfileView: View {
     private func header(entrenos: Int) -> some View {
         VStack(spacing: 12) {
             ScoredAvatar(account: store.account, score: store.gymScore.total, size: 84)
+                .overlay(AvatarFrame(frameId: store.equippedFrame, size: 84))
             VStack(spacing: 6) {
+                if let title = store.equippedTitle {
+                    Text(title).font(.system(size: 12, weight: .heavy)).foregroundColor(Color(hex: "9b6cf2"))
+                        .padding(.horizontal, 10).padding(.vertical, 3)
+                        .background(Color(hex: "9b6cf2").opacity(0.12)).clipShape(Capsule())
+                }
                 HStack(spacing: 6) {
                     Text(store.account?.name ?? "Tú").font(.system(size: 22, weight: .heavy)).foregroundColor(Brand.ink)
                     if store.profile.isPrivate { Image(systemName: "lock.fill").font(.system(size: 13)).foregroundColor(Brand.soft) }
