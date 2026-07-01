@@ -409,7 +409,26 @@ final class AppStore: ObservableObject {
 
     // MARK: - Account
 
-    func saveAccount(_ acc: Account) { account = acc; persist() }
+    func saveAccount(_ acc: Account) {
+        account = acc; persist()
+        syncProfileToBackend()
+    }
+
+    /// Best-effort: sube el perfil a Supabase si hay backend configurado y sesión abierta.
+    /// (La foto/avatar_url llegará en la fase de Storage; aquí van los campos de texto.)
+    func syncProfileToBackend() {
+        guard Backend.shared.isConfigured, let acc = account, let uid = Backend.shared.currentUserId else { return }
+        let row = ProfileRow(
+            id: uid,
+            handle: acc.handle,
+            name: acc.name,
+            avatar_url: nil,
+            country: profile.country.isEmpty ? nil : profile.country,
+            city: profile.city.isEmpty ? nil : profile.city,
+            gym: profile.gym.isEmpty ? nil : profile.gym,
+            is_private: profile.isPrivate)
+        Task { try? await Backend.shared.upsertProfile(row) }
+    }
 
     /// Inicia sesión con un proveedor (Apple / email / Google). Sin backend: se guarda local.
     func signIn(provider: String, userId: String, email: String?, name: String?) {
@@ -418,7 +437,10 @@ final class AppStore: ObservableObject {
     }
 
     /// Cerrar sesión: vuelve a la pantalla de login (se conserva el perfil para reentrar).
-    func logout() { auth = nil; persist() }
+    func logout() {
+        auth = nil; persist()
+        Task { await Backend.shared.signOut() }
+    }
 
     // MARK: - Tutorial guiado por sección
     func tourSeen(_ key: String) -> Bool { seenTours.contains(key) }

@@ -11,6 +11,9 @@ packages:
   GoogleSignIn:
     url: https://github.com/google/GoogleSignIn-iOS
     from: "7.1.0"
+  Supabase:
+    url: https://github.com/supabase/supabase-swift
+    from: "2.0.0"
 targets:
   GymSwipeIOS:
     type: application
@@ -23,6 +26,8 @@ targets:
       - target: ForgeWidget
       - package: GoogleSignIn
         product: GoogleSignIn
+      - package: Supabase
+        product: Supabase
     entitlements:
       path: GymSwipeIOS/GymSwipeIOS.entitlements
       properties:

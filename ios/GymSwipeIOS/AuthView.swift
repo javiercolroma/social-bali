@@ -9,6 +9,7 @@ struct AuthView: View {
     @State private var showEmail = false
     @State private var email = ""
     @State private var googleNote = false
+    @State private var appleNonce = ""   // nonce en crudo para el login Apple → Supabase
     @FocusState private var emailFocused: Bool
 
     private var validEmail: Bool {
@@ -33,7 +34,10 @@ struct AuthView: View {
 
                 VStack(spacing: 12) {
                     SignInWithAppleButton(.continue) { req in
+                        let nonce = AuthNonce.random()
+                        appleNonce = nonce
                         req.requestedScopes = [.fullName, .email]
+                        req.nonce = AuthNonce.sha256(nonce)   // Apple recibe el hash; Supabase, el crudo
                     } onCompletion: { result in
                         handleApple(result)
                     }
@@ -98,6 +102,10 @@ struct AuthView: View {
             let uid = user.userID ?? profile?.email ?? UUID().uuidString
             FX.success(sound: true)
             withAnimation { store.signIn(provider: "google", userId: uid, email: profile?.email, name: profile?.name) }
+            // Best-effort: si hay backend configurado, abre también la sesión en Supabase.
+            if Backend.shared.isConfigured, let idToken = user.idToken?.tokenString {
+                Task { try? await Backend.shared.signInWithGoogle(idToken: idToken) }
+            }
         }
     }
 
@@ -107,6 +115,12 @@ struct AuthView: View {
         let name = [c.fullName?.givenName, c.fullName?.familyName].compactMap { $0 }.joined(separator: " ")
         FX.success(sound: true)
         withAnimation { store.signIn(provider: "apple", userId: c.user, email: c.email, name: name.isEmpty ? nil : name) }
+        // Best-effort: si hay backend configurado, abre también la sesión en Supabase.
+        if Backend.shared.isConfigured, let tokenData = c.identityToken,
+           let idToken = String(data: tokenData, encoding: .utf8) {
+            let nonce = appleNonce
+            Task { try? await Backend.shared.signInWithApple(idToken: idToken, nonce: nonce) }
+        }
     }
 
     private func signInEmail() {
