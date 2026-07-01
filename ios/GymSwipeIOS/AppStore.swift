@@ -36,6 +36,9 @@ final class AppStore: ObservableObject {
     @Published var shieldedDays: Set<String> = []          // días cubiertos por un congelador (yyyy-MM-dd)
     @Published var streakMilestones: Set<Int> = []          // hitos de racha ya celebrados
     @Published var streakCelebration: Int? = nil           // hito de racha a celebrar (efímero)
+    @Published var leagueTier: Int = 0                      // liga actual (0 = Bronce … 6 = Leyenda)
+    @Published var leagueWeekId: String = ""               // semana a la que pertenece la liga actual
+    @Published var leaguePromoted: Int? = nil              // nueva liga al ascender (efímero, para celebrar)
 
     let people = AppStore.demoPeople
     let templates = AppStore.builtinTemplates
@@ -74,6 +77,8 @@ final class AppStore: ObservableObject {
             streakFreezes = snap.streakFreezes ?? 0
             shieldedDays = Set(snap.shieldedDays ?? [])
             streakMilestones = Set(snap.streakMilestones ?? [])
+            leagueTier = snap.leagueTier ?? 0
+            leagueWeekId = snap.leagueWeekId ?? ""
             // Migrate old "Mis entrenos" group to "Otros"
             savedWorkouts = savedWorkouts.map { w in
                 guard w.block == "Mis entrenos" else { return w }
@@ -90,6 +95,7 @@ final class AppStore: ObservableObject {
         loaded = true
         // Da por conseguidos (sin celebrar) los logros que ya cumplas al abrir.
         refreshAchievements(celebrate: false)
+        resolveLeagueIfNeeded()   // ascenso/descenso si ha cambiado de semana
     }
 
     // MARK: - Persistence
@@ -118,6 +124,8 @@ final class AppStore: ObservableObject {
         var streakFreezes: Int?
         var shieldedDays: [String]?
         var streakMilestones: [Int]?
+        var leagueTier: Int?
+        var leagueWeekId: String?
     }
 
     func persist() {
@@ -129,7 +137,8 @@ final class AppStore: ObservableObject {
             sessions: sessions, appliedKudos: Array(appliedKudos), hiddenWorkoutIds: Array(hiddenWorkoutIds),
             seenTours: Array(seenTours), coins: coins, unlockedAchievements: Array(unlockedAchievements),
             personalBests: personalBests, prCount: prCount, claimedQuests: Array(claimedQuests),
-            streakFreezes: streakFreezes, shieldedDays: Array(shieldedDays), streakMilestones: Array(streakMilestones)
+            streakFreezes: streakFreezes, shieldedDays: Array(shieldedDays), streakMilestones: Array(streakMilestones),
+            leagueTier: leagueTier, leagueWeekId: leagueWeekId
         )
         if let data = try? JSONEncoder().encode(snap) {
             UserDefaults.standard.set(data, forKey: storeKey)

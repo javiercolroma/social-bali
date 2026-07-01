@@ -210,6 +210,197 @@ struct WeeklyQuestsCard: View {
     }
 }
 
+// MARK: - Liga semanal (ascenso / descenso)
+
+struct LeagueMember: Identifiable {
+    let id: String
+    let name: String
+    let emoji: String
+    let xp: Int
+    let isMe: Bool
+}
+
+enum League {
+    static let names = ["Bronce", "Plata", "Oro", "Platino", "Diamante", "Maestro", "Leyenda"]
+    static let colors = ["b0824a", "9aa3ad", "e2a915", "8fb7c9", "2fb8c6", "9b6cf2", "f2760c"]
+    static let maxTier = names.count - 1
+    static let promoteTop = 3       // los 3 primeros ascienden
+    static let relegateBottom = 3   // los 3 últimos descienden
+    static let botNames = ["Aria", "Bruno", "Chloe", "Diego", "Emma", "Fran", "Gala", "Hugo",
+                           "Iris", "Jon", "Kira", "Luca", "Mara", "Nil", "Ona", "Pol", "Rita", "Saúl"]
+    static let botEmojis = ["🦊", "🐻", "🦅", "🐺", "🦁", "🐯", "🐳", "🦈", "🐴", "🦉", "🐷", "🐸", "🐰", "🐨"]
+
+    static func bots(weekId: String, tier: Int) -> [LeagueMember] {
+        var seed: UInt64 = 1469598103934665603
+        for ch in (weekId + "#\(tier)").unicodeScalars { seed = (seed ^ UInt64(ch.value)) &* 1099511628211 }
+        return (0..<14).map { i in
+            seed = seed &* 6364136223846793005 &+ 1442695040888963407
+            let base = 180 + tier * 130
+            let xp = base + Int((seed >> 33) % UInt64(base * 3 + 250))
+            return LeagueMember(id: "bot\(i)", name: botNames[i % botNames.count],
+                                emoji: botEmojis[i % botEmojis.count], xp: xp, isMe: false)
+        }
+    }
+}
+
+extension AppStore {
+    var leagueName: String { League.names[min(League.maxTier, max(0, leagueTier))] }
+
+    private func weekIdFor(_ date: Date) -> String {
+        let c = Calendar.current.dateComponents([.yearForWeekOfYear, .weekOfYear], from: date)
+        return "\(c.yearForWeekOfYear ?? 0)-W\(c.weekOfYear ?? 0)"
+    }
+    /// XP ganada en la semana ISO de `date` (suma del XP de las sesiones de esa semana).
+    func weekXP(for date: Date = Date()) -> Int {
+        sessions.filter { Calendar.current.isDate($0.date, equalTo: date, toGranularity: .weekOfYear) }
+            .reduce(0) { $0 + $1.xp }
+    }
+    /// Días que faltan para el reinicio de la liga (próximo lunes).
+    var leagueDaysLeft: Int {
+        let cal = Calendar.current
+        guard let next = cal.nextDate(after: Date(), matching: DateComponents(weekday: 2), matchingPolicy: .nextTime) else { return 0 }
+        return max(0, cal.dateComponents([.day], from: cal.startOfDay(for: Date()), to: cal.startOfDay(for: next)).day ?? 0)
+    }
+    /// Clasificación de la liga de esta semana (bots deterministas + tú, por XP semanal).
+    func leagueStandings() -> [LeagueMember] {
+        var m = League.bots(weekId: weekId, tier: leagueTier)
+        m.append(LeagueMember(id: "me", name: account?.name ?? "Tú", emoji: "🙂", xp: weekXP(), isMe: true))
+        return m.sorted { $0.xp > $1.xp }
+    }
+    var myLeagueRank: Int {
+        (leagueStandings().firstIndex { $0.isMe }.map { $0 + 1 }) ?? 0
+    }
+
+    /// Al cambiar de semana, resuelve la liza anterior (ascenso/descenso por posición).
+    func resolveLeagueIfNeeded() {
+        let now = weekId
+        if leagueWeekId.isEmpty { leagueWeekId = now; persist(); return }
+        guard leagueWeekId != now else { return }
+        // Clasificación de la semana pasada con la tier que tenías entonces.
+        let prevDate = Calendar.current.date(byAdding: .day, value: -7, to: Date()) ?? Date()
+        let prevWeek = weekIdFor(prevDate)
+        var members = League.bots(weekId: prevWeek, tier: leagueTier)
+        members.append(LeagueMember(id: "me", name: account?.name ?? "Tú", emoji: "🙂", xp: weekXP(for: prevDate), isMe: true))
+        members.sort { $0.xp > $1.xp }
+        let rank = (members.firstIndex { $0.isMe } ?? members.count - 1) + 1
+        if rank <= League.promoteTop, leagueTier < League.maxTier {
+            leagueTier += 1
+            leaguePromoted = leagueTier
+        } else if rank > members.count - League.relegateBottom, leagueTier > 0 {
+            leagueTier -= 1
+        }
+        leagueWeekId = now
+        persist()
+    }
+}
+
+struct LeaguePromotionCelebration: View {
+    let tier: Int
+    var onDismiss: () -> Void
+    @State private var pop: CGFloat = 0.4
+    var body: some View {
+        let idx = min(League.maxTier, max(0, tier))
+        return ZStack {
+            Color.black.opacity(0.55).ignoresSafeArea().onTapGesture { onDismiss() }
+            ConfettiView().frame(maxWidth: .infinity, maxHeight: .infinity).allowsHitTesting(false)
+            VStack(spacing: 14) {
+                Text("¡HAS ASCENDIDO!").font(.system(size: 13, weight: .heavy)).kerning(1).foregroundColor(Color(hex: League.colors[idx]))
+                ZStack {
+                    Circle().fill(LinearGradient(colors: [Color(hex: League.colors[idx]).opacity(0.95), Color(hex: League.colors[idx]).opacity(0.6)], startPoint: .top, endPoint: .bottom))
+                        .frame(width: 118, height: 118).overlay(Circle().stroke(.white.opacity(0.7), lineWidth: 3))
+                        .shadow(color: Color(hex: League.colors[idx]).opacity(0.75), radius: 18)
+                    Image(systemName: "shield.fill").font(.system(size: 48, weight: .heavy)).foregroundColor(.white)
+                }.scaleEffect(pop)
+                Text("Liga \(League.names[idx])").font(.system(size: 22, weight: .heavy)).foregroundColor(Brand.ink)
+                Text("Terminaste arriba y subes de liga. ¡A por la siguiente!").font(.system(size: 14, weight: .semibold)).foregroundColor(Brand.muted).multilineTextAlignment(.center)
+                Button { onDismiss() } label: { Text("¡Vamos!").frame(maxWidth: .infinity) }
+                    .buttonStyle(PrimaryButtonStyle()).padding(.top, 4)
+            }
+            .padding(24).background(Color.white).clipShape(RoundedRectangle(cornerRadius: 26, style: .continuous))
+            .shadow(color: .black.opacity(0.25), radius: 30, y: 12).padding(.horizontal, 34)
+        }
+        .onAppear { withAnimation(.spring(response: 0.5, dampingFraction: 0.55)) { pop = 1 }; FX.success(sound: true) }
+    }
+}
+
+struct LeagueCard: View {
+    @EnvironmentObject var store: AppStore
+    var onOpen: () -> Void
+    var body: some View {
+        let idx = min(League.maxTier, max(0, store.leagueTier))
+        Button { FX.tap(); onOpen() } label: {
+            PanelCard {
+                HStack(spacing: 12) {
+                    ZStack {
+                        Circle().fill(LinearGradient(colors: [Color(hex: League.colors[idx]).opacity(0.9), Color(hex: League.colors[idx]).opacity(0.6)], startPoint: .top, endPoint: .bottom))
+                            .frame(width: 46, height: 46).overlay(Circle().stroke(.white.opacity(0.6), lineWidth: 1.5))
+                        Image(systemName: "shield.fill").font(.system(size: 20, weight: .heavy)).foregroundColor(.white)
+                    }
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text("Liga \(store.leagueName)").font(.system(size: 15, weight: .heavy)).foregroundColor(Brand.ink)
+                        Text("Vas #\(store.myLeagueRank) · quedan \(store.leagueDaysLeft) días").font(.system(size: 12, weight: .bold)).foregroundColor(Brand.soft)
+                    }
+                    Spacer()
+                    Image(systemName: "chevron.right").font(.system(size: 13, weight: .bold)).foregroundColor(Brand.soft)
+                }
+            }
+        }.buttonStyle(.plain)
+    }
+}
+
+struct LeagueView: View {
+    @EnvironmentObject var store: AppStore
+    var body: some View {
+        let idx = min(League.maxTier, max(0, store.leagueTier))
+        let standings = store.leagueStandings()
+        return NavigationStack {
+            ScrollView {
+                VStack(spacing: 12) {
+                    // Cabecera de la liga
+                    VStack(spacing: 8) {
+                        ZStack {
+                            Circle().fill(LinearGradient(colors: [Color(hex: League.colors[idx]).opacity(0.95), Color(hex: League.colors[idx]).opacity(0.6)], startPoint: .top, endPoint: .bottom))
+                                .frame(width: 72, height: 72).overlay(Circle().stroke(.white.opacity(0.6), lineWidth: 2))
+                                .shadow(color: Color(hex: League.colors[idx]).opacity(0.6), radius: 10)
+                            Image(systemName: "shield.fill").font(.system(size: 30, weight: .heavy)).foregroundColor(.white)
+                        }
+                        Text("Liga \(store.leagueName)").font(.system(size: 20, weight: .heavy)).foregroundColor(Brand.ink)
+                        Text("Los \(League.promoteTop) primeros ascienden · quedan \(store.leagueDaysLeft) días").font(.footnote).foregroundColor(Brand.muted)
+                    }.padding(.vertical, 6)
+
+                    PanelCard {
+                        ForEach(Array(standings.enumerated()), id: \.element.id) { i, m in
+                            leagueRow(i + 1, m, total: standings.count)
+                            if m.id != standings.last?.id { Divider() }
+                        }
+                    }
+                    Text("La liga se reinicia cada lunes. Gana XP entrenando para subir de liga.")
+                        .font(.caption).foregroundColor(Brand.muted).multilineTextAlignment(.center).padding(.top, 2)
+                }.padding(16)
+            }
+            .background(Brand.bg)
+            .navigationTitle("Liga semanal").navigationBarTitleDisplayMode(.inline)
+        }
+    }
+
+    private func leagueRow(_ rank: Int, _ m: LeagueMember, total: Int) -> some View {
+        let promote = rank <= League.promoteTop
+        let relegate = rank > total - League.relegateBottom
+        return HStack(spacing: 11) {
+            Text("\(rank)").font(.system(size: 14, weight: .heavy)).foregroundColor(promote ? Brand.green : (relegate ? Color(hex: "d9534f") : Brand.muted)).frame(width: 22)
+            Avatar(emoji: m.isMe ? "🙂" : m.emoji, size: 32)
+            Text(m.isMe ? "Tú" : m.name).font(.system(size: 14, weight: m.isMe ? .heavy : .semibold)).foregroundColor(Brand.ink)
+            Spacer()
+            Text("\(m.xp) XP").font(.system(size: 13, weight: .heavy)).foregroundColor(Brand.soft).monospacedDigit()
+            if promote { Image(systemName: "arrow.up").font(.system(size: 11, weight: .heavy)).foregroundColor(Brand.green) }
+            else if relegate { Image(systemName: "arrow.down").font(.system(size: 11, weight: .heavy)).foregroundColor(Color(hex: "d9534f")) }
+        }
+        .padding(.vertical, 5).padding(.horizontal, 6)
+        .background(m.isMe ? Brand.greenSoft.opacity(0.4) : Color.clear)
+        .clipShape(RoundedRectangle(cornerRadius: 8))
+    }
+}
+
 // MARK: - Tarjeta de perfil: nivel + monedas + logros
 
 struct GamificationCard: View {

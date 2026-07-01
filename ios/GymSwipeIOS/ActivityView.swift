@@ -12,6 +12,7 @@ struct ActivityView: View {
     @State private var daySheet: DayPayload?
     @State private var showEpleyInfo = false
     @State private var showScoreInfo = false
+    @State private var showLeague = false
 
     private let tabs: [(title: String, icon: String)] = [
         ("Progreso", "chart.line.uptrend.xyaxis"),
@@ -34,6 +35,7 @@ struct ActivityView: View {
         .background(Brand.bg)
         .sheet(item: $detail) { ActivityDetailView(item: activityData($0)).environmentObject(store) }
         .sheet(item: $daySheet) { DaySessionsSheet(date: $0.date, sessions: $0.sessions).environmentObject(store) }
+        .sheet(isPresented: $showLeague) { LeagueView().environmentObject(store) }
     }
 
     private var switcher: some View {
@@ -61,6 +63,7 @@ struct ActivityView: View {
     @ViewBuilder
     private var progressContent: some View {
         rachaCard.tourAnchor("activity.progress")
+        LeagueCard(onOpen: { showLeague = true })
         WeeklyQuestsCard()
         gymScoreCard
         RecordsCard()
