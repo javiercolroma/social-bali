@@ -16,7 +16,7 @@ import UIKit
 /// (El login con Apple y con email funcionan sin nada de esto.)
 enum GoogleAuth {
     /// Pega aquí tu iOS OAuth client ID de Google Cloud.
-    static let clientID = ""
+    static let clientID = "610266617536-rs1havs16kj8hmfcananppassb7v6ads.apps.googleusercontent.com"
 
     /// ¿Están puestas las credenciales? Si no, el botón de Google queda desactivado con ayuda.
     static var isConfigured: Bool { !clientID.isEmpty }

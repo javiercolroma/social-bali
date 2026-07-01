@@ -44,7 +44,7 @@ targets:
         # `npm run ios:generate`. El client ID va en AuthConfig.swift. Ver README.
         CFBundleURLTypes:
           - CFBundleURLSchemes:
-              - GOOGLE_REVERSED_CLIENT_ID
+              - com.googleusercontent.apps.610266617536-rs1havs16kj8hmfcananppassb7v6ads
         ITSAppUsesNonExemptEncryption: false
         NSSupportsLiveActivities: true
         LSApplicationCategoryType: public.app-category.healthcare-fitness
