@@ -40,24 +40,26 @@ final class LiveActivityManager {
         push()
     }
 
-    /// Cambios DIRECTOS desde el App Intent del widget. Actualizan la Live Activity al instante,
-    /// sin pasar por la vista ni el store, que es lo que daba la sensación de lentitud.
-    /// Re-adquiere la actividad y su estado por si iOS relanzó la app para ejecutar el intent
-    /// (en ese caso `currentState` estaría vacío y el cambio se perdía).
-    func bumpReps(_ delta: Int) {
+    /// Cambios DIRECTOS desde el App Intent del widget. IMPORTANTE: son `async` y el intent
+    /// los ESPERA en `perform()` — el sistema recarga la UI del widget justo al terminar
+    /// `perform()`, así que si la actualización no está aplicada para entonces, el botón
+    /// "no responde" hasta la siguiente pasada (eso era la lentitud). Con el await, el
+    /// nuevo valor aparece en la recarga inmediata.
+    /// Re-adquiere la actividad y su estado por si iOS relanzó la app para ejecutar el intent.
+    func bumpReps(_ delta: Int) async {
         guard #available(iOS 16.2, *), let act = liveActivity() else { return }
         var s = liveState(act)
-        s.reps = max(1, s.reps + delta)
+        s.reps = min(50, max(1, s.reps + delta))   // mismos topes que la app
         currentState = s
-        Task { await act.update(ActivityContent(state: s, staleDate: nil)) }
+        await act.update(ActivityContent(state: s, staleDate: nil))
     }
-    func bumpWeight(_ delta: Double) {
+    func bumpWeight(_ delta: Double) async {
         guard #available(iOS 16.2, *), let act = liveActivity() else { return }
         var s = liveState(act)
-        let next = max(0, s.weight + delta)
+        let next = min(500, max(0, s.weight + delta))   // mismos topes que la app
         s.weight = (next * 2).rounded() / 2
         currentState = s
-        Task { await act.update(ActivityContent(state: s, staleDate: nil)) }
+        await act.update(ActivityContent(state: s, staleDate: nil))
     }
 
     @available(iOS 16.2, *)
