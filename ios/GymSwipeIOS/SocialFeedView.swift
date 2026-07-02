@@ -241,9 +241,11 @@ struct SocialFeedView: View {
         paraTiFeed = discover
         paraTiLoaded = true
         // Sugerencias "A quién seguir": solo se reescriben si la petición trajo datos.
+        // Excluye SIEMPRE tu propia cuenta (por uid y por @usuario, por si el uid llega nil).
+        let myHandle = store.account?.handle.lowercased()
         if !suggested.isEmpty {
             suggestionsSnapshot = Array(AppStore.asPeople(suggested)
-                .filter { $0.id != me && !followed.contains($0.id) }
+                .filter { $0.id != me && $0.handle.lowercased() != myHandle && !followed.contains($0.id) }
                 .prefix(10))
         }
         store.loadMyLikes()

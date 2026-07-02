@@ -344,6 +344,32 @@ final class AppStore: ObservableObject {
         persist()
     }
 
+    /// ¿Hay un entreno en marcha? (para no interrumpir con pop-ups de logro mientras entrenas).
+    var isTraining: Bool { !exercises.isEmpty }
+
+    /// Reconstruye `history` a partir de las SESIONES sincronizadas del servidor. `history` es
+    /// local (no se sube), así que tras reinstalar/entrar en otro dispositivo estaría vacío y el
+    /// Gym Score / racha / récords / logros saldrían a 0 pese a tener entrenos. Sintetiza una
+    /// entrada por ejercicio de cada sesión que aún no esté representada (por `sessionId`).
+    @discardableResult
+    func rebuildHistoryFromSessions() -> Bool {
+        let known = Set(history.compactMap { $0.sessionId?.lowercased() })
+        var added: [HistoryEntry] = []
+        for s in sessions where !known.contains(s.id.lowercased()) {
+            for (i, ex) in (s.items ?? []).enumerated() {
+                let logs = ex.logs ?? []
+                let vol = logs.isEmpty ? Double(ex.sets) * Double(ex.reps) * ex.weight
+                                       : logs.reduce(0) { $0 + Double($1.reps) * $1.weight }
+                added.append(HistoryEntry(id: "\(s.id)-\(i)-\(ex.name)", exerciseName: ex.name, day: "",
+                    status: .done, sets: ex.sets, reps: ex.reps, weight: ex.weight, volume: vol,
+                    xp: 0, completedAt: s.date, sessionId: s.id))
+            }
+        }
+        guard !added.isEmpty else { return false }
+        history.insert(contentsOf: added, at: 0)
+        return true
+    }
+
     // Commit the session: write history + XP + a session record, then clear the workout.
     func saveSession(name: String, note: String, photoData: Data?, visibility: WorkoutVisibility, elapsed: Int,
                      avgHeartRate: Int? = nil, maxHeartRate: Int? = nil, location: String? = nil) {
@@ -440,13 +466,23 @@ final class AppStore: ObservableObject {
                 // Merge SIN duplicados: server (fuente de verdad) + las locales que aún no están.
                 let localOnly = sessions.filter { !serverIds.contains($0.id.lowercased()) }
                 sessions = (server + localOnly).sorted { $0.date > $1.date }
-                // Con el histórico ya completo: recalcula la racha y desbloquea (sin celebrar)
-                // los logros que ya se cumplan — si no, quedaban con candado pese a la barra llena.
+                // Reconstruye el histórico desde las sesiones para que el Gym Score / racha /
+                // récords / logros funcionen tras reinstalar o entrar en otro dispositivo.
+                rebuildHistoryFromSessions()
+                detectPRsFromHistory()               // récords a partir del histórico reconstruido
                 player.streak = currentStreak()
-                refreshAchievements(celebrate: false)
+                refreshAchievements(celebrate: false) // backfill silencioso (ya conseguidos antes)
                 persist()
                 print("[Backend] sesiones sincronizadas: \(server.count) servidor + \(localOnly.count) locales")
             } catch { print("[Backend] sync sesiones falló:", error) }
+        }
+    }
+
+    /// Reconstruye los récords (`personalBests`) a partir de TODAS las sesiones, sin celebrar.
+    /// Para que "Tus récords" y los logros de récord sobrevivan a reinstalar/entrar en otro móvil.
+    func detectPRsFromHistory() {
+        for s in sessions where s.verified {
+            detectPRs(s.items ?? [], verified: false)   // verified:false = registra sin celebrar/contar prCount
         }
     }
 
@@ -593,6 +629,8 @@ final class AppStore: ObservableObject {
                 if let c = p.city { profile.city = c }
                 if let g = p.gym { profile.gym = g }
                 if let pv = p.is_private { profile.isPrivate = pv }
+                // Usuario que YA existía: no le repitas el tutorial guiado del menú.
+                seenTours.formUnion((0..<5).map { "tour-\($0)" })
                 persist()
             }
             checkingProfile = false
@@ -674,6 +712,8 @@ final class AppStore: ObservableObject {
                 let isPrivate = person(personId)?.isPrivate == true
                 if isPrivate { pendingFollowingIds.insert(key) }
                 else if let p = person(personId) { followingPeople.append(p) }
+                // Seguir puede desbloquear el logro "Sociable": celébralo (no estás entrenando).
+                refreshAchievements(celebrate: !isTraining)
                 Task {
                     try? await Backend.shared.setFollow(uid, status: isPrivate ? "pending" : "accepted")
                     loadFollowing()
@@ -756,6 +796,8 @@ final class AppStore: ObservableObject {
             let followers = (try? await Backend.shared.fetchFollowers()) ?? []
             let fids = followers.filter { $0.status == "accepted" }.compactMap { UUID(uuidString: $0.follower_id) }
             followerPeople = Self.asPeople((try? await Backend.shared.fetchProfiles(ids: fids)) ?? [])
+            // Ya con la red real cargada, revisa logros sociales (celebra si no entrenas).
+            refreshAchievements(celebrate: !isTraining)
         }
     }
 

@@ -83,9 +83,9 @@ enum Achievements {
         Achievement(id: "social", title: "Sociable", detail: "Sigue a alguien",
                     icon: "person.2.fill", tier: .bronze, coins: 30, goal: 1, value: { min(1, $0.following.count) }),
         Achievement(id: "pr1", title: "Rompe-récords", detail: "Bate tu primer récord",
-                    icon: "trophy.fill", tier: .silver, coins: 60, goal: 1, value: { $0.prCount }),
+                    icon: "trophy.fill", tier: .silver, coins: 60, goal: 1, value: { max($0.prCount, $0.personalBests.count) }),
         Achievement(id: "pr10", title: "Máquina de récords", detail: "Bate 10 récords",
-                    icon: "trophy.fill", tier: .gold, coins: 170, goal: 10, value: { $0.prCount }),
+                    icon: "trophy.fill", tier: .gold, coins: 170, goal: 10, value: { max($0.prCount, $0.personalBests.count) }),
     ]
     static func by(_ id: String) -> Achievement? { all.first { $0.id == id } }
 }
@@ -484,7 +484,6 @@ struct GamificationCard: View {
     @EnvironmentObject var store: AppStore
     var onOpenLogros: () -> Void
     var onOpenShop: () -> Void = {}
-    var onOpenTitles: () -> Void = {}
 
     var body: some View {
         let lv = getLevelProgress(store.player.xp)
@@ -516,8 +515,6 @@ struct GamificationCard: View {
             gamRow("Logros", "trophy.fill", Color(hex: "e2a915"), trailing: "\(store.unlockedCount)/\(store.totalAchievements)", action: onOpenLogros)
             Divider()
             gamRow("Tienda", "bag.fill", Brand.green, trailing: "🪙 \(store.coins)", action: onOpenShop)
-            Divider()
-            gamRow("Títulos", "seal.fill", Color(hex: "9b6cf2"), trailing: store.equippedTitle ?? "elegir", action: onOpenTitles)
         }
     }
 
