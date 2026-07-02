@@ -59,7 +59,9 @@ struct SocialFeedView: View {
     @State private var paraTiFeed: [FeedItem] = []
     @State private var paraTiLoaded = false
     @State private var showDiscover = false
-    @State private var realFeed: [FeedItem] = []   // posts reales (tuyos + de a quien sigues), del servidor
+    @State private var realFeed: [FeedItem] = []      // posts reales: TUYOS + de a quien sigues
+    @State private var realDiscover: [FeedItem] = []  // posts reales de gente que NO sigues (→ Para ti)
+    @State private var realFollowedEmpty = true       // ¿aún no sigues a nadie? (modo usuario nuevo)
 
     private let tabs: [(title: String, icon: String)] = [("Seguidos", "person.2.fill"), ("Para ti", "sparkles")]
 
@@ -213,8 +215,29 @@ struct SocialFeedView: View {
     /// Carga el feed real (tuyo + de a quien sigues) desde Supabase y reconstruye la lista.
     private func loadRealFeed() async {
         guard BackendConfig.isConfigured else { return }
-        let rows = (try? await Backend.shared.fetchFeedWithAuthors()) ?? []
-        realFeed = rows.map { feedItem(from: $0) }
+        async let rowsReq = Backend.shared.fetchFeedWithAuthors()
+        async let followsReq = Backend.shared.fetchFollowing()
+        let rows = (try? await rowsReq) ?? []
+        let follows = (try? await followsReq) ?? []
+        let followed = Set(follows.filter { $0.status == "accepted" }.map { $0.following_id.lowercased() })
+        let me = Backend.shared.currentUserId?.uuidString.lowercased()
+        // Partición: Seguidos = tuyos + de a quien sigues; el resto (público) → Para ti.
+        var mineAndFollowed: [FeedItem] = [], discover: [FeedItem] = []
+        for r in rows {
+            let uid = r.user_id.lowercased()
+            if uid == me || followed.contains(uid) { mineAndFollowed.append(feedItem(from: r)) }
+            else { discover.append(feedItem(from: r)) }
+        }
+        realFeed = mineAndFollowed
+        realDiscover = discover
+        realFollowedEmpty = followed.isEmpty
+        paraTiFeed = discover
+        paraTiLoaded = true
+        // Sugerencias "A quién seguir": usuarios reales recientes que aún no sigues.
+        let suggested = (try? await Backend.shared.fetchSuggestedProfiles()) ?? []
+        suggestionsSnapshot = Array(AppStore.asPeople(suggested)
+            .filter { $0.id != me && !followed.contains($0.id) }
+            .prefix(10))
         store.loadMyLikes()
         refreshSeguidos(manual: false)
     }
@@ -243,13 +266,16 @@ struct SocialFeedView: View {
     }
 
     private func refreshSeguidos(manual: Bool) {
-        // Con backend real: el feed son posts REALES (tuyos + de a quien sigues), del servidor,
-        // más tus sesiones locales aún no sincronizadas.
+        // Con backend real: Seguidos = TUS posts + los de a quien sigues (+ locales sin sincronizar).
+        // Si aún no sigues a nadie → modo usuario nuevo: se añaden posts para descubrir gente
+        // (con la tira "A quién seguir" arriba). En cuanto sigues a alguien, el descubrimiento
+        // pasa a "Para ti" y Seguidos queda solo con los tuyos + seguidos.
         if BackendConfig.isConfigured {
-            let localExtra = myItems.filter { m in !realFeed.contains { $0.id == m.id } }
-            seguidosFeed = (realFeed + localExtra).sorted { $0.date > $1.date }
-            seguidosNewUser = seguidosFeed.isEmpty
-            suggestionsSnapshot = []
+            let localExtra = myItems.filter { m in !realFeed.contains { $0.id.lowercased() == m.id.lowercased() } }
+            seguidosNewUser = realFollowedEmpty
+            let base = realFeed + localExtra + (realFollowedEmpty ? realDiscover : [])
+            seguidosFeed = base.sorted { $0.date > $1.date }
+            if manual { showInterleavedSuggestions = true }
             seguidosLoaded = true
             return
         }
@@ -288,13 +314,15 @@ struct SocialFeedView: View {
             .padding(.horizontal, 14).padding(.vertical, 12)
         }
         .refreshable {
-            try? await Task.sleep(nanoseconds: 500_000_000)
-            await MainActor.run { refreshParaTi() }
+            if BackendConfig.isConfigured { await loadRealFeed() }
+            else { try? await Task.sleep(nanoseconds: 500_000_000); await MainActor.run { refreshParaTi() } }
         }
         .onAppear { if !paraTiLoaded { refreshParaTi() } }
     }
 
     private func refreshParaTi() {
+        // Con backend, Para ti lo alimenta loadRealFeed (posts públicos de gente que no sigues).
+        if BackendConfig.isConfigured { paraTiFeed = realDiscover; paraTiLoaded = true; return }
         paraTiFeed = discoverFeed
         paraTiLoaded = true
     }
@@ -330,7 +358,7 @@ struct SocialFeedView: View {
     private func suggestionCard(_ p: SocialPerson) -> some View {
         VStack(spacing: 8) {
             Button { FX.tap(); onOpenProfile(p.id) } label: {
-                ScoredAvatar(emoji: p.avatar, score: store.personScore(p.id), size: 60)
+                ScoredAvatar(emoji: p.avatar, avatarURL: p.avatarURL, score: store.personScore(p.id), size: 60)
             }.buttonStyle(.plain)
             VStack(spacing: 1) {
                 Text(p.name).font(.system(size: 14, weight: .heavy)).foregroundColor(Brand.ink).lineLimit(1)
@@ -346,6 +374,10 @@ struct SocialFeedView: View {
         .padding(12).frame(width: 140)
         .background(Brand.panel).clipShape(RoundedRectangle(cornerRadius: 14))
         .overlay(RoundedRectangle(cornerRadius: 14).stroke(Brand.line))
+    }
+
+    private func withName(_ p: SocialPerson, _ name: String) -> SocialPerson {
+        var c = p; c.name = name; return c
     }
 
     private func followPerson(_ p: SocialPerson) {
@@ -451,7 +483,10 @@ struct SocialFeedView: View {
                 Spacer()
                 if let pid = item.personId {
                     HStack(spacing: 8) {
-                        if showFollow, let p = store.person(pid) {
+                        if showFollow {
+                            // Persona construida desde el propio post (nombre real del autor).
+                            let p = store.person(pid).map { $0.name == "Atleta" ? withName($0, item.authorName) : $0 }
+                                ?? SocialPerson(id: pid, name: item.authorName, handle: "", avatar: item.avatarEmoji, gym: "")
                             Button { followPerson(p) } label: {
                                 Text("Seguir").font(.system(size: 12, weight: .heavy)).foregroundColor(Color(hex: "10150a"))
                                     .padding(.horizontal, 12).frame(height: 30).background(Brand.green).clipShape(Capsule())

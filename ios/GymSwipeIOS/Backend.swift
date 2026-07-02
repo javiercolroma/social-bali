@@ -163,6 +163,16 @@ final class Backend {
             .execute().value
     }
 
+    /// Usuarios recientes para "A quién seguir" (yo y los ya seguidos se filtran en el cliente).
+    func fetchSuggestedProfiles(limit: Int = 30) async throws -> [ProfileRow] {
+        guard let client else { return [] }
+        return try await client.from("profiles")
+            .select("id,handle,name,avatar_url,country,city,gym,is_private")
+            .order("created_at", ascending: false)
+            .limit(limit)
+            .execute().value
+    }
+
     /// El perfil del usuario autenticado (para saber si ya se onboardeó).
     func fetchMyProfile() async throws -> ProfileRow? {
         guard let client, let uid = await currentUserIdAsync() else { return nil }

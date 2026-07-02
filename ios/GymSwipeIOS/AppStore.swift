@@ -60,6 +60,8 @@ final class AppStore: ObservableObject {
     /// A quién sigues / quién te sigue DE VERDAD (usuarios reales). Vacío sin backend.
     @Published var followingPeople: [SocialPerson] = []
     @Published var followerPeople: [SocialPerson] = []
+    /// Solicitudes de seguimiento pendientes (a cuentas privadas), ids en minúscula.
+    @Published var pendingFollowingIds: Set<String> = []
     /// Personas con las que tienes conversación real (para resolver nombre/avatar en Mensajes).
     @Published var messagedPeople: [SocialPerson] = []
 
@@ -215,9 +217,15 @@ final class AppStore: ObservableObject {
     var unreadNotifications: Int { notifications.filter { !$0.read }.count }
 
     func relationship(_ personId: String) -> RelationshipStatus {
-        // Los usuarios reales que sigues cuentan como "amigos". Insensible a mayúsculas del UUID.
-        let key = personId.lowercased()
-        if relationships[personId] == nil && followingPeople.contains(where: { $0.id.lowercased() == key }) { return .friends }
+        // Usuarios REALES (UUID) con backend: el estado viene SOLO del servidor. El diccionario
+        // `relationships` es del modo demo y PERSISTE en el dispositivo — si se consultara aquí,
+        // los follows de una cuenta anterior "contaminarían" a la siguiente (bug de follow fantasma).
+        if BackendConfig.isConfigured, UUID(uuidString: personId) != nil {
+            let key = personId.lowercased()
+            if followingPeople.contains(where: { $0.id.lowercased() == key }) { return .friends }
+            if pendingFollowingIds.contains(key) { return .outgoing }
+            return .none
+        }
         return relationships[personId] ?? .none
     }
     func person(_ id: String) -> SocialPerson? {
@@ -432,6 +440,10 @@ final class AppStore: ObservableObject {
                 // Merge SIN duplicados: server (fuente de verdad) + las locales que aún no están.
                 let localOnly = sessions.filter { !serverIds.contains($0.id.lowercased()) }
                 sessions = (server + localOnly).sorted { $0.date > $1.date }
+                // Con el histórico ya completo: recalcula la racha y desbloquea (sin celebrar)
+                // los logros que ya se cumplan — si no, quedaban con candado pese a la barra llena.
+                player.streak = currentStreak()
+                refreshAchievements(celebrate: false)
                 persist()
                 print("[Backend] sesiones sincronizadas: \(server.count) servidor + \(localOnly.count) locales")
             } catch { print("[Backend] sync sesiones falló:", error) }
@@ -507,8 +519,11 @@ final class AppStore: ObservableObject {
         let f = DateFormatter(); f.dateFormat = "yyyy-MM-dd"
         // Los días protegidos por un congelador cuentan como entrenados (puentean el hueco).
         let shielded = shieldedDays.compactMap { f.date(from: $0).map { cal.startOfDay(for: $0) } }
+        // Cuenta también las SESIONES (sincronizadas del servidor): así la racha sobrevive
+        // a reinstalar/entrar en otro dispositivo aunque `history` sea solo local.
+        let sessionDays = sessions.map { cal.startOfDay(for: $0.date) }
         let trainedDays = Set(history.filter { $0.status == .done }
-            .map { cal.startOfDay(for: $0.completedAt) } + shielded).sorted(by: >)
+            .map { cal.startOfDay(for: $0.completedAt) } + shielded + sessionDays).sorted(by: >)
         guard let mostRecent = trainedDays.first else { return 0 }
         let today = cal.startOfDay(for: Date())
         let sinceLast = cal.dateComponents([.day], from: mostRecent, to: today).day ?? 0
@@ -584,16 +599,53 @@ final class AppStore: ObservableObject {
         }
     }
 
-    /// Cerrar sesión: limpia la cuenta/histórico local (para no mezclar entre cuentas). El
-    /// próximo login rehidrata desde el servidor (o hace onboarding si es un usuario nuevo).
+    /// Cerrar sesión: borra TODO el estado local del usuario (como cualquier app social) para
+    /// que NADA se filtre a la siguiente cuenta (follows, chats, monedas, logros, racha…).
+    /// El próximo login rehidrata del servidor (perfil + entrenos) o hace onboarding si es nuevo.
     func logout() {
+        Task { await Backend.shared.signOut() }
         auth = nil
         account = nil
+        exercises = []
+        player = Player(xp: 0, streak: 0, focus: 80, hearts: 3)
+        history = []
+        profile = Profile(sex: "", age: "", country: "España", city: "Madrid", gym: "Mi gimnasio")
+        savedWorkouts = []
         sessions = []
+        lastAction = "Listo para empezar"
+        relationships = [:]
+        conversations = []
+        notifications = []
+        trainingPlans = []
+        appliedKudos = []
+        hiddenWorkoutIds = []
+        coins = 0
+        unlockedAchievements = []
+        celebrations = []
+        personalBests = [:]
+        prCount = 0
+        pendingPRs = []
+        claimedQuests = []
+        questCompleted = []
+        streakFreezes = 0
+        shieldedDays = []
+        streakMilestones = []
+        streakCelebration = nil
+        leagueTier = 0
+        leagueWeekId = ""
+        leaguePromoted = nil
+        ownedCosmetics = []
+        equippedFrame = nil
+        equippedForgey = nil
+        equippedTitle = nil
         realLeaderboard = []
+        followingPeople = []
+        followerPeople = []
+        messagedPeople = []
+        pendingFollowingIds = []
+        scoreCache = [:]
         checkingProfile = false
         persist()
-        Task { await Backend.shared.signOut() }
     }
 
     // MARK: - Tutorial guiado por sección
@@ -609,6 +661,26 @@ final class AppStore: ObservableObject {
     /// - Privado: se envía una solicitud (→ .outgoing, "Pendiente").
     /// Si ya lo sigues o la solicitud está pendiente, la acción la deshace.
     func followOrRequest(_ personId: String) {
+        // Usuarios REALES: el follow/unfollow se escribe en el servidor (con estado optimista
+        // para que el botón responda al instante); nada de simulaciones demo.
+        if BackendConfig.isConfigured, let uid = UUID(uuidString: personId) {
+            let key = personId.lowercased()
+            switch relationship(personId) {
+            case .friends, .outgoing:
+                followingPeople.removeAll { $0.id.lowercased() == key }
+                pendingFollowingIds.remove(key)
+                Task { try? await Backend.shared.unfollow(uid); loadFollowing() }
+            default:
+                let isPrivate = person(personId)?.isPrivate == true
+                if isPrivate { pendingFollowingIds.insert(key) }
+                else if let p = person(personId) { followingPeople.append(p) }
+                Task {
+                    try? await Backend.shared.setFollow(uid, status: isPrivate ? "pending" : "accepted")
+                    loadFollowing()
+                }
+            }
+            return
+        }
         switch relationship(personId) {
         case .friends:
             relationships[personId] = .none          // dejar de seguir
@@ -679,6 +751,7 @@ final class AppStore: ObservableObject {
             let follows = (try? await Backend.shared.fetchFollowing()) ?? []
             let ids = follows.filter { $0.status == "accepted" }.compactMap { UUID(uuidString: $0.following_id) }
             followingPeople = Self.asPeople((try? await Backend.shared.fetchProfiles(ids: ids)) ?? [])
+            pendingFollowingIds = Set(follows.filter { $0.status == "pending" }.map { $0.following_id.lowercased() })
 
             let followers = (try? await Backend.shared.fetchFollowers()) ?? []
             let fids = followers.filter { $0.status == "accepted" }.compactMap { UUID(uuidString: $0.follower_id) }
@@ -686,11 +759,12 @@ final class AppStore: ObservableObject {
         }
     }
 
-    private static func asPeople(_ profiles: [ProfileRow]) -> [SocialPerson] {
+    static func asPeople(_ profiles: [ProfileRow]) -> [SocialPerson] {
         profiles.map { p in
-            SocialPerson(id: p.id.uuidString, name: p.name ?? p.handle ?? "Atleta",
+            SocialPerson(id: p.id.uuidString.lowercased(), name: p.name ?? p.handle ?? "Atleta",
                          handle: p.handle ?? "", avatar: "🙂", gym: p.gym ?? "",
-                         city: p.city ?? "", country: p.country ?? "", isPrivate: p.is_private ?? false)
+                         city: p.city ?? "", country: p.country ?? "",
+                         isPrivate: p.is_private ?? false, avatarURL: p.avatar_url)
         }
     }
 

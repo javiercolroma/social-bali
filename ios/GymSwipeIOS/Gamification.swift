@@ -73,7 +73,7 @@ enum Achievements {
                     value: { Int($0.sessions.reduce(0.0) { $0 + $1.volume }) }),
         Achievement(id: "photo", title: "Postureo", detail: "Comparte una foto de entreno",
                     icon: "camera.fill", tier: .bronze, coins: 30, goal: 1,
-                    value: { $0.sessions.contains { $0.photoData != nil } ? 1 : 0 }),
+                    value: { $0.sessions.contains { $0.photoData != nil || $0.photoURL != nil } ? 1 : 0 }),
         Achievement(id: "early", title: "Madrugador", detail: "Entrena antes de las 7:00",
                     icon: "sunrise.fill", tier: .silver, coins: 50, goal: 1,
                     value: { $0.sessions.contains { Calendar.current.component(.hour, from: $0.date) < 7 } ? 1 : 0 }),

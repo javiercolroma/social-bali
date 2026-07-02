@@ -166,13 +166,17 @@ struct ScorePill: View {
 struct ScoredAvatar: View {
     var emoji: String = "🙂"
     var account: Account? = nil   // si se pasa, usa la foto de la cuenta (MeAvatar)
+    var avatarURL: String? = nil  // foto real remota (usuarios reales); emoji de fallback
     let score: Int
     var size: CGFloat = 42
 
     var body: some View {
         ZStack(alignment: .bottomTrailing) {
             if let account { MeAvatar(account: account, size: size) }
-            else { Avatar(emoji: emoji, size: size) }
+            else if let a = avatarURL, let u = URL(string: a) {
+                AsyncImage(url: u) { img in img.resizable().scaledToFill() } placeholder: { Avatar(emoji: emoji, size: size) }
+                    .frame(width: size, height: size).clipShape(Circle())
+            } else { Avatar(emoji: emoji, size: size) }
             ScoreBadge(score: score, avatarSize: size)
         }
     }

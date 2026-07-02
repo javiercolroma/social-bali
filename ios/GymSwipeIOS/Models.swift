@@ -167,6 +167,8 @@ struct SocialPerson: Identifiable, Codable, Hashable {
     var city: String = "Madrid"
     var country: String = "España"
     var isPrivate: Bool = false
+    /// Foto real del avatar (Storage) para usuarios reales; el emoji queda de fallback.
+    var avatarURL: String? = nil
 }
 
 struct ChatMessage: Identifiable, Codable, Hashable {
