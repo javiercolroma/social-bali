@@ -12,6 +12,7 @@ struct AuthView: View {
     @State private var emailError: String?
     @State private var resetMsg: String?
     @State private var emailBusy = false
+    @State private var creatingAccount = false   // modo explícito: iniciar sesión vs crear cuenta
     @State private var googleNote = false
     @State private var appleNonce = ""   // nonce en crudo para el login Apple → Supabase
     @FocusState private var emailFocused: Bool
@@ -61,6 +62,11 @@ struct AuthView: View {
                     }
 
                     if showEmail {
+                        // Modo EXPLÍCITO: que siempre quede claro si entras o creas cuenta nueva.
+                        HStack(spacing: 6) {
+                            emailModeChip("Iniciar sesión", isOn: !creatingAccount) { creatingAccount = false }
+                            emailModeChip("Crear cuenta", isOn: creatingAccount) { creatingAccount = true }
+                        }
                         HStack(spacing: 10) {
                             Image(systemName: "envelope.fill").foregroundColor(Brand.soft)
                             TextField("tu@email.com", text: $email)
@@ -72,9 +78,9 @@ struct AuthView: View {
                         .overlay(RoundedRectangle(cornerRadius: 14).stroke(emailFocused ? Brand.greenSoft : Brand.line, lineWidth: emailFocused ? 1.5 : 1))
                         HStack(spacing: 10) {
                             Image(systemName: "lock.fill").foregroundColor(Brand.soft)
-                            SecureField("Contraseña (mín. 6)", text: $password)
+                            SecureField(creatingAccount ? "Elige una contraseña (mín. 6)" : "Tu contraseña", text: $password)
                                 .textInputAutocapitalization(.never).autocorrectionDisabled()
-                                .submitLabel(.go).onSubmit { signInEmail() }
+                                .submitLabel(.go).onSubmit { submitEmail() }
                         }
                         .padding(.horizontal, 14).frame(height: 52).background(Color.white)
                         .clipShape(RoundedRectangle(cornerRadius: 14))
@@ -83,11 +89,16 @@ struct AuthView: View {
                             Text(emailError).font(.caption).foregroundColor(Color(hex: "a73232"))
                                 .frame(maxWidth: .infinity, alignment: .leading)
                         }
-                        Button { signInEmail() } label: { Text(emailBusy ? "Entrando…" : "Continuar") }
+                        Button { submitEmail() } label: {
+                            Text(emailBusy ? (creatingAccount ? "Creando cuenta…" : "Entrando…")
+                                           : (creatingAccount ? "Crear cuenta" : "Entrar"))
+                        }
                             .buttonStyle(PrimaryButtonStyle(enabled: canEmail && !emailBusy)).disabled(!canEmail || emailBusy)
-                        Button { forgotPassword() } label: {
-                            Text("¿Olvidaste la contraseña?").font(.system(size: 13, weight: .semibold)).foregroundColor(Brand.soft)
-                        }.buttonStyle(.plain).disabled(!validEmail)
+                        if !creatingAccount {
+                            Button { forgotPassword() } label: {
+                                Text("¿Olvidaste la contraseña?").font(.system(size: 13, weight: .semibold)).foregroundColor(Brand.soft)
+                            }.buttonStyle(.plain).disabled(!validEmail)
+                        }
                         if let resetMsg {
                             Text(resetMsg).font(.caption).foregroundColor(Color(hex: "3f7d12"))
                                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -172,7 +183,18 @@ struct AuthView: View {
         }
     }
 
-    private func signInEmail() {
+    /// Pestaña del modo email (Iniciar sesión / Crear cuenta).
+    private func emailModeChip(_ label: String, isOn: Bool, action: @escaping () -> Void) -> some View {
+        Button { FX.selection(); action(); emailError = nil; resetMsg = nil } label: {
+            Text(label).font(.system(size: 13, weight: .heavy))
+                .foregroundColor(isOn ? Color(hex: "10150a") : Brand.soft)
+                .frame(maxWidth: .infinity).frame(height: 36)
+                .background(isOn ? Brand.greenSoft : Brand.chip)
+                .clipShape(Capsule())
+        }.buttonStyle(.plain)
+    }
+
+    private func submitEmail() {
         let e = email.trimmingCharacters(in: .whitespaces).lowercased()
         guard canEmail, !emailBusy else { return }
         emailError = nil; resetMsg = nil
@@ -185,14 +207,20 @@ struct AuthView: View {
         emailBusy = true
         Task {
             do {
-                let uid = try await Backend.shared.signInOrSignUpEmail(e, password: password)
+                let uid = creatingAccount
+                    ? try await Backend.shared.signUpEmail(e, password: password)
+                    : try await Backend.shared.signInEmail(e, password: password)
                 print("[Backend] sesión Supabase (email) abierta: \(uid)")
                 FX.success(sound: true)
                 withAnimation { store.signIn(provider: "email", userId: uid.uuidString, email: e, name: nil) }
                 store.hydrateAccountFromBackend(); store.syncSessionsFromBackend()
+            } catch BackendError.emailTaken {
+                emailError = "Ya existe una cuenta con este correo. Cambia a «Iniciar sesión»."
             } catch {
                 print("[Backend] email → Supabase falló:", error)
-                emailError = "No pudimos entrar. Revisa el correo y la contraseña."
+                emailError = creatingAccount
+                    ? "No pudimos crear la cuenta. Revisa el correo y usa una contraseña de 6+ caracteres."
+                    : "Correo o contraseña incorrectos. ¿Eres nuevo? Elige «Crear cuenta»."
             }
             emailBusy = false
         }

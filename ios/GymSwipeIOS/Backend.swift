@@ -51,19 +51,21 @@ final class Backend {
         return session.user.id
     }
 
-    /// Entra con email/contraseña; si el usuario no existe, lo crea. Devuelve el uid.
+    /// Inicia sesión con email/contraseña (falla si las credenciales no son válidas).
     @discardableResult
-    func signInOrSignUpEmail(_ email: String, password: String) async throws -> UUID {
+    func signInEmail(_ email: String, password: String) async throws -> UUID {
         guard let client else { throw BackendError.notConfigured }
-        do {
-            return try await client.auth.signIn(email: email, password: password).user.id
-        } catch {
-            // No existe / contraseña incorrecta → intenta registrarlo. Exigimos SESIÓN real:
-            // si signUp no la devuelve (email ya existe, obfuscado), es un fallo, no un login fantasma.
-            let res = try await client.auth.signUp(email: email, password: password)
-            guard let session = res.session else { throw BackendError.noSession }
-            return session.user.id
-        }
+        return try await client.auth.signIn(email: email, password: password).user.id
+    }
+
+    /// Crea una cuenta NUEVA con email/contraseña. Si el correo ya está registrado,
+    /// GoTrue (con autoconfirm) devuelve un usuario ofuscado SIN sesión → `emailTaken`.
+    @discardableResult
+    func signUpEmail(_ email: String, password: String) async throws -> UUID {
+        guard let client else { throw BackendError.notConfigured }
+        let res = try await client.auth.signUp(email: email, password: password)
+        guard let session = res.session else { throw BackendError.emailTaken }
+        return session.user.id
     }
 
     func signOut() async {
@@ -354,7 +356,7 @@ final class Backend {
     }
 }
 
-enum BackendError: Error { case notConfigured, noSession }
+enum BackendError: Error { case notConfigured, noSession, emailTaken }
 
 /// Nonce para Sign in with Apple → Supabase: se envía el SHA256 a Apple y el crudo a Supabase.
 enum AuthNonce {
