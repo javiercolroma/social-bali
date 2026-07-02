@@ -2,27 +2,14 @@ import SwiftUI
 import AuthenticationServices
 import GoogleSignIn
 
-/// Pantalla de inicio de sesión / registro. Sin backend todavía: la identidad del
-/// proveedor se guarda localmente (`store.signIn`). Tras entrar, el onboarding monta el perfil.
+/// Pantalla de bienvenida / inicio de sesión: tres vías consistentes (Apple, Google,
+/// email). El email abre una hoja dedicada (`EmailAuthSheet`) con modo explícito
+/// Iniciar sesión / Crear cuenta. Sin backend: la identidad se guarda en local.
 struct AuthView: View {
     @EnvironmentObject var store: AppStore
     @State private var showEmail = false
-    @State private var email = ""
-    @State private var password = ""
-    @State private var emailError: String?
-    @State private var resetMsg: String?
-    @State private var emailBusy = false
-    @State private var creatingAccount = false   // modo explícito: iniciar sesión vs crear cuenta
     @State private var googleNote = false
     @State private var appleNonce = ""   // nonce en crudo para el login Apple → Supabase
-    @FocusState private var emailFocused: Bool
-
-    private var canEmail: Bool { validEmail && password.count >= 6 }
-
-    private var validEmail: Bool {
-        let e = email.trimmingCharacters(in: .whitespaces)
-        return e.contains("@") && e.contains(".") && e.count >= 6
-    }
 
     var body: some View {
         ZStack {
@@ -39,6 +26,7 @@ struct AuthView: View {
                     .fixedSize(horizontal: false, vertical: true)
                 Spacer()
 
+                // Tres botones de la misma familia (misma altura y radio): se lee profesional.
                 VStack(spacing: 12) {
                     SignInWithAppleButton(.continue) { req in
                         let nonce = AuthNonce.random()
@@ -51,64 +39,8 @@ struct AuthView: View {
                         .signInWithAppleButtonStyle(.black)
                         .frame(height: 52).clipShape(RoundedRectangle(cornerRadius: 14))
 
-                    Button { handleGoogle() } label: {
-                        HStack(spacing: 10) {
-                            Image(systemName: "globe").font(.system(size: 17, weight: .bold))
-                            Text("Continuar con Google").font(.system(size: 16, weight: .heavy))
-                        }
-                        .foregroundColor(Brand.ink).frame(maxWidth: .infinity).frame(height: 52)
-                        .background(Color.white).clipShape(RoundedRectangle(cornerRadius: 14))
-                        .overlay(RoundedRectangle(cornerRadius: 14).stroke(Brand.line))
-                    }
-
-                    if showEmail {
-                        // Modo EXPLÍCITO: que siempre quede claro si entras o creas cuenta nueva.
-                        HStack(spacing: 6) {
-                            emailModeChip("Iniciar sesión", isOn: !creatingAccount) { creatingAccount = false }
-                            emailModeChip("Crear cuenta", isOn: creatingAccount) { creatingAccount = true }
-                        }
-                        HStack(spacing: 10) {
-                            Image(systemName: "envelope.fill").foregroundColor(Brand.soft)
-                            TextField("tu@email.com", text: $email)
-                                .keyboardType(.emailAddress).textInputAutocapitalization(.never)
-                                .autocorrectionDisabled().focused($emailFocused).submitLabel(.next)
-                        }
-                        .padding(.horizontal, 14).frame(height: 52).background(Color.white)
-                        .clipShape(RoundedRectangle(cornerRadius: 14))
-                        .overlay(RoundedRectangle(cornerRadius: 14).stroke(emailFocused ? Brand.greenSoft : Brand.line, lineWidth: emailFocused ? 1.5 : 1))
-                        HStack(spacing: 10) {
-                            Image(systemName: "lock.fill").foregroundColor(Brand.soft)
-                            SecureField(creatingAccount ? "Elige una contraseña (mín. 6)" : "Tu contraseña", text: $password)
-                                .textInputAutocapitalization(.never).autocorrectionDisabled()
-                                .submitLabel(.go).onSubmit { submitEmail() }
-                        }
-                        .padding(.horizontal, 14).frame(height: 52).background(Color.white)
-                        .clipShape(RoundedRectangle(cornerRadius: 14))
-                        .overlay(RoundedRectangle(cornerRadius: 14).stroke(Brand.line))
-                        if let emailError {
-                            Text(emailError).font(.caption).foregroundColor(Color(hex: "a73232"))
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                        }
-                        Button { submitEmail() } label: {
-                            Text(emailBusy ? (creatingAccount ? "Creando cuenta…" : "Entrando…")
-                                           : (creatingAccount ? "Crear cuenta" : "Entrar"))
-                        }
-                            .buttonStyle(PrimaryButtonStyle(enabled: canEmail && !emailBusy)).disabled(!canEmail || emailBusy)
-                        if !creatingAccount {
-                            Button { forgotPassword() } label: {
-                                Text("¿Olvidaste la contraseña?").font(.system(size: 13, weight: .semibold)).foregroundColor(Brand.soft)
-                            }.buttonStyle(.plain).disabled(!validEmail)
-                        }
-                        if let resetMsg {
-                            Text(resetMsg).font(.caption).foregroundColor(Color(hex: "3f7d12"))
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                        }
-                    } else {
-                        Button { withAnimation { showEmail = true }; DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { emailFocused = true } } label: {
-                            Text("Continuar con email").font(.system(size: 15, weight: .bold)).foregroundColor(Brand.soft)
-                                .frame(maxWidth: .infinity).frame(height: 36)
-                        }.buttonStyle(.plain)
-                    }
+                    providerButton(icon: "globe", label: "Continuar con Google") { handleGoogle() }
+                    providerButton(icon: "envelope.fill", label: "Continuar con email") { FX.tap(); showEmail = true }
                 }
 
                 Text("Al continuar aceptas los términos y la política de privacidad.")
@@ -117,10 +49,24 @@ struct AuthView: View {
             }
             .padding(24)
         }
+        .sheet(isPresented: $showEmail) { EmailAuthSheet().environmentObject(store) }
         .alert("Falta configurar Google", isPresented: $googleNote) {
             Button("Vale", role: .cancel) {}
         } message: {
             Text("Para activar Google hay que crear un OAuth Client ID de iOS en Google Cloud y pegarlo en AuthConfig.swift (instrucciones dentro). Mientras, entra con Apple o email.")
+        }
+    }
+
+    /// Botón de proveedor (blanco, borde fino) — mismo tamaño que el de Apple.
+    private func providerButton(icon: String, label: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            HStack(spacing: 10) {
+                Image(systemName: icon).font(.system(size: 17, weight: .bold))
+                Text(label).font(.system(size: 16, weight: .heavy))
+            }
+            .foregroundColor(Brand.ink).frame(maxWidth: .infinity).frame(height: 52)
+            .background(Color.white).clipShape(RoundedRectangle(cornerRadius: 14))
+            .overlay(RoundedRectangle(cornerRadius: 14).stroke(Brand.line))
         }
     }
 
@@ -168,8 +114,170 @@ struct AuthView: View {
             }
         }
     }
+}
 
-    private func forgotPassword() {
+/// Hoja dedicada al email: modo EXPLÍCITO (Iniciar sesión / Crear cuenta), campos con
+/// etiqueta, mostrar/ocultar contraseña y errores específicos por modo.
+struct EmailAuthSheet: View {
+    @EnvironmentObject var store: AppStore
+    @Environment(\.dismiss) private var dismiss
+    @State private var creating = false
+    @State private var email = ""
+    @State private var password = ""
+    @State private var showPassword = false
+    @State private var error: String?
+    @State private var resetMsg: String?
+    @State private var busy = false
+    @FocusState private var focus: Field?
+    private enum Field { case email, password }
+
+    private var validEmail: Bool {
+        let e = email.trimmingCharacters(in: .whitespaces)
+        return e.contains("@") && e.contains(".") && e.count >= 6
+    }
+    private var canSubmit: Bool { validEmail && password.count >= 6 }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            // Título según el modo: siempre sabes si entras o te registras.
+            VStack(alignment: .leading, spacing: 4) {
+                Text(creating ? "Crea tu cuenta" : "¡Hola de nuevo!")
+                    .font(.system(size: 24, weight: .heavy)).foregroundColor(Brand.ink)
+                Text(creating ? "Regístrate con tu correo para guardar tu progreso."
+                              : "Entra con el correo con el que te registraste.")
+                    .font(.footnote).foregroundColor(Brand.muted)
+            }
+            .padding(.top, 22)
+
+            HStack(spacing: 6) {
+                modeTab("Iniciar sesión", isOn: !creating) { creating = false }
+                modeTab("Crear cuenta", isOn: creating) { creating = true }
+            }
+
+            VStack(alignment: .leading, spacing: 5) {
+                Text("CORREO").font(.caption2).fontWeight(.heavy).foregroundColor(Brand.muted)
+                HStack(spacing: 10) {
+                    Image(systemName: "envelope.fill").font(.system(size: 14)).foregroundColor(Brand.soft)
+                    TextField("tu@email.com", text: $email)
+                        .keyboardType(.emailAddress).textContentType(.emailAddress)
+                        .textInputAutocapitalization(.never).autocorrectionDisabled()
+                        .focused($focus, equals: .email).submitLabel(.next)
+                        .onSubmit { focus = .password }
+                }
+                .padding(.horizontal, 14).frame(height: 52).background(Color.white)
+                .clipShape(RoundedRectangle(cornerRadius: 14))
+                .overlay(RoundedRectangle(cornerRadius: 14)
+                    .stroke(focus == .email ? Brand.green : Brand.line, lineWidth: focus == .email ? 1.5 : 1))
+            }
+
+            VStack(alignment: .leading, spacing: 5) {
+                Text("CONTRASEÑA").font(.caption2).fontWeight(.heavy).foregroundColor(Brand.muted)
+                HStack(spacing: 10) {
+                    Image(systemName: "lock.fill").font(.system(size: 14)).foregroundColor(Brand.soft)
+                    Group {
+                        if showPassword {
+                            TextField(creating ? "Mínimo 6 caracteres" : "Tu contraseña", text: $password)
+                        } else {
+                            SecureField(creating ? "Mínimo 6 caracteres" : "Tu contraseña", text: $password)
+                        }
+                    }
+                    .textContentType(creating ? .newPassword : .password)
+                    .textInputAutocapitalization(.never).autocorrectionDisabled()
+                    .focused($focus, equals: .password).submitLabel(.go)
+                    .onSubmit { submit() }
+                    Button { showPassword.toggle() } label: {
+                        Image(systemName: showPassword ? "eye.slash.fill" : "eye.fill")
+                            .font(.system(size: 14)).foregroundColor(Brand.soft)
+                    }.buttonStyle(.plain)
+                }
+                .padding(.horizontal, 14).frame(height: 52).background(Color.white)
+                .clipShape(RoundedRectangle(cornerRadius: 14))
+                .overlay(RoundedRectangle(cornerRadius: 14)
+                    .stroke(focus == .password ? Brand.green : Brand.line, lineWidth: focus == .password ? 1.5 : 1))
+            }
+
+            if let error {
+                Label(error, systemImage: "exclamationmark.circle.fill")
+                    .font(.caption).foregroundColor(Color(hex: "a73232"))
+            }
+            if let resetMsg {
+                Label(resetMsg, systemImage: "paperplane.fill")
+                    .font(.caption).foregroundColor(Color(hex: "3f7d12"))
+            }
+
+            Button { submit() } label: {
+                HStack(spacing: 8) {
+                    if busy { ProgressView().tint(Color(hex: "10150a")) }
+                    Text(busy ? (creating ? "Creando cuenta…" : "Entrando…")
+                              : (creating ? "Crear cuenta" : "Entrar"))
+                }.frame(maxWidth: .infinity)
+            }
+            .buttonStyle(PrimaryButtonStyle(enabled: canSubmit && !busy)).disabled(!canSubmit || busy)
+
+            if !creating {
+                Button { forgot() } label: {
+                    Text("¿Olvidaste la contraseña?")
+                        .font(.system(size: 13, weight: .semibold)).foregroundColor(Brand.soft)
+                        .frame(maxWidth: .infinity)
+                }.buttonStyle(.plain).disabled(!validEmail).opacity(validEmail ? 1 : 0.55)
+            }
+            Spacer(minLength: 0)
+        }
+        .padding(.horizontal, 20)
+        .background(Brand.bg)
+        .presentationDetents([.medium, .large])
+        .presentationDragIndicator(.visible)
+        .onAppear { DispatchQueue.main.asyncAfter(deadline: .now() + 0.45) { focus = .email } }
+        .onChange(of: creating) { _ in error = nil; resetMsg = nil }
+    }
+
+    /// Pestaña del modo (mismo estilo que los selectores del resto de la app).
+    private func modeTab(_ label: String, isOn: Bool, action: @escaping () -> Void) -> some View {
+        Button { FX.selection(); action() } label: {
+            Text(label).font(.system(size: 14, weight: .heavy))
+                .foregroundColor(isOn ? Color(hex: "10150a") : Brand.soft)
+                .frame(maxWidth: .infinity).frame(height: 40)
+                .background(isOn ? Brand.green : Brand.chip)
+                .clipShape(RoundedRectangle(cornerRadius: 12))
+                .contentShape(Rectangle())
+        }.buttonStyle(.plain)
+    }
+
+    private func submit() {
+        let e = email.trimmingCharacters(in: .whitespaces).lowercased()
+        guard canSubmit, !busy else { return }
+        error = nil; resetMsg = nil
+        // Sin backend configurado: identidad local simple (como antes).
+        guard Backend.shared.isConfigured else {
+            FX.success(sound: true)
+            dismiss()
+            withAnimation { store.signIn(provider: "email", userId: e, email: e, name: nil) }
+            return
+        }
+        busy = true
+        Task {
+            do {
+                let uid = creating
+                    ? try await Backend.shared.signUpEmail(e, password: password)
+                    : try await Backend.shared.signInEmail(e, password: password)
+                print("[Backend] sesión Supabase (email) abierta: \(uid)")
+                FX.success(sound: true)
+                dismiss()
+                withAnimation { store.signIn(provider: "email", userId: uid.uuidString, email: e, name: nil) }
+                store.hydrateAccountFromBackend(); store.syncSessionsFromBackend()
+            } catch BackendError.emailTaken {
+                error = "Ya existe una cuenta con este correo. Cambia a «Iniciar sesión»."
+            } catch {
+                print("[Backend] email → Supabase falló:", error)
+                self.error = creating
+                    ? "No pudimos crear la cuenta. Revisa el correo y usa una contraseña de 6+ caracteres."
+                    : "Correo o contraseña incorrectos. ¿Eres nuevo? Elige «Crear cuenta»."
+            }
+            busy = false
+        }
+    }
+
+    private func forgot() {
         let e = email.trimmingCharacters(in: .whitespaces).lowercased()
         guard validEmail, Backend.shared.isConfigured else { return }
         FX.tap()
@@ -180,49 +288,6 @@ struct AuthView: View {
             } catch {
                 resetMsg = "No pudimos enviar el correo. Inténtalo de nuevo."
             }
-        }
-    }
-
-    /// Pestaña del modo email (Iniciar sesión / Crear cuenta).
-    private func emailModeChip(_ label: String, isOn: Bool, action: @escaping () -> Void) -> some View {
-        Button { FX.selection(); action(); emailError = nil; resetMsg = nil } label: {
-            Text(label).font(.system(size: 13, weight: .heavy))
-                .foregroundColor(isOn ? Color(hex: "10150a") : Brand.soft)
-                .frame(maxWidth: .infinity).frame(height: 36)
-                .background(isOn ? Brand.greenSoft : Brand.chip)
-                .clipShape(Capsule())
-        }.buttonStyle(.plain)
-    }
-
-    private func submitEmail() {
-        let e = email.trimmingCharacters(in: .whitespaces).lowercased()
-        guard canEmail, !emailBusy else { return }
-        emailError = nil; resetMsg = nil
-        // Sin backend configurado: identidad local simple (como antes).
-        guard Backend.shared.isConfigured else {
-            FX.success(sound: true)
-            withAnimation { store.signIn(provider: "email", userId: e, email: e, name: nil) }
-            return
-        }
-        emailBusy = true
-        Task {
-            do {
-                let uid = creatingAccount
-                    ? try await Backend.shared.signUpEmail(e, password: password)
-                    : try await Backend.shared.signInEmail(e, password: password)
-                print("[Backend] sesión Supabase (email) abierta: \(uid)")
-                FX.success(sound: true)
-                withAnimation { store.signIn(provider: "email", userId: uid.uuidString, email: e, name: nil) }
-                store.hydrateAccountFromBackend(); store.syncSessionsFromBackend()
-            } catch BackendError.emailTaken {
-                emailError = "Ya existe una cuenta con este correo. Cambia a «Iniciar sesión»."
-            } catch {
-                print("[Backend] email → Supabase falló:", error)
-                emailError = creatingAccount
-                    ? "No pudimos crear la cuenta. Revisa el correo y usa una contraseña de 6+ caracteres."
-                    : "Correo o contraseña incorrectos. ¿Eres nuevo? Elige «Crear cuenta»."
-            }
-            emailBusy = false
         }
     }
 }
