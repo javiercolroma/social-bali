@@ -215,35 +215,42 @@ struct SocialFeedView: View {
     /// Carga el feed real (tuyo + de a quien sigues) desde Supabase y reconstruye la lista.
     private func loadRealFeed() async {
         guard BackendConfig.isConfigured else { return }
+        // Espera a la sesión restaurada: en frío `currentUserId` podía ser nil y tus
+        // propios posts acababan clasificados como "de otros" (→ Para ti).
+        let me = (await Backend.shared.currentUserIdAsync())?.uuidString.lowercased()
+        // Trae TODO primero y muta el estado UNA vez al final: cambiar la lista a mitad
+        // de un pull-to-refresh puede cancelar la Task y la petición de sugerencias
+        // (la última) moría cancelada → la tira "A quién seguir" se vaciaba al refrescar.
         async let rowsReq = Backend.shared.fetchFeedWithAuthors()
         async let followsReq = Backend.shared.fetchFollowing()
-        let rows = (try? await rowsReq) ?? []
-        let follows = (try? await followsReq) ?? []
+        async let suggestedReq = Backend.shared.fetchSuggestedProfiles()
+        // Si algo falla o se cancela, CONSERVA lo que había en pantalla (no lo machaques).
+        guard let rows = try? await rowsReq, let follows = try? await followsReq else { return }
+        let suggested = (try? await suggestedReq) ?? []
         let followed = Set(follows.filter { $0.status == "accepted" }.map { $0.following_id.lowercased() })
-        let me = Backend.shared.currentUserId?.uuidString.lowercased()
         // Partición: Seguidos = tuyos + de a quien sigues; el resto (público) → Para ti.
         var mineAndFollowed: [FeedItem] = [], discover: [FeedItem] = []
         for r in rows {
             let uid = r.user_id.lowercased()
-            if uid == me || followed.contains(uid) { mineAndFollowed.append(feedItem(from: r)) }
-            else { discover.append(feedItem(from: r)) }
+            if uid == me || followed.contains(uid) { mineAndFollowed.append(feedItem(from: r, me: me)) }
+            else { discover.append(feedItem(from: r, me: me)) }
         }
         realFeed = mineAndFollowed
         realDiscover = discover
         realFollowedEmpty = followed.isEmpty
         paraTiFeed = discover
         paraTiLoaded = true
-        // Sugerencias "A quién seguir": usuarios reales recientes que aún no sigues.
-        let suggested = (try? await Backend.shared.fetchSuggestedProfiles()) ?? []
-        suggestionsSnapshot = Array(AppStore.asPeople(suggested)
-            .filter { $0.id != me && !followed.contains($0.id) }
-            .prefix(10))
+        // Sugerencias "A quién seguir": solo se reescriben si la petición trajo datos.
+        if !suggested.isEmpty {
+            suggestionsSnapshot = Array(AppStore.asPeople(suggested)
+                .filter { $0.id != me && !followed.contains($0.id) }
+                .prefix(10))
+        }
         store.loadMyLikes()
         refreshSeguidos(manual: false)
     }
 
-    private func feedItem(from r: FeedRow) -> FeedItem {
-        let me = Backend.shared.currentUserId?.uuidString.lowercased()
+    private func feedItem(from r: FeedRow, me: String?) -> FeedItem {
         let isMe = r.user_id.lowercased() == me
         return FeedItem(
             id: r.id,
