@@ -143,14 +143,18 @@ struct MessagesSheet: View {
 
     private var conversations: [Conversation] { store.conversations.sorted { $0.lastAt > $1.lastAt } }
     private var incoming: [SocialPerson] { store.people.filter { store.relationship($0.id) == .incoming } }
+    /// Nº de CHATS con mensajes nuevos (no mensajes totales) — para el circulito verde.
+    private var unreadChats: Int { store.conversations.filter { $0.unread > 0 }.count }
 
     var body: some View {
         NavigationStack {
             VStack(spacing: 10) {
-                Picker("", selection: $tab) {
-                    Text(incoming.isEmpty ? "Amigos" : "Amigos (\(incoming.count))").tag(0)
-                    Text("Mensajes").tag(1)
-                }.pickerStyle(.segmented).padding(.horizontal, 16)
+                // Selector propio (el Picker segmentado no admite badges): "Mensajes" lleva
+                // un circulito verde con el nº de chats con mensajes nuevos, estilo WhatsApp.
+                HStack(spacing: 6) {
+                    switchTab(0, incoming.isEmpty ? "Amigos" : "Amigos (\(incoming.count))")
+                    switchTab(1, "Mensajes", badge: unreadChats)
+                }.padding(.horizontal, 16)
 
                 ScrollView {
                     if tab == 1 { chats } else {
@@ -179,6 +183,28 @@ struct MessagesSheet: View {
             }
         }
         .animation(.easeInOut(duration: 0.28), value: chatTarget?.id)
+    }
+
+    /// Pestaña del selector Amigos/Mensajes, con circulito verde de chats sin leer.
+    private func switchTab(_ idx: Int, _ label: String, badge: Int = 0) -> some View {
+        let active = tab == idx
+        return Button { FX.selection(); tab = idx } label: {
+            HStack(spacing: 6) {
+                Text(label).font(.system(size: 14, weight: .heavy))
+                if badge > 0 {
+                    Text("\(badge)")
+                        .font(.system(size: 11, weight: .heavy)).foregroundColor(Color(hex: "10150a"))
+                        .padding(.horizontal, 5).frame(minWidth: 18).frame(height: 18)
+                        .background(Brand.green).clipShape(Capsule())
+                        .overlay(Capsule().stroke(.white, lineWidth: 1.5))
+                }
+            }
+            .foregroundColor(active ? Color(hex: "10150a") : Brand.soft)
+            .frame(maxWidth: .infinity).frame(height: 40)
+            .background(active ? Brand.green : Brand.chip)
+            .clipShape(RoundedRectangle(cornerRadius: 12))
+            .contentShape(Rectangle())
+        }.buttonStyle(.plain)
     }
 
     private var chats: some View {
