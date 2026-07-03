@@ -483,7 +483,6 @@ struct LeagueView: View {
 struct GamificationCard: View {
     @EnvironmentObject var store: AppStore
     var onOpenLogros: () -> Void
-    var onOpenShop: () -> Void = {}
 
     var body: some View {
         let lv = getLevelProgress(store.player.xp)
@@ -514,7 +513,12 @@ struct GamificationCard: View {
             Divider()
             gamRow("Logros", "trophy.fill", Color(hex: "e2a915"), trailing: "\(store.unlockedCount)/\(store.totalAchievements)", action: onOpenLogros)
             Divider()
-            gamRow("Tienda", "bag.fill", Brand.green, trailing: "🪙 \(store.coins)", action: onOpenShop)
+            HStack(spacing: 10) {
+                Image(systemName: "circle.hexagongrid.fill").font(.system(size: 15)).foregroundColor(Brand.gold)
+                Text("Monedas").font(.system(size: 15, weight: .heavy)).foregroundColor(Brand.ink)
+                Spacer()
+                Text("🪙 \(store.coins)").font(.system(size: 13, weight: .heavy)).foregroundColor(Brand.muted)
+            }.padding(.vertical, 4)
         }
     }
 
