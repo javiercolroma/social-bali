@@ -11,7 +11,6 @@ struct ActivityView: View {
     @State private var detail: WorkoutSession?
     @State private var daySheet: DayPayload?
     @State private var progressExercise: IdString?   // evolución de un ejercicio (hoja)
-    @State private var showForgeyEvolution = false   // hoja de evolución de Forgey
     @State private var showEpleyInfo = false
     @State private var showScoreInfo = false
 
@@ -36,7 +35,6 @@ struct ActivityView: View {
         .sheet(item: $detail) { ActivityDetailView(item: activityData($0)).environmentObject(store) }
         .sheet(item: $daySheet) { DaySessionsSheet(date: $0.date, sessions: $0.sessions).environmentObject(store) }
         .sheet(item: $progressExercise) { ExerciseProgressView(exerciseName: $0.id).environmentObject(store) }
-        .sheet(isPresented: $showForgeyEvolution) { ForgeyEvolutionSheet().environmentObject(store) }
     }
 
     private var switcher: some View {
@@ -68,7 +66,6 @@ struct ActivityView: View {
     private var progressContent: some View {
         sectionHeader("RESUMEN")
         rachaCard.tourAnchor("activity.progress")
-        forgeyCard
         gymScoreCard
 
         sectionHeader("ESTA SEMANA")
@@ -429,90 +426,5 @@ struct ActivityView: View {
         let m = s / 60
         if m >= 60 { return "\(m / 60)h \(m % 60)m" }
         return "\(max(1, m)) min"
-    }
-}
-
-// MARK: - Forgey: tu reflejo
-
-/// Nombres de las etapas físicas de Forgey (0–4).
-let forgeyStageNames = ["Novato", "Constante", "Fuerte", "Cañón", "Leyenda"]
-
-extension ActivityView {
-    /// Tarjeta de Forgey en Progreso: la mascota con TU nivel de músculo. Toca para ver la evolución.
-    var forgeyCard: some View {
-        Button { FX.tap(); showForgeyEvolution = true } label: {
-            HStack(spacing: 14) {
-                Mascot(size: 64, stage: store.forgeyStage, pose: .flex)
-                VStack(alignment: .leading, spacing: 3) {
-                    Text("FORGEY · TU REFLEJO").font(.system(size: 9, weight: .heavy)).foregroundColor(Brand.soft).tracking(0.5)
-                    Text(forgeyStageNames[store.forgeyStage]).font(.system(size: 17, weight: .heavy)).foregroundColor(Brand.ink)
-                    Text("Crece contigo: sube tu Gym Score y se pondrá más fuerte.")
-                        .font(.caption).foregroundColor(Brand.muted).fixedSize(horizontal: false, vertical: true)
-                }
-                Spacer()
-                Image(systemName: "chevron.right").font(.system(size: 12, weight: .bold)).foregroundColor(Brand.soft)
-            }
-            .padding(14).background(Brand.panel).clipShape(RoundedRectangle(cornerRadius: 16))
-            .overlay(RoundedRectangle(cornerRadius: 16).stroke(Brand.line))
-        }.buttonStyle(.plain)
-    }
-}
-
-/// La evolución de Forgey: las 5 etapas, con la tuya destacada. Motiva sin números.
-struct ForgeyEvolutionSheet: View {
-    @EnvironmentObject var store: AppStore
-
-    private let thresholds = ["Score 0", "Score 15", "Score 45", "Score 60", "Score 90"]
-
-    var body: some View {
-        ScrollView {
-            VStack(spacing: 18) {
-                VStack(spacing: 4) {
-                    Text("La evolución de Forgey").font(.system(size: 22, weight: .heavy)).foregroundColor(Brand.ink)
-                    Text("Forgey es tu reflejo: cuanto más fuerte te pones tú, más fuerte se pone él.")
-                        .font(.footnote).foregroundColor(Brand.muted).multilineTextAlignment(.center)
-                }.padding(.top, 26)
-
-                Mascot(size: 120, stage: store.forgeyStage, pose: .flex)
-                Text(forgeyStageNames[store.forgeyStage])
-                    .font(.system(size: 15, weight: .heavy)).foregroundColor(Color(hex: "10150a"))
-                    .padding(.horizontal, 14).padding(.vertical, 5).background(Brand.green).clipShape(Capsule())
-
-                VStack(spacing: 0) {
-                    ForEach(0..<5, id: \.self) { s in
-                        let mine = s == store.forgeyStage
-                        HStack(spacing: 14) {
-                            Mascot(size: 44, stage: s, pose: s == 4 ? .flex : .idle)
-                                .opacity(s <= store.forgeyStage ? 1 : 0.35)
-                            VStack(alignment: .leading, spacing: 1) {
-                                Text(forgeyStageNames[s]).font(.system(size: 14, weight: .heavy))
-                                    .foregroundColor(s <= store.forgeyStage ? Brand.ink : Brand.soft)
-                                Text(thresholds[s]).font(.caption2).foregroundColor(Brand.soft)
-                            }
-                            Spacer()
-                            if mine {
-                                Text("TÚ").font(.system(size: 10, weight: .heavy)).foregroundColor(Color(hex: "10150a"))
-                                    .padding(.horizontal, 8).padding(.vertical, 3).background(Brand.green).clipShape(Capsule())
-                            } else if s < store.forgeyStage {
-                                Image(systemName: "checkmark.circle.fill").foregroundColor(Color(hex: "6ea300"))
-                            } else {
-                                Image(systemName: "lock.fill").font(.system(size: 12)).foregroundColor(Brand.soft.opacity(0.5))
-                            }
-                        }
-                        .padding(.vertical, 8).padding(.horizontal, 14)
-                        .background(mine ? Brand.greenSoft.opacity(0.35) : Color.clear)
-                        .clipShape(RoundedRectangle(cornerRadius: 12))
-                        if s < 4 { Divider().padding(.leading, 70) }
-                    }
-                }
-                .padding(6)
-                .background(Color.white).clipShape(RoundedRectangle(cornerRadius: 16))
-                .overlay(RoundedRectangle(cornerRadius: 16).stroke(Brand.line))
-            }
-            .padding(16)
-        }
-        .background(Brand.bg)
-        .presentationDetents([.large])
-        .presentationDragIndicator(.visible)
     }
 }

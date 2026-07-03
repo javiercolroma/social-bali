@@ -621,15 +621,11 @@ struct AchievementCelebration: View {
             ConfettiView().frame(maxWidth: .infinity, maxHeight: .infinity).allowsHitTesting(false)
             VStack(spacing: 16) {
                 Text("¡LOGRO DESBLOQUEADO!").font(.system(size: 13, weight: .heavy)).kerning(1).foregroundColor(Color(hex: "e2a915"))
-                ZStack(alignment: .bottomTrailing) {
-                    ZStack {
-                        Circle().fill(achievement.tier.fill).frame(width: 118, height: 118)
-                            .overlay(Circle().stroke(.white.opacity(0.7), lineWidth: 3))
-                            .shadow(color: achievement.tier.color.opacity(0.8), radius: 18)
-                        Image(systemName: achievement.icon).font(.system(size: 50, weight: .heavy)).foregroundColor(.white)
-                    }
-                    // Forgey celebra tu logro asomándose por la esquina.
-                    Mascot(size: 46, stage: 1, pose: .cheer).offset(x: 26, y: 18)
+                ZStack {
+                    Circle().fill(achievement.tier.fill).frame(width: 118, height: 118)
+                        .overlay(Circle().stroke(.white.opacity(0.7), lineWidth: 3))
+                        .shadow(color: achievement.tier.color.opacity(0.8), radius: 18)
+                    Image(systemName: achievement.icon).font(.system(size: 50, weight: .heavy)).foregroundColor(.white)
                 }
                 .scaleEffect(pop)
                 .rotationEffect(.degrees(shine ? 0 : -8))
@@ -711,8 +707,13 @@ struct StreakCelebration: View {
             ConfettiView().frame(maxWidth: .infinity, maxHeight: .infinity).allowsHitTesting(false)
             VStack(spacing: 14) {
                 Text("¡RACHA EN LLAMAS!").font(.system(size: 13, weight: .heavy)).kerning(1).foregroundColor(Color(hex: "f2760c"))
-                // Forgey (que ES una llama) celebra tu racha contigo.
-                Mascot(size: 104, stage: 2, pose: .cheer).scaleEffect(pop)
+                ZStack {
+                    Circle().fill(LinearGradient(colors: [Color(hex: "ffb03a"), Color(hex: "f2600c")], startPoint: .top, endPoint: .bottom))
+                        .frame(width: 118, height: 118)
+                        .overlay(Circle().stroke(.white.opacity(0.7), lineWidth: 3))
+                        .shadow(color: Color(hex: "f2600c").opacity(0.7), radius: 18)
+                    Image(systemName: "flame.fill").font(.system(size: 52, weight: .heavy)).foregroundColor(.white)
+                }.scaleEffect(pop)
                 Text("\(days) días de racha").font(.system(size: 22, weight: .heavy)).foregroundColor(Brand.ink)
                 Text("¡Sigue así, no la pierdas!").font(.system(size: 14, weight: .semibold)).foregroundColor(Brand.muted)
                 HStack(spacing: 6) {

@@ -508,19 +508,12 @@ struct OnboardingView: View {
 
 /// Mascota amistosa de Forge Loop: cuerpo "blob" con degradado, brillo, ojos con
 /// destello y mejillas suaves. Acompaña en cada paso del onboarding.
-/// Pose de Forgey según el contexto: reposo, flexionando (entreno), secándose el
-/// sudor (descanso) o celebrando (resumen / logros).
-enum ForgeyPose { case idle, flex, rest, cheer }
-
 struct Mascot: View {
     var size: CGFloat = 110
     var wave = false
     var holdsHeart = false
-    var accessory: String? = nil   // accesorio (corona, gorro…) sobre la punta de la llama
+    var accessory: String? = nil   // accesorio de la tienda (corona, gorro, auriculares…)
     var bounceTrigger: Int = 0   // al cambiar, Forgey hace squash + cara feliz
-    /// Etapa física (0–4): Forgey GANA músculo con tu Gym Score — es tu reflejo.
-    var stage: Int = 0
-    var pose: ForgeyPose = .idle
     @State private var bob = false
     @State private var blink = false
     @State private var waveAngle = false
@@ -529,18 +522,14 @@ struct Mascot: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     private let ink = Color(hex: "16240b")
-    private let armFill = Color(hex: "8ed11d")
-    private let armEdge = Color(hex: "6fa916")
-    private var armW: CGFloat { size * (0.095 + CGFloat(min(4, max(0, stage))) * 0.020) }
-    private var armLen: CGFloat { size * (0.28 + CGFloat(min(4, max(0, stage))) * 0.028) }
 
-    /// Accesorios de Forgey: símbolo, tamaño relativo, color y desplazamiento sobre la punta.
+    /// Accesorios de Forgey (tienda): símbolo, tamaño relativo, color y desplazamiento sobre la cabeza.
     static func accessory(_ id: String) -> (symbol: String, scale: CGFloat, color: Color, offset: CGFloat)? {
         switch id {
-        case "corona":      return ("crown.fill", 0.30, Color(hex: "f2c015"), 0.66)
-        case "gorro":       return ("graduationcap.fill", 0.36, Color(hex: "16240b"), 0.64)
-        case "auriculares": return ("headphones", 0.56, Color(hex: "3a3a3c"), 0.10)
-        case "aureola":     return ("circle.dashed", 0.40, Color(hex: "f2c015"), 0.72)
+        case "corona":      return ("crown.fill", 0.34, Color(hex: "f2c015"), 0.60)
+        case "gorro":       return ("graduationcap.fill", 0.40, Color(hex: "16240b"), 0.58)
+        case "auriculares": return ("headphones", 0.62, Color(hex: "3a3a3c"), 0.10)
+        case "aureola":     return ("circle.dashed", 0.44, Color(hex: "f2c015"), 0.66)
         default: return nil
         }
     }
@@ -549,94 +538,56 @@ struct Mascot: View {
         ZStack {
             // Sombra de contacto en el suelo
             Ellipse().fill(Color.black.opacity(0.10))
-                .frame(width: size * 0.62, height: size * 0.11)
-                .blur(radius: 7).offset(y: size * 0.62)
+                .frame(width: size * 0.66, height: size * 0.12)
+                .blur(radius: 7).offset(y: size * 0.56)
 
             ZStack {
-                // Brazos DETRÁS del cuerpo (crecen con la etapa; integran con la silueta).
-                if stage >= 1 || pose != .idle { arms }
-
-                // Llama exterior (silueta orgánica, con más "cuerpo" cuanto más fuerte).
-                FlameShape()
-                    .fill(LinearGradient(colors: [Color(hex: "c2f861"), Color(hex: "84c718")],
+                // Cuerpo con degradado vertical
+                BlobShape()
+                    .fill(LinearGradient(colors: [Color(hex: "c2f861"), Color(hex: "8ed11d")],
                                          startPoint: .top, endPoint: .bottom))
-                    .overlay(FlameShape().stroke(Color(hex: "6fa916").opacity(0.45), lineWidth: 1))
-                    .frame(width: size * (1 + CGFloat(stage) * 0.02), height: size * 1.18)
-                    .shadow(color: Color(hex: "8ed11d").opacity(0.45), radius: 14, y: 9)
-
-                // Núcleo interior más claro (le da vida de llama)
-                InnerFlameShape()
-                    .fill(LinearGradient(colors: [Color(hex: "e6ffab"), Color(hex: "c6f870")],
-                                         startPoint: .top, endPoint: .bottom))
-                    .frame(width: size * 0.72, height: size * 0.70)
-                    .offset(y: size * 0.21)
+                    .overlay(BlobShape().stroke(Color(hex: "6fa916").opacity(0.5), lineWidth: 1))
+                    .frame(width: size, height: size * 1.02)
+                    .shadow(color: Color(hex: "8ed11d").opacity(0.4), radius: 14, y: 10)
 
                 // Brillo superior (gloss)
-                Ellipse().fill(Color.white.opacity(0.35))
-                    .frame(width: size * 0.30, height: size * 0.16)
-                    .blur(radius: 7)
-                    .rotationEffect(.degrees(-24))
-                    .offset(x: -size * 0.16, y: -size * 0.26)
-
-                // Cinta de gimnasio en la "frente" de la llama.
-                ZStack {
-                    Capsule().fill(ink).frame(width: size * 0.56, height: size * 0.085)
-                    Capsule().fill(Color(hex: "a7f22d")).frame(width: size * 0.56, height: size * 0.026)
-                }
-                .rotationEffect(.degrees(-3))
-                .offset(y: -size * 0.135)
+                Ellipse().fill(Color.white.opacity(0.40))
+                    .frame(width: size * 0.52, height: size * 0.30)
+                    .blur(radius: 9).offset(x: -size * 0.11, y: -size * 0.28)
 
                 // Mejillas suaves
-                HStack(spacing: size * 0.40) { cheek; cheek }.offset(y: size * 0.30)
+                HStack(spacing: size * 0.44) { cheek; cheek }.offset(y: size * 0.15)
 
-                // Cejas decididas a partir de la etapa 3.
-                if stage >= 3 && !happy {
-                    HStack(spacing: size * 0.215) {
-                        Capsule().fill(ink).frame(width: size * 0.115, height: size * 0.034).rotationEffect(.degrees(13))
-                        Capsule().fill(ink).frame(width: size * 0.115, height: size * 0.034).rotationEffect(.degrees(-13))
-                    }.offset(y: size * 0.015)
-                }
-
-                // Gotita de sudor en el descanso.
-                if pose == .rest {
-                    Image(systemName: "drop.fill")
-                        .font(.system(size: size * 0.12))
-                        .foregroundColor(Color(hex: "6cb9f5"))
-                        .rotationEffect(.degrees(-12))
-                        .offset(x: -size * 0.36, y: -size * 0.10)
-                }
-
-                // Cara (sobre el núcleo claro)
-                VStack(spacing: size * 0.085) {
-                    HStack(spacing: size * 0.17) { eye; eye }
-                    Smile().stroke(ink, style: StrokeStyle(lineWidth: size * 0.045, lineCap: .round))
-                        .frame(width: size * (happy ? 0.36 : 0.29), height: size * (happy ? 0.18 : 0.13))
-                }.offset(y: size * 0.22)
+                // Cara
+                VStack(spacing: size * 0.10) {
+                    HStack(spacing: size * 0.19) { eye; eye }
+                    Smile().stroke(ink, style: StrokeStyle(lineWidth: size * 0.05, lineCap: .round))
+                        .frame(width: size * (happy ? 0.42 : 0.34), height: size * (happy ? 0.21 : 0.16))
+                }.offset(y: size * 0.05)
 
                 if let acc = accessory, let a = Mascot.accessory(acc) {
                     Image(systemName: a.symbol).font(.system(size: size * a.scale, weight: .heavy))
                         .foregroundColor(a.color)
-                        .rotationEffect(.degrees(10))
-                        .offset(x: size * 0.06, y: -size * a.offset)
+                        .offset(y: -size * a.offset)
                 }
                 if wave {
                     Image(systemName: "hand.wave.fill")
                         .font(.system(size: size * 0.20)).foregroundColor(Color(hex: "f2b134"))
                         .rotationEffect(.degrees(waveAngle ? 20 : -4), anchor: .bottomLeading)
-                        .offset(x: size * 0.48, y: -size * 0.16)
+                        .offset(x: size * 0.5, y: -size * 0.34)
                         .animation(.easeInOut(duration: 0.5).repeatForever(autoreverses: true), value: waveAngle)
                 }
                 if holdsHeart {
                     Image(systemName: "heart.fill").font(.system(size: size * 0.22)).foregroundColor(Brand.red)
                         .shadow(color: Brand.red.opacity(0.4), radius: 4, y: 2)
-                        .offset(x: size * 0.46, y: -size * 0.18)
+                        .offset(x: size * 0.46, y: -size * 0.36)
                         .scaleEffect(bob ? 1.14 : 0.94)
                 }
             }
             .scaleEffect(x: 2 - squash, y: squash)   // squash & stretch al reaccionar
             .offset(y: bob ? -size * 0.03 : size * 0.03)
         }
-        .frame(width: size * 1.25, height: size * 1.35)
+        .frame(width: size * 1.2, height: size * 1.3)
         .onAppear {
             withAnimation(.easeInOut(duration: 1.6).repeatForever(autoreverses: true)) { bob = true }
             if wave { waveAngle = true }
@@ -645,69 +596,19 @@ struct Mascot: View {
         .onChange(of: bounceTrigger) { _ in react() }
     }
 
-    // MARK: - Músculo (brazos que crecen contigo)
-
-    @ViewBuilder private var arms: some View {
-        switch pose {
-        case .idle:
-            armCapsule(w: armW, h: armLen).rotationEffect(.degrees(32)).offset(x: -size * 0.475, y: size * 0.30)
-            armCapsule(w: armW, h: armLen).rotationEffect(.degrees(-32)).offset(x: size * 0.475, y: size * 0.30)
-        case .cheer:
-            armCapsule(w: armW, h: armLen * 1.1, fist: true).rotationEffect(.degrees(150)).offset(x: -size * 0.52, y: -size * 0.10)
-            armCapsule(w: armW, h: armLen * 1.1, fist: true).rotationEffect(.degrees(-150)).offset(x: size * 0.52, y: -size * 0.10)
-        case .flex:
-            flexArm(mirror: false)
-            flexArm(mirror: true)
-        case .rest:
-            armCapsule(w: armW, h: armLen).rotationEffect(.degrees(32)).offset(x: -size * 0.475, y: size * 0.30)
-            armCapsule(w: armW, h: armLen, fist: true).rotationEffect(.degrees(-122)).offset(x: size * 0.47, y: -size * 0.06)
-        }
-    }
-
-    private func flexArm(mirror: Bool) -> some View {
-        let sgn: CGFloat = mirror ? 1 : -1
-        return ZStack {
-            // Hombro → codo (el codo queda FUERA de la silueta)
-            armCapsule(w: size * 0.28, h: armW).offset(x: sgn * size * 0.525, y: size * 0.16)
-            // Bíceps (crece con la etapa)
-            if stage >= 1 {
-                Circle().fill(armFill)
-                    .overlay(Circle().stroke(armEdge.opacity(0.5), lineWidth: 1))
-                    .frame(width: armW * (1.25 + CGFloat(stage) * 0.16))
-                    .offset(x: sgn * size * 0.545, y: size * 0.16 - armW * 0.5)
-            }
-            // Antebrazo hacia arriba + puño
-            armCapsule(w: armW, h: size * 0.25 + armW * 0.4, fist: true)
-                .offset(x: sgn * size * 0.655, y: -size * 0.005)
-        }
-    }
-
-    private func armCapsule(w: CGFloat, h: CGFloat, fist: Bool = false) -> some View {
-        Capsule().fill(armFill)
-            .overlay(Capsule().stroke(armEdge.opacity(0.5), lineWidth: 1))
-            .overlay(alignment: .top) {
-                if fist {
-                    Circle().fill(Color(hex: "76b31a"))
-                        .frame(width: w * 1.1, height: w * 1.1)
-                        .offset(y: -w * 0.25)
-                }
-            }
-            .frame(width: w, height: h)
-    }
-
     // Ojo: feliz = arco "^" (ojitos contentos); normal = óvalo con destello.
     private var eye: some View {
         Group {
             if happy {
-                HappyEye().stroke(ink, style: StrokeStyle(lineWidth: size * 0.045, lineCap: .round))
-                    .frame(width: size * 0.13, height: size * 0.085)
+                HappyEye().stroke(ink, style: StrokeStyle(lineWidth: size * 0.05, lineCap: .round))
+                    .frame(width: size * 0.14, height: size * 0.09)
             } else {
                 Capsule().fill(ink)
-                    .frame(width: size * 0.105, height: blink ? size * 0.024 : size * 0.19)
+                    .frame(width: size * 0.115, height: blink ? size * 0.025 : size * 0.215)
                     .overlay(alignment: .top) {
                         Circle().fill(Color.white.opacity(blink ? 0 : 0.9))
-                            .frame(width: size * 0.042, height: size * 0.042)
-                            .offset(y: size * 0.032)
+                            .frame(width: size * 0.045, height: size * 0.045)
+                            .offset(y: size * 0.035)
                     }
             }
         }
@@ -723,7 +624,7 @@ struct Mascot: View {
     }
     private var cheek: some View {
         Circle().fill(Color(red: 1, green: 0.46, blue: 0.46).opacity(0.5))
-            .frame(width: size * 0.13, height: size * 0.13).blur(radius: size * 0.02)
+            .frame(width: size * 0.15, height: size * 0.15).blur(radius: size * 0.02)
     }
     private func scheduleBlink() {
         DispatchQueue.main.asyncAfter(deadline: .now() + Double.random(in: 2.5...4.5)) {
@@ -736,42 +637,22 @@ struct Mascot: View {
     }
 }
 
-/// Silueta de llama estilizada (punta con un leve giro, base redonda y abrazable).
-/// Forgey ES una llama: Forge = forja = fuego, y tu racha ya es 🔥.
-private struct FlameShape: Shape {
+/// Cuerpo "blob" simétrico y suave (más orgánico que un cuadrado redondeado).
+private struct BlobShape: Shape {
     func path(in r: CGRect) -> Path {
         let w = r.width, h = r.height
         var p = Path()
-        p.move(to: CGPoint(x: w * 0.54, y: 0))                                   // punta
-        p.addCurve(to: CGPoint(x: w * 0.08, y: h * 0.50),
-                   control1: CGPoint(x: w * 0.26, y: h * 0.09), control2: CGPoint(x: w * 0.08, y: h * 0.27))
-        p.addCurve(to: CGPoint(x: w * 0.50, y: h),
-                   control1: CGPoint(x: w * 0.08, y: h * 0.82), control2: CGPoint(x: w * 0.22, y: h))
-        p.addCurve(to: CGPoint(x: w * 0.92, y: h * 0.50),
-                   control1: CGPoint(x: w * 0.78, y: h), control2: CGPoint(x: w * 0.92, y: h * 0.82))
-        p.addCurve(to: CGPoint(x: w * 0.72, y: h * 0.15),
-                   control1: CGPoint(x: w * 0.92, y: h * 0.33), control2: CGPoint(x: w * 0.83, y: h * 0.235))
-        p.addCurve(to: CGPoint(x: w * 0.54, y: 0),
-                   control1: CGPoint(x: w * 0.615, y: h * 0.10), control2: CGPoint(x: w * 0.565, y: h * 0.045))
-        p.closeSubpath()
-        return p
-    }
-}
-
-/// Núcleo interior de la llama (gota simétrica, más clara).
-private struct InnerFlameShape: Shape {
-    func path(in r: CGRect) -> Path {
-        let w = r.width, h = r.height
-        var p = Path()
-        p.move(to: CGPoint(x: w * 0.52, y: 0))
-        p.addCurve(to: CGPoint(x: w * 0.12, y: h * 0.55),
-                   control1: CGPoint(x: w * 0.28, y: h * 0.12), control2: CGPoint(x: w * 0.12, y: h * 0.32))
-        p.addCurve(to: CGPoint(x: w * 0.50, y: h),
-                   control1: CGPoint(x: w * 0.12, y: h * 0.84), control2: CGPoint(x: w * 0.26, y: h))
-        p.addCurve(to: CGPoint(x: w * 0.88, y: h * 0.55),
-                   control1: CGPoint(x: w * 0.74, y: h), control2: CGPoint(x: w * 0.88, y: h * 0.84))
-        p.addCurve(to: CGPoint(x: w * 0.52, y: 0),
-                   control1: CGPoint(x: w * 0.88, y: h * 0.28), control2: CGPoint(x: w * 0.68, y: h * 0.12))
+        // Squircle suave construido con curvas (esquinas muy redondeadas, lados ligeramente abombados)
+        let cx = w * 0.5
+        p.move(to: CGPoint(x: cx, y: 0))
+        p.addCurve(to: CGPoint(x: w, y: h * 0.5),
+                   control1: CGPoint(x: w * 0.92, y: 0), control2: CGPoint(x: w, y: h * 0.12))
+        p.addCurve(to: CGPoint(x: cx, y: h),
+                   control1: CGPoint(x: w, y: h * 0.9), control2: CGPoint(x: w * 0.9, y: h))
+        p.addCurve(to: CGPoint(x: 0, y: h * 0.5),
+                   control1: CGPoint(x: w * 0.1, y: h), control2: CGPoint(x: 0, y: h * 0.9))
+        p.addCurve(to: CGPoint(x: cx, y: 0),
+                   control1: CGPoint(x: 0, y: h * 0.12), control2: CGPoint(x: w * 0.08, y: 0))
         p.closeSubpath()
         return p
     }

@@ -298,14 +298,9 @@ struct SocialFeedView: View {
     }
 
     private var newUserHeader: some View {
-        HStack(spacing: 10) {
-            // Forgey te saluda al llegar (y ya refleja tu nivel).
-            Mascot(size: 52, wave: true, stage: store.forgeyStage)
-            VStack(alignment: .leading, spacing: 3) {
-                Text("Hola, \(store.account?.name ?? "atleta") 👋").font(.system(size: 20, weight: .heavy)).foregroundColor(Brand.ink)
-                Text("Pon en marcha tu Forge Loop").font(.footnote).foregroundColor(Brand.muted)
-            }
-            Spacer()
+        VStack(alignment: .leading, spacing: 3) {
+            Text("Hola, \(store.account?.name ?? "atleta") 👋").font(.system(size: 20, weight: .heavy)).foregroundColor(Brand.ink)
+            Text("Pon en marcha tu Forge Loop").font(.footnote).foregroundColor(Brand.muted)
         }.frame(maxWidth: .infinity, alignment: .leading)
     }
 
