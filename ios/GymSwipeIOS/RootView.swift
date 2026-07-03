@@ -268,9 +268,10 @@ struct CustomTabBar: View {
     ]
 
     var body: some View {
-        HStack(alignment: .center, spacing: 0) {
+        HStack(alignment: .bottom, spacing: 0) {
             ForEach(Array(items.enumerated()), id: \.offset) { idx, item in
-                tabItem(idx, item)
+                // Entreno (centro) mantiene su botón destacado; el resto son elementos suaves.
+                if idx == 2 { centerItem(idx, item) } else { tabItem(idx, item) }
             }
         }
         .padding(.horizontal, 8)
@@ -279,6 +280,25 @@ struct CustomTabBar: View {
         .background(Brand.bg)
         // Mismo muelle que el deslizamiento de pantallas: el indicador "casa" con la transición.
         .animation(.spring(response: 0.42, dampingFraction: 0.9), value: tab)
+    }
+
+    /// Botón central de Entreno: círculo elevado (como estaba), con toque suave.
+    private func centerItem(_ idx: Int, _ item: (title: String, icon: String)) -> some View {
+        let active = tab == idx
+        return VStack(spacing: 4) {
+            Image(systemName: item.icon).font(.system(size: 20, weight: .heavy))
+                .foregroundStyle(active ? Color(hex: "10150a") : Brand.soft)
+                .frame(width: 50, height: 50)
+                .background(active ? Brand.green : Color.white)
+                .clipShape(Circle())
+                .overlay(Circle().stroke(active ? Color.clear : Brand.line, lineWidth: 1))
+                .shadow(color: active ? Brand.green.opacity(0.4) : .black.opacity(0.06), radius: active ? 8 : 4, y: 3)
+            Text(item.title).font(.system(size: 10, weight: .heavy)).foregroundStyle(active ? accent : Brand.soft)
+        }
+        .frame(maxWidth: .infinity)
+        .offset(y: -8)
+        .contentShape(Rectangle())
+        .onTapGesture { onSelect(idx) }
     }
 
     private var safeBottom: CGFloat {

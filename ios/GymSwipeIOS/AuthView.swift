@@ -156,21 +156,23 @@ struct AuthProviderSheet: View {
     }
 }
 
-/// Hoja de email con modo explícito. El modo llega ya elegido desde la bienvenida
-/// (Unirme gratis / Iniciar sesión), con un enlace para cambiar por si te equivocaste.
+/// Email SIN contraseña (estilo Strava): 1) escribes tu correo → te enviamos un código
+/// de 6 dígitos; 2) lo introduces y dentro. El modo (registro/inicio) solo cambia la copy
+/// y si se crea cuenta con un correo nuevo.
 struct EmailAuthSheet: View {
     @EnvironmentObject var store: AppStore
     @Environment(\.dismiss) private var dismiss
     let startCreating: Bool
     @State private var creating: Bool
+    @State private var step = 0           // 0 = correo, 1 = código
     @State private var email = ""
-    @State private var password = ""
-    @State private var showPassword = false
+    @State private var code = ""
     @State private var error: String?
-    @State private var resetMsg: String?
     @State private var busy = false
-    @FocusState private var focus: Field?
-    private enum Field { case email, password }
+    @State private var resendIn = 0       // segundos para poder reenviar
+    @FocusState private var focusEmail: Bool
+    @FocusState private var focusCode: Bool
+    private let ticker = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
 
     init(startCreating: Bool) {
         self.startCreating = startCreating
@@ -181,15 +183,29 @@ struct EmailAuthSheet: View {
         let e = email.trimmingCharacters(in: .whitespaces)
         return e.contains("@") && e.contains(".") && e.count >= 6
     }
-    private var canSubmit: Bool { validEmail && password.count >= 6 }
+    private var cleanEmail: String { email.trimmingCharacters(in: .whitespaces).lowercased() }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
+            if step == 0 { emailStep } else { codeStep }
+            Spacer(minLength: 0)
+        }
+        .padding(.horizontal, 20)
+        .background(Brand.bg)
+        .presentationDetents([.medium, .large])
+        .presentationDragIndicator(.visible)
+        .onAppear { DispatchQueue.main.asyncAfter(deadline: .now() + 0.45) { focusEmail = true } }
+        .onReceive(ticker) { _ in if resendIn > 0 { resendIn -= 1 } }
+    }
+
+    // MARK: - Paso 1: correo
+
+    private var emailStep: some View {
+        Group {
             VStack(alignment: .leading, spacing: 4) {
                 Text(creating ? "Crea tu cuenta" : "Inicia sesión")
                     .font(.system(size: 24, weight: .heavy)).foregroundColor(Brand.ink)
-                Text(creating ? "Regístrate con tu correo para guardar tu progreso."
-                              : "Entra con el correo con el que te registraste.")
+                Text("Te enviaremos un código de 6 dígitos para verificar que este correo es tuyo.")
                     .font(.footnote).foregroundColor(Brand.muted)
             }
             .padding(.top, 22)
@@ -201,109 +217,145 @@ struct EmailAuthSheet: View {
                     TextField("tu@email.com", text: $email)
                         .keyboardType(.emailAddress).textContentType(.emailAddress)
                         .textInputAutocapitalization(.never).autocorrectionDisabled()
-                        .focused($focus, equals: .email).submitLabel(.next).onSubmit { focus = .password }
+                        .focused($focusEmail).submitLabel(.go).onSubmit { sendCode() }
                 }
                 .padding(.horizontal, 14).frame(height: 52).background(Color.white)
                 .clipShape(RoundedRectangle(cornerRadius: 14))
                 .overlay(RoundedRectangle(cornerRadius: 14)
-                    .stroke(focus == .email ? Brand.green : Brand.line, lineWidth: focus == .email ? 1.5 : 1))
-            }
-
-            VStack(alignment: .leading, spacing: 5) {
-                Text("CONTRASEÑA").font(.caption2).fontWeight(.heavy).foregroundColor(Brand.muted)
-                HStack(spacing: 10) {
-                    Image(systemName: "lock.fill").font(.system(size: 14)).foregroundColor(Brand.soft)
-                    Group {
-                        if showPassword { TextField(creating ? "Mínimo 6 caracteres" : "Tu contraseña", text: $password) }
-                        else { SecureField(creating ? "Mínimo 6 caracteres" : "Tu contraseña", text: $password) }
-                    }
-                    .textContentType(creating ? .newPassword : .password)
-                    .textInputAutocapitalization(.never).autocorrectionDisabled()
-                    .focused($focus, equals: .password).submitLabel(.go).onSubmit { submit() }
-                    Button { showPassword.toggle() } label: {
-                        Image(systemName: showPassword ? "eye.slash.fill" : "eye.fill").font(.system(size: 14)).foregroundColor(Brand.soft)
-                    }.buttonStyle(.plain)
-                }
-                .padding(.horizontal, 14).frame(height: 52).background(Color.white)
-                .clipShape(RoundedRectangle(cornerRadius: 14))
-                .overlay(RoundedRectangle(cornerRadius: 14)
-                    .stroke(focus == .password ? Brand.green : Brand.line, lineWidth: focus == .password ? 1.5 : 1))
+                    .stroke(focusEmail ? Brand.green : Brand.line, lineWidth: focusEmail ? 1.5 : 1))
             }
 
             if let error { Label(error, systemImage: "exclamationmark.circle.fill").font(.caption).foregroundColor(Color(hex: "a73232")) }
-            if let resetMsg { Label(resetMsg, systemImage: "paperplane.fill").font(.caption).foregroundColor(Color(hex: "3f7d12")) }
 
-            Button { submit() } label: {
+            Button { sendCode() } label: {
                 HStack(spacing: 8) {
                     if busy { ProgressView().tint(Color(hex: "10150a")) }
-                    Text(busy ? (creating ? "Creando cuenta…" : "Entrando…") : (creating ? "Crear cuenta" : "Entrar"))
+                    Text(busy ? "Enviando…" : "Enviar código")
                 }.frame(maxWidth: .infinity)
             }
-            .buttonStyle(PrimaryButtonStyle(enabled: canSubmit && !busy)).disabled(!canSubmit || busy)
-
-            if !creating {
-                Button { forgot() } label: {
-                    Text("¿Olvidaste la contraseña?").font(.system(size: 13, weight: .semibold)).foregroundColor(Brand.soft)
-                        .frame(maxWidth: .infinity)
-                }.buttonStyle(.plain).disabled(!validEmail).opacity(validEmail ? 1 : 0.55)
-            }
+            .buttonStyle(PrimaryButtonStyle(enabled: validEmail && !busy)).disabled(!validEmail || busy)
 
             // Cambiar de modo por si te equivocaste al elegir en la bienvenida.
-            Button { withAnimation { creating.toggle(); error = nil; resetMsg = nil } } label: {
+            Button { withAnimation { creating.toggle(); error = nil } } label: {
                 HStack(spacing: 5) {
                     Text(creating ? "¿Ya tienes cuenta?" : "¿Eres nuevo?").foregroundColor(Brand.muted)
                     Text(creating ? "Inicia sesión" : "Crea una cuenta").foregroundColor(Brand.ink)
                 }.font(.system(size: 13, weight: .heavy)).frame(maxWidth: .infinity)
             }.buttonStyle(.plain).padding(.top, 2)
-
-            Spacer(minLength: 0)
         }
-        .padding(.horizontal, 20)
-        .background(Brand.bg)
-        .presentationDetents([.medium, .large])
-        .presentationDragIndicator(.visible)
-        .onAppear { DispatchQueue.main.asyncAfter(deadline: .now() + 0.45) { focus = .email } }
     }
 
-    private func submit() {
-        let e = email.trimmingCharacters(in: .whitespaces).lowercased()
-        guard canSubmit, !busy else { return }
-        error = nil; resetMsg = nil
+    // MARK: - Paso 2: código
+
+    private var codeStep: some View {
+        Group {
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Revisa tu correo").font(.system(size: 24, weight: .heavy)).foregroundColor(Brand.ink)
+                Text("Hemos enviado un código de 6 dígitos a **\(cleanEmail)**.")
+                    .font(.footnote).foregroundColor(Brand.muted)
+            }
+            .padding(.top, 22)
+
+            // Casillas del código: un TextField oculto recoge los dígitos; las cajas los pintan.
+            ZStack {
+                TextField("", text: $code)
+                    .keyboardType(.numberPad).textContentType(.oneTimeCode)
+                    .focused($focusCode)
+                    .opacity(0.02)
+                    .onChange(of: code) { v in
+                        let digits = String(v.filter(\.isNumber).prefix(6))
+                        if digits != v { code = digits }
+                        error = nil
+                        if digits.count == 6 { verify() }
+                    }
+                HStack(spacing: 8) {
+                    ForEach(0..<6, id: \.self) { i in
+                        let chars = Array(code)
+                        let filled = i < chars.count
+                        let isCursor = i == chars.count && focusCode
+                        Text(filled ? String(chars[i]) : "")
+                            .font(.system(size: 24, weight: .heavy)).foregroundColor(Brand.ink)
+                            .frame(maxWidth: .infinity).frame(height: 56)
+                            .background(Color.white)
+                            .clipShape(RoundedRectangle(cornerRadius: 12))
+                            .overlay(RoundedRectangle(cornerRadius: 12)
+                                .stroke(isCursor ? Brand.green : (filled ? Brand.greenSoft : Brand.line),
+                                        lineWidth: isCursor ? 2 : 1.2))
+                    }
+                }
+                .contentShape(Rectangle())
+                .onTapGesture { focusCode = true }
+            }
+            .frame(height: 56)
+
+            if let error { Label(error, systemImage: "exclamationmark.circle.fill").font(.caption).foregroundColor(Color(hex: "a73232")) }
+            if busy { HStack(spacing: 8) { ProgressView(); Text("Verificando…").font(.caption).foregroundColor(Brand.muted) } }
+
+            HStack {
+                Button { withAnimation { step = 0; code = ""; error = nil }; DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { focusEmail = true } } label: {
+                    Label("Cambiar correo", systemImage: "arrow.left").font(.system(size: 13, weight: .heavy)).foregroundColor(Brand.soft)
+                }.buttonStyle(.plain)
+                Spacer()
+                Button { sendCode(resend: true) } label: {
+                    Text(resendIn > 0 ? "Reenviar en \(resendIn)s" : "Reenviar código")
+                        .font(.system(size: 13, weight: .heavy))
+                        .foregroundColor(resendIn > 0 ? Brand.soft : Brand.ink)
+                }.buttonStyle(.plain).disabled(resendIn > 0 || busy)
+            }.padding(.top, 4)
+        }
+    }
+
+    // MARK: - Acciones
+
+    private func sendCode(resend: Bool = false) {
+        guard validEmail, !busy else { return }
+        error = nil
         guard Backend.shared.isConfigured else {
+            // Sin backend (desarrollo local): entra directo.
             FX.success(sound: true); dismiss()
-            withAnimation { store.signIn(provider: "email", userId: e, email: e, name: nil) }
+            withAnimation { store.signIn(provider: "email", userId: cleanEmail, email: cleanEmail, name: nil) }
             return
         }
         busy = true
         Task {
             do {
-                let uid = creating
-                    ? try await Backend.shared.signUpEmail(e, password: password)
-                    : try await Backend.shared.signInEmail(e, password: password)
-                print("[Backend] sesión Supabase (email) abierta: \(uid)")
-                FX.success(sound: true); dismiss()
-                withAnimation { store.signIn(provider: "email", userId: uid.uuidString, email: e, name: nil) }
-                store.hydrateAccountFromBackend(); store.syncSessionsFromBackend(); store.syncWorkoutsFromBackend()
-            } catch BackendError.emailTaken {
-                error = "Ya existe una cuenta con este correo. Cambia a «Iniciar sesión»."
+                try await Backend.shared.sendEmailCode(cleanEmail, createIfNeeded: creating)
+                FX.tap()
+                resendIn = 30
+                if !resend { withAnimation { step = 1; code = "" } }
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { focusCode = true }
             } catch {
-                print("[Backend] email → Supabase falló:", error)
-                self.error = creating
-                    ? "No pudimos crear la cuenta. Revisa el correo y usa una contraseña de 6+ caracteres."
-                    : "Correo o contraseña incorrectos. ¿Eres nuevo? Elige «Crea una cuenta»."
+                print("[Backend] enviar código falló:", error)
+                let msg = String(describing: error).lowercased()
+                if msg.contains("signup") || msg.contains("otp_disabled") {
+                    self.error = "No existe ninguna cuenta con este correo. ¿Eres nuevo? Elige «Crea una cuenta»."
+                } else if msg.contains("rate") {
+                    self.error = "Demasiados intentos. Espera un minuto y vuelve a probar."
+                } else {
+                    self.error = "No pudimos enviar el código. Revisa el correo e inténtalo de nuevo."
+                }
             }
             busy = false
         }
     }
 
-    private func forgot() {
-        let e = email.trimmingCharacters(in: .whitespaces).lowercased()
-        guard validEmail, Backend.shared.isConfigured else { return }
-        FX.tap()
+    private func verify() {
+        guard code.count == 6, !busy else { return }
+        busy = true
         Task {
-            do { try await Backend.shared.resetPassword(email: e)
-                 resetMsg = "Si el correo existe, te enviamos un enlace para restablecer la contraseña." }
-            catch { resetMsg = "No pudimos enviar el correo. Inténtalo de nuevo." }
+            do {
+                let uid = try await Backend.shared.verifyEmailCode(cleanEmail, code: code)
+                print("[Backend] sesión Supabase (email OTP) abierta: \(uid)")
+                FX.success(sound: true); dismiss()
+                withAnimation { store.signIn(provider: "email", userId: uid.uuidString, email: cleanEmail, name: nil) }
+                store.hydrateAccountFromBackend(); store.syncSessionsFromBackend(); store.syncWorkoutsFromBackend()
+            } catch {
+                print("[Backend] verificar código falló:", error)
+                self.error = "Código incorrecto o caducado. Revísalo o pide uno nuevo."
+                code = ""
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) { focusCode = true }
+            }
+            busy = false
         }
     }
 }

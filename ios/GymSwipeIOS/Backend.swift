@@ -53,19 +53,21 @@ final class Backend {
 
     /// Inicia sesión con email/contraseña (falla si las credenciales no son válidas).
     @discardableResult
-    func signInEmail(_ email: String, password: String) async throws -> UUID {
+    // Email SIN contraseña (estilo Strava): se envía un código de 6 dígitos al correo
+    // (SMTP Resend + plantillas con {{ .Token }}) y `verifyEmailCode` abre la sesión.
+
+    /// Envía el código. `createIfNeeded`: en REGISTRO crea la cuenta si no existe; en
+    /// INICIO DE SESIÓN va a false → un correo no registrado da error (y no una cuenta nueva).
+    func sendEmailCode(_ email: String, createIfNeeded: Bool) async throws {
         guard let client else { throw BackendError.notConfigured }
-        return try await client.auth.signIn(email: email, password: password).user.id
+        try await client.auth.signInWithOTP(email: email, shouldCreateUser: createIfNeeded)
     }
 
-    /// Crea una cuenta NUEVA con email/contraseña. Si el correo ya está registrado,
-    /// GoTrue (con autoconfirm) devuelve un usuario ofuscado SIN sesión → `emailTaken`.
-    @discardableResult
-    func signUpEmail(_ email: String, password: String) async throws -> UUID {
+    /// Verifica el código de 6 dígitos y devuelve el usuario ya autenticado.
+    func verifyEmailCode(_ email: String, code: String) async throws -> UUID {
         guard let client else { throw BackendError.notConfigured }
-        let res = try await client.auth.signUp(email: email, password: password)
-        guard let session = res.session else { throw BackendError.emailTaken }
-        return session.user.id
+        let res = try await client.auth.verifyOTP(email: email, token: code, type: .email)
+        return res.user.id
     }
 
     func signOut() async {
