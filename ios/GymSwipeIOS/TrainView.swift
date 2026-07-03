@@ -189,7 +189,8 @@ struct TrainView: View {
                     if resting {
                         Text(timeString(restRemaining)).font(.system(size: 17, weight: .heavy)).monospacedDigit().foregroundColor(Brand.ink)
                     } else {
-                        Image(systemName: "figure.strengthtraining.traditional").font(.system(size: 26)).foregroundColor(Color(hex: "4b6211"))
+                        // Forgey flexionando: tu compañero de entreno (con TU nivel de músculo).
+                        Mascot(size: 34, stage: store.forgeyStage, pose: .flex).offset(y: -3)
                     }
                 }.frame(width: 70, height: 70)
                 VStack(alignment: .leading, spacing: 2) {
@@ -447,7 +448,8 @@ struct TrainView: View {
     private var summary: some View {
         ZStack(alignment: .top) {
             PanelCard {
-                HStack { Spacer(); Text("🏁").font(.system(size: 46)); Spacer() }
+                // Forgey celebra contigo (brazos arriba).
+                HStack { Spacer(); Mascot(size: 76, stage: store.forgeyStage, pose: .cheer); Spacer() }
                 Text("¡Buen trabajo!").font(.system(size: 22, weight: .heavy)).foregroundColor(Brand.ink)
                     .frame(maxWidth: .infinity, alignment: .center)
                 HStack(spacing: 10) {
@@ -555,10 +557,8 @@ struct TrainView: View {
     private var emptyState: some View {
         VStack(spacing: 18) {
             Spacer(minLength: 40)
-            ZStack {
-                Circle().fill(Brand.greenSoft).frame(width: 96, height: 96)
-                Image(systemName: "dumbbell.fill").font(.system(size: 40, weight: .heavy)).foregroundColor(Color(hex: "10150a"))
-            }
+            // Forgey te recibe (y refleja lo fuerte que ya estás).
+            Mascot(size: 92, wave: true, stage: store.forgeyStage)
             VStack(spacing: 6) {
                 Text("¿Qué entrenamos hoy?").font(.system(size: 22, weight: .heavy)).foregroundColor(Brand.ink)
                 Text("Elige un entreno para empezar tu sesión.")

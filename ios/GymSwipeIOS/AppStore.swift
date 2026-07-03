@@ -195,6 +195,17 @@ final class AppStore: ObservableObject {
     // MARK: - Computed
 
     var gymScore: GymScore { GymScoreEngine.calculate(history) }
+
+    /// Etapa física de Forgey (0–4): la mascota GANA músculo con tu Gym Score — es tu reflejo.
+    /// 0 <15 (Hierro) · 1 15–44 (Bronce/Plata) · 2 45–59 (Oro) · 3 60–89 (Platino/Diamante) · 4 ≥90 (Maestro).
+    var forgeyStage: Int {
+        let t = gymScore.total
+        if t >= 90 { return 4 }
+        if t >= 60 { return 3 }
+        if t >= 45 { return 2 }
+        if t >= 15 { return 1 }
+        return 0
+    }
     /// Ejercicio activo. En una superserie NO se hace un ejercicio entero y luego el otro:
     /// se rota (una serie de cada). El activo dentro del grupo es el pendiente con MENOS series
     /// cerradas (y, a igualdad, el primero en orden) → A·serie1, B·serie1, A·serie2, B·serie2…

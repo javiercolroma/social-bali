@@ -508,12 +508,19 @@ struct OnboardingView: View {
 
 /// Mascota amistosa de Forge Loop: cuerpo "blob" con degradado, brillo, ojos con
 /// destello y mejillas suaves. Acompaña en cada paso del onboarding.
+/// Pose de Forgey según el contexto: reposo, flexionando (entreno), secándose el
+/// sudor (descanso) o celebrando (resumen / logros).
+enum ForgeyPose { case idle, flex, rest, cheer }
+
 struct Mascot: View {
     var size: CGFloat = 110
     var wave = false
     var holdsHeart = false
     var accessory: String? = nil   // accesorio de la tienda (corona, gorro, auriculares…)
     var bounceTrigger: Int = 0   // al cambiar, Forgey hace squash + cara feliz
+    /// Etapa física (0–4): Forgey GANA músculo con tu Gym Score — es tu reflejo.
+    var stage: Int = 0
+    var pose: ForgeyPose = .idle
     @State private var bob = false
     @State private var blink = false
     @State private var waveAngle = false
@@ -522,6 +529,11 @@ struct Mascot: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     private let ink = Color(hex: "16240b")
+    private let armFill = Color(hex: "9adb2e")
+    private let armEdge = Color(hex: "6fa916")
+    // Grosor/largo del brazo crecen con la etapa (el "músculo" de Forgey).
+    private var armW: CGFloat { size * (0.10 + CGFloat(min(4, max(0, stage))) * 0.022) }
+    private var armLen: CGFloat { size * (0.30 + CGFloat(min(4, max(0, stage))) * 0.030) }
 
     /// Accesorios de Forgey (tienda): símbolo, tamaño relativo, color y desplazamiento sobre la cabeza.
     static func accessory(_ id: String) -> (symbol: String, scale: CGFloat, color: Color, offset: CGFloat)? {
@@ -542,6 +554,10 @@ struct Mascot: View {
                 .blur(radius: 7).offset(y: size * 0.56)
 
             ZStack {
+                // Brazos y hombros DETRÁS del cuerpo (la silueta gana anchura con la etapa).
+                if stage >= 1 || pose != .idle { arms }
+                if stage >= 2 { shoulders }
+
                 // Cuerpo con degradado vertical
                 BlobShape()
                     .fill(LinearGradient(colors: [Color(hex: "c2f861"), Color(hex: "8ed11d")],
@@ -557,6 +573,30 @@ struct Mascot: View {
 
                 // Mejillas suaves
                 HStack(spacing: size * 0.44) { cheek; cheek }.offset(y: size * 0.15)
+
+                // Cinta de gimnasio (sweatband): dice "gym" sin ser un aparato.
+                ZStack {
+                    Capsule().fill(ink).frame(width: size * 0.64, height: size * 0.095)
+                    Capsule().fill(Color(hex: "a7f22d")).frame(width: size * 0.64, height: size * 0.028)
+                }
+                .offset(y: -size * 0.285)
+
+                // Cejas decididas a partir de la etapa 3 (cara de "a por ello").
+                if stage >= 3 && !happy {
+                    HStack(spacing: size * 0.24) {
+                        Capsule().fill(ink).frame(width: size * 0.13, height: size * 0.038).rotationEffect(.degrees(14))
+                        Capsule().fill(ink).frame(width: size * 0.13, height: size * 0.038).rotationEffect(.degrees(-14))
+                    }.offset(y: -size * 0.145)
+                }
+
+                // Gotita de sudor en el descanso (se lo está currando, como tú).
+                if pose == .rest {
+                    Image(systemName: "drop.fill")
+                        .font(.system(size: size * 0.13))
+                        .foregroundColor(Color(hex: "6cb9f5"))
+                        .rotationEffect(.degrees(-14))
+                        .offset(x: -size * 0.40, y: -size * 0.30)
+                }
 
                 // Cara
                 VStack(spacing: size * 0.10) {
@@ -594,6 +634,70 @@ struct Mascot: View {
             scheduleBlink()
         }
         .onChange(of: bounceTrigger) { _ in react() }
+    }
+
+    // MARK: - Músculo (brazos y hombros que crecen contigo)
+
+    /// Hombros: bultos tras los lados superiores; la silueta se ensancha con la etapa.
+    private var shoulders: some View {
+        let d = size * (0.17 + CGFloat(stage - 2) * 0.05)
+        return HStack(spacing: size * 1.02 - d) {
+            Circle().fill(armFill).overlay(Circle().stroke(armEdge.opacity(0.5), lineWidth: 1)).frame(width: d, height: d)
+            Circle().fill(armFill).overlay(Circle().stroke(armEdge.opacity(0.5), lineWidth: 1)).frame(width: d, height: d)
+        }
+        .offset(y: -size * 0.17)
+    }
+
+    @ViewBuilder private var arms: some View {
+        switch pose {
+        case .idle:
+            // Brazos relajados a los lados, ligeramente abiertos.
+            armCapsule(w: armW, h: armLen).rotationEffect(.degrees(30)).offset(x: -size * 0.555, y: size * 0.16)
+            armCapsule(w: armW, h: armLen).rotationEffect(.degrees(-30)).offset(x: size * 0.555, y: size * 0.16)
+        case .cheer:
+            // ¡Brazos arriba! (con puños)
+            armCapsule(w: armW, h: armLen * 1.1, fist: true).rotationEffect(.degrees(150)).offset(x: -size * 0.575, y: -size * 0.38)
+            armCapsule(w: armW, h: armLen * 1.1, fist: true).rotationEffect(.degrees(-150)).offset(x: size * 0.575, y: -size * 0.38)
+        case .flex:
+            // Doble bíceps: antebrazo hacia arriba + bola de bíceps (crece con la etapa).
+            flexArm(mirror: false)
+            flexArm(mirror: true)
+        case .rest:
+            // Un brazo secándose la frente, el otro relajado.
+            armCapsule(w: armW, h: armLen).rotationEffect(.degrees(30)).offset(x: -size * 0.555, y: size * 0.16)
+            armCapsule(w: armW, h: armLen, fist: true).rotationEffect(.degrees(-125)).offset(x: size * 0.53, y: -size * 0.33)
+        }
+    }
+
+    private func flexArm(mirror: Bool) -> some View {
+        let sgn: CGFloat = mirror ? 1 : -1
+        return ZStack {
+            // Brazo horizontal (hombro → codo), con el codo FUERA de la silueta
+            armCapsule(w: size * 0.30, h: armW).offset(x: sgn * size * 0.575, y: -size * 0.04)
+            // Bíceps (el bulto que crece contigo)
+            if stage >= 1 {
+                Circle().fill(armFill)
+                    .overlay(Circle().stroke(armEdge.opacity(0.5), lineWidth: 1))
+                    .frame(width: armW * (1.3 + CGFloat(stage) * 0.16))
+                    .offset(x: sgn * size * 0.585, y: -size * 0.04 - armW * 0.5)
+            }
+            // Antebrazo hacia arriba + puño
+            armCapsule(w: armW, h: size * 0.27 + armW * 0.4, fist: true)
+                .offset(x: sgn * size * 0.715, y: -size * 0.215)
+        }
+    }
+
+    private func armCapsule(w: CGFloat, h: CGFloat, fist: Bool = false) -> some View {
+        Capsule().fill(armFill)
+            .overlay(Capsule().stroke(armEdge.opacity(0.5), lineWidth: 1))
+            .overlay(alignment: .top) {
+                if fist {
+                    Circle().fill(Color(hex: "7cbb1c"))
+                        .frame(width: w * 1.12, height: w * 1.12)
+                        .offset(y: -w * 0.28)
+                }
+            }
+            .frame(width: w, height: h)
     }
 
     // Ojo: feliz = arco "^" (ojitos contentos); normal = óvalo con destello.
