@@ -156,12 +156,14 @@ struct MessagesSheet: View {
                     switchTab(1, "Mensajes", badge: unreadChats)
                 }.padding(.horizontal, 16)
 
-                ScrollView {
-                    if tab == 1 { chats } else {
+                SlidingPages(index: tab) {
+                    ScrollView {
                         FriendsContent(onOpenChat: { chatTarget = IdString(id: $0) },
                                        onOpenProfile: { profileTarget = IdString(id: $0) },
                                        onEditAccount: onEditAccount)
                     }
+                } second: {
+                    ScrollView { chats }
                 }
             }
             .padding(.top, 8)
@@ -551,35 +553,44 @@ struct SharedWorkoutCard: View {
     let fromMe: Bool
     let at: Date
     @State private var added = false
+    @State private var showPreview = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
-            HStack(spacing: 10) {
-                ZStack {
-                    RoundedRectangle(cornerRadius: 10).fill(Brand.greenSoft).frame(width: 40, height: 40)
-                    Image(systemName: "dumbbell.fill").font(.system(size: 17, weight: .bold)).foregroundColor(Color(hex: "10150a"))
-                }
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("ENTRENO COMPARTIDO").font(.system(size: 9, weight: .heavy)).foregroundColor(Brand.soft).tracking(0.5)
-                    Text(workout.name).font(.system(size: 16, weight: .heavy)).foregroundColor(Brand.ink).lineLimit(1)
-                }
-            }
-            Text("\(workout.exercises.count) ejercicios · \(workout.block)")
-                .font(.system(size: 12, weight: .semibold)).foregroundColor(Brand.muted)
-            // Vista rápida de los primeros ejercicios.
-            VStack(alignment: .leading, spacing: 3) {
-                ForEach(workout.exercises.prefix(4)) { e in
-                    HStack(spacing: 6) {
-                        Circle().fill(Brand.line).frame(width: 4, height: 4)
-                        Text(e.name).font(.system(size: 12)).foregroundColor(Brand.muted).lineLimit(1)
-                        Spacer()
-                        Text("\(e.sets)×\(e.reps)").font(.system(size: 11, weight: .semibold)).foregroundColor(Brand.soft)
+            // Toca la tarjeta para previsualizar el entreno completo antes de decidir.
+            Button { FX.tap(); showPreview = true } label: {
+                VStack(alignment: .leading, spacing: 10) {
+                    HStack(spacing: 10) {
+                        ZStack {
+                            RoundedRectangle(cornerRadius: 10).fill(Brand.greenSoft).frame(width: 40, height: 40)
+                            Image(systemName: "dumbbell.fill").font(.system(size: 17, weight: .bold)).foregroundColor(Color(hex: "10150a"))
+                        }
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("ENTRENO COMPARTIDO").font(.system(size: 9, weight: .heavy)).foregroundColor(Brand.soft).tracking(0.5)
+                            Text(workout.name).font(.system(size: 16, weight: .heavy)).foregroundColor(Brand.ink).lineLimit(1)
+                        }
+                        Spacer(minLength: 0)
+                        Image(systemName: "chevron.right").font(.system(size: 12, weight: .bold)).foregroundColor(Brand.soft)
                     }
+                    Text("\(workout.exercises.count) ejercicios · \(workout.block)")
+                        .font(.system(size: 12, weight: .semibold)).foregroundColor(Brand.muted)
+                    // Vista rápida de los primeros ejercicios.
+                    VStack(alignment: .leading, spacing: 3) {
+                        ForEach(workout.exercises.prefix(4)) { e in
+                            HStack(spacing: 6) {
+                                Circle().fill(Brand.line).frame(width: 4, height: 4)
+                                Text(e.name).font(.system(size: 12)).foregroundColor(Brand.muted).lineLimit(1)
+                                Spacer()
+                                Text("\(e.sets)×\(e.reps)").font(.system(size: 11, weight: .semibold)).foregroundColor(Brand.soft)
+                            }
+                        }
+                        if workout.exercises.count > 4 {
+                            Text("+\(workout.exercises.count - 4) más").font(.system(size: 11, weight: .semibold)).foregroundColor(Brand.soft)
+                        }
+                    }
+                    Text("Toca para previsualizar").font(.system(size: 10, weight: .heavy)).foregroundColor(Color(hex: "4b6211"))
                 }
-                if workout.exercises.count > 4 {
-                    Text("+\(workout.exercises.count - 4) más").font(.system(size: 11, weight: .semibold)).foregroundColor(Brand.soft)
-                }
-            }
+            }.buttonStyle(.plain)
             if !fromMe {
                 Button {
                     store.addSharedWorkout(workout); withAnimation { added = true }
@@ -611,6 +622,59 @@ struct SharedWorkoutCard: View {
         .background(Color.white)
         .clipShape(RoundedRectangle(cornerRadius: 16))
         .overlay(RoundedRectangle(cornerRadius: 16).stroke(Brand.line))
+        .sheet(isPresented: $showPreview) {
+            SharedWorkoutPreview(template: workout, alreadyAdded: added, showAdd: !fromMe) {
+                store.addSharedWorkout(workout); added = true; showPreview = false
+            }.environmentObject(store)
+        }
+    }
+}
+
+/// Previsualización de un entreno compartido (desde el chat): lista completa con superseries
+/// y CTA para añadirlo a tu plan. Así decides si te interesa antes de guardarlo.
+struct SharedWorkoutPreview: View {
+    @EnvironmentObject var store: AppStore
+    @Environment(\.dismiss) private var dismiss
+    let template: WorkoutTemplate
+    var alreadyAdded: Bool = false
+    var showAdd: Bool = true
+    var onAdd: () -> Void = {}
+    @State private var added = false
+
+    private var isAdded: Bool { added || alreadyAdded }
+
+    var body: some View {
+        NavigationStack {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 12) {
+                    HStack(spacing: 12) {
+                        ZStack {
+                            RoundedRectangle(cornerRadius: 12).fill(Brand.greenSoft).frame(width: 48, height: 48)
+                            Image(systemName: "dumbbell.fill").font(.system(size: 20, weight: .bold)).foregroundColor(Color(hex: "10150a"))
+                        }
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("ENTRENO COMPARTIDO").font(.system(size: 10, weight: .heavy)).foregroundColor(Brand.soft).tracking(0.5)
+                            Text("\(template.exercises.count) ejercicios · \(template.block)").font(.footnote).foregroundColor(Brand.muted)
+                        }
+                        Spacer()
+                    }
+                    WorkoutExerciseList(exercises: template.exercises)
+                    if showAdd {
+                        Button { onAdd(); added = true } label: {
+                            HStack(spacing: 6) {
+                                Image(systemName: isAdded ? "checkmark.circle.fill" : "plus.circle.fill")
+                                Text(isAdded ? "Añadido a tu plan" : "Añadir a mi plan")
+                            }.frame(maxWidth: .infinity)
+                        }.buttonStyle(PrimaryButtonStyle(enabled: !isAdded)).disabled(isAdded).padding(.top, 4)
+                    }
+                }.padding(16)
+            }
+            .background(Brand.bg)
+            .navigationTitle(template.name)
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar { ToolbarItem(placement: .cancellationAction) { Button("Cerrar") { dismiss() } } }
+        }
+        .presentationDetents([.medium, .large])
     }
 }
 

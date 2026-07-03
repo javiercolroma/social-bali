@@ -68,10 +68,7 @@ struct SocialFeedView: View {
     var body: some View {
         VStack(spacing: 0) {
             switcher
-            ZStack {
-                seguidosTab.opacity(segment == 0 ? 1 : 0).allowsHitTesting(segment == 0)
-                paraTiTab.opacity(segment == 1 ? 1 : 0).allowsHitTesting(segment == 1)
-            }
+            SlidingPages(index: segment) { seguidosTab } second: { paraTiTab }
         }
         .background(Brand.bg)
         .overlay(alignment: .bottom) { toastView }

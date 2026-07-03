@@ -24,11 +24,10 @@ struct ActivityView: View {
     var body: some View {
         VStack(spacing: 0) {
             switcher
-            ScrollView {
-                VStack(spacing: 12) {
-                    if section == 0 { progressContent } else { historyContent }
-                }
-                .padding(.horizontal, 14).padding(.vertical, 12)
+            SlidingPages(index: section) {
+                ScrollView { VStack(spacing: 12) { progressContent }.padding(.horizontal, 14).padding(.vertical, 12) }
+            } second: {
+                ScrollView { VStack(spacing: 12) { historyContent }.padding(.horizontal, 14).padding(.vertical, 12) }
             }
         }
         .background(Brand.bg)

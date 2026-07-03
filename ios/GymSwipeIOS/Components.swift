@@ -313,6 +313,27 @@ struct WorkoutPhoto: View {
     }
 }
 
+/// Sub-pestañas con **deslizamiento horizontal** (estilo páginas): al cambiar de sección
+/// la vista actual sale y la nueva entra deslizándose en la dirección del cambio, en vez de
+/// un simple fundido/corte. Ambas páginas quedan montadas (conservan su estado y scroll).
+struct SlidingPages<A: View, B: View>: View {
+    let index: Int
+    @ViewBuilder var first: () -> A
+    @ViewBuilder var second: () -> B
+
+    var body: some View {
+        GeometryReader { geo in
+            HStack(spacing: 0) {
+                first().frame(width: geo.size.width, height: geo.size.height)
+                second().frame(width: geo.size.width, height: geo.size.height)
+            }
+            .offset(x: -CGFloat(index) * geo.size.width)
+            .animation(.spring(response: 0.4, dampingFraction: 0.88), value: index)
+        }
+        .clipped()
+    }
+}
+
 func shortTime(_ date: Date) -> String {
     let cal = Calendar.current
     let f = DateFormatter()

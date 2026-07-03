@@ -91,18 +91,7 @@ struct WorkoutPreview: View {
                 if let workout {
                     ScrollView {
                         VStack(spacing: 8) {
-                            ForEach(Array(workout.exercises.enumerated()), id: \.element.id) { idx, ex in
-                                HStack(spacing: 12) {
-                                    Text("\(idx + 1)").font(.system(size: 14, weight: .heavy)).foregroundColor(Brand.muted).frame(width: 24)
-                                    VStack(alignment: .leading, spacing: 2) {
-                                        Text(ex.name).font(.system(size: 15, weight: .bold)).foregroundColor(Brand.ink)
-                                        Text("\(ex.sets)×\(ex.reps) · \(weightText(ex.weight)) kg").font(.footnote).foregroundColor(Brand.muted)
-                                    }
-                                    Spacer()
-                                }
-                                .padding(12).background(Brand.panel).clipShape(RoundedRectangle(cornerRadius: 10))
-                                .overlay(RoundedRectangle(cornerRadius: 10).stroke(Brand.line))
-                            }
+                            WorkoutExerciseList(exercises: workout.exercises)
                             Button { FX.start(); store.loadWorkout(workout); dismiss(); onLoaded() } label: { Label("Cargar entreno", systemImage: "dumbbell.fill") }
                                 .buttonStyle(PrimaryButtonStyle()).padding(.top, 8)
                             Button { showEditor = true } label: {
@@ -129,6 +118,65 @@ struct WorkoutPreview: View {
                 Button("Cancelar", role: .cancel) {}
             } message: {
                 Text("Se quitará “\(workout?.name ?? "")” de tu lista de entrenos.")
+            }
+        }
+    }
+
+    private func weightText(_ w: Double) -> String { w == w.rounded() ? String(Int(w)) : String(format: "%.1f", w) }
+}
+
+/// Lista de ejercicios de un entreno que **muestra las superseries**: los ejercicios
+/// consecutivos con el mismo grupo van con una etiqueta «🔗 SUPERSERIE», una franja verde
+/// a la izquierda que los une y una letra (A/B/C) por ejercicio del grupo.
+struct WorkoutExerciseList: View {
+    let exercises: [Exercise]
+
+    private func decor(_ i: Int) -> (inSS: Bool, first: Bool, last: Bool, letter: String) {
+        let g = exercises[i].supersetGroup
+        let prevSame = i > 0 && g != nil && exercises[i - 1].supersetGroup == g
+        let nextSame = i < exercises.count - 1 && g != nil && exercises[i + 1].supersetGroup == g
+        let inSS = prevSame || nextSame
+        var letter = ""
+        if inSS {
+            var start = i; while start > 0 && exercises[start - 1].supersetGroup == g { start -= 1 }
+            letter = String(UnicodeScalar(65 + min(25, i - start))!)
+        }
+        return (inSS, inSS && !prevSame, inSS && !nextSame, letter)
+    }
+
+    var body: some View {
+        VStack(spacing: 8) {
+            ForEach(Array(exercises.enumerated()), id: \.element.id) { idx, ex in
+                let d = decor(idx)
+                VStack(spacing: 0) {
+                    if d.first {
+                        HStack(spacing: 5) {
+                            Image(systemName: "link").font(.system(size: 10, weight: .heavy))
+                            Text("SUPERSERIE").font(.system(size: 10, weight: .heavy)).tracking(0.6)
+                            Text("· sin descanso entre ellos").font(.system(size: 10, weight: .semibold)).foregroundColor(Brand.soft)
+                        }
+                        .foregroundColor(Color(hex: "4b6211"))
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(.bottom, 4)
+                    }
+                    HStack(spacing: 12) {
+                        if d.inSS {
+                            Text(d.letter).font(.system(size: 12, weight: .heavy)).foregroundColor(Color(hex: "10150a"))
+                                .frame(width: 24, height: 24).background(Brand.green).clipShape(Circle())
+                        } else {
+                            Text("\(idx + 1)").font(.system(size: 14, weight: .heavy)).foregroundColor(Brand.muted).frame(width: 24)
+                        }
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(ex.name).font(.system(size: 15, weight: .bold)).foregroundColor(Brand.ink)
+                            Text("\(ex.sets)×\(ex.reps) · \(weightText(ex.weight)) kg").font(.footnote).foregroundColor(Brand.muted)
+                        }
+                        Spacer()
+                    }
+                    .padding(12)
+                    .background(d.inSS ? Brand.greenSoft.opacity(0.35) : Brand.panel)
+                    .clipShape(RoundedRectangle(cornerRadius: 10))
+                    .overlay(RoundedRectangle(cornerRadius: 10).stroke(d.inSS ? Brand.green.opacity(0.4) : Brand.line))
+                }
             }
         }
     }

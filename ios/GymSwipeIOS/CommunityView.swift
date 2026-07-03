@@ -19,16 +19,12 @@ struct CommunityView: View {
     var body: some View {
         VStack(spacing: 0) {
             switcher
-            ZStack {
+            SlidingPages(index: section) {
                 RankingView()
-                    .opacity(section == 0 ? 1 : 0)
-                    .allowsHitTesting(section == 0)
+            } second: {
                 PartnerView(onOpenChat: onOpenChat)
-                    .opacity(section == 1 ? 1 : 0)
-                    .allowsHitTesting(section == 1)
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .animation(.easeInOut(duration: 0.28), value: section)
         }
         .background(Brand.bg)
     }
