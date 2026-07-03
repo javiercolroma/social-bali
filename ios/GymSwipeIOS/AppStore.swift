@@ -952,6 +952,30 @@ final class AppStore: ObservableObject {
         persist()
     }
 
+    /// ¿Ya tienes en el plan un entreno con este nombre? (para el estado del botón "Añadir").
+    func hasSavedWorkoutNamed(_ name: String) -> Bool {
+        savedWorkouts.contains { $0.name.caseInsensitiveCompare(name) == .orderedSame }
+    }
+
+    /// Añade a TU plan un entreno recibido por el chat. Re-genera ids (para no colisionar con
+    /// los del emisor) y evita duplicados por nombre. Devuelve false si ya lo tenías.
+    @discardableResult
+    func addSharedWorkout(_ t: WorkoutTemplate) -> Bool {
+        guard !hasSavedWorkoutNamed(t.name) else { return false }
+        let reid = t.exercises.map { e -> Exercise in
+            var c = e
+            c.id = newId("ex"); c.completedSets = 0; c.skippedSets = 0; c.status = .pending; c.setLog = nil
+            return c
+        }
+        let w = WorkoutTemplate(id: newId("w"), name: t.name,
+                                description: AppStore.summary(of: reid),
+                                block: t.block.isEmpty ? "Compartidos" : t.block, exercises: reid)
+        savedWorkouts.insert(w, at: 0)
+        FX.success()
+        persist()
+        return true
+    }
+
     /// Custom groups created by the user (from saved workouts).
     var customGroups: [String] {
         var seen = Set<String>()

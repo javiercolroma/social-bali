@@ -176,6 +176,27 @@ struct ChatMessage: Identifiable, Codable, Hashable {
     var fromMe: Bool
     var text: String
     var at: Date
+
+    /// Si el mensaje es un entreno compartido, devuelve la plantilla decodificada.
+    var sharedWorkout: WorkoutTemplate? { WorkoutShare.decode(text) }
+}
+
+/// Compartir un entreno por el chat SIN cambiar el esquema: la plantilla viaja
+/// codificada (base64 JSON) dentro del propio texto del mensaje, tras un marcador.
+/// Un cliente que no lo entienda vería el texto crudo; como ambos son la misma app,
+/// siempre se renderiza como tarjeta.
+enum WorkoutShare {
+    static let marker = "\u{1FAAF}FORGE-WKT1::"
+    static func encode(_ t: WorkoutTemplate) -> String {
+        guard let data = try? JSONEncoder().encode(t) else { return "Entreno: \(t.name)" }
+        return marker + data.base64EncodedString()
+    }
+    static func decode(_ text: String) -> WorkoutTemplate? {
+        guard text.hasPrefix(marker),
+              let data = Data(base64Encoded: String(text.dropFirst(marker.count))),
+              let t = try? JSONDecoder().decode(WorkoutTemplate.self, from: data) else { return nil }
+        return t
+    }
 }
 
 struct Conversation: Identifiable, Codable, Hashable {

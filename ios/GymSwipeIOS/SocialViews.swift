@@ -356,6 +356,7 @@ struct ChatView: View {
     @State private var realMessages: [ChatMessage] = []
     @State private var realMode = false
     @State private var channel: RealtimeChannelV2?
+    @State private var showWorkoutPicker = false
 
     /// Suscripción Realtime: los mensajes del otro llegan al instante (sin esperar al sondeo).
     private func subscribeRealtime() async {
@@ -434,6 +435,10 @@ struct ChatView: View {
             }
 
             HStack(spacing: 8) {
+                Button { FX.tap(); showWorkoutPicker = true } label: {
+                    Image(systemName: "dumbbell.fill").foregroundColor(Brand.ink)
+                        .frame(width: 46, height: 46).background(Brand.chip).clipShape(Circle())
+                }
                 TextField("Escribe un mensaje", text: $draft)
                     .padding(.horizontal, 16).frame(height: 46).background(Color.white).clipShape(Capsule())
                     .overlay(Capsule().stroke(Brand.line))
@@ -461,44 +466,169 @@ struct ChatView: View {
         .sheet(item: $profileTarget) { item in
             if let p = store.person(item.id) { FriendProfileView(person: p).environmentObject(store) }
         }
+        .sheet(isPresented: $showWorkoutPicker) {
+            ShareWorkoutPicker { w in showWorkoutPicker = false; shareWorkout(w) }.environmentObject(store)
+        }
+    }
+
+    /// Envía cualquier texto por el camino correcto (real o local) y lo refleja al instante.
+    private func deliver(_ text: String) {
+        if realMode, let uid = UUID(uuidString: personId) {
+            let msg = ChatMessage(id: UUID().uuidString, fromMe: true, text: text, at: Date())
+            realMessages.append(msg)
+            store.appendLocalMessage(personId, msg)   // refleja el último mensaje en la lista
+            Task { try? await Backend.shared.sendMessage(to: uid, text: text) }
+        } else {
+            store.sendMessage(personId, text, activeConversation: conversationId(personId))
+        }
     }
 
     private func send() {
         let t = draft.trimmingCharacters(in: .whitespaces)
         guard !t.isEmpty else { return }
-        FX.tap()
-        if realMode, let uid = UUID(uuidString: personId) {
-            let msg = ChatMessage(id: UUID().uuidString, fromMe: true, text: t, at: Date())
-            realMessages.append(msg)
-            store.appendLocalMessage(personId, msg)   // refleja el último mensaje en la lista
-            Task { try? await Backend.shared.sendMessage(to: uid, text: t) }
-        } else {
-            store.sendMessage(personId, draft, activeConversation: conversationId(personId))
-        }
-        draft = ""
+        FX.tap(); deliver(t); draft = ""
     }
 
+    private func shareWorkout(_ w: WorkoutTemplate) { FX.success(); deliver(WorkoutShare.encode(w)) }
+
+    @ViewBuilder
     private func bubble(_ m: ChatMessage) -> some View {
-        HStack {
-            if m.fromMe { Spacer(minLength: 50) }
-            VStack(alignment: m.fromMe ? .trailing : .leading, spacing: 2) {
-                Text(m.text).font(.system(size: 15)).foregroundColor(m.fromMe ? Color(hex: "10150a") : Color(hex: "2c3127"))
-                HStack(spacing: 3) {
-                    Text(shortTime(m.at)).font(.system(size: 10, weight: .semibold)).opacity(0.5)
-                    if m.fromMe {
-                        // Doble check estilo WhatsApp (enviado; sin confirmación de lectura).
-                        ZStack {
-                            Image(systemName: "checkmark").offset(x: -2.5)
-                            Image(systemName: "checkmark").offset(x: 1.5)
-                        }.font(.system(size: 8, weight: .bold)).opacity(0.55)
+        if let w = m.sharedWorkout {
+            HStack {
+                if m.fromMe { Spacer(minLength: 40) }
+                SharedWorkoutCard(workout: w, fromMe: m.fromMe, at: m.at)
+                if !m.fromMe { Spacer(minLength: 40) }
+            }
+        } else {
+            HStack {
+                if m.fromMe { Spacer(minLength: 50) }
+                VStack(alignment: m.fromMe ? .trailing : .leading, spacing: 2) {
+                    Text(m.text).font(.system(size: 15)).foregroundColor(m.fromMe ? Color(hex: "10150a") : Color(hex: "2c3127"))
+                    HStack(spacing: 3) {
+                        Text(shortTime(m.at)).font(.system(size: 10, weight: .semibold)).opacity(0.5)
+                        if m.fromMe {
+                            // Doble check estilo WhatsApp (enviado; sin confirmación de lectura).
+                            ZStack {
+                                Image(systemName: "checkmark").offset(x: -2.5)
+                                Image(systemName: "checkmark").offset(x: 1.5)
+                            }.font(.system(size: 8, weight: .bold)).opacity(0.55)
+                        }
                     }
                 }
+                .padding(.horizontal, 11).padding(.vertical, 8)
+                .background(m.fromMe ? Brand.greenSoft : Brand.chip)
+                .clipShape(RoundedRectangle(cornerRadius: 14))
+                if !m.fromMe { Spacer(minLength: 50) }
             }
-            .padding(.horizontal, 11).padding(.vertical, 8)
-            .background(m.fromMe ? Brand.greenSoft : Brand.chip)
-            .clipShape(RoundedRectangle(cornerRadius: 14))
-            if !m.fromMe { Spacer(minLength: 50) }
         }
+    }
+}
+
+/// Tarjeta de entreno compartido dentro del chat. Quien la recibe puede añadirlo a su plan.
+struct SharedWorkoutCard: View {
+    @EnvironmentObject var store: AppStore
+    let workout: WorkoutTemplate
+    let fromMe: Bool
+    let at: Date
+    @State private var added = false
+
+    private var alreadyInPlan: Bool { added || store.hasSavedWorkoutNamed(workout.name) }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(spacing: 10) {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 10).fill(Brand.greenSoft).frame(width: 40, height: 40)
+                    Image(systemName: "dumbbell.fill").font(.system(size: 17, weight: .bold)).foregroundColor(Color(hex: "10150a"))
+                }
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("ENTRENO COMPARTIDO").font(.system(size: 9, weight: .heavy)).foregroundColor(Brand.soft).tracking(0.5)
+                    Text(workout.name).font(.system(size: 16, weight: .heavy)).foregroundColor(Brand.ink).lineLimit(1)
+                }
+            }
+            Text("\(workout.exercises.count) ejercicios · \(workout.block)")
+                .font(.system(size: 12, weight: .semibold)).foregroundColor(Brand.muted)
+            // Vista rápida de los primeros ejercicios.
+            VStack(alignment: .leading, spacing: 3) {
+                ForEach(workout.exercises.prefix(4)) { e in
+                    HStack(spacing: 6) {
+                        Circle().fill(Brand.line).frame(width: 4, height: 4)
+                        Text(e.name).font(.system(size: 12)).foregroundColor(Brand.muted).lineLimit(1)
+                        Spacer()
+                        Text("\(e.sets)×\(e.reps)").font(.system(size: 11, weight: .semibold)).foregroundColor(Brand.soft)
+                    }
+                }
+                if workout.exercises.count > 4 {
+                    Text("+\(workout.exercises.count - 4) más").font(.system(size: 11, weight: .semibold)).foregroundColor(Brand.soft)
+                }
+            }
+            if fromMe {
+                Text("Enviado").font(.system(size: 12, weight: .heavy)).foregroundColor(Brand.soft)
+                    .frame(maxWidth: .infinity).padding(.vertical, 9).background(Brand.chip).clipShape(RoundedRectangle(cornerRadius: 11))
+            } else {
+                Button {
+                    if store.addSharedWorkout(workout) { withAnimation { added = true } }
+                    else { added = true }
+                } label: {
+                    HStack(spacing: 6) {
+                        Image(systemName: alreadyInPlan ? "checkmark.circle.fill" : "plus.circle.fill")
+                        Text(alreadyInPlan ? "En tu plan" : "Añadir a mi plan")
+                    }
+                    .font(.system(size: 14, weight: .heavy))
+                    .foregroundColor(alreadyInPlan ? Brand.ink : Color(hex: "10150a"))
+                    .frame(maxWidth: .infinity).padding(.vertical, 10)
+                    .background(alreadyInPlan ? Brand.chip : Brand.green).clipShape(RoundedRectangle(cornerRadius: 11))
+                }.disabled(alreadyInPlan)
+            }
+            Text(shortTime(at)).font(.system(size: 10, weight: .semibold)).foregroundColor(Brand.soft).opacity(0.6)
+        }
+        .padding(12)
+        .frame(width: 250, alignment: .leading)
+        .background(Color.white)
+        .clipShape(RoundedRectangle(cornerRadius: 16))
+        .overlay(RoundedRectangle(cornerRadius: 16).stroke(Brand.line))
+    }
+}
+
+/// Selector para compartir uno de TUS entrenos por el chat.
+struct ShareWorkoutPicker: View {
+    @EnvironmentObject var store: AppStore
+    @Environment(\.dismiss) private var dismiss
+    let onPick: (WorkoutTemplate) -> Void
+
+    var body: some View {
+        NavigationStack {
+            ScrollView {
+                VStack(spacing: 10) {
+                    if store.allWorkouts.isEmpty {
+                        Text("No tienes entrenos en tu plan todavía.").font(.subheadline).foregroundColor(Brand.muted).padding(.top, 40)
+                    }
+                    ForEach(store.allWorkouts) { w in
+                        Button { onPick(w) } label: {
+                            HStack(spacing: 12) {
+                                ZStack {
+                                    RoundedRectangle(cornerRadius: 10).fill(Brand.greenSoft).frame(width: 42, height: 42)
+                                    Image(systemName: "dumbbell.fill").font(.system(size: 17, weight: .bold)).foregroundColor(Color(hex: "10150a"))
+                                }
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text(w.name).font(.system(size: 15, weight: .heavy)).foregroundColor(Brand.ink)
+                                    Text("\(w.exercises.count) ejercicios · \(w.block)").font(.caption).foregroundColor(Brand.muted)
+                                }
+                                Spacer()
+                                Image(systemName: "paperplane.fill").foregroundColor(Brand.green)
+                            }
+                            .padding(12).background(Color.white).clipShape(RoundedRectangle(cornerRadius: 14))
+                            .overlay(RoundedRectangle(cornerRadius: 14).stroke(Brand.line))
+                        }.buttonStyle(.plain)
+                    }
+                }.padding(16)
+            }
+            .background(Brand.bg)
+            .navigationTitle("Compartir entreno")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar { ToolbarItem(placement: .cancellationAction) { Button("Cancelar") { dismiss() } } }
+        }
+        .presentationDetents([.medium, .large])
     }
 }
 
