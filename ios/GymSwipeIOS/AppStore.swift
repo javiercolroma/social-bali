@@ -819,8 +819,11 @@ final class AppStore: ObservableObject {
             let followers = (try? await Backend.shared.fetchFollowers()) ?? []
             let fids = followers.filter { $0.status == "accepted" }.compactMap { UUID(uuidString: $0.follower_id) }
             followerPeople = Self.asPeople((try? await Backend.shared.fetchProfiles(ids: fids)) ?? [])
-            // Ya con la red real cargada, revisa logros sociales (celebra si no entrenas).
-            refreshAchievements(celebrate: !isTraining)
+            // Ya con la red real cargada, DESBLOQUEA (sin celebrar) los logros sociales que ya
+            // cumplas — esto corre en CADA apertura, así que celebrar aquí repetiría el pop-up de
+            // "Sociable" en cada arranque. La celebración va solo en el acto de seguir
+            // (`followOrRequest`), que es cuando de verdad lo consigues.
+            refreshAchievements(celebrate: false)
         }
     }
 
