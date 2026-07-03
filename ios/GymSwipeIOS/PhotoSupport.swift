@@ -26,6 +26,24 @@ struct MeAvatar: View {
     }
 }
 
+/// Comprime una imagen para guardar/subir: reescala a un lado máximo razonable y
+/// re-codifica a JPEG. Sin esto, una foto del carrete (HEIC de 10+ MB) acabaría entera
+/// en UserDefaults (persistencia local) y en Storage (subida lenta y cara).
+func compressedImageData(_ data: Data, maxDimension: CGFloat = 1600, quality: CGFloat = 0.72) -> Data {
+    guard let img = UIImage(data: data) else { return data }
+    let maxSide = max(img.size.width, img.size.height)
+    var out = img
+    if maxSide > maxDimension {
+        let k = maxDimension / maxSide
+        let newSize = CGSize(width: img.size.width * k, height: img.size.height * k)
+        out = UIGraphicsImageRenderer(size: newSize).image { _ in
+            img.draw(in: CGRect(origin: .zero, size: newSize))
+        }
+    }
+    let jpeg = out.jpegData(compressionQuality: quality) ?? data
+    return jpeg.count < data.count ? jpeg : data   // nunca "comprimir" a algo más grande
+}
+
 /// Picks an image and returns its Data via the callback.
 struct PhotoPickerLabel<Label: View>: View {
     @Binding var item: PhotosPickerItem?
@@ -38,7 +56,9 @@ struct PhotoPickerLabel<Label: View>: View {
                 guard let newItem else { return }
                 Task {
                     if let data = try? await newItem.loadTransferable(type: Data.self) {
-                        await MainActor.run { onPicked(data) }
+                        // Comprimir AQUÍ cubre todos los pickers de la app (avatar y foto de entreno).
+                        let small = compressedImageData(data)
+                        await MainActor.run { onPicked(small) }
                     }
                 }
             }

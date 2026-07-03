@@ -222,6 +222,18 @@ struct TrainView: View {
             }
             if peers.count > 1 { supersetStrip(peers: peers, active: ex) }
             Text(ex.name).font(.system(size: 28, weight: .heavy)).foregroundColor(Brand.ink).lineLimit(2)
+            // "La última vez": tu mejor serie de la sesión anterior con este ejercicio.
+            if let last = store.lastPerformance(of: ex.name) {
+                HStack(spacing: 6) {
+                    Image(systemName: "clock.arrow.circlepath").font(.system(size: 11, weight: .heavy))
+                    Text("Última vez:").font(.system(size: 12, weight: .semibold))
+                    Text("\(weightText(last.weight)) kg × \(last.reps)").font(.system(size: 12, weight: .heavy))
+                    Text("· \(relativeTime(last.date))").font(.system(size: 12, weight: .semibold)).opacity(0.7)
+                }
+                .foregroundColor(Color(hex: "4b6211"))
+                .padding(.horizontal, 10).padding(.vertical, 5)
+                .background(Brand.greenSoft.opacity(0.4)).clipShape(Capsule())
+            }
             HStack(spacing: 7) {
                 ForEach(0..<ex.sets, id: \.self) { i in
                     Circle().fill(dotColor(ex, i))

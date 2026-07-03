@@ -1,5 +1,12 @@
 import Foundation
 
+/// Flags de producto. Partner (buscar compañero de gym) sigue funcionando con datos DEMO:
+/// se oculta en v1 para no mezclar gente falsa con usuarios reales. Ponlo a true cuando
+/// se migre a backend real (planes en Supabase + matching por cercanía).
+enum FeatureFlags {
+    static let partnerEnabled = false
+}
+
 enum ExerciseStatus: String, Codable {
     case pending, done, skipped
 }

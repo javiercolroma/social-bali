@@ -373,6 +373,23 @@ final class AppStore: ObservableObject {
     /// ¿Hay un entreno en marcha? (para no interrumpir con pop-ups de logro mientras entrenas).
     var isTraining: Bool { !exercises.isEmpty }
 
+    /// Última marca de un ejercicio (por nombre, en cualquier entreno): la MEJOR serie
+    /// (por 1RM estimado) de la sesión más reciente que lo incluyó. Para pintar
+    /// "Última vez: 60 kg × 8" en la tarjeta del entreno — la razón nº1 de usar una app de gym.
+    func lastPerformance(of name: String) -> (weight: Double, reps: Int, date: Date)? {
+        let key = name.folding(options: .diacriticInsensitive, locale: .current).lowercased()
+        for s in sessions.sorted(by: { $0.date > $1.date }) {
+            for it in (s.items ?? []) where it.name.folding(options: .diacriticInsensitive, locale: .current).lowercased() == key {
+                let sets: [(w: Double, r: Int)] = it.logs?.map { ($0.weight, $0.reps) } ?? [(it.weight, it.reps)]
+                guard let best = sets.max(by: {
+                    $0.w * (1 + Double(min(20, $0.r)) / 30) < $1.w * (1 + Double(min(20, $1.r)) / 30)
+                }), best.w > 0 || best.r > 0 else { continue }
+                return (best.w, best.r, s.date)
+            }
+        }
+        return nil
+    }
+
     /// Reconstruye `history` a partir de las SESIONES sincronizadas del servidor. `history` es
     /// local (no se sube), así que tras reinstalar/entrar en otro dispositivo estaría vacío y el
     /// Gym Score / racha / récords / logros saldrían a 0 pese a tener entrenos. Sintetiza una
@@ -456,6 +473,7 @@ final class AppStore: ObservableObject {
         persist()
         pushSessionToBackend(newSession)       // sube la sesión a Supabase (best-effort, gateado)
         refreshAchievements(celebrate: true)   // desbloquea + celebra logros nuevos
+        NotificationManager.shared.afterWorkoutSaved(streak: player.streak)   // aviso de racha en 3 días
     }
 
     /// Sube un entreno creado al servidor (best-effort) para que no se pierda al cerrar sesión.
@@ -695,6 +713,7 @@ final class AppStore: ObservableObject {
     /// El próximo login rehidrata del servidor (perfil + entrenos) o hace onboarding si es nuevo.
     func logout() {
         Task { await Backend.shared.signOut() }
+        NotificationManager.shared.cancelAll()   // sin sesión no hay recordatorios
         auth = nil
         account = nil
         exercises = []

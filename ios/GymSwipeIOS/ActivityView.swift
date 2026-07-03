@@ -10,6 +10,7 @@ struct ActivityView: View {
     @State private var section = 0
     @State private var detail: WorkoutSession?
     @State private var daySheet: DayPayload?
+    @State private var progressExercise: IdString?   // evolución de un ejercicio (hoja)
     @State private var showEpleyInfo = false
     @State private var showScoreInfo = false
 
@@ -33,6 +34,7 @@ struct ActivityView: View {
         .background(Brand.bg)
         .sheet(item: $detail) { ActivityDetailView(item: activityData($0)).environmentObject(store) }
         .sheet(item: $daySheet) { DaySessionsSheet(date: $0.date, sessions: $0.sessions).environmentObject(store) }
+        .sheet(item: $progressExercise) { ExerciseProgressView(exerciseName: $0.id).environmentObject(store) }
     }
 
     private var switcher: some View {
@@ -176,7 +178,7 @@ struct ActivityView: View {
         let delta = lift.current - lift.first
         let pct = lift.first > 0 ? delta / lift.first * 100 : 0
         let hasTrend = lift.points.count >= 2
-        return HStack(spacing: 10) {
+        return Button { FX.tap(); progressExercise = IdString(id: lift.name) } label: { HStack(spacing: 10) {
             VStack(alignment: .leading, spacing: 3) {
                 Text(lift.name).font(.system(size: 14, weight: .heavy)).foregroundColor(Brand.ink).lineLimit(1)
                 HStack(spacing: 6) {
@@ -208,8 +210,11 @@ struct ActivityView: View {
                 .chartXAxis(.hidden).chartYAxis(.hidden)
                 .frame(width: 84, height: 38)
             }
+            Image(systemName: "chevron.right").font(.system(size: 11, weight: .bold)).foregroundColor(Brand.soft)
         }
         .padding(.vertical, 8)
+        .contentShape(Rectangle()) }
+        .buttonStyle(.plain)
     }
 
     // MARK: - ACTIVIDADES (histórico)

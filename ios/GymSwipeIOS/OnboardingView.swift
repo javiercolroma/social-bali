@@ -1113,11 +1113,15 @@ struct CoachTour: View {
             CoachStep("O toca un entreno para cargarlo.", target: "plan.item")],
         2: [CoachStep("Aquí entrenas. Empieza eligiendo un entreno.", target: "train.choose"),
             CoachStep("Luego marcas cada serie y yo llevo la cuenta.")],
-        3: [CoachStep("Aquí subes de división, de Hierro a Maestro."),
-            CoachStep("Con esta barra eliges la distancia para buscar compañero.", target: "partner.distance"),
-            CoachStep("Con este botón publicas tu plan y buscas compañero.", target: "partner.create"),
-            CoachStep("Si un plan te encaja, pulsa «Aceptar» y se abre un chat.", target: "partner.accept"),
-            CoachStep("¿No te va? Descártalo con la ✕.", target: "partner.discard")],
+        // Con Partner oculto (v1), el tour de Comunidad solo explica el ranking.
+        3: FeatureFlags.partnerEnabled
+            ? [CoachStep("Aquí subes de división, de Hierro a Maestro."),
+               CoachStep("Con esta barra eliges la distancia para buscar compañero.", target: "partner.distance"),
+               CoachStep("Con este botón publicas tu plan y buscas compañero.", target: "partner.create"),
+               CoachStep("Si un plan te encaja, pulsa «Aceptar» y se abre un chat.", target: "partner.accept"),
+               CoachStep("¿No te va? Descártalo con la ✕.", target: "partner.discard")]
+            : [CoachStep("Aquí subes de división, de Hierro a Maestro."),
+               CoachStep("Compite cada semana: el XP de tus entrenos te hace escalar en el ranking.")],
         4: [CoachStep("Cambia entre tu progreso y tus entrenos.", target: "activity.switch"),
             CoachStep("Aquí ves tu racha y tu Gym Score.", target: "activity.progress")],
     ]

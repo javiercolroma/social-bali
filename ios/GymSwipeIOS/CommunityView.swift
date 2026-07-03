@@ -18,13 +18,18 @@ struct CommunityView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            switcher
-            SlidingPages(index: section) {
-                RankingView()
-            } second: {
-                PartnerView(onOpenChat: onOpenChat)
+            // v1: Partner (demo) oculto → Comunidad es solo el Ranking, sin selector.
+            if FeatureFlags.partnerEnabled {
+                switcher
+                SlidingPages(index: section) {
+                    RankingView()
+                } second: {
+                    PartnerView(onOpenChat: onOpenChat)
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+            } else {
+                RankingView().frame(maxWidth: .infinity, maxHeight: .infinity)
             }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
         .background(Brand.bg)
     }

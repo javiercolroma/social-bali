@@ -3,6 +3,7 @@ import GoogleSignIn
 
 @main
 struct GymSwipeIOSApp: App {
+    @UIApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate   // token APNs
     @StateObject private var store = AppStore()
     @Environment(\.scenePhase) private var scenePhase
 

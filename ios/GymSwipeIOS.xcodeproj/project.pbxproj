@@ -36,9 +36,11 @@
 		96BF0657964B419B9F01B3EB /* SearchFields.swift in Sources */ = {isa = PBXBuildFile; fileRef = A13A6C62B64C684CF0D535E4 /* SearchFields.swift */; };
 		A4012CAB9F8D66E7AA47FCBE /* SocialFeedView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 627A3AB04978CE24F42D32E8 /* SocialFeedView.swift */; };
 		A6911B1E14CE1300F4DD0173 /* LiveActivityManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 51E3F8B26293A58B6A5DC2F4 /* LiveActivityManager.swift */; };
+		A6EA57786D3C06C98EFBF7E5 /* NotificationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 65AB2F19CF6DCC5B645AB356 /* NotificationManager.swift */; };
 		A89D564806DC6E75C368E3EB /* AuthView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 75B84C1241AA6578E1A438C3 /* AuthView.swift */; };
 		AB141212796D0B82E3E7400D /* HealthKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 776E83FB86616C628EE591C8 /* HealthKit.framework */; };
 		AEC40F20A484762912222BA0 /* LocationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F46519F370ACB4CE695F4928 /* LocationManager.swift */; };
+		AF24880BEDF82C1B96C5A49E /* ExerciseProgress.swift in Sources */ = {isa = PBXBuildFile; fileRef = D00693AEEFD43298AF8CCCDF /* ExerciseProgress.swift */; };
 		B087CB2C4C5E2848E78E6BFE /* WorkoutRemote.swift in Sources */ = {isa = PBXBuildFile; fileRef = 896F243436BE8AEDD8406091 /* WorkoutRemote.swift */; };
 		B2BA2EDCA173DDEDD61FF8BD /* SocialViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = A94209F7155C5A09DA6E950A /* SocialViews.swift */; };
 		BA42448E61D8F741BC01820C /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD5D6AB5B854D33B50CA68B /* OnboardingView.swift */; };
@@ -103,6 +105,7 @@
 		5E47D6DA8F5D815485FE6ACC /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		627A3AB04978CE24F42D32E8 /* SocialFeedView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SocialFeedView.swift; sourceTree = "<group>"; };
 		6323375755B5CE9680137707 /* SessionFX.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionFX.swift; sourceTree = "<group>"; };
+		65AB2F19CF6DCC5B645AB356 /* NotificationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationManager.swift; sourceTree = "<group>"; };
 		6D844158ED27007A7D1CBEDB /* GymSwipeIOS.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = GymSwipeIOS.entitlements; sourceTree = "<group>"; };
 		706D917063A09C4DDB833556 /* ForgeWidget.appex */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = "wrapper.app-extension"; path = ForgeWidget.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		75B84C1241AA6578E1A438C3 /* AuthView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthView.swift; sourceTree = "<group>"; };
@@ -120,6 +123,7 @@
 		B83B0B92285D78A53157123F /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		C6D25F1EF920215C121A1A33 /* WorkoutActivityAttributes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutActivityAttributes.swift; sourceTree = "<group>"; };
 		C6E2A074351DB17430CAE561 /* PartnerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PartnerView.swift; sourceTree = "<group>"; };
+		D00693AEEFD43298AF8CCCDF /* ExerciseProgress.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExerciseProgress.swift; sourceTree = "<group>"; };
 		D0B083763AEA6D7CE3C7B500 /* AppStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppStore.swift; sourceTree = "<group>"; };
 		D1596E5BECE9666DDA76867A /* Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models.swift; sourceTree = "<group>"; };
 		D1DF8FC23C0BF2E64342C5D7 /* TrainView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrainView.swift; sourceTree = "<group>"; };
@@ -198,6 +202,7 @@
 				A415A6402658DC75C3C37C3C /* Components.swift */,
 				1D19B1F26226F79DC0669B52 /* Countries.swift */,
 				470412DEE02D5F1B63B07DF7 /* DiscoverPeopleView.swift */,
+				D00693AEEFD43298AF8CCCDF /* ExerciseProgress.swift */,
 				AC0D952E1A0BC084FD9FDB7C /* Exercises.swift */,
 				3ED686425803AD9C87827576 /* Gamification.swift */,
 				1250C29A42354C7EA62ADC58 /* GymScore.swift */,
@@ -208,6 +213,7 @@
 				51E3F8B26293A58B6A5DC2F4 /* LiveActivityManager.swift */,
 				F46519F370ACB4CE695F4928 /* LocationManager.swift */,
 				D1596E5BECE9666DDA76867A /* Models.swift */,
+				65AB2F19CF6DCC5B645AB356 /* NotificationManager.swift */,
 				FCD5D6AB5B854D33B50CA68B /* OnboardingView.swift */,
 				C6E2A074351DB17430CAE561 /* PartnerView.swift */,
 				3A318726DFFA74FF768BA96D /* PhotoSupport.swift */,
@@ -350,6 +356,7 @@
 				2A71043ED4BBAF7A09523AFF /* Components.swift in Sources */,
 				FF1D8080F80F010C04EB3609 /* Countries.swift in Sources */,
 				1844C711EF657BFC211693C5 /* DiscoverPeopleView.swift in Sources */,
+				AF24880BEDF82C1B96C5A49E /* ExerciseProgress.swift in Sources */,
 				942CEB3E1BDC0BABD1CB038F /* Exercises.swift in Sources */,
 				E16DCF8706F165D2CD3C5A8C /* Gamification.swift in Sources */,
 				46248B5DA3F8CE7CF349D01C /* GymScore.swift in Sources */,
@@ -358,6 +365,7 @@
 				A6911B1E14CE1300F4DD0173 /* LiveActivityManager.swift in Sources */,
 				AEC40F20A484762912222BA0 /* LocationManager.swift in Sources */,
 				D1A51AF5DF1BCC6CDABBD42C /* Models.swift in Sources */,
+				A6EA57786D3C06C98EFBF7E5 /* NotificationManager.swift in Sources */,
 				BA42448E61D8F741BC01820C /* OnboardingView.swift in Sources */,
 				C96DA3E9AC38A13BD8D381B1 /* PartnerView.swift in Sources */,
 				2A882A99A8CD48DE197DD5A5 /* PhotoSupport.swift in Sources */,

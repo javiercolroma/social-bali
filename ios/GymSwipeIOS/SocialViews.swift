@@ -298,8 +298,29 @@ struct FriendsContent: View {
                 if !incoming.isEmpty { section("Solicitudes recibidas", people: incoming, empty: "") }
                 if !friends.isEmpty { section("Tus amigos", people: friends, empty: "") }
                 if !discover.isEmpty { section("Descubre compañeros", people: discover, empty: "") }
+                inviteCard   // cold start: trae a tu gente al gimnasio
             }
         }.padding(.horizontal, 14).padding(.bottom, 16)
+    }
+
+    /// Invita a tus amigos (share sheet): mientras la red es pequeña, tu gimnasio eres tú y tu gente.
+    private var inviteCard: some View {
+        ShareLink(item: "Entreno con Forge Loop 💪 Registra tus entrenos, compite con tu gente y sube de división. ¡Únete y sígueme! https://javiercolroma.github.io/gym-swipe-ios/") {
+            HStack(spacing: 11) {
+                ZStack {
+                    Circle().fill(Brand.greenSoft).frame(width: 40, height: 40)
+                    Image(systemName: "person.badge.plus").font(.system(size: 16, weight: .bold)).foregroundColor(Color(hex: "10150a"))
+                }
+                VStack(alignment: .leading, spacing: 1) {
+                    Text("Invita a tus amigos").font(.system(size: 14, weight: .heavy)).foregroundColor(Brand.ink)
+                    Text("Entrenar acompañado engancha el doble.").font(.caption).foregroundColor(Brand.muted)
+                }
+                Spacer()
+                Image(systemName: "square.and.arrow.up").font(.system(size: 15, weight: .semibold)).foregroundColor(Brand.soft)
+            }
+            .padding(10).background(Brand.panel).clipShape(RoundedRectangle(cornerRadius: 12))
+            .overlay(RoundedRectangle(cornerRadius: 12).stroke(Brand.line))
+        }
     }
 
     private func section(_ title: String, people: [SocialPerson], empty: String) -> some View {
