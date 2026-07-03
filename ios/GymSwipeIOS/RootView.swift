@@ -20,21 +20,14 @@ struct RootView: View {
     var body: some View {
         VStack(spacing: 0) {
             header
-            // Las 5 pantallas viven en fila y se deslizan horizontalmente al cambiar de
-            // sección (misma sensación que las sub-pestañas). Todas montadas → conservan estado.
-            GeometryReader { geo in
-                HStack(spacing: 0) {
-                    screen(geo) { SocialFeedView(onOpenProfile: { profilePerson = IdString(id: $0) },
-                                                 onOpenMyProfile: { showProfile = true }) }
-                    screen(geo) { PlanView(onLoaded: { tab = 2 }) }
-                    screen(geo) { TrainView(onGoToPlan: { tab = 1 }) }
-                    screen(geo) { CommunityView(onOpenChat: { chatPerson = IdString(id: $0) }) }
-                    screen(geo) { ActivityView() }
-                }
-                .offset(x: -CGFloat(tab) * geo.size.width)
-                .animation(.spring(response: 0.42, dampingFraction: 0.9), value: tab)
+            ZStack {
+                screen(0) { SocialFeedView(onOpenProfile: { profilePerson = IdString(id: $0) },
+                                           onOpenMyProfile: { showProfile = true }) }
+                screen(1) { PlanView(onLoaded: { tab = 2 }) }
+                screen(2) { TrainView(onGoToPlan: { tab = 1 }) }
+                screen(3) { CommunityView(onOpenChat: { chatPerson = IdString(id: $0) }) }
+                screen(4) { ActivityView() }
             }
-            .clipped()
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .onChange(of: tab) { t in FX.selection(); maybeShowTour(t) }
 
@@ -193,8 +186,10 @@ struct RootView: View {
     }
 
     @ViewBuilder
-    private func screen<Content: View>(_ geo: GeometryProxy, @ViewBuilder content: () -> Content) -> some View {
-        content().frame(width: geo.size.width, height: geo.size.height)
+    private func screen<Content: View>(_ index: Int, @ViewBuilder content: () -> Content) -> some View {
+        content()
+            .opacity(tab == index ? 1 : 0)
+            .allowsHitTesting(tab == index)
     }
 
     /// La primera vez que entras en una sección, Forgey te da un tour (una sola vez por sección).

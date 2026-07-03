@@ -75,8 +75,12 @@ struct AuthProviderSheet: View {
                         .signInWithAppleButtonStyle(.black)
                         .frame(height: 52).clipShape(RoundedRectangle(cornerRadius: 14))
 
-                    providerButton(icon: "globe", label: creating ? "Registrarse con Google" : "Continuar con Google") { handleGoogle() }
-                    providerButton(icon: "envelope.fill", label: creating ? "Registrarse con email" : "Continuar con email") { FX.tap(); showEmail = true }
+                    providerButton(creating ? "Registrarse con Google" : "Continuar con Google", action: { handleGoogle() }) {
+                        GoogleGLogo(size: 18)
+                    }
+                    providerButton(creating ? "Registrarse con email" : "Continuar con email", action: { FX.tap(); showEmail = true }) {
+                        Image(systemName: "envelope.fill").font(.system(size: 16, weight: .bold)).foregroundColor(Brand.ink)
+                    }
                 }
                 Spacer()
             }
@@ -99,10 +103,10 @@ struct AuthProviderSheet: View {
         }
     }
 
-    private func providerButton(icon: String, label: String, action: @escaping () -> Void) -> some View {
+    private func providerButton<Leading: View>(_ label: String, action: @escaping () -> Void, @ViewBuilder leading: () -> Leading) -> some View {
         Button(action: action) {
             HStack(spacing: 10) {
-                Image(systemName: icon).font(.system(size: 17, weight: .bold))
+                leading().frame(width: 20, height: 20)
                 Text(label).font(.system(size: 16, weight: .heavy))
             }
             .foregroundColor(Brand.ink).frame(maxWidth: .infinity).frame(height: 52)
@@ -301,5 +305,37 @@ struct EmailAuthSheet: View {
                  resetMsg = "Si el correo existe, te enviamos un enlace para restablecer la contraseña." }
             catch { resetMsg = "No pudimos enviar el correo. Inténtalo de nuevo." }
         }
+    }
+}
+
+/// Logotipo "G" de Google (4 colores) dibujado en SwiftUI, sin necesidad de imágenes.
+/// Anillo abierto por la derecha (rojo arriba, amarillo izquierda, verde abajo, azul
+/// arriba-derecha) + barra horizontal azul.
+struct GoogleGLogo: View {
+    var size: CGFloat = 18
+    private let blue = Color(red: 0.259, green: 0.522, blue: 0.957)   // #4285F4
+    private let red = Color(red: 0.918, green: 0.263, blue: 0.208)    // #EA4335
+    private let yellow = Color(red: 0.984, green: 0.737, blue: 0.020) // #FBBC05
+    private let green = Color(red: 0.204, green: 0.659, blue: 0.325)  // #34A853
+
+    var body: some View {
+        let lw = size * 0.28
+        ZStack {
+            seg(0.60, 0.88, red, lw)      // arco superior
+            seg(0.35, 0.60, yellow, lw)   // arco izquierdo
+            seg(0.10, 0.35, green, lw)    // arco inferior
+            seg(0.88, 1.00, blue, lw)     // arco superior-derecha (hacia la barra)
+            // Barra horizontal azul (lo que hace que sea una "G" y no un anillo).
+            Capsule().fill(blue)
+                .frame(width: size * 0.40, height: lw)
+                .offset(x: size * 0.23, y: size * 0.02)
+        }
+        .frame(width: size, height: size)
+    }
+
+    private func seg(_ from: CGFloat, _ to: CGFloat, _ color: Color, _ lw: CGFloat) -> some View {
+        Circle().trim(from: from, to: to)
+            .stroke(color, style: StrokeStyle(lineWidth: lw, lineCap: .butt))
+            .frame(width: size, height: size)
     }
 }
