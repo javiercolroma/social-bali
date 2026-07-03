@@ -20,18 +20,25 @@ struct RootView: View {
     var body: some View {
         VStack(spacing: 0) {
             header
-            ZStack {
-                screen(0) { SocialFeedView(onOpenProfile: { profilePerson = IdString(id: $0) },
-                                           onOpenMyProfile: { showProfile = true }) }
-                screen(1) { PlanView(onLoaded: { tab = 2 }) }
-                screen(2) { TrainView(onGoToPlan: { tab = 1 }) }
-                screen(3) { CommunityView(onOpenChat: { chatPerson = IdString(id: $0) }) }
-                screen(4) { ActivityView() }
+            // Las 5 pantallas viven en fila y se deslizan horizontalmente al cambiar de
+            // sección (misma sensación que las sub-pestañas). Todas montadas → conservan estado.
+            GeometryReader { geo in
+                HStack(spacing: 0) {
+                    screen(geo) { SocialFeedView(onOpenProfile: { profilePerson = IdString(id: $0) },
+                                                 onOpenMyProfile: { showProfile = true }) }
+                    screen(geo) { PlanView(onLoaded: { tab = 2 }) }
+                    screen(geo) { TrainView(onGoToPlan: { tab = 1 }) }
+                    screen(geo) { CommunityView(onOpenChat: { chatPerson = IdString(id: $0) }) }
+                    screen(geo) { ActivityView() }
+                }
+                .offset(x: -CGFloat(tab) * geo.size.width)
+                .animation(.spring(response: 0.42, dampingFraction: 0.9), value: tab)
             }
+            .clipped()
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .onChange(of: tab) { t in FX.selection(); maybeShowTour(t) }
 
-            CustomTabBar(tab: tab, onSelect: { tab = $0 }).id(tab)
+            CustomTabBar(tab: tab, onSelect: { tab = $0 })
         }
         .background(Brand.bg.ignoresSafeArea())
         .onAppear { maybeShowTour(tab) }
@@ -186,10 +193,8 @@ struct RootView: View {
     }
 
     @ViewBuilder
-    private func screen<Content: View>(_ index: Int, @ViewBuilder content: () -> Content) -> some View {
-        content()
-            .opacity(tab == index ? 1 : 0)
-            .allowsHitTesting(tab == index)
+    private func screen<Content: View>(_ geo: GeometryProxy, @ViewBuilder content: () -> Content) -> some View {
+        content().frame(width: geo.size.width, height: geo.size.height)
     }
 
     /// La primera vez que entras en una sección, Forgey te da un tour (una sola vez por sección).
@@ -258,6 +263,7 @@ struct CustomTabBar: View {
     // resaltado se quedaba pegado en Social.
     let tab: Int
     var onSelect: (Int) -> Void
+    @Namespace private var ns
     private let items: [(title: String, icon: String)] = [
         ("Social", "newspaper.fill"),
         ("Plan", "list.bullet.clipboard"),
@@ -267,15 +273,17 @@ struct CustomTabBar: View {
     ]
 
     var body: some View {
-        HStack(alignment: .bottom, spacing: 0) {
+        HStack(alignment: .center, spacing: 0) {
             ForEach(Array(items.enumerated()), id: \.offset) { idx, item in
-                if idx == 2 { centerButton(idx, item) } else { tabButton(idx, item) }
+                tabItem(idx, item)
             }
         }
-        .padding(.horizontal, 10)
-        .padding(.top, 6)
+        .padding(.horizontal, 8)
+        .padding(.top, 8)
         .padding(.bottom, max(8, safeBottom))
         .background(Brand.bg)
+        // Mismo muelle que el deslizamiento de pantallas: el indicador "casa" con la transición.
+        .animation(.spring(response: 0.42, dampingFraction: 0.9), value: tab)
     }
 
     private var safeBottom: CGFloat {
@@ -285,41 +293,30 @@ struct CustomTabBar: View {
 
     private let accent = Color(hex: "5e910e")
 
-    private func tabButton(_ idx: Int, _ item: (title: String, icon: String)) -> some View {
+    /// Elemento del menú: nada de `Button` ni recuadros duros — un toque suave con un
+    /// indicador (píldora verde tenue) que se DESLIZA entre pestañas (matchedGeometryEffect).
+    private func tabItem(_ idx: Int, _ item: (title: String, icon: String)) -> some View {
         let active = tab == idx
-        return Button { onSelect(idx) } label: {
-            VStack(spacing: 4) {
+        return VStack(spacing: 5) {
+            ZStack {
+                if active {
+                    RoundedRectangle(cornerRadius: 16, style: .continuous)
+                        .fill(Brand.greenSoft)
+                        .matchedGeometryEffect(id: "tabHighlight", in: ns)
+                        .frame(width: 54, height: 34)
+                }
                 Image(systemName: item.icon)
-                    .font(.system(size: 18, weight: active ? .heavy : .semibold))
-                    .frame(width: 46, height: 30)
-                    .background(active ? Brand.greenSoft : .clear)
-                    .clipShape(Capsule())
-                Text(item.title).font(.system(size: 10, weight: .heavy))
+                    .font(.system(size: 19, weight: active ? .heavy : .medium))
+                    .foregroundStyle(active ? accent : Brand.soft)
+                    .scaleEffect(active ? 1.06 : 1)
             }
-            .foregroundStyle(active ? accent : Brand.soft)
-            .frame(maxWidth: .infinity)
-            .contentShape(Rectangle())
+            .frame(height: 34)
+            Text(item.title)
+                .font(.system(size: 10, weight: active ? .heavy : .semibold))
+                .foregroundStyle(active ? accent : Brand.soft)
         }
-        .buttonStyle(.plain)
-    }
-
-    private func centerButton(_ idx: Int, _ item: (title: String, icon: String)) -> some View {
-        let active = tab == idx
-        return Button { onSelect(idx) } label: {
-            VStack(spacing: 4) {
-                Image(systemName: item.icon).font(.system(size: 20, weight: .heavy))
-                    .foregroundStyle(active ? Color(hex: "10150a") : Brand.soft)
-                    .frame(width: 50, height: 50)
-                    .background(active ? Brand.green : Color.white)
-                    .clipShape(Circle())
-                    .overlay(Circle().stroke(active ? Color.clear : Brand.line, lineWidth: 1))
-                    .shadow(color: active ? Brand.green.opacity(0.4) : .black.opacity(0.06), radius: active ? 8 : 4, y: 3)
-                Text(item.title).font(.system(size: 10, weight: .heavy)).foregroundStyle(active ? accent : Brand.soft)
-            }
-            .frame(maxWidth: .infinity)
-            .offset(y: -8)
-            .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
+        .frame(maxWidth: .infinity)
+        .contentShape(Rectangle())
+        .onTapGesture { onSelect(idx) }
     }
 }
