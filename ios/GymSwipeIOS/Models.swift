@@ -23,6 +23,9 @@ struct Exercise: Identifiable, Codable, Hashable {
     var note: String
     var status: ExerciseStatus
     var setLog: [SetLog]? = nil
+    /// Superserie: ejercicios CONSECUTIVOS con el mismo id de grupo se entrenan alternando
+    /// una serie de cada, sin descanso entre ellos (descanso al cerrar la ronda). `nil` = normal.
+    var supersetGroup: String? = nil
 
     var closedSets: Int { min(sets, completedSets + skippedSets) }
     var resolvedStatus: ExerciseStatus {

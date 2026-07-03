@@ -19,6 +19,9 @@ struct WorkoutActivityAttributes: ActivityAttributes {
         var resting: Bool
         var restStartedAt: Date?
         var restEndsAt: Date?
+        /// Si el ejercicio activo es una superserie, nombre del siguiente ejercicio con el que
+        /// se alterna (sin descanso). `nil` = ejercicio normal.
+        var supersetPartner: String? = nil
     }
 
     var title: String

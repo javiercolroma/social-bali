@@ -193,8 +193,31 @@ final class AppStore: ObservableObject {
     // MARK: - Computed
 
     var gymScore: GymScore { GymScoreEngine.calculate(history) }
-    var activeExercise: Exercise? { exercises.first { $0.status == .pending } }
+    /// Ejercicio activo. En una superserie NO se hace un ejercicio entero y luego el otro:
+    /// se rota (una serie de cada). El activo dentro del grupo es el pendiente con MENOS series
+    /// cerradas (y, a igualdad, el primero en orden) → A·serie1, B·serie1, A·serie2, B·serie2…
+    var activeExercise: Exercise? {
+        guard let first = exercises.first(where: { $0.resolvedStatus == .pending }) else { return nil }
+        guard let g = first.supersetGroup else { return first }
+        let members = exercises.filter { $0.supersetGroup == g && $0.resolvedStatus == .pending }
+        let minClosed = members.map { $0.closedSets }.min() ?? 0
+        return members.first { $0.closedSets == minClosed } ?? first
+    }
     var allWorkouts: [WorkoutTemplate] { (templates + savedWorkouts).filter { !hiddenWorkoutIds.contains($0.id) } }
+
+    /// Miembros de la superserie de `ex` (en orden). Vacío si no es una superserie.
+    func supersetPeers(of ex: Exercise) -> [Exercise] {
+        guard let g = ex.supersetGroup else { return [] }
+        return exercises.filter { $0.supersetGroup == g }
+    }
+    /// ¿El descanso va DESPUÉS de esta serie? En superserie solo se descansa al cerrar la ronda
+    /// (cuando el siguiente activo NO es un compañero con menos series cerradas que este).
+    func restsAfterSet(_ ex: Exercise) -> Bool {
+        guard ex.supersetGroup != nil else { return true }
+        guard let next = activeExercise, next.supersetGroup == ex.supersetGroup else { return true }
+        let mine = exercises.first { $0.id == ex.id }?.closedSets ?? ex.closedSets
+        return next.closedSets >= mine   // compañero "por detrás" → seguimos sin descanso
+    }
 
     /// Workouts the user trains most often (by past sessions), else the first templates.
     var frequentWorkouts: [WorkoutTemplate] {
@@ -1056,9 +1079,11 @@ final class AppStore: ObservableObject {
         SocialPerson(id: "p-noa", name: "Noa", handle: "noa_gym", avatar: "🐯", gym: "Basic-Fit Atocha", flag: "🇨🇴", city: "Bogotá", country: "Colombia"),
     ]
 
-    static func makeExercise(_ day: String, _ name: String, _ sets: Int, _ reps: Int, _ weight: Double, _ rest: Int = 120) -> Exercise {
+    static func makeExercise(_ day: String, _ name: String, _ sets: Int, _ reps: Int, _ weight: Double, _ rest: Int = 120,
+                             supersetGroup: String? = nil) -> Exercise {
         Exercise(id: "\(name)-\(Int.random(in: 0..<1_000_000))", day: day, name: name, targetSets: sets, sets: sets,
-                 completedSets: 0, skippedSets: 0, reps: reps, weight: weight, rest: rest, note: "", status: .pending)
+                 completedSets: 0, skippedSets: 0, reps: reps, weight: weight, rest: rest, note: "", status: .pending,
+                 supersetGroup: supersetGroup)
     }
 
     static let builtinTemplates: [WorkoutTemplate] = [

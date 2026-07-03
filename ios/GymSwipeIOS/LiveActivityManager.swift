@@ -11,14 +11,16 @@ final class LiveActivityManager {
     private var currentState: Any?   // ContentState — fuente de verdad de lo que muestra el widget
 
     func start(name: String, startedAt: Date, closedSets: Int, totalSets: Int,
-               currentExercise: String, reps: Int, weight: Double, setIndex: Int, exerciseSets: Int) {
+               currentExercise: String, reps: Int, weight: Double, setIndex: Int, exerciseSets: Int,
+               supersetPartner: String? = nil) {
         guard #available(iOS 16.2, *) else { return }
         guard ActivityAuthorizationInfo().areActivitiesEnabled, current == nil else { return }
         let attrs = WorkoutActivityAttributes(title: "Forge Loop")
         let state = WorkoutActivityAttributes.ContentState(
             workoutName: name, startedAt: startedAt, closedSets: closedSets, totalSets: totalSets,
             currentExercise: currentExercise, reps: reps, weight: weight, setIndex: setIndex,
-            exerciseSets: exerciseSets, bpm: nil, resting: false, restStartedAt: nil, restEndsAt: nil)
+            exerciseSets: exerciseSets, bpm: nil, resting: false, restStartedAt: nil, restEndsAt: nil,
+            supersetPartner: supersetPartner)
         currentState = state
         do {
             current = try Activity.request(attributes: attrs,
@@ -31,12 +33,13 @@ final class LiveActivityManager {
 
     func update(name: String, startedAt: Date, closedSets: Int, totalSets: Int,
                 currentExercise: String, reps: Int, weight: Double, setIndex: Int, exerciseSets: Int,
-                bpm: Int?, resting: Bool, restStartedAt: Date?, restEndsAt: Date?) {
+                bpm: Int?, resting: Bool, restStartedAt: Date?, restEndsAt: Date?, supersetPartner: String? = nil) {
         guard #available(iOS 16.2, *) else { return }
         currentState = WorkoutActivityAttributes.ContentState(
             workoutName: name, startedAt: startedAt, closedSets: closedSets, totalSets: totalSets,
             currentExercise: currentExercise, reps: reps, weight: weight, setIndex: setIndex,
-            exerciseSets: exerciseSets, bpm: bpm, resting: resting, restStartedAt: restStartedAt, restEndsAt: restEndsAt)
+            exerciseSets: exerciseSets, bpm: bpm, resting: resting, restStartedAt: restStartedAt, restEndsAt: restEndsAt,
+            supersetPartner: supersetPartner)
         push()
     }
 

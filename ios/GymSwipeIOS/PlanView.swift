@@ -142,6 +142,7 @@ private struct DraftExercise: Identifiable {
     var sets = 4
     var reps = 8
     var weight = 20.0
+    var linkNext = false   // superserie con el ejercicio siguiente
 }
 
 struct CreateWorkoutView: View {
@@ -241,7 +242,10 @@ struct CreateWorkoutView: View {
 
                     labeled("EJERCICIOS") {
                         VStack(spacing: 10) {
-                            ForEach($drafts) { $draft in exerciseCard($draft) }
+                            ForEach(Array(drafts.enumerated()), id: \.element.id) { idx, _ in
+                                exerciseCard($drafts[idx])
+                                if idx < drafts.count - 1 { supersetLink(idx) }
+                            }
                             addButton
                         }
                     }
@@ -268,6 +272,11 @@ struct CreateWorkoutView: View {
         name = e.name
         group = (e.block == "Por defecto" || e.block == "Mis entrenos") ? "" : e.block
         drafts = e.exercises.map { DraftExercise(name: $0.name, sets: $0.sets, reps: $0.reps, weight: $0.weight) }
+        // Reconstruye los enlaces de superserie: dos ejercicios consecutivos con el mismo grupo.
+        for i in 0..<max(0, e.exercises.count - 1) where e.exercises[i].supersetGroup != nil
+            && e.exercises[i].supersetGroup == e.exercises[i + 1].supersetGroup {
+            drafts[i].linkNext = true
+        }
         if drafts.isEmpty { drafts = [DraftExercise()] }
         didLoad = true
     }
@@ -366,6 +375,27 @@ struct CreateWorkoutView: View {
         }
     }
 
+    /// Conector entre dos ejercicios: enlázalos en superserie (se alternan sin descanso).
+    private func supersetLink(_ idx: Int) -> some View {
+        let linked = drafts[idx].linkNext
+        return Button {
+            FX.tap(); withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) { drafts[idx].linkNext.toggle() }
+        } label: {
+            HStack(spacing: 5) {
+                Image(systemName: linked ? "link" : "link.badge.plus").font(.system(size: 11, weight: .heavy))
+                Text(linked ? "Superserie" : "Enlazar en superserie").font(.system(size: 11, weight: .heavy))
+            }
+            .foregroundColor(linked ? Color(hex: "10150a") : Brand.soft)
+            .padding(.horizontal, 12).padding(.vertical, 6)
+            .background(linked ? Brand.green : Brand.chip)
+            .clipShape(Capsule())
+            .overlay(alignment: .top) { Rectangle().fill(linked ? Brand.green : Brand.line).frame(width: 2, height: 8).offset(y: -8) }
+            .overlay(alignment: .bottom) { Rectangle().fill(linked ? Brand.green : Brand.line).frame(width: 2, height: 8).offset(y: 8) }
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 2)
+    }
+
     private var addButton: some View {
         Button {
             let d = DraftExercise()
@@ -388,9 +418,22 @@ struct CreateWorkoutView: View {
 
     private func save() {
         FX.success()
+        let day = name.isEmpty ? "Mi entreno" : name
+        // Asigna un id de grupo de superserie a cada tramo de ejercicios unidos por `linkNext`.
+        var groupOf: [UUID: String] = [:]
+        var i = 0
+        while i < drafts.count {
+            if i < drafts.count - 1 && drafts[i].linkNext {
+                let gid = "ss-\(Int.random(in: 0..<1_000_000))"
+                groupOf[drafts[i].id] = gid
+                var j = i
+                while j < drafts.count - 1 && drafts[j].linkNext { groupOf[drafts[j + 1].id] = gid; j += 1 }
+                i = j + 1
+            } else { i += 1 }
+        }
         let exercises = drafts
             .filter { !$0.name.trimmingCharacters(in: .whitespaces).isEmpty }
-            .map { d in AppStore.makeExercise(name.isEmpty ? "Mi entreno" : name, d.name, d.sets, d.reps, d.weight) }
+            .map { d in AppStore.makeExercise(day, d.name, d.sets, d.reps, d.weight, supersetGroup: groupOf[d.id]) }
         if let e = editing {
             store.updateWorkout(id: e.id, name: name, group: group, exercises: exercises)
         } else {

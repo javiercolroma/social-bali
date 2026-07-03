@@ -213,12 +213,14 @@ struct TrainView: View {
 
     private func activeCard(_ ex: Exercise) -> some View {
         let current = min(ex.sets, ex.completedSets + ex.skippedSets + 1)
+        let peers = store.supersetPeers(of: ex)
         return PanelCard {
             HStack {
                 Text(ex.day.uppercased()).font(.caption2).fontWeight(.heavy).foregroundColor(Brand.muted)
                 Spacer()
                 Text("SERIE \(current) DE \(ex.sets)").font(.caption2).fontWeight(.heavy).foregroundColor(Color(hex: "4b6211"))
             }
+            if peers.count > 1 { supersetStrip(peers: peers, active: ex) }
             Text(ex.name).font(.system(size: 28, weight: .heavy)).foregroundColor(Brand.ink).lineLimit(2)
             HStack(spacing: 7) {
                 ForEach(0..<ex.sets, id: \.self) { i in
@@ -261,6 +263,45 @@ struct TrainView: View {
         }
     }
 
+    /// Tira de superserie: los ejercicios enlazados, con el activo resaltado y una nota de
+    /// "sin descanso entre ellos". Deja claro que se alternan (una serie de cada).
+    private func supersetStrip(peers: [Exercise], active: Exercise) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            HStack(spacing: 6) {
+                Image(systemName: "link").font(.system(size: 10, weight: .heavy))
+                Text("SUPERSERIE").font(.system(size: 10, weight: .heavy)).tracking(0.6)
+                Text("· sin descanso entre ejercicios").font(.system(size: 10, weight: .semibold)).foregroundColor(Brand.soft)
+            }.foregroundColor(Color(hex: "4b6211"))
+            HStack(spacing: 6) {
+                ForEach(Array(peers.enumerated()), id: \.element.id) { idx, p in
+                    let isActive = p.id == active.id
+                    let isDone = p.resolvedStatus != .pending
+                    HStack(spacing: 5) {
+                        Text("\(letter(idx))").font(.system(size: 10, weight: .heavy))
+                            .foregroundColor(isActive ? Color(hex: "10150a") : Brand.soft)
+                            .frame(width: 16, height: 16)
+                            .background(isActive ? Brand.green : Brand.chip).clipShape(Circle())
+                        Text(p.name).font(.system(size: 12, weight: .heavy)).lineLimit(1)
+                            .foregroundColor(isActive ? Brand.ink : (isDone ? Brand.soft : Brand.muted))
+                            .strikethrough(isDone && !isActive, color: Brand.soft)
+                    }
+                    .padding(.horizontal, 8).padding(.vertical, 5)
+                    .background(isActive ? Brand.greenSoft : Brand.surface)
+                    .clipShape(Capsule())
+                    .overlay(Capsule().stroke(isActive ? Brand.green.opacity(0.5) : Color.clear))
+                    if idx < peers.count - 1 {
+                        Image(systemName: "arrow.right").font(.system(size: 9, weight: .heavy)).foregroundColor(Brand.soft)
+                    }
+                }
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.vertical, 8).padding(.horizontal, 10)
+        .background(Brand.greenSoft.opacity(0.35)).clipShape(RoundedRectangle(cornerRadius: 12))
+    }
+
+    private func letter(_ i: Int) -> String { String(UnicodeScalar(65 + min(25, i))!) }
+
     private var finishButton: some View {
         Button { finalElapsed = elapsedSeconds; LiveActivityManager.shared.end(); withAnimation { showSummary = true } } label: {
             Label("Finalizar entrenamiento", systemImage: "flag.checkered")
@@ -273,12 +314,19 @@ struct TrainView: View {
     private func register(_ ex: Exercise, done: Bool) {
         if sessionStart == nil { sessionStart = Date() }
         let willClose = (ex.completedSets + ex.skippedSets + 1) >= ex.sets
-        if done { restActive = true; restTotal = max(1, ex.rest); restElapsed = 0 } else { restActive = false }
 
         lineSeed += 1
         lastEvent = done ? .done : .skip
 
         withAnimation(.spring(response: 0.4, dampingFraction: 0.82)) { store.registerSet(ex.id, done: done) }
+        // Descanso consciente de superserie: dentro de la rotación (vas al compañero) NO se
+        // descansa; solo al cerrar la ronda o si el ejercicio es normal. Se decide DESPUÉS de
+        // registrar la serie (el store ya rotó al siguiente activo).
+        if done && store.restsAfterSet(ex) {
+            restActive = true; restTotal = max(1, ex.rest); restElapsed = 0
+        } else {
+            restActive = false
+        }
         if store.activeExercise == nil { finalElapsed = elapsedSeconds; LiveActivityManager.shared.end() }   // último set
 
         // Hito del 50% (una sola vez por sesión).
@@ -331,6 +379,13 @@ struct TrainView: View {
     /// Serie actual (1-based) del ejercicio activo, para mostrarla en el widget.
     private func currentSetIndex(_ ex: Exercise) -> Int { min(ex.sets, ex.completedSets + ex.skippedSets + 1) }
 
+    /// En superserie, el siguiente ejercicio con el que se alterna (para el widget).
+    private func supersetPartner(_ ex: Exercise) -> String? {
+        let peers = store.supersetPeers(of: ex)
+        guard peers.count > 1, let i = peers.firstIndex(where: { $0.id == ex.id }) else { return nil }
+        return peers[(i + 1) % peers.count].name
+    }
+
     private func startLive() {
         guard let start = sessionStart else { return }
         let ex = store.activeExercise
@@ -338,7 +393,8 @@ struct TrainView: View {
                                          closedSets: closedSets, totalSets: totalSets,
                                          currentExercise: ex?.name ?? "",
                                          reps: ex?.reps ?? 0, weight: ex?.weight ?? 0,
-                                         setIndex: ex.map(currentSetIndex) ?? 0, exerciseSets: ex?.sets ?? 0)
+                                         setIndex: ex.map(currentSetIndex) ?? 0, exerciseSets: ex?.sets ?? 0,
+                                         supersetPartner: ex.flatMap(supersetPartner))
     }
 
     private func syncLive() {
@@ -350,7 +406,8 @@ struct TrainView: View {
                                           setIndex: currentSetIndex(ex), exerciseSets: ex.sets,
                                           bpm: health.liveBPM, resting: resting,
                                           restStartedAt: resting ? Date().addingTimeInterval(-Double(restElapsed)) : nil,
-                                          restEndsAt: resting ? Date().addingTimeInterval(Double(restRemaining)) : nil)
+                                          restEndsAt: resting ? Date().addingTimeInterval(Double(restRemaining)) : nil,
+                                          supersetPartner: supersetPartner(ex))
     }
 
     /// Aplica un comando llegado desde el widget (botones de la Live Activity) usando

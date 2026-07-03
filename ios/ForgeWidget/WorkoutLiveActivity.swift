@@ -18,11 +18,19 @@ struct WorkoutLiveActivity: Widget {
             let s = context.state
             return DynamicIsland {
                 DynamicIslandExpandedRegion(.leading) {
-                    Label {
-                        Text(s.currentExercise.isEmpty ? "En marcha" : s.currentExercise)
-                            .font(.caption).fontWeight(.heavy).lineLimit(1)
-                    } icon: {
-                        Image(systemName: "dumbbell.fill").foregroundColor(lime)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Label {
+                            Text(s.currentExercise.isEmpty ? "En marcha" : s.currentExercise)
+                                .font(.caption).fontWeight(.heavy).lineLimit(1)
+                        } icon: {
+                            Image(systemName: "dumbbell.fill").foregroundColor(lime)
+                        }
+                        if let partner = s.supersetPartner, !partner.isEmpty {
+                            HStack(spacing: 3) {
+                                Image(systemName: "link").font(.system(size: 8, weight: .heavy))
+                                Text(partner).font(.system(size: 9, weight: .heavy)).lineLimit(1)
+                            }.foregroundColor(lime)
+                        }
                     }
                 }
                 DynamicIslandExpandedRegion(.trailing) {
@@ -75,7 +83,7 @@ private struct LockScreenView: View {
     let state: WorkoutActivityAttributes.ContentState
 
     var body: some View {
-        VStack(spacing: 12) {
+        VStack(spacing: 10) {
             // Una sola fila de cabecera. El cronómetro de entrenamiento se ha
             // eliminado; el chip "Serie X/Y" ocupa el hueco que dejó arriba a la derecha.
             HStack(spacing: 8) {
@@ -94,6 +102,17 @@ private struct LockScreenView: View {
                         .padding(.horizontal, 8).padding(.vertical, 3)
                         .background(lime).clipShape(Capsule())
                 }
+            }
+            if let partner = state.supersetPartner, !partner.isEmpty {
+                HStack(spacing: 5) {
+                    Image(systemName: "link").font(.system(size: 9, weight: .heavy))
+                    Text("SUPERSERIE").font(.system(size: 9, weight: .heavy))
+                    Image(systemName: "arrow.right").font(.system(size: 8, weight: .heavy))
+                    Text(partner).font(.system(size: 10, weight: .heavy)).lineLimit(1)
+                    Spacer(minLength: 0)
+                }
+                .foregroundColor(lime)
+                .frame(maxWidth: .infinity, alignment: .leading)
             }
             ControlsView(state: state)   // controles O el bloque de descanso
         }
