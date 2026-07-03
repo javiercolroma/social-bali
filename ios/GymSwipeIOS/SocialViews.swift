@@ -142,7 +142,7 @@ struct MessagesSheet: View {
     var onEditAccount: () -> Void
 
     private var conversations: [Conversation] { store.conversations.sorted { $0.lastAt > $1.lastAt } }
-    private var incoming: [SocialPerson] { store.people.filter { store.relationship($0.id) == .incoming } }
+    private var incoming: [SocialPerson] { store.incomingRequestPeople + store.people.filter { store.relationship($0.id) == .incoming } }
     /// Nº de CHATS con mensajes nuevos (no mensajes totales) — para el circulito verde.
     private var unreadChats: Int { store.conversations.filter { $0.unread > 0 }.count }
 
@@ -268,7 +268,8 @@ struct FriendsContent: View {
     var onEditAccount: () -> Void
 
     private func rel(_ id: String) -> RelationshipStatus { store.relationship(id) }
-    private var incoming: [SocialPerson] { store.people.filter { rel($0.id) == .incoming } }
+    // Solicitudes recibidas: reales (cuentas privadas, del servidor) + demo.
+    private var incoming: [SocialPerson] { store.incomingRequestPeople + store.people.filter { rel($0.id) == .incoming } }
     // Con backend real, "tus amigos" = a quién sigues DE VERDAD; sin backend, demo.
     private var friends: [SocialPerson] { store.following }
     private var discover: [SocialPerson] { store.people.filter { rel($0.id) == .none || rel($0.id) == .outgoing } }

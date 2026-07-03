@@ -168,6 +168,9 @@ struct SettingsView: View {
     @AppStorage("fxHaptics") private var hapticsOn = true
     @ObservedObject private var health = HealthManager.shared
     @State private var confirmLogout = false
+    @State private var confirmDelete = false
+    @State private var deleting = false
+    @State private var deleteFailed = false
     @State private var toursReset = false
 
     var body: some View {
@@ -242,6 +245,12 @@ struct SettingsView: View {
                             .frame(maxWidth: .infinity).frame(height: 50)
                             .background(Brand.redSoft).clipShape(RoundedRectangle(cornerRadius: 12))
                     }
+
+                    // Eliminación de cuenta in-app (obligatoria para App Store, guideline 5.1.1).
+                    Button(role: .destructive) { confirmDelete = true } label: {
+                        Text("Eliminar cuenta").font(.system(size: 13, weight: .heavy)).foregroundColor(Color(hex: "a73232"))
+                            .frame(maxWidth: .infinity)
+                    }.padding(.top, 2)
                 }
                 .padding(.horizontal, 14).padding(.vertical, 12)
             }
@@ -256,6 +265,23 @@ struct SettingsView: View {
                 Button("Cerrar sesión", role: .destructive) { FX.warning(); store.logout(); dismiss() }
                 Button("Cancelar", role: .cancel) {}
             } message: { Text("Volverás a la pantalla de creación de cuenta.") }
+            .confirmationDialog("¿Eliminar tu cuenta?", isPresented: $confirmDelete, titleVisibility: .visible) {
+                Button("Eliminar definitivamente", role: .destructive) {
+                    deleting = true
+                    Task {
+                        let ok = await store.deleteAccount()
+                        deleting = false
+                        if ok { FX.warning(); dismiss() } else { deleteFailed = true }
+                    }
+                }
+                Button("Cancelar", role: .cancel) {}
+            } message: {
+                Text("Se borrarán PARA SIEMPRE tu perfil, entrenos, mensajes, seguidores y fotos. Esta acción no se puede deshacer.")
+            }
+            .alert("No se pudo eliminar la cuenta", isPresented: $deleteFailed) {
+                Button("Entendido", role: .cancel) {}
+            } message: { Text("Comprueba tu conexión e inténtalo de nuevo.") }
+            .overlay { if deleting { ZStack { Color.black.opacity(0.25).ignoresSafeArea(); ProgressView().tint(.white) } } }
         }
     }
 

@@ -64,6 +64,8 @@ final class AppStore: ObservableObject {
     @Published var pendingFollowingIds: Set<String> = []
     /// Personas con las que tienes conversación real (para resolver nombre/avatar en Mensajes).
     @Published var messagedPeople: [SocialPerson] = []
+    /// Solicitudes de seguimiento RECIBIDAS (tu cuenta es privada) pendientes de aceptar.
+    @Published var incomingRequestPeople: [SocialPerson] = []
 
     /// DEBUG: salta el login (AuthView) y el onboarding mientras se depura.
     /// Pon en `false` para volver al flujo real (login → onboarding → app).
@@ -247,6 +249,7 @@ final class AppStore: ObservableObject {
             let key = personId.lowercased()
             if followingPeople.contains(where: { $0.id.lowercased() == key }) { return .friends }
             if pendingFollowingIds.contains(key) { return .outgoing }
+            if incomingRequestPeople.contains(where: { $0.id.lowercased() == key }) { return .incoming }
             return .none
         }
         return relationships[personId] ?? .none
@@ -730,6 +733,7 @@ final class AppStore: ObservableObject {
         followingPeople = []
         followerPeople = []
         messagedPeople = []
+        incomingRequestPeople = []
         pendingFollowingIds = []
         scoreCache = [:]
         checkingProfile = false
@@ -805,6 +809,16 @@ final class AppStore: ObservableObject {
 
     /// Aceptar una solicitud de seguimiento que TE han enviado (cuenta privada).
     func acceptFriendRequest(_ personId: String) {
+        // Usuario REAL: acepta la solicitud en el servidor (pending → accepted).
+        if BackendConfig.isConfigured, let uid = UUID(uuidString: personId) {
+            let key = personId.lowercased()
+            if let p = incomingRequestPeople.first(where: { $0.id.lowercased() == key }) {
+                followerPeople.append(p)   // ya te sigue
+            }
+            incomingRequestPeople.removeAll { $0.id.lowercased() == key }
+            Task { try? await Backend.shared.acceptFollowRequest(from: uid) }
+            return
+        }
         relationships[personId] = .friends
         let name = person(personId)?.name ?? "Esa persona"
         updateFollowRequestNotif(personId, body: "Has aceptado la solicitud de \(name).")
@@ -813,10 +827,37 @@ final class AppStore: ObservableObject {
 
     /// Rechazar una solicitud de seguimiento.
     func rejectFriendRequest(_ personId: String) {
+        // Usuario REAL: borra la solicitud en el servidor.
+        if BackendConfig.isConfigured, let uid = UUID(uuidString: personId) {
+            incomingRequestPeople.removeAll { $0.id.lowercased() == personId.lowercased() }
+            Task { try? await Backend.shared.rejectFollowRequest(from: uid) }
+            return
+        }
         relationships[personId] = .none
         let name = person(personId)?.name ?? "Esa persona"
         updateFollowRequestNotif(personId, body: "Has rechazado la solicitud de \(name).")
         persist()
+    }
+
+    /// Carga las solicitudes de seguimiento RECIBIDAS (pendientes) desde el servidor.
+    func loadFollowRequests() {
+        guard BackendConfig.isConfigured else { return }
+        Task {
+            let rows = (try? await Backend.shared.fetchFollowRequests()) ?? []
+            let ids = rows.compactMap { UUID(uuidString: $0.follower_id) }
+            guard !ids.isEmpty else { incomingRequestPeople = []; return }
+            incomingRequestPeople = Self.asPeople((try? await Backend.shared.fetchProfiles(ids: ids)) ?? [])
+        }
+    }
+
+    /// Elimina la cuenta COMPLETA (servidor + estado local). Devuelve false si falló el servidor.
+    func deleteAccount() async -> Bool {
+        if BackendConfig.isConfigured {
+            do { try await Backend.shared.deleteAccount() }
+            catch { print("[Backend] eliminar cuenta falló:", error); return false }
+        }
+        logout()   // borra todo el estado local (igual que cerrar sesión)
+        return true
     }
 
     private func updateFollowRequestNotif(_ personId: String, body: String) {
@@ -852,6 +893,7 @@ final class AppStore: ObservableObject {
             // (`followOrRequest`), que es cuando de verdad lo consigues.
             refreshAchievements(celebrate: false)
         }
+        loadFollowRequests()   // solicitudes recibidas (cuentas privadas)
     }
 
     static func asPeople(_ profiles: [ProfileRow]) -> [SocialPerson] {

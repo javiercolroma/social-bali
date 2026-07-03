@@ -25,53 +25,79 @@
   </head>
   <body>
     <h1>Política de privacidad</h1>
-    <p class="muted">Forge Loop · Última actualización: 28 de junio de 2026</p>
+    <p class="muted">Forge Loop · Última actualización: 5 de julio de 2026</p>
 
     <p>
-      Forge Loop es una aplicación de entrenamiento <strong>local-first</strong>: funciona en tu dispositivo y no
-      requiere crear una cuenta en ningún servidor. Esta política explica qué datos maneja la app y cómo.
+      Forge Loop es una aplicación social de entrenamiento. Esta política explica qué datos tratamos,
+      para qué y cómo puedes borrarlos.
     </p>
 
     <h2>Datos que tratamos</h2>
     <ul>
       <li>
-        <strong>Datos de entrenamiento y perfil</strong> (entrenos, series, pesos, historial, foto de perfil, nombre y
-        @usuario) se guardan <strong>únicamente en tu dispositivo</strong> mediante el almacenamiento local del
-        navegador (<code>localStorage</code>). No se envían a ningún servidor.
+        <strong>Cuenta:</strong> email y nombre, procedentes del proveedor con el que entres
+        (Apple, Google) o del registro por email.
       </li>
       <li>
-        <strong>Ubicación</strong>: si concedes el permiso, la usamos <strong>solo en tu dispositivo</strong> para
-        centrar el mapa del apartado Ranking y mostrar zonas aproximadas. <strong>No se almacena ni se transmite</strong>
-        a ningún servidor ni a terceros. Puedes denegar o revocar el permiso en los Ajustes de iOS en cualquier momento.
+        <strong>Perfil:</strong> nombre, @usuario, foto de perfil y, si los indicas, país, ciudad y gimnasio.
+      </li>
+      <li>
+        <strong>Entrenamiento:</strong> tus sesiones (ejercicios, series, pesos, duración, XP), tus rutinas
+        creadas y, si la añades, la foto del entreno.
+      </li>
+      <li>
+        <strong>Frecuencia cardíaca (opcional):</strong> si conectas la app Salud (HealthKit), guardamos solo la
+        <strong>media y el máximo</strong> de cada sesión. No usamos los datos de HealthKit para publicidad ni los
+        compartimos con terceros.
+      </li>
+      <li>
+        <strong>Ubicación (opcional):</strong> si concedes permiso, guardamos una <strong>zona aproximada</strong>
+        (p. ej. «Chamberí, Madrid») junto a la sesión, y la usamos para el mapa y el ranking. Puedes revocar el
+        permiso en Ajustes de iOS cuando quieras.
+      </li>
+      <li>
+        <strong>Social:</strong> a quién sigues, me gusta, comentarios, mensajes con otros usuarios y reportes
+        de moderación.
       </li>
     </ul>
 
-    <h2>Funciones sociales</h2>
+    <h2>Dónde se guardan</h2>
     <p>
-      Las funciones de mensajes, amigos y notificaciones son <strong>demostrativas y locales</strong>: los compañeros,
-      respuestas y solicitudes se generan en el propio dispositivo. La app no comparte tu información con otros usuarios
-      ni con servidores.
+      Los datos se almacenan en <a href="https://supabase.com">Supabase</a> (cifrado en tránsito y en reposo) con
+      políticas de seguridad a nivel de fila: cada usuario solo puede acceder a lo que le corresponde — por ejemplo,
+      un mensaje solo lo ven remitente y destinatario, y las sesiones respetan la visibilidad que elijas
+      (todos / solo seguidores / privado).
+    </p>
+
+    <h2>Para qué los usamos</h2>
+    <p>
+      Únicamente para el funcionamiento de la app: tu progreso, el muro social, el ranking semanal y el chat.
     </p>
 
     <h2>Lo que NO hacemos</h2>
     <ul>
-      <li>No recopilamos datos personales en servidores propios.</li>
       <li>No usamos analítica ni rastreo (tracking) de terceros.</li>
-      <li>No vendemos ni compartimos tus datos.</li>
+      <li>No vendemos ni cedemos tus datos.</li>
       <li>No mostramos publicidad.</li>
     </ul>
 
+    <h2>Moderación</h2>
+    <p>
+      Puedes reportar contenido y bloquear usuarios desde la propia app. El contenido reportado repetidamente se
+      oculta de forma automática hasta su revisión.
+    </p>
+
     <h2>Mapas</h2>
     <p>
-      El mapa usa teselas de <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>. Al cargar el mapa, tu
-      dispositivo solicita imágenes a sus servidores, lo que implica el envío de tu dirección IP a dicho servicio,
-      como en cualquier navegación web.
+      El mapa del apartado Comunidad usa Apple Maps (MapKit); al mostrarlo, tu dispositivo se comunica con los
+      servidores de Apple como en cualquier app con mapas.
     </p>
 
     <h2>Borrado de datos</h2>
     <p>
-      Como todos los datos viven en tu dispositivo, puedes eliminarlos desinstalando la app o borrando los datos del
-      sitio en los Ajustes de iOS.
+      Puedes <strong>eliminar tu cuenta desde la propia app</strong> (Perfil → Ajustes → Eliminar cuenta). Esto borra
+      de forma <strong>permanente e irreversible</strong> tu perfil, sesiones, rutinas, mensajes, seguidores, me gusta,
+      comentarios y fotos de nuestros servidores.
     </p>
 
     <h2>Menores</h2>

@@ -94,6 +94,54 @@ final class Backend {
         try await client.from("workout_sessions").upsert(row).execute()
     }
 
+    // MARK: - Eliminar cuenta (App Store 5.1.1: obligatorio con registro)
+
+    /// Borra la cuenta COMPLETA del usuario actual: archivos de Storage (best-effort) y la
+    /// fila de auth.users vía RPC `delete_my_account` (las cascadas arrastran perfil, sesiones,
+    /// follows, mensajes, kudos, comentarios, entrenos…). Después cierra la sesión Supabase.
+    func deleteAccount() async throws {
+        guard let client else { throw BackendError.notConfigured }
+        if let uid = await currentUserIdAsync() {
+            let dir = uid.uuidString
+            if let files = try? await client.storage.from("session-photos").list(path: dir) {
+                let paths = files.map { "\(dir)/\($0.name)" }
+                if !paths.isEmpty { _ = try? await client.storage.from("session-photos").remove(paths: paths) }
+            }
+            _ = try? await client.storage.from("avatars").remove(paths: ["\(dir)/avatar.jpg"])
+        }
+        try await client.rpc("delete_my_account").execute()
+        try? await client.auth.signOut()
+    }
+
+    // MARK: - Solicitudes de seguimiento (cuentas privadas)
+
+    /// Solicitudes RECIBIDAS pendientes de aceptar (gente que quiere seguirte).
+    func fetchFollowRequests() async throws -> [FollowRow] {
+        guard let client, let me = await currentUserIdAsync() else { return [] }
+        return try await client.from("follows").select()
+            .eq("following_id", value: me.uuidString).eq("status", value: "pending").execute().value
+    }
+    func acceptFollowRequest(from follower: UUID) async throws {
+        guard let client, let me = await currentUserIdAsync() else { throw BackendError.notConfigured }
+        try await client.from("follows").update(["status": "accepted"])
+            .eq("follower_id", value: follower.uuidString).eq("following_id", value: me.uuidString).execute()
+    }
+    func rejectFollowRequest(from follower: UUID) async throws {
+        guard let client, let me = await currentUserIdAsync() else { throw BackendError.notConfigured }
+        try await client.from("follows").delete()
+            .eq("follower_id", value: follower.uuidString).eq("following_id", value: me.uuidString).execute()
+    }
+
+    // MARK: - Push (token del dispositivo)
+
+    /// Registra/actualiza el token APNs del dispositivo para poder recibir pushes.
+    func upsertDeviceToken(_ token: String) async throws {
+        guard let client, let uid = await currentUserIdAsync() else { return }
+        struct Row: Codable { let token: String; let user_id: String; let platform: String }
+        try await client.from("device_tokens")
+            .upsert(Row(token: token, user_id: uid.uuidString.lowercased(), platform: "ios")).execute()
+    }
+
     // MARK: - Entrenos creados (plantillas) — para que no se pierdan al cerrar sesión
 
     func upsertWorkout(_ row: WorkoutRow) async throws {
