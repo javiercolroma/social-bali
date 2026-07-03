@@ -23,7 +23,7 @@ struct GymSwipeIOSApp: App {
             // Y si hay sesión pero no cuenta local, rehidrata el perfil (evita repetir onboarding).
             .task {
                 if store.auth != nil && store.account == nil { store.hydrateAccountFromBackend() }
-                store.syncSessionsFromBackend(); store.loadLeaderboard()
+                store.syncSessionsFromBackend(); store.syncWorkoutsFromBackend(); store.loadLeaderboard()
                 store.loadFollowing(); store.loadConversations()
             }
             // Al volver a primer plano: re-sincroniza (SUBE cualquier entreno que no subiera en su

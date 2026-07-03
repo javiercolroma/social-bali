@@ -126,7 +126,7 @@ struct AuthProviderSheet: View {
                 Task {
                     do { let uid = try await Backend.shared.signInWithGoogle(idToken: idToken)
                          print("[Backend] sesión Supabase (Google) abierta: \(uid)")
-                         store.hydrateAccountFromBackend(); store.syncSessionsFromBackend() }
+                         store.hydrateAccountFromBackend(); store.syncSessionsFromBackend(); store.syncWorkoutsFromBackend() }
                     catch { print("[Backend] Google → Supabase falló:", error); store.checkingProfile = false }
                 }
             }
@@ -145,7 +145,7 @@ struct AuthProviderSheet: View {
             Task {
                 do { let uid = try await Backend.shared.signInWithApple(idToken: idToken, nonce: nonce)
                      print("[Backend] sesión Supabase (Apple) abierta: \(uid)")
-                     store.hydrateAccountFromBackend(); store.syncSessionsFromBackend() }
+                     store.hydrateAccountFromBackend(); store.syncSessionsFromBackend(); store.syncWorkoutsFromBackend() }
                 catch { print("[Backend] Apple → Supabase falló:", error); store.checkingProfile = false }
             }
         }
@@ -279,7 +279,7 @@ struct EmailAuthSheet: View {
                 print("[Backend] sesión Supabase (email) abierta: \(uid)")
                 FX.success(sound: true); dismiss()
                 withAnimation { store.signIn(provider: "email", userId: uid.uuidString, email: e, name: nil) }
-                store.hydrateAccountFromBackend(); store.syncSessionsFromBackend()
+                store.hydrateAccountFromBackend(); store.syncSessionsFromBackend(); store.syncWorkoutsFromBackend()
             } catch BackendError.emailTaken {
                 error = "Ya existe una cuenta con este correo. Cambia a «Iniciar sesión»."
             } catch {

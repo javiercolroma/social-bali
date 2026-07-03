@@ -94,6 +94,22 @@ final class Backend {
         try await client.from("workout_sessions").upsert(row).execute()
     }
 
+    // MARK: - Entrenos creados (plantillas) — para que no se pierdan al cerrar sesión
+
+    func upsertWorkout(_ row: WorkoutRow) async throws {
+        guard let client else { throw BackendError.notConfigured }
+        try await client.from("workouts").upsert(row).execute()
+    }
+    func deleteWorkout(id: String) async throws {
+        guard let client else { throw BackendError.notConfigured }
+        try await client.from("workouts").delete().eq("id", value: id).execute()
+    }
+    /// Entrenos del usuario actual (RLS ya los limita a los suyos), más recientes primero.
+    func fetchMyWorkouts() async throws -> [WorkoutRow] {
+        guard let client else { throw BackendError.notConfigured }
+        return try await client.from("workouts").select().order("updated_at", ascending: false).execute().value
+    }
+
     /// Trae las sesiones del usuario actual, más recientes primero.
     func fetchMySessions() async throws -> [SessionRow] {
         guard let client, let uid = await currentUserIdAsync() else { return [] }
@@ -566,5 +582,28 @@ struct SessionRow: Codable {
             photoData: nil, visibility: WorkoutVisibility(rawValue: visibility) ?? .all,
             items: items, avgHeartRate: avg_hr, maxHeartRate: max_hr,
             location: location, verified: verified, photoURL: photo_url)
+    }
+}
+
+/// Fila de un entreno creado (plantilla). `exercises` se guarda como jsonb.
+struct WorkoutRow: Codable {
+    let id: String
+    let user_id: String
+    let name: String
+    let description: String
+    let block: String
+    let exercises: [Exercise]
+
+    init(_ w: WorkoutTemplate, userId: UUID) {
+        id = w.id
+        user_id = userId.uuidString.lowercased()
+        name = w.name
+        description = w.description
+        block = w.block
+        exercises = w.exercises
+    }
+
+    var asTemplate: WorkoutTemplate {
+        WorkoutTemplate(id: id, name: name, description: description, block: block, exercises: exercises)
     }
 }

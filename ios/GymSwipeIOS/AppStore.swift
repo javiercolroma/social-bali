@@ -455,6 +455,33 @@ final class AppStore: ObservableObject {
         refreshAchievements(celebrate: true)   // desbloquea + celebra logros nuevos
     }
 
+    /// Sube un entreno creado al servidor (best-effort) para que no se pierda al cerrar sesión.
+    func pushWorkoutToBackend(_ w: WorkoutTemplate) {
+        guard Backend.shared.isConfigured else { return }
+        Task {
+            guard let uid = await Backend.shared.currentUserIdAsync() else { return }
+            do { try await Backend.shared.upsertWorkout(WorkoutRow(w, userId: uid)); print("[Backend] entreno subido: \(w.id)") }
+            catch { print("[Backend] subir entreno falló:", error) }
+        }
+    }
+
+    /// Sincroniza los entrenos creados con el servidor (fuente de verdad + sube los locales que
+    /// aún no estén). Restaura tus entrenos tras cerrar sesión / reinstalar / cambiar de móvil.
+    func syncWorkoutsFromBackend() {
+        guard Backend.shared.isConfigured else { return }
+        Task {
+            guard await Backend.shared.currentUserIdAsync() != nil else { return }
+            guard let rows = try? await Backend.shared.fetchMyWorkouts() else { return }
+            let server = rows.map { $0.asTemplate }
+            let serverIds = Set(server.map { $0.id })
+            let localOnly = savedWorkouts.filter { !serverIds.contains($0.id) }
+            for w in localOnly { pushWorkoutToBackend(w) }   // sube los que faltaban en el servidor
+            savedWorkouts = localOnly + server               // locales sin subir primero, luego servidor
+            print("[Backend] entrenos sincronizados: \(server.count) servidor + \(localOnly.count) locales")
+            persist()
+        }
+    }
+
     /// Sube una sesión recién guardada al servidor (best-effort; requiere backend + sesión Supabase).
     func pushSessionToBackend(_ s: WorkoutSession) {
         guard Backend.shared.isConfigured else { return }
@@ -976,6 +1003,7 @@ final class AppStore: ObservableObject {
             description: AppStore.summary(of: exercises), block: g.isEmpty ? "Otros" : g, exercises: exercises)
         savedWorkouts.insert(workout, at: 0)
         persist()
+        pushWorkoutToBackend(workout)   // que sobreviva a cerrar sesión / reinstalar
     }
 
     /// ¿Ya tienes en el plan un entreno con este nombre? (para el estado del botón "Añadir").
@@ -1005,6 +1033,7 @@ final class AppStore: ObservableObject {
         savedWorkouts.insert(w, at: 0)
         FX.success()
         persist()
+        pushWorkoutToBackend(w)   // que sobreviva a cerrar sesión / reinstalar
         return w
     }
 
@@ -1017,6 +1046,9 @@ final class AppStore: ObservableObject {
     func deleteWorkout(_ id: String) {
         if savedWorkouts.contains(where: { $0.id == id }) {
             savedWorkouts.removeAll { $0.id == id }   // entreno propio: se borra
+            if Backend.shared.isConfigured {          // bórralo también en el servidor
+                Task { try? await Backend.shared.deleteWorkout(id: id) }
+            }
         } else {
             hiddenWorkoutIds.insert(id)               // entreno por defecto: se oculta
         }
@@ -1038,6 +1070,7 @@ final class AppStore: ObservableObject {
             w.description = AppStore.summary(of: exercises)
             savedWorkouts[idx] = w
             persist()
+            pushWorkoutToBackend(w)   // sube el cambio al servidor
         } else {
             addWorkout(name: name, group: group, exercises: exercises)
         }
