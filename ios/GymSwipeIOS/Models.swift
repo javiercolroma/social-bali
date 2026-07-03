@@ -182,6 +182,11 @@ struct ChatMessage: Identifiable, Codable, Hashable {
 
     /// Si el mensaje es un entreno compartido, devuelve la plantilla decodificada.
     var sharedWorkout: WorkoutTemplate? { WorkoutShare.decode(text) }
+    /// Texto legible para la lista de conversaciones (nunca el JSON codificado del entreno).
+    var preview: String {
+        if let w = sharedWorkout { return "📋 Entreno: \(w.name)" }
+        return text
+    }
 }
 
 /// Compartir un entreno por el chat SIN cambiar el esquema: la plantilla viaja

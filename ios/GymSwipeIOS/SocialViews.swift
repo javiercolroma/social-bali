@@ -244,7 +244,7 @@ struct MessagesSheet: View {
 
     private func previewText(_ conv: Conversation) -> String {
         guard let m = conv.lastMessage else { return "Sin mensajes todavía" }
-        return (m.fromMe ? "Tú: " : "") + m.text
+        return (m.fromMe ? "Tú: " : "") + m.preview
     }
 }
 
@@ -357,6 +357,7 @@ struct ChatView: View {
     @State private var realMode = false
     @State private var channel: RealtimeChannelV2?
     @State private var showWorkoutPicker = false
+    @State private var pendingWorkout: WorkoutTemplate?   // entreno adjunto pendiente de enviar
 
     /// Suscripción Realtime: los mensajes del otro llegan al instante (sin esperar al sondeo).
     private func subscribeRealtime() async {
@@ -434,18 +435,36 @@ struct ChatView: View {
                 }
             }
 
-            HStack(spacing: 8) {
-                Button { FX.tap(); showWorkoutPicker = true } label: {
-                    Image(systemName: "dumbbell.fill").foregroundColor(Brand.ink)
-                        .frame(width: 46, height: 46).background(Brand.chip).clipShape(Circle())
+            VStack(spacing: 8) {
+                // Adjunto pendiente: el entreno elegido se coloca aquí (no se envía hasta pulsar enviar).
+                if let w = pendingWorkout {
+                    HStack(spacing: 10) {
+                        Image(systemName: "doc.text.fill").font(.system(size: 14)).foregroundColor(Color(hex: "4b6211"))
+                        VStack(alignment: .leading, spacing: 1) {
+                            Text("Entreno adjunto").font(.system(size: 10, weight: .heavy)).foregroundColor(Brand.soft)
+                            Text(w.name).font(.system(size: 14, weight: .heavy)).foregroundColor(Brand.ink).lineLimit(1)
+                        }
+                        Spacer()
+                        Button { withAnimation { pendingWorkout = nil } } label: {
+                            Image(systemName: "xmark.circle.fill").font(.system(size: 18)).foregroundColor(Brand.soft)
+                        }
+                    }
+                    .padding(.horizontal, 12).padding(.vertical, 8)
+                    .background(Brand.greenSoft.opacity(0.5)).clipShape(RoundedRectangle(cornerRadius: 12))
                 }
-                TextField("Escribe un mensaje", text: $draft)
-                    .padding(.horizontal, 16).frame(height: 46).background(Color.white).clipShape(Capsule())
-                    .overlay(Capsule().stroke(Brand.line))
-                Button { send() } label: {
-                    Image(systemName: "paperplane.fill").foregroundColor(Color(hex: "10150a"))
-                        .frame(width: 46, height: 46).background(Brand.green).clipShape(Circle())
-                }.disabled(draft.trimmingCharacters(in: .whitespaces).isEmpty)
+                HStack(spacing: 8) {
+                    Button { FX.tap(); showWorkoutPicker = true } label: {
+                        Image(systemName: "plus").font(.system(size: 20, weight: .semibold)).foregroundColor(Brand.ink)
+                            .frame(width: 46, height: 46).background(Brand.chip).clipShape(Circle())
+                    }
+                    TextField("Escribe un mensaje", text: $draft)
+                        .padding(.horizontal, 16).frame(height: 46).background(Color.white).clipShape(Capsule())
+                        .overlay(Capsule().stroke(Brand.line))
+                    Button { send() } label: {
+                        Image(systemName: "paperplane.fill").foregroundColor(Color(hex: "10150a"))
+                            .frame(width: 46, height: 46).background(Brand.green).clipShape(Circle())
+                    }.disabled(draft.trimmingCharacters(in: .whitespaces).isEmpty && pendingWorkout == nil)
+                }
             }
             .padding(.horizontal, 14).padding(.vertical, 10)
             .background(Brand.bg).overlay(Divider(), alignment: .top)
@@ -467,7 +486,8 @@ struct ChatView: View {
             if let p = store.person(item.id) { FriendProfileView(person: p).environmentObject(store) }
         }
         .sheet(isPresented: $showWorkoutPicker) {
-            ShareWorkoutPicker { w in showWorkoutPicker = false; shareWorkout(w) }.environmentObject(store)
+            // Elegir un entreno lo ADJUNTA al mensaje (no lo envía); se manda al pulsar enviar.
+            ShareWorkoutPicker { w in showWorkoutPicker = false; withAnimation { pendingWorkout = w } }.environmentObject(store)
         }
     }
 
@@ -485,11 +505,11 @@ struct ChatView: View {
 
     private func send() {
         let t = draft.trimmingCharacters(in: .whitespaces)
-        guard !t.isEmpty else { return }
-        FX.tap(); deliver(t); draft = ""
+        guard !t.isEmpty || pendingWorkout != nil else { return }
+        FX.tap()
+        if let w = pendingWorkout { deliver(WorkoutShare.encode(w)); pendingWorkout = nil }
+        if !t.isEmpty { deliver(t); draft = "" }
     }
-
-    private func shareWorkout(_ w: WorkoutTemplate) { FX.success(); deliver(WorkoutShare.encode(w)) }
 
     @ViewBuilder
     private func bubble(_ m: ChatMessage) -> some View {
@@ -532,8 +552,6 @@ struct SharedWorkoutCard: View {
     let at: Date
     @State private var added = false
 
-    private var alreadyInPlan: Bool { added || store.hasSavedWorkoutNamed(workout.name) }
-
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack(spacing: 10) {
@@ -562,25 +580,31 @@ struct SharedWorkoutCard: View {
                     Text("+\(workout.exercises.count - 4) más").font(.system(size: 11, weight: .semibold)).foregroundColor(Brand.soft)
                 }
             }
-            if fromMe {
-                Text("Enviado").font(.system(size: 12, weight: .heavy)).foregroundColor(Brand.soft)
-                    .frame(maxWidth: .infinity).padding(.vertical, 9).background(Brand.chip).clipShape(RoundedRectangle(cornerRadius: 11))
-            } else {
+            if !fromMe {
                 Button {
-                    if store.addSharedWorkout(workout) { withAnimation { added = true } }
-                    else { added = true }
+                    store.addSharedWorkout(workout); withAnimation { added = true }
                 } label: {
                     HStack(spacing: 6) {
-                        Image(systemName: alreadyInPlan ? "checkmark.circle.fill" : "plus.circle.fill")
-                        Text(alreadyInPlan ? "En tu plan" : "Añadir a mi plan")
+                        Image(systemName: added ? "checkmark.circle.fill" : "plus.circle.fill")
+                        Text(added ? "Añadido a tu plan" : "Añadir a mi plan")
                     }
                     .font(.system(size: 14, weight: .heavy))
-                    .foregroundColor(alreadyInPlan ? Brand.ink : Color(hex: "10150a"))
+                    .foregroundColor(added ? Brand.ink : Color(hex: "10150a"))
                     .frame(maxWidth: .infinity).padding(.vertical, 10)
-                    .background(alreadyInPlan ? Brand.chip : Brand.green).clipShape(RoundedRectangle(cornerRadius: 11))
-                }.disabled(alreadyInPlan)
+                    .background(added ? Brand.chip : Brand.green).clipShape(RoundedRectangle(cornerRadius: 11))
+                }.disabled(added)
             }
-            Text(shortTime(at)).font(.system(size: 10, weight: .semibold)).foregroundColor(Brand.soft).opacity(0.6)
+            // Pie tipo mensaje: hora + doble check (enviado) cuando es tuyo.
+            HStack(spacing: 3) {
+                Spacer(minLength: 0)
+                Text(shortTime(at)).font(.system(size: 10, weight: .semibold)).foregroundColor(Brand.soft).opacity(0.6)
+                if fromMe {
+                    ZStack {
+                        Image(systemName: "checkmark").offset(x: -2.5)
+                        Image(systemName: "checkmark").offset(x: 1.5)
+                    }.font(.system(size: 8, weight: .bold)).foregroundColor(Brand.soft).opacity(0.6)
+                }
+            }
         }
         .padding(12)
         .frame(width: 250, alignment: .leading)
