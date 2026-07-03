@@ -258,7 +258,6 @@ struct CustomTabBar: View {
     // resaltado se quedaba pegado en Social.
     let tab: Int
     var onSelect: (Int) -> Void
-    @Namespace private var ns
     private let items: [(title: String, icon: String)] = [
         ("Social", "newspaper.fill"),
         ("Plan", "list.bullet.clipboard"),
@@ -278,8 +277,6 @@ struct CustomTabBar: View {
         .padding(.top, 8)
         .padding(.bottom, max(8, safeBottom))
         .background(Brand.bg)
-        // Mismo muelle que el deslizamiento de pantallas: el indicador "casa" con la transición.
-        .animation(.spring(response: 0.42, dampingFraction: 0.9), value: tab)
     }
 
     /// Botón central de Entreno: círculo elevado (como estaba), con toque suave.
@@ -308,8 +305,8 @@ struct CustomTabBar: View {
 
     private let accent = Color(hex: "5e910e")
 
-    /// Elemento del menú: nada de `Button` ni recuadros duros — un toque suave con un
-    /// indicador (píldora verde tenue) que se DESLIZA entre pestañas (matchedGeometryEffect).
+    /// Elemento del menú: toque suave con la píldora verde encendida SOLO en la pestaña
+    /// activa (sin deslizarse entre pestañas: aparece directamente donde estás).
     private func tabItem(_ idx: Int, _ item: (title: String, icon: String)) -> some View {
         let active = tab == idx
         return VStack(spacing: 5) {
@@ -317,7 +314,6 @@ struct CustomTabBar: View {
                 if active {
                     RoundedRectangle(cornerRadius: 16, style: .continuous)
                         .fill(Brand.greenSoft)
-                        .matchedGeometryEffect(id: "tabHighlight", in: ns)
                         .frame(width: 54, height: 34)
                 }
                 Image(systemName: item.icon)
