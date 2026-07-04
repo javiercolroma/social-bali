@@ -101,9 +101,6 @@ struct ActivityView: View {
         // El calendario, justo debajo de racha/score: tu mes de un vistazo.
         calendarBlock
 
-        sectionHeader("ESTA SEMANA")
-        WeeklyQuestsCard()
-
         sectionHeader("FUERZA POR EJERCICIO")
         if store.sessions.isEmpty {
             Text("Completa y guarda entrenos para medir tu evolución de carga.")
