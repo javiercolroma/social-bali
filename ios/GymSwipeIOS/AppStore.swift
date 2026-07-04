@@ -405,7 +405,7 @@ final class AppStore: ObservableObject {
                                        : logs.reduce(0) { $0 + Double($1.reps) * $1.weight }
                 added.append(HistoryEntry(id: "\(s.id)-\(i)-\(ex.name)", exerciseName: ex.name, day: "",
                     status: .done, sets: ex.sets, reps: ex.reps, weight: ex.weight, volume: vol,
-                    xp: 0, completedAt: s.date, sessionId: s.id))
+                    xp: 0, completedAt: s.date, sessionId: s.id, verified: s.verified))
             }
         }
         guard !added.isEmpty else { return false }
@@ -424,6 +424,7 @@ final class AppStore: ObservableObject {
         var totalSets = 0
         var totalVolume = 0.0
         var sessionItems: [SessionExercise] = []
+        var newEntries: [HistoryEntry] = []
         for ex in exercises where (ex.completedSets + ex.skippedSets) > 0 {
             let status: ExerciseStatus = ex.completedSets > 0 ? .done : .skipped
             let xp = ex.completedSets * 12 + (status == .done ? 18 : 0)
@@ -439,16 +440,18 @@ final class AppStore: ObservableObject {
             if ex.completedSets > 0 {
                 sessionItems.append(SessionExercise(name: ex.name, sets: ex.completedSets, reps: ex.reps, weight: ex.weight, logs: logs.isEmpty ? nil : logs))
             }
-            history.insert(HistoryEntry(
+            newEntries.append(HistoryEntry(
                 id: "h-\(ex.id)-\(Int(Date().timeIntervalSince1970 * 1000))-\(Int.random(in: 0..<9999))",
                 exerciseName: ex.name, day: ex.day, status: status,
                 sets: ex.completedSets > 0 ? ex.completedSets : ex.sets, reps: ex.reps, weight: ex.weight,
                 volume: Double(ex.completedSets) * Double(ex.reps) * ex.weight,
-                xp: xp, completedAt: Date(), sessionId: sid), at: 0)
+                xp: xp, completedAt: Date(), sessionId: sid))
         }
-        // Plausibilidad (anti-fake): una sesión demasiado rápida no cuenta para liga/récords públicos.
-        // ~20 s por serie (incluye descanso, permite EMOM/superseries) + topes por sesión.
+        // Plausibilidad (anti-fake): una sesión demasiado rápida NO cuenta para liga, récords
+        // NI Gym Score (seguramente es fake). ~20 s por serie + topes por sesión.
         let verified = elapsed >= totalSets * 20 && totalSets <= 60 && gained <= 600
+        // El histórico se escribe con la marca: el Gym Score ignora las entradas no verificadas.
+        for var e in newEntries.reversed() { e.verified = verified; history.insert(e, at: 0) }
         let trimmed = name.trimmingCharacters(in: .whitespaces)
         let newSession = WorkoutSession(
             id: sid, name: trimmed.isEmpty ? (exercises.first?.day ?? "Entreno") : trimmed,
@@ -462,14 +465,14 @@ final class AppStore: ObservableObject {
         applyStreakFreeze()                    // protege la racha con congeladores si hubo un hueco
         player.streak = currentStreak()
         checkStreakMilestones()                // hitos de racha (celebra + monedas + congelador)
-        detectPRs(sessionItems, verified: verified)   // récords personales (solo se celebran si es plausible)
+        if verified { detectPRs(sessionItems, celebrate: true) }   // sesión fake → ni registra ni celebra récords
         exercises = []
         lastAction = "Entreno guardado"
         // Misiones recién completadas por esta sesión → aviso para reclamar.
         for q in Quests.weekly where questDone(q) && !(questsBefore[q.id] ?? false) && !questClaimed(q) {
             questCompleted.append(q)
         }
-        if !verified { flashMessage = "Entreno guardado. Por ser muy rápido, no cuenta para la liga ni para récords." }
+        if !verified { flashMessage = "Entreno guardado. Por ser muy rápido, no cuenta para la liga, los récords ni el Gym Score." }
         persist()
         pushSessionToBackend(newSession)       // sube la sesión a Supabase (best-effort, gateado)
         refreshAchievements(celebrate: true)   // desbloquea + celebra logros nuevos
@@ -553,13 +556,13 @@ final class AppStore: ObservableObject {
     /// Para que "Tus récords" y los logros de récord sobrevivan a reinstalar/entrar en otro móvil.
     func detectPRsFromHistory() {
         for s in sessions where s.verified {
-            detectPRs(s.items ?? [], verified: false)   // verified:false = registra sin celebrar/contar prCount
+            detectPRs(s.items ?? [], celebrate: false)   // registra sin celebrar (backfill tras re-login)
         }
     }
 
     /// Detecta récords personales (mejor 1RM estimado por ejercicio). Registra el mejor
     /// de cada ejercicio y celebra solo cuando SUPERA un récord previo (no la primera vez).
-    private func detectPRs(_ items: [SessionExercise], verified: Bool) {
+    private func detectPRs(_ items: [SessionExercise], celebrate: Bool) {
         for item in items {
             let key = item.name.folding(options: .diacriticInsensitive, locale: .current).lowercased()
             let sets: [(w: Double, r: Int)] = (item.logs?.map { ($0.weight, $0.reps) }) ?? [(item.weight, item.reps)]
@@ -573,8 +576,8 @@ final class AppStore: ObservableObject {
             if prev == nil || b.e > prev!.e1rm + 0.01 {
                 let pb = PersonalBest(exercise: item.name, weight: b.w, reps: b.r, e1rm: b.e, date: Date())
                 personalBests[key] = pb
-                // Solo se celebra/cuenta como récord público si la sesión es plausible.
-                if prev != nil && verified {
+                // Solo se celebra/cuenta si NO es un backfill silencioso.
+                if prev != nil && celebrate {
                     pendingPRs.append(pb)
                     prCount += 1
                 }

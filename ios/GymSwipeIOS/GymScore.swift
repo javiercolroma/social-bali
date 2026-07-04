@@ -41,6 +41,9 @@ enum GymScoreEngine {
     private static func e1rm(weight: Double, reps: Int) -> Double { weight * (1 + Double(min(20, reps)) / 30) }
 
     static func calculate(_ history: [HistoryEntry]) -> GymScore {
+        // Anti-fake: las sesiones implausibles (verified == false) NO alimentan el score.
+        // nil = datos antiguos sin marca → cuentan (compatibilidad).
+        let history = history.filter { $0.verified ?? true }
         let dayMs = 24.0 * 60 * 60
         let now = Date().timeIntervalSince1970
 

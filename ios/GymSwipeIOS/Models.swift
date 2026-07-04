@@ -79,6 +79,8 @@ struct HistoryEntry: Identifiable, Codable {
     var xp: Int
     var completedAt: Date
     var sessionId: String?
+    /// nil (datos antiguos) = verificada. false = sesión implausible: NO cuenta para el Gym Score.
+    var verified: Bool? = nil
 }
 
 enum WorkoutVisibility: String, Codable, CaseIterable {
