@@ -387,8 +387,9 @@ struct WorkoutCover: View {
     }
 }
 
-/// Foto de entreno ENTERA (sin recortar): aspect-fit centrada sobre BLANCO, como el
-/// fondo de la tarjeta — sin bandas negras (feedback: homogéneo con la app clara).
+/// Foto de entreno ENTERA (sin recortar) con maquetación cuidada: el hueco sobrante
+/// se rellena con la MISMA foto difuminada y aclarada (técnica clásica de Instagram) —
+/// nada de bandas planas que hagan parecer la foto "pequeña".
 struct FullWorkoutPhoto: View {
     let data: Data?
     let url: String?
@@ -396,16 +397,58 @@ struct FullWorkoutPhoto: View {
 
     var body: some View {
         ZStack {
-            Color.white
-            if let d = data, let ui = UIImage(data: d) {
-                Image(uiImage: ui).resizable().scaledToFit()
-            } else if let u = url, let link = URL(string: u) {
-                AsyncImage(url: link) { img in img.resizable().scaledToFit() } placeholder: { ProgressView() }
-            }
+            // Fondo: la propia foto llenando el marco, difuminada y suavizada hacia blanco.
+            photo(fill: true).blur(radius: 22, opaque: true).overlay(Color.white.opacity(0.45))
+            photo(fill: false)
+                .shadow(color: .black.opacity(0.18), radius: 10, y: 3)
         }
         .frame(maxWidth: .infinity)
         .frame(height: height)
         .clipShape(RoundedRectangle(cornerRadius: 12))
+    }
+
+    @ViewBuilder private func photo(fill: Bool) -> some View {
+        if let d = data, let ui = UIImage(data: d) {
+            if fill { Image(uiImage: ui).resizable().scaledToFill().frame(height: height).clipped() }
+            else { Image(uiImage: ui).resizable().scaledToFit() }
+        } else if let u = url, let link = URL(string: u) {
+            AsyncImage(url: link) { img in
+                if fill { img.resizable().scaledToFill().frame(height: height).clipped() }
+                else { img.resizable().scaledToFit() }
+            } placeholder: { if fill { Brand.chip } else { ProgressView() } }
+        }
+    }
+}
+
+/// EL medio visual de TODA tarjeta de entreno (regla: post = historial = perfiles =
+/// calendario = detalle). Con foto → pager [foto entera + tarjeta de stats]; sin foto
+/// → portada visual. Cambios de tarjeta se hacen AQUÍ, una vez.
+struct WorkoutMedia: View {
+    let photoData: Data?
+    let photoURL: String?
+    let elapsed: Int
+    let sets: Int
+    let volume: Double
+    let exercises: Int
+    let seed: String
+    var height: CGFloat = 150
+
+    var body: some View {
+        if photoData != nil || photoURL != nil {
+            TabView {
+                FullWorkoutPhoto(data: photoData, url: photoURL, height: height)
+                WorkoutCover(elapsed: elapsed, sets: sets, volume: volume,
+                             exercises: exercises, seed: seed, height: height)
+            }
+            .tabViewStyle(.page(indexDisplayMode: .automatic))
+            // Puntitos discretos: sin la cápsula de fondo del sistema.
+            .indexViewStyle(.page(backgroundDisplayMode: .never))
+            .frame(height: height)
+            .clipShape(RoundedRectangle(cornerRadius: 12))
+        } else {
+            WorkoutCover(elapsed: elapsed, sets: sets, volume: volume,
+                         exercises: exercises, seed: seed, height: height)
+        }
     }
 }
 

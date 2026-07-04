@@ -394,6 +394,9 @@ struct ActivityView: View {
 
 
     private func sessionCard(_ s: WorkoutSession) -> some View {
+        // El menú (3 puntitos) va en un OVERLAY, no dentro del Button: un Menu dentro
+        // del label de un Button no recibe toques (el botón se los come) — era el bug
+        // de "no me deja dar a los 3 puntos".
         Button { FX.tap(); detail = s } label: {
             PanelCard {
                 HStack(spacing: 10) {
@@ -410,25 +413,12 @@ struct ActivityView: View {
                             .padding(.horizontal, 8).padding(.vertical, 4)
                             .background(Color(hex: "fff3d6")).clipShape(Capsule())
                     }
-                    // Los clásicos 3 puntitos: eliminar la actividad (con confirmación).
-                    Menu {
-                        Button(role: .destructive) { pendingDelete = s } label: {
-                            Label("Eliminar entreno", systemImage: "trash")
-                        }
-                    } label: {
-                        Image(systemName: "ellipsis").font(.system(size: 15, weight: .bold)).foregroundColor(Brand.soft)
-                            .frame(width: 30, height: 34).contentShape(Rectangle())
-                    }
+                    Color.clear.frame(width: 30, height: 34)   // hueco para el menú del overlay
                 }
-                // Igual que en el feed: con foto, la foto; sin foto, la portada visual
-                // (minutos / series / ejercicios como héroe).
-                if s.photoData != nil || s.photoURL != nil {
-                    WorkoutPhoto(data: s.photoData, url: s.photoURL, height: 120)
-                } else {
-                    WorkoutCover(elapsed: s.elapsed, sets: s.sets, volume: s.volume,
-                                 exercises: s.exercises,
-                                 seed: "\(s.name)-\(Int(s.date.timeIntervalSince1970))", height: 120)
-                }
+                WorkoutMedia(photoData: s.photoData, photoURL: s.photoURL,
+                             elapsed: s.elapsed, sets: s.sets, volume: s.volume,
+                             exercises: s.exercises,
+                             seed: "\(s.name)-\(Int(s.date.timeIntervalSince1970))", height: 160)
                 WorkoutStatStrip(stats: WorkoutStatStrip.metrics(time: durationText(s.elapsed), sets: s.sets,
                                                  exercises: s.exercises, ppm: s.avgHeartRate), style: .compact)
             }

@@ -1095,14 +1095,10 @@ struct FriendProfileView: View {
                     }
                     Image(systemName: "chevron.right").font(.system(size: 12, weight: .bold)).foregroundColor(Brand.soft)
                 }
-                // Como en los posts: foto si hay; si no, la portada visual variada.
-                if s.photoData != nil || s.photoURL != nil {
-                    WorkoutPhoto(data: s.photoData, url: s.photoURL, height: 120)
-                } else {
-                    WorkoutCover(elapsed: s.elapsed, sets: s.sets, volume: s.volume,
-                                 exercises: s.exercises,
-                                 seed: "\(s.name)-\(Int(s.date.timeIntervalSince1970))", height: 120)
-                }
+                WorkoutMedia(photoData: s.photoData, photoURL: s.photoURL,
+                             elapsed: s.elapsed, sets: s.sets, volume: s.volume,
+                             exercises: s.exercises,
+                             seed: "\(s.name)-\(Int(s.date.timeIntervalSince1970))", height: 160)
                 WorkoutStatStrip(stats: WorkoutStatStrip.metrics(time: durationText(s.elapsed), sets: s.sets,
                                                  exercises: s.exercises, ppm: s.avgHeartRate), style: .compact)
             }
@@ -1335,14 +1331,10 @@ struct MeProfileView: View {
                     }
                     Image(systemName: "chevron.right").font(.system(size: 12, weight: .bold)).foregroundColor(Brand.soft)
                 }
-                // Como en los posts: foto si hay; si no, la portada visual variada.
-                if s.photoData != nil || s.photoURL != nil {
-                    WorkoutPhoto(data: s.photoData, url: s.photoURL, height: 120)
-                } else {
-                    WorkoutCover(elapsed: s.elapsed, sets: s.sets, volume: s.volume,
-                                 exercises: s.exercises,
-                                 seed: "\(s.name)-\(Int(s.date.timeIntervalSince1970))", height: 120)
-                }
+                WorkoutMedia(photoData: s.photoData, photoURL: s.photoURL,
+                             elapsed: s.elapsed, sets: s.sets, volume: s.volume,
+                             exercises: s.exercises,
+                             seed: "\(s.name)-\(Int(s.date.timeIntervalSince1970))", height: 160)
                 WorkoutStatStrip(stats: WorkoutStatStrip.metrics(time: durationText(s.elapsed), sets: s.sets,
                                                  exercises: s.exercises, ppm: s.avgHeartRate), style: .compact)
             }

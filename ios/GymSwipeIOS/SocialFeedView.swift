@@ -529,26 +529,10 @@ struct SocialFeedView: View {
                     if !item.note.isEmpty {
                         Text(item.note).font(.system(size: 14)).foregroundColor(Color(hex: "2c3127")).lineLimit(2).fixedSize(horizontal: false, vertical: true)
                     }
-                    if item.photo != nil || item.photoURL != nil {
-                        // Con foto: la foto ES el post (entera, sin recortar) y, deslizando a la
-                        // derecha, una segunda página con la tarjeta visual de estadísticas.
-                        TabView {
-                            FullWorkoutPhoto(data: item.photo, url: item.photoURL, height: 320)
-                            WorkoutCover(elapsed: item.elapsed, sets: item.sets, volume: item.volume,
-                                         exercises: item.exercises,
-                                         seed: "\(item.title)-\(Int(item.date.timeIntervalSince1970))", height: 320)
-                        }
-                        .tabViewStyle(.page(indexDisplayMode: .automatic))
-                        // Puntitos discretos: sin la cápsula de fondo del sistema.
-                        .indexViewStyle(.page(backgroundDisplayMode: .never))
-                        .frame(height: 320)
-                        .clipShape(RoundedRectangle(cornerRadius: 12))
-                    } else {
-                        // Sin foto: portada visual elegante (nada de pila de texto).
-                        WorkoutCover(elapsed: item.elapsed, sets: item.sets, volume: item.volume,
-                                     exercises: item.exercises,
-                                     seed: "\(item.title)-\(Int(item.date.timeIntervalSince1970))")
-                    }
+                    WorkoutMedia(photoData: item.photo, photoURL: item.photoURL,
+                                 elapsed: item.elapsed, sets: item.sets, volume: item.volume,
+                                 exercises: item.exercises,
+                                 seed: "\(item.title)-\(Int(item.date.timeIntervalSince1970))", height: 320)
                     WorkoutStatStrip(stats: WorkoutStatStrip.metrics(time: durationText(item.elapsed), sets: item.sets,
                                                      exercises: item.exercises, ppm: item.avgHeartRate), style: .full)
                 }
