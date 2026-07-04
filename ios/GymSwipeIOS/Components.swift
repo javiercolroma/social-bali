@@ -387,9 +387,8 @@ struct WorkoutCover: View {
     }
 }
 
-/// Foto de entreno ENTERA (sin recortar) con maquetación cuidada: el hueco sobrante
-/// se rellena con la MISMA foto difuminada y aclarada (técnica clásica de Instagram) —
-/// nada de bandas planas que hagan parecer la foto "pequeña".
+/// Foto de entreno ENTERA (sin recortar): aspect-fit centrada sobre BLANCO, fundida
+/// con la tarjeta (el usuario prefirió los márgenes blancos al fondo difuminado).
 struct FullWorkoutPhoto: View {
     let data: Data?
     let url: String?
@@ -397,26 +396,16 @@ struct FullWorkoutPhoto: View {
 
     var body: some View {
         ZStack {
-            // Fondo: la propia foto llenando el marco, difuminada y suavizada hacia blanco.
-            photo(fill: true).blur(radius: 22, opaque: true).overlay(Color.white.opacity(0.45))
-            photo(fill: false)
-                .shadow(color: .black.opacity(0.18), radius: 10, y: 3)
+            Color.white
+            if let d = data, let ui = UIImage(data: d) {
+                Image(uiImage: ui).resizable().scaledToFit()
+            } else if let u = url, let link = URL(string: u) {
+                AsyncImage(url: link) { img in img.resizable().scaledToFit() } placeholder: { ProgressView() }
+            }
         }
         .frame(maxWidth: .infinity)
         .frame(height: height)
         .clipShape(RoundedRectangle(cornerRadius: 12))
-    }
-
-    @ViewBuilder private func photo(fill: Bool) -> some View {
-        if let d = data, let ui = UIImage(data: d) {
-            if fill { Image(uiImage: ui).resizable().scaledToFill().frame(height: height).clipped() }
-            else { Image(uiImage: ui).resizable().scaledToFit() }
-        } else if let u = url, let link = URL(string: u) {
-            AsyncImage(url: link) { img in
-                if fill { img.resizable().scaledToFill().frame(height: height).clipped() }
-                else { img.resizable().scaledToFit() }
-            } placeholder: { if fill { Brand.chip } else { ProgressView() } }
-        }
     }
 }
 

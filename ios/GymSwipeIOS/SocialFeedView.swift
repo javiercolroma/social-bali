@@ -443,7 +443,8 @@ struct SocialFeedView: View {
     private func feedItemView(_ item: FeedItem) -> ActivityData {
         ActivityData(authorName: item.authorName, avatarPhoto: item.avatarPhoto, avatarEmoji: item.avatarEmoji,
                      flag: item.flag, location: item.location, date: item.date, title: item.title, note: item.note,
-                     photo: item.photo, elapsed: item.elapsed, exercises: item.exercises, sets: item.sets,
+                     photo: item.photo, photoURL: item.photoURL,
+                     elapsed: item.elapsed, exercises: item.exercises, sets: item.sets,
                      volume: item.volume, items: item.items,
                      avgHeartRate: item.avgHeartRate, maxHeartRate: item.maxHeartRate,
                      score: item.personId == nil ? store.gymScore.total : store.personScore(item.personId ?? ""))
