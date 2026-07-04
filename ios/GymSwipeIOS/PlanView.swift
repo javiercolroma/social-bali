@@ -183,23 +183,19 @@ struct WorkoutExerciseList: View {
                         .padding(.bottom, 4)
                     }
                     HStack(spacing: 12) {
+                        // Visualización SOBRIA (el color vive solo en el editor de crear/editar);
+                        // la superserie mantiene su letra verde porque es información, no adorno.
                         if d.inSS {
                             Text(d.letter).font(.system(size: 12, weight: .heavy)).foregroundColor(Color(hex: "10150a"))
-                                .frame(width: 26, height: 26).background(Brand.green).clipShape(Circle())
+                                .frame(width: 24, height: 24).background(Brand.green).clipShape(Circle())
                         } else {
-                            Text("\(idx + 1)").font(.system(size: 13, weight: .heavy)).foregroundColor(Color(hex: "4b6211"))
-                                .frame(width: 26, height: 26).background(Brand.greenSoft.opacity(0.5)).clipShape(Circle())
+                            Text("\(idx + 1)").font(.system(size: 14, weight: .heavy)).foregroundColor(Brand.muted).frame(width: 24)
                         }
-                        Text(ex.name).font(.system(size: 15, weight: .bold)).foregroundColor(Brand.ink)
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(ex.name).font(.system(size: 15, weight: .bold)).foregroundColor(Brand.ink)
+                            Text("\(ex.sets)×\(ex.reps) · \(weightText(ex.weight)) kg").font(.footnote).foregroundColor(Brand.muted)
+                        }
                         Spacer()
-                        Text("\(ex.sets)×\(ex.reps)")
-                            .font(.system(size: 12, weight: .heavy)).foregroundColor(Color(hex: "b8860b"))
-                            .padding(.horizontal, 8).padding(.vertical, 3)
-                            .background(Color(hex: "fff3d6")).clipShape(Capsule())
-                        Text("\(weightText(ex.weight)) kg")
-                            .font(.system(size: 12, weight: .heavy)).foregroundColor(Color(hex: "3d7dbb"))
-                            .padding(.horizontal, 8).padding(.vertical, 3)
-                            .background(Color(hex: "e5f0fb")).clipShape(Capsule())
                     }
                     .padding(12)
                     .background(d.inSS ? Brand.greenSoft.opacity(0.35) : Brand.panel)
