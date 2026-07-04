@@ -134,6 +134,14 @@ final class Backend {
             .eq("follower_id", value: follower.uuidString).eq("following_id", value: me.uuidString).execute()
     }
 
+    /// Borra una sesión de entreno del servidor (y su foto de Storage, best-effort).
+    func deleteSession(id: String) async {
+        guard let client, let me = await currentUserIdAsync() else { return }
+        _ = try? await client.storage.from("session-photos")
+            .remove(paths: ["\(me.uuidString.lowercased())/\(id.lowercased()).jpg"])
+        _ = try? await client.from("workout_sessions").delete().eq("id", value: id).execute()
+    }
+
     // MARK: - Partner (planes de entrenamiento REALES)
 
     func fetchTrainingPlans() async throws -> [TrainingPlanRow] {

@@ -9,6 +9,7 @@ struct ActivityView: View {
     @EnvironmentObject var store: AppStore
     @State private var section = 0
     @State private var detail: WorkoutSession?
+    @State private var pendingDelete: WorkoutSession?   // confirmación de borrado (3 puntitos)
     @State private var daySheet: DayPayload?
     @State private var progressExercise: IdString?   // evolución de un ejercicio (hoja)
     @State private var showScoreDetail = false        // hoja con el desglose del Gym Score
@@ -409,7 +410,15 @@ struct ActivityView: View {
                             .padding(.horizontal, 8).padding(.vertical, 4)
                             .background(Color(hex: "fff3d6")).clipShape(Capsule())
                     }
-                    Image(systemName: "chevron.right").font(.system(size: 12, weight: .bold)).foregroundColor(Brand.soft)
+                    // Los clásicos 3 puntitos: eliminar la actividad (con confirmación).
+                    Menu {
+                        Button(role: .destructive) { pendingDelete = s } label: {
+                            Label("Eliminar entreno", systemImage: "trash")
+                        }
+                    } label: {
+                        Image(systemName: "ellipsis").font(.system(size: 15, weight: .bold)).foregroundColor(Brand.soft)
+                            .frame(width: 30, height: 34).contentShape(Rectangle())
+                    }
                 }
                 WorkoutPhoto(data: s.photoData, url: s.photoURL, height: 120)
                 WorkoutStatStrip(stats: WorkoutStatStrip.metrics(time: durationText(s.elapsed), sets: s.sets,

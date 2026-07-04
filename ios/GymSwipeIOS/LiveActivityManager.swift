@@ -49,17 +49,33 @@ final class LiveActivityManager {
     /// "no responde" hasta la siguiente pasada (eso era la lentitud). Con el await, el
     /// nuevo valor aparece en la recarga inmediata.
     /// Re-adquiere la actividad y su estado por si iOS relanzó la app para ejecutar el intent.
+    // Aceleración de taps rápidos: pulsar seguido en la misma dirección duplica el paso
+    // (peso 2,5→5→10 kg; reps 1→2). Un tap suelto vuelve al paso base. Así ajustar de
+    // 20 a 60 kg son 6 toques, no 16.
+    private var lastBump: (at: Date, dir: Int, step: Double)?
+    private func accelStep(dir: Int, base: Double, cap: Double) -> Double {
+        let now = Date()
+        var step = base
+        if let l = lastBump, l.dir == dir, now.timeIntervalSince(l.at) < 1.5 {
+            step = min(cap, l.step * 2)
+        }
+        lastBump = (now, dir, step)
+        return step
+    }
+
     func bumpReps(_ delta: Int) async {
         guard #available(iOS 16.2, *), let act = liveActivity() else { return }
         var s = liveState(act)
-        s.reps = min(50, max(1, s.reps + delta))   // mismos topes que la app
+        let step = Int(accelStep(dir: delta > 0 ? 1 : -1, base: 1, cap: 2))
+        s.reps = min(50, max(1, s.reps + step * (delta > 0 ? 1 : -1)))   // mismos topes que la app
         currentState = s
         await act.update(ActivityContent(state: s, staleDate: nil))
     }
     func bumpWeight(_ delta: Double) async {
         guard #available(iOS 16.2, *), let act = liveActivity() else { return }
         var s = liveState(act)
-        let next = min(500, max(0, s.weight + delta))   // mismos topes que la app
+        let step = accelStep(dir: delta > 0 ? 1 : -1, base: 2.5, cap: 10)
+        let next = min(500, max(0, s.weight + step * (delta > 0 ? 1 : -1)))   // mismos topes que la app
         s.weight = (next * 2).rounded() / 2
         currentState = s
         await act.update(ActivityContent(state: s, staleDate: nil))

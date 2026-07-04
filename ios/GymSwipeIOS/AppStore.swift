@@ -1108,6 +1108,17 @@ final class AppStore: ObservableObject {
         persist()
     }
 
+    /// Elimina un entreno del histórico: local + servidor (fila y foto). El Gym Score,
+    /// la racha y las estadísticas se recalculan solos al cambiar `sessions`.
+    func deleteSession(_ id: String) {
+        sessions.removeAll { $0.id == id }
+        rebuildHistoryFromSessions()
+        persist()
+        if BackendConfig.isConfigured {
+            Task { await Backend.shared.deleteSession(id: id) }
+        }
+    }
+
     func deletePlan(_ id: String) {
         trainingPlans.removeAll { $0.id == id }
         if BackendConfig.isConfigured, UUID(uuidString: id) != nil {
