@@ -350,13 +350,13 @@ struct WorkoutCover: View {
         var h: UInt64 = 1469598103934665603
         for c in seed.unicodeScalars { h = (h ^ UInt64(c.value)) &* 1099511628211 }
         var options: [(String, String, String)] = []
-        if elapsed >= 60 { options.append(("\(max(1, elapsed / 60)) min", "de entreno",
+        if elapsed >= 60 { options.append(("\(max(1, elapsed / 60)) min", "De entreno",
             "\(sets) series" + (exercises > 0 ? " · \(exercises) ejercicios" : ""))) }
-        if sets > 0 { options.append(("\(sets)", sets == 1 ? "serie completada" : "series completadas",
+        if sets > 0 { options.append(("\(sets)", sets == 1 ? "Serie completada" : "Series completadas",
             "\(max(1, elapsed / 60)) min" + (exercises > 0 ? " · \(exercises) ejercicios" : ""))) }
-        if exercises > 0 { options.append(("\(exercises)", exercises == 1 ? "ejercicio" : "ejercicios",
+        if exercises > 0 { options.append(("\(exercises)", exercises == 1 ? "Ejercicio" : "Ejercicios",
             "\(max(1, elapsed / 60)) min · \(sets) series")) }
-        guard !options.isEmpty else { return ("💪", "entreno completado", "") }
+        guard !options.isEmpty else { return ("💪", "Entreno completado", "") }
         return options[Int(h % UInt64(options.count))]
     }
 
