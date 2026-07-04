@@ -412,6 +412,13 @@ struct ActivityView: View {
                         Text(relativeTime(s.date)).font(.system(size: 13)).foregroundColor(Brand.soft)
                     }
                     Spacer()
+                    // XP ganado en este entreno, visible desde la lista.
+                    if s.xp > 0 {
+                        Text("+\(s.xp) XP")
+                            .font(.system(size: 11, weight: .heavy)).foregroundColor(Color(hex: "b8860b"))
+                            .padding(.horizontal, 8).padding(.vertical, 4)
+                            .background(Color(hex: "fff3d6")).clipShape(Capsule())
+                    }
                     Image(systemName: "chevron.right").font(.system(size: 12, weight: .bold)).foregroundColor(Brand.soft)
                 }
                 WorkoutPhoto(data: s.photoData, url: s.photoURL, height: 120)
@@ -485,7 +492,8 @@ struct ActivityView: View {
             date: s.date, title: s.name, note: s.note, photo: s.photoData, photoURL: s.photoURL,
             elapsed: s.elapsed, exercises: s.exercises, sets: s.sets,
             volume: s.volume, items: s.items ?? [],
-            avgHeartRate: s.avgHeartRate, maxHeartRate: s.maxHeartRate, score: store.gymScore.total)
+            avgHeartRate: s.avgHeartRate, maxHeartRate: s.maxHeartRate, score: store.gymScore.total,
+            xp: s.xp)
     }
 
     private func durationText(_ s: Int) -> String {

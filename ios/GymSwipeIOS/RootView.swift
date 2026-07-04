@@ -30,11 +30,9 @@ struct RootView: View {
                 screen(4) { ActivityView() }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
-            // Forgey se ASOMA por el lateral, esperando a ayudar (toca → chat IA).
-            .overlay(alignment: .bottomTrailing) {
-                ForgeyPeek { FX.tap(); showForgey = true }
-                    .padding(.bottom, 400)
-            }
+            // Forgey se ASOMA por el lateral, esperando a ayudar (toca → chat IA;
+            // ARRASTRA para colocarlo a tu gusto — recuerda su posición).
+            .overlay { ForgeyPeek { FX.tap(); showForgey = true } }
             .onChange(of: tab) { t in FX.selection(); maybeShowTour(t) }
 
             // .id(tab): fuerza el re-render de la barra al cambiar de pestaña — sin él,
@@ -342,16 +340,20 @@ struct CustomTabBar: View {
 }
 
 
-/// Forgey asomándose por el borde derecho de la pantalla, como esperando a ayudar:
-/// medio cuerpo fuera, inclinado y saludando. Cada pocos segundos hace un pequeño
-/// "hola" (se asoma un poco más) para recordarte que está ahí. Toca → chat IA.
+/// Forgey asomándose por el borde derecho, como esperando a ayudar: medio cuerpo fuera,
+/// inclinado y saludando. ARRASTRABLE verticalmente (recuerda su posición entre sesiones).
+/// Cada pocos segundos se asoma un poco más. Toca → chat IA.
 struct ForgeyPeek: View {
     var action: () -> Void
+    /// Posición vertical como fracción de la pantalla (persistida).
+    @AppStorage("forgeyPeekYFrac") private var yFrac = 0.40
+    @State private var dragY: CGFloat = 0
     @State private var peeking = false
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
-        Button(action: action) {
+        GeometryReader { geo in
+            let baseY = CGFloat(yFrac) * geo.size.height
             Mascot(size: 52, wave: true)
                 .rotationEffect(.degrees(-16))
                 // El símbolo clásico de IA (✨) sobre la parte visible, siempre derecho.
@@ -366,23 +368,33 @@ struct ForgeyPeek: View {
                         .offset(x: -4, y: 0)
                 }
                 .shadow(color: .black.opacity(0.14), radius: 8, x: -2, y: 3)
-                // En reposo: medio cuerpo fuera. Al "asomarse": entra un poco más.
-                .offset(x: peeking ? 18 : 30)
+                // En reposo: medio cuerpo fuera. Al "asomarse" o arrastrar: entra un poco más.
+                .offset(x: (peeking || dragY != 0) ? 18 : 30)
+                .position(x: geo.size.width - 20, y: min(max(baseY + dragY, 50), geo.size.height - 50))
+                .onTapGesture { action() }
+                .gesture(
+                    DragGesture(minimumDistance: 6)
+                        .onChanged { dragY = $0.translation.height }
+                        .onEnded { v in
+                            let final = min(max(baseY + v.translation.height, 50), geo.size.height - 50)
+                            yFrac = Double(final / max(1, geo.size.height))
+                            withAnimation(.spring(response: 0.35, dampingFraction: 0.75)) { dragY = 0 }
+                        }
+                )
+                .animation(.spring(response: 0.45, dampingFraction: 0.7), value: peeking)
         }
-        .buttonStyle(.plain)
-        .accessibilityLabel("Pregúntale a Forgey")
         .onAppear {
             guard !reduceMotion else { return }
             scheduleWiggle()
         }
     }
 
-    /// Se asoma 1,2 s cada ~6 s (suave, sin ser pesado).
+    /// Se asoma 1,2 s cada ~5-7 s (suave, sin ser pesado).
     private func scheduleWiggle() {
         DispatchQueue.main.asyncAfter(deadline: .now() + Double.random(in: 4.5...7.5)) {
-            withAnimation(.spring(response: 0.45, dampingFraction: 0.7)) { peeking = true }
+            peeking = true
             DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
-                withAnimation(.spring(response: 0.5, dampingFraction: 0.8)) { peeking = false }
+                peeking = false
                 scheduleWiggle()
             }
         }

@@ -19,6 +19,7 @@ struct ActivityData {
     var avgHeartRate: Int? = nil
     var maxHeartRate: Int? = nil
     var score: Int = 0   // Gym Score del autor, para el badge del avatar
+    var xp: Int = 0      // XP ganado en la sesión (0 = no mostrar, p. ej. posts de otros)
 }
 
 struct ActivityDetailView: View {
@@ -66,6 +67,7 @@ struct ActivityDetailView: View {
                         metric(durationText(item.elapsed), "Tiempo", "clock")
                         metric("\(item.sets)", "Series", "checkmark.circle")
                         metric("\(item.exercises)", "Ejercicios", "list.bullet")
+                        if item.xp > 0 { metric("+\(item.xp)", "XP", "star.fill") }
                     }
                     if let avg = item.avgHeartRate {
                         HStack(spacing: 10) {
@@ -114,6 +116,13 @@ struct ActivityDetailView: View {
             HStack {
                 Text(ex.name).font(.system(size: 16, weight: .heavy)).foregroundColor(Brand.ink)
                 Spacer()
+                // XP del ejercicio: 12 por serie hecha + 18 de bono por completarlo.
+                if item.xp > 0 && !sets.isEmpty {
+                    Text("+\(sets.count * 12 + 18) XP")
+                        .font(.system(size: 11, weight: .heavy)).foregroundColor(Color(hex: "b8860b"))
+                        .padding(.horizontal, 7).padding(.vertical, 3)
+                        .background(Color(hex: "fff3d6")).clipShape(Capsule())
+                }
                 Text("\(sets.count) \(sets.count == 1 ? "serie" : "series")")
                     .font(.system(size: 12, weight: .heavy)).foregroundColor(Color(hex: "4b6211"))
                     .padding(.horizontal, 9).padding(.vertical, 4).background(Brand.greenSoft).clipShape(Capsule())
@@ -127,6 +136,9 @@ struct ActivityDetailView: View {
                         }
                         Text("\(s.reps) reps").font(.system(size: 14, weight: .semibold)).foregroundColor(Color(hex: "2c3127"))
                         Spacer()
+                        if item.xp > 0 {
+                            Text("+12 XP").font(.system(size: 10, weight: .heavy)).foregroundColor(Color(hex: "b8860b")).opacity(0.8)
+                        }
                         Text("\(fmt(s.weight)) kg").font(.system(size: 15, weight: .heavy)).foregroundColor(Brand.ink)
                     }
                     .padding(.vertical, 8)
