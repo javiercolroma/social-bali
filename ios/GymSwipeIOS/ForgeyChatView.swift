@@ -182,6 +182,10 @@ struct AIWorkoutSheet: View {
     @State private var generating = false
     @State private var error: String?
     @FocusState private var focused: Bool
+    // Antes de guardar puedes ponerle el nombre que quieras y elegir grupo (existente o nuevo).
+    @State private var editName = ""
+    @State private var editGroup = ""
+    @State private var adjusting = false   // abrir el editor completo con el entreno generado
 
     private let examples = [
         "Pecho y tríceps, 45 minutos, nivel intermedio",
@@ -233,21 +237,56 @@ struct AIWorkoutSheet: View {
                     .disabled(descriptionText.isEmpty || generating)
 
                     if let w = generated {
-                        VStack(alignment: .leading, spacing: 10) {
-                            HStack {
-                                VStack(alignment: .leading, spacing: 1) {
-                                    Text(w.name).font(.system(size: 17, weight: .heavy)).foregroundColor(Brand.ink)
-                                    Text("\(w.exercises.count) ejercicios · \(w.block)").font(.caption).foregroundColor(Brand.muted)
-                                }
-                                Spacer()
-                            }
+                        VStack(alignment: .leading, spacing: 12) {
                             WorkoutExerciseList(exercises: w.exercises)
+
+                            // Guárdalo con TU nombre y en el apartado que quieras (existente o nuevo).
+                            VStack(alignment: .leading, spacing: 5) {
+                                Text("NOMBRE").font(.caption2).fontWeight(.heavy).foregroundColor(Brand.muted)
+                                TextField("Nombre del entreno", text: $editName)
+                                    .font(.system(size: 15, weight: .heavy))
+                                    .padding(.horizontal, 12).frame(height: 46).background(Color.white)
+                                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                                    .overlay(RoundedRectangle(cornerRadius: 12).stroke(Brand.line))
+                            }
+                            VStack(alignment: .leading, spacing: 5) {
+                                Text("GRUPO (apartado del plan)").font(.caption2).fontWeight(.heavy).foregroundColor(Brand.muted)
+                                TextField("P. ej. Pierna, Push, Mis rutinas…", text: $editGroup)
+                                    .padding(.horizontal, 12).frame(height: 46).background(Color.white)
+                                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                                    .overlay(RoundedRectangle(cornerRadius: 12).stroke(Brand.line))
+                                // Tus apartados existentes, a un toque.
+                                ScrollView(.horizontal, showsIndicators: false) {
+                                    HStack(spacing: 6) {
+                                        ForEach(groupOptions, id: \.self) { g in
+                                            Button { FX.tap(); editGroup = g } label: {
+                                                Text(g).font(.system(size: 12, weight: .heavy))
+                                                    .foregroundColor(editGroup == g ? Color(hex: "10150a") : Brand.muted)
+                                                    .padding(.horizontal, 11).padding(.vertical, 6)
+                                                    .background(editGroup == g ? Brand.green : Brand.chip)
+                                                    .clipShape(Capsule())
+                                            }.buttonStyle(.plain)
+                                        }
+                                    }
+                                }
+                            }
+
                             Button {
                                 FX.success()
-                                store.addWorkout(name: w.name, group: w.block, exercises: w.exercises)
+                                store.addWorkout(name: editName.isEmpty ? w.name : editName,
+                                                 group: editGroup.isEmpty ? w.block : editGroup,
+                                                 exercises: w.exercises)
                                 dismiss()
                             } label: { Label("Guardar en mi plan", systemImage: "checkmark").frame(maxWidth: .infinity) }
                                 .buttonStyle(PrimaryButtonStyle())
+
+                            // Para tocar series/reps/pesos o quitar ejercicios: editor completo.
+                            Button { adjusting = true } label: {
+                                Label("Ajustar ejercicios antes de guardar", systemImage: "slider.horizontal.3")
+                                    .font(.system(size: 14, weight: .heavy)).foregroundColor(Brand.ink)
+                                    .frame(maxWidth: .infinity).frame(minHeight: 46)
+                                    .background(Brand.chip).clipShape(RoundedRectangle(cornerRadius: 12))
+                            }
                         }
                         .padding(.top, 4)
                     }
@@ -257,14 +296,37 @@ struct AIWorkoutSheet: View {
             .background(Brand.bg)
             .navigationTitle("Crear con Forgey").navigationBarTitleDisplayMode(.inline)
             .toolbar { ToolbarItem(placement: .cancellationAction) { Button("Cerrar") { dismiss() }.foregroundColor(Brand.soft) } }
+            // Editor completo prefijado con lo generado (nombre/grupo editados incluidos);
+            // al guardar desde ahí se crea como entreno nuevo del plan.
+            .sheet(isPresented: $adjusting, onDismiss: { dismiss() }) {
+                if let w = generated {
+                    CreateWorkoutView(editing: WorkoutTemplate(
+                        id: w.id, name: editName.isEmpty ? w.name : editName,
+                        description: w.description,
+                        block: editGroup.isEmpty ? w.block : editGroup, exercises: w.exercises))
+                        .environmentObject(store)
+                }
+            }
         }
+    }
+
+    /// Apartados existentes del plan + sugerencias típicas (sin duplicados).
+    private var groupOptions: [String] {
+        var seen = Set<String>(); var out: [String] = []
+        for g in store.customGroups + ["Pierna", "Pecho", "Espalda", "Push", "Pull", "Full body", "Otros"]
+        where seen.insert(g).inserted { out.append(g) }
+        return out
     }
 
     private func generate() {
         guard !generating else { return }
         error = nil; generating = true; FX.tap()
         Task {
-            do { generated = try await ForgeyAI.shared.generateWorkout(from: descriptionText, store: store); FX.success() }
+            do {
+                let w = try await ForgeyAI.shared.generateWorkout(from: descriptionText, store: store)
+                generated = w; editName = w.name; editGroup = w.block
+                FX.success()
+            }
             catch { self.error = error.localizedDescription }
             generating = false
         }
