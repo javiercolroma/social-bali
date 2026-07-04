@@ -539,7 +539,8 @@ struct SocialFeedView: View {
                                          seed: "\(item.title)-\(Int(item.date.timeIntervalSince1970))", height: 320)
                         }
                         .tabViewStyle(.page(indexDisplayMode: .automatic))
-                        .indexViewStyle(.page(backgroundDisplayMode: .always))
+                        // Puntitos discretos: sin la cápsula de fondo del sistema.
+                        .indexViewStyle(.page(backgroundDisplayMode: .never))
                         .frame(height: 320)
                         .clipShape(RoundedRectangle(cornerRadius: 12))
                     } else {
