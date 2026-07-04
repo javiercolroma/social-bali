@@ -38,6 +38,10 @@ final class LocationManager: NSObject, ObservableObject, CLLocationManagerDelega
     }
 
     nonisolated func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
+        // Presencia para el mapa de calor: solo la CELDA (~5 km), nunca la posición exacta.
+        if let c = locations.last?.coordinate {
+            Task { await Backend.shared.updatePresence(lat: c.latitude, lon: c.longitude) }
+        }
         guard let loc = locations.last else { return }
         Task { @MainActor in
             self.coordinate = loc.coordinate

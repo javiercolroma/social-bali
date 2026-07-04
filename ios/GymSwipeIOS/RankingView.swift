@@ -24,7 +24,12 @@ struct RankingView: View {
     @State private var profileTarget: IdString?
     @State private var showMe = false
     @State private var showLeague = false
-    @State private var showMap = false   // el Map de MapKit pide ubicación al crearse: lo diferimos hasta que el usuario lo abra
+    // Persistido: una vez abierto, el mapa se queda abierto en visitas futuras
+    // (antes era @State y "se quitaba todo el rato"). Se difiere a la primera vez
+    // solo para no pedir el permiso de ubicación nada más entrar.
+    @AppStorage("communityMapOpen") private var showMap = false
+    @State private var heatCells: [HeatCell] = []   // mapa de calor agregado (backend real)
+    @State private var activeCount = 0              // usuarios activos (30 días)
     @State private var region = MKCoordinateRegion(
         center: CLLocationCoordinate2D(latitude: 40.4168, longitude: -3.7038),
         span: MKCoordinateSpan(latitudeDelta: 0.08, longitudeDelta: 0.08))
@@ -100,10 +105,18 @@ struct RankingView: View {
         PanelCard {
             HStack {
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("Mapa").font(.system(size: 16, weight: .heavy)).foregroundColor(Brand.ink)
+                    Text(BackendConfig.isConfigured ? "Mapa de actividad" : "Mapa").font(.system(size: 16, weight: .heavy)).foregroundColor(Brand.ink)
                     Text(location.status).font(.caption).foregroundColor(Brand.muted)
                 }
                 Spacer()
+                if BackendConfig.isConfigured && activeCount > 0 {
+                    HStack(spacing: 4) {
+                        Circle().fill(Color(hex: "58c322")).frame(width: 7, height: 7)
+                        Text("\(activeCount) activos · 30 días").font(.system(size: 11, weight: .heavy)).foregroundColor(Brand.ink)
+                    }
+                    .padding(.horizontal, 9).padding(.vertical, 5)
+                    .background(Brand.greenSoft.opacity(0.4)).clipShape(Capsule())
+                }
                 if showMap {
                     Button { location.request() } label: {
                         Label("Ubicarme", systemImage: "location.fill").font(.system(size: 13, weight: .heavy))
@@ -113,6 +126,19 @@ struct RankingView: View {
                 }
             }
             if showMap {
+                if BackendConfig.isConfigured {
+                    // MAPA DE CALOR agregado: celdas de ~5 km con nº de atletas activos.
+                    // Sin identidades ni ubicaciones exactas (privacidad por diseño).
+                    Map(coordinateRegion: $region, showsUserLocation: location.coordinate != nil, annotationItems: heatCells) { cell in
+                        MapAnnotation(coordinate: CLLocationCoordinate2D(latitude: cell.cell_lat, longitude: cell.cell_lon)) {
+                            heatBubble(cell.users)
+                        }
+                    }
+                    .frame(height: 300).clipShape(RoundedRectangle(cornerRadius: 12))
+                    .task { await loadHeatmap() }
+                    Text("Mapa de calor de actividad · zonas de ~5 km, nunca ubicaciones exactas.")
+                        .font(.caption2).foregroundColor(Brand.soft)
+                } else {
                 Map(coordinateRegion: $region, showsUserLocation: location.coordinate != nil, annotationItems: places) { place in
                     MapAnnotation(coordinate: place.coordinate) {
                         if place.isMe {
@@ -131,6 +157,7 @@ struct RankingView: View {
                 .frame(height: 300).clipShape(RoundedRectangle(cornerRadius: 12))
                 Text("Toca un usuario para ver su perfil. Ubicaciones aproximadas.")
                     .font(.caption2).foregroundColor(Brand.soft)
+                }
             } else {
                 Button { FX.tap(); showMap = true; location.request() } label: {
                     VStack(spacing: 8) {
@@ -145,6 +172,28 @@ struct RankingView: View {
             }
         }
         .sheet(item: $selectedMapPerson) { MapUserSheet(person: $0).environmentObject(store) }
+    }
+
+    /// Burbuja de calor: tamaño e intensidad crecen con el nº de atletas en la celda.
+    private func heatBubble(_ n: Int) -> some View {
+        let d: CGFloat = min(96, 40 + CGFloat(n) * 9)
+        return ZStack {
+            Circle()
+                .fill(RadialGradient(colors: [Color(hex: "ff9500").opacity(0.60),
+                                              Color(hex: "ff3b30").opacity(0.28), .clear],
+                                     center: .center, startRadius: 2, endRadius: d / 2))
+                .frame(width: d, height: d)
+            if n > 1 {
+                Text("\(n)").font(.system(size: 12, weight: .heavy)).foregroundColor(.white)
+                    .shadow(color: .black.opacity(0.5), radius: 2)
+            }
+        }
+        .allowsHitTesting(false)
+    }
+
+    private func loadHeatmap() async {
+        heatCells = (try? await Backend.shared.fetchHeatmap()) ?? []
+        activeCount = (try? await Backend.shared.fetchActiveUsersCount()) ?? 0
     }
 
     private var anchor: CLLocationCoordinate2D {

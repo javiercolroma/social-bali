@@ -26,6 +26,12 @@
 				<string>com.googleusercontent.apps.610266617536-rs1havs16kj8hmfcananppassb7v6ads</string>
 			</array>
 		</dict>
+		<dict>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>forgeloop</string>
+			</array>
+		</dict>
 	</array>
 	<key>CFBundleVersion</key>
 	<string>1</string>

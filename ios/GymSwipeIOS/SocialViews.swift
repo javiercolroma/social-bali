@@ -303,9 +303,13 @@ struct FriendsContent: View {
         }.padding(.horizontal, 14).padding(.bottom, 16)
     }
 
-    /// Invita a tus amigos (share sheet): mientras la red es pequeña, tu gimnasio eres tú y tu gente.
+    /// Invita a tus amigos (share sheet). El mensaje lleva tu @usuario y un enlace a la
+    /// página de invitación: si tu amigo YA tiene la app, el botón «Abrir» salta directo a
+    /// tu perfil (deep link forgeloop://user/...); si no, le guía a descargarla.
     private var inviteCard: some View {
-        ShareLink(item: "Entreno con Forge Loop 💪 Registra tus entrenos, compite con tu gente y sube de división. ¡Únete y sígueme! https://javiercolroma.github.io/gym-swipe-ios/") {
+        let handle = store.account?.handle ?? ""
+        let url = "https://javiercolroma.github.io/gym-swipe-ios/invite.html" + (handle.isEmpty ? "" : "?u=\(handle)")
+        return ShareLink(item: "Entreno con Forge Loop 💪 Sígueme, soy @\(handle.isEmpty ? "forgeloop" : handle). Únete aquí: \(url)") {
             HStack(spacing: 11) {
                 ZStack {
                     Circle().fill(Brand.greenSoft).frame(width: 40, height: 40)

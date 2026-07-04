@@ -64,6 +64,8 @@ final class AppStore: ObservableObject {
     @Published var pendingFollowingIds: Set<String> = []
     /// Personas con las que tienes conversación real (para resolver nombre/avatar en Mensajes).
     @Published var messagedPeople: [SocialPerson] = []
+    /// Perfil a abrir por deep link de invitación (forgeloop://user/<usuario>). Efímero.
+    @Published var deepLinkPersonId: String? = nil
     /// Solicitudes de seguimiento RECIBIDAS (tu cuenta es privada) pendientes de aceptar.
     @Published var incomingRequestPeople: [SocialPerson] = []
 
@@ -861,6 +863,19 @@ final class AppStore: ObservableObject {
         let name = person(personId)?.name ?? "Esa persona"
         updateFollowRequestNotif(personId, body: "Has rechazado la solicitud de \(name).")
         persist()
+    }
+
+    /// Deep link de invitación: busca el @usuario y abre su perfil (para seguirle).
+    func openProfileByHandle(_ handle: String) {
+        guard BackendConfig.isConfigured else { return }
+        let h = handle.trimmingCharacters(in: .whitespaces).lowercased()
+        guard !h.isEmpty else { return }
+        Task {
+            let results = (try? await Backend.shared.searchProfiles(h)) ?? []
+            if let match = results.first(where: { ($0.handle ?? "").lowercased() == h }) ?? results.first {
+                deepLinkPersonId = match.id.uuidString.lowercased()
+            }
+        }
     }
 
     /// Carga las solicitudes de seguimiento RECIBIDAS (pendientes) desde el servidor.

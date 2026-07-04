@@ -13,6 +13,19 @@ import FoundationModels
 final class ForgeyAI: ObservableObject {
     static let shared = ForgeyAI()
 
+    /// ¿Este dispositivo PODRÁ usar la IA alguna vez? false = ocultar los accesos por
+    /// completo (iOS < 26 o hardware sin Apple Intelligence: no tiene sentido enseñarlos).
+    /// Estados transitorios (IA desactivada, modelo descargándose) SÍ cuentan como soportado.
+    static var isSupported: Bool {
+        #if canImport(FoundationModels)
+        if #available(iOS 26.0, *) {
+            if case .unavailable(.deviceNotEligible) = SystemLanguageModel.default.availability { return false }
+            return true
+        }
+        #endif
+        return false
+    }
+
     /// ¿Este dispositivo puede usar la IA? (nil = sí; si no, el motivo en humano)
     static func unavailableReason() -> String? {
         #if canImport(FoundationModels)

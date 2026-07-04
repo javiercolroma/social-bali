@@ -30,18 +30,8 @@ struct PlanView: View {
                     .buttonStyle(PrimaryButtonStyle())
                     .tourAnchor("plan.create")
 
-                // Crear con IA on-device: descríbelo y Forgey monta el entreno.
-                Button { FX.tap(); aiCreating = true } label: {
-                    HStack(spacing: 8) {
-                        Image(systemName: "sparkles")
-                        Text("Crear con Forgey (IA)")
-                    }
-                    .font(.system(size: 15, weight: .heavy)).foregroundColor(Color(hex: "4b6211"))
-                    .frame(maxWidth: .infinity).frame(minHeight: 48)
-                    .background(Brand.greenSoft.opacity(0.28)).clipShape(RoundedRectangle(cornerRadius: 12))
-                    .overlay(RoundedRectangle(cornerRadius: 12)
-                        .strokeBorder(Color(hex: "9ec85a"), style: StrokeStyle(lineWidth: 1.5, dash: [6])))
-                }
+                // Crear con IA on-device: solo en dispositivos que la soportan.
+                if ForgeyAI.isSupported { aiCreateButton }
 
                 ForEach(grouped, id: \.group) { section in
                     VStack(alignment: .leading, spacing: 8) {
@@ -73,6 +63,20 @@ struct PlanView: View {
             Button("Cancelar", role: .cancel) { pendingDelete = nil }
         } message: { w in
             Text("Se quitará “\(w.name)” de tu lista de entrenos.")
+        }
+    }
+
+    private var aiCreateButton: some View {
+        Button { FX.tap(); aiCreating = true } label: {
+            HStack(spacing: 8) {
+                Image(systemName: "sparkles")
+                Text("Crear con Forgey (IA)")
+            }
+            .font(.system(size: 15, weight: .heavy)).foregroundColor(Color(hex: "4b6211"))
+            .frame(maxWidth: .infinity).frame(minHeight: 48)
+            .background(Brand.greenSoft.opacity(0.28)).clipShape(RoundedRectangle(cornerRadius: 12))
+            .overlay(RoundedRectangle(cornerRadius: 12)
+                .strokeBorder(Color(hex: "9ec85a"), style: StrokeStyle(lineWidth: 1.5, dash: [6])))
         }
     }
 

@@ -31,8 +31,8 @@ struct RootView: View {
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             // Forgey se ASOMA por el lateral, esperando a ayudar (toca → chat IA;
-            // ARRASTRA para colocarlo a tu gusto — recuerda su posición).
-            .overlay { ForgeyPeek { FX.tap(); showForgey = true } }
+            // ARRASTRA para colocarlo a tu gusto). Solo si el dispositivo soporta la IA.
+            .overlay { if ForgeyAI.isSupported { ForgeyPeek { FX.tap(); showForgey = true } } }
             .onChange(of: tab) { t in FX.selection(); maybeShowTour(t) }
 
             // .id(tab): fuerza el re-render de la barra al cambiar de pestaña — sin él,
@@ -42,6 +42,11 @@ struct RootView: View {
         .background(Brand.bg.ignoresSafeArea())
         .sheet(isPresented: $showForgey) { ForgeyChatView().environmentObject(store) }
         .onAppear { maybeShowTour(tab) }
+        // Invitación por deep link: abre el perfil del que te invitó, listo para seguirle.
+        .onReceive(store.$deepLinkPersonId.compactMap { $0 }) { pid in
+            profilePerson = IdString(id: pid)
+            store.deepLinkPersonId = nil
+        }
         // Tras el onboarding (la cuenta pasa a existir), muestra el tour de Social.
         .onChange(of: store.account == nil) { isNil in if !isNil { maybeShowTour(tab) } }
         .sheet(isPresented: $showMessages) {
@@ -225,7 +230,10 @@ struct RootView: View {
             .accessibilityLabel("Perfil · Gym Score \(store.gymScore.total)")
             VStack(alignment: .leading, spacing: 2) {
                 Text("FORGE LOOP").font(.caption2).fontWeight(.heavy).kerning(1.4).foregroundColor(Color(hex: "4b6211"))
+                // En pantallas estrechas "Comunidad" se partía en dos líneas: una línea
+                // SIEMPRE, encogiendo la fuente lo necesario en cualquier dispositivo.
                 Text(titles[tab]).font(.system(size: 30, weight: .heavy)).foregroundColor(Brand.ink)
+                    .lineLimit(1).minimumScaleFactor(0.55)
             }
             Spacer()
             headerButton(system: "envelope.fill", badge: store.unreadMessages) { FX.tap(); messagesTab = 1; showMessages = true }

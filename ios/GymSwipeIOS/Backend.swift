@@ -134,6 +134,37 @@ final class Backend {
             .eq("follower_id", value: follower.uuidString).eq("following_id", value: me.uuidString).execute()
     }
 
+    // MARK: - Presencia + mapa de calor (privacidad: celda de ~5 km, nunca exacta)
+
+    /// Redondea a la celda de 0,05° (~5 km) y actualiza tu presencia. NUNCA se sube
+    /// la ubicación exacta — solo la celda y la marca de actividad.
+    func updatePresence(lat: Double, lon: Double) async {
+        guard let client, let me = await currentUserIdAsync() else { return }
+        struct P: Encodable { let geo_cell_lat: Double; let geo_cell_lon: Double; let active_at: String }
+        let cell = P(geo_cell_lat: (lat / 0.05).rounded() * 0.05,
+                     geo_cell_lon: (lon / 0.05).rounded() * 0.05,
+                     active_at: BackendDate.iso.string(from: Date()))
+        _ = try? await client.from("profiles").update(cell).eq("id", value: me.uuidString).execute()
+    }
+
+    /// Marca actividad SIN ubicación (al abrir la app): cuenta para "activos", no para el mapa.
+    func touchPresence() async {
+        guard let client, let me = await currentUserIdAsync() else { return }
+        struct T: Encodable { let active_at: String }
+        _ = try? await client.from("profiles").update(T(active_at: BackendDate.iso.string(from: Date())))
+            .eq("id", value: me.uuidString).execute()
+    }
+
+    /// Celdas agregadas (celda → nº de usuarios activos 30 días). Sin identidades.
+    func fetchHeatmap() async throws -> [HeatCell] {
+        guard let client else { return [] }
+        return try await client.rpc("activity_heatmap").execute().value
+    }
+    func fetchActiveUsersCount() async throws -> Int {
+        guard let client else { return 0 }
+        return try await client.rpc("active_users_count").execute().value
+    }
+
     // MARK: - Push (token del dispositivo)
 
     /// Registra/actualiza el token APNs del dispositivo para poder recibir pushes.
@@ -633,6 +664,14 @@ struct SessionRow: Codable {
             items: items, avgHeartRate: avg_hr, maxHeartRate: max_hr,
             location: location, verified: verified, photoURL: photo_url)
     }
+}
+
+/// Celda agregada del mapa de calor (sin identidades).
+struct HeatCell: Codable, Identifiable {
+    let cell_lat: Double
+    let cell_lon: Double
+    let users: Int
+    var id: String { "\(cell_lat),\(cell_lon)" }
 }
 
 /// Fila de un entreno creado (plantilla). `exercises` se guarda como jsonb.

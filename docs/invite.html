@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Únete a Forge Loop</title>
+    <style>
+      :root { color-scheme: light; }
+      body { margin: 0; min-height: 100vh; display: flex; align-items: center; justify-content: center;
+             font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: #fbfcf7; color: #1d2417; }
+      .card { text-align: center; padding: 40px 28px; max-width: 420px; }
+      .logo { width: 92px; height: 92px; border-radius: 50%; background: #c8e89a; display: flex;
+              align-items: center; justify-content: center; font-size: 44px; margin: 0 auto 14px; }
+      h1 { font-size: 1.8rem; margin: 0 0 4px; }
+      .sub { color: #6d7068; margin: 0 0 22px; }
+      .handle { font-weight: 800; color: #4b6211; }
+      a.btn { display: block; padding: 16px; border-radius: 16px; font-weight: 800; text-decoration: none; margin: 10px 0; }
+      .primary { background: #a7f22d; color: #10150a; }
+      .secondary { background: #eef1e8; color: #1d2417; }
+      .note { font-size: .85rem; color: #6d7068; margin-top: 18px; }
+    </style>
+  </head>
+  <body>
+    <div class="card">
+      <div class="logo">🏋️</div>
+      <h1>Forge Loop</h1>
+      <p class="sub"><span class="handle" id="who">Un amigo</span> te invita a entrenar juntos: comparte entrenos, compite en el ranking y sigue su progreso.</p>
+      <a class="btn primary" id="open" href="#">Ya tengo la app · Abrir y seguirle</a>
+      <a class="btn secondary" href="#" onclick="alert('Muy pronto en el App Store 💪 Mientras tanto, pídele a tu amigo una invitación de prueba.'); return false;">Descargar Forge Loop</a>
+      <p class="note" id="hint"></p>
+    </div>
+    <script>
+      const u = new URLSearchParams(location.search).get("u");
+      if (u) {
+        document.getElementById("who").textContent = "@" + u;
+        document.getElementById("open").href = "forgeloop://user/" + encodeURIComponent(u);
+        document.getElementById("hint").textContent = "Si el botón no abre la app: entra en Forge Loop → Amigos → busca @" + u + ".";
+      } else {
+        document.getElementById("open").href = "forgeloop://";
+      }
+    </script>
+  </body>
+</html>

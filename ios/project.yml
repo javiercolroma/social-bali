@@ -51,6 +51,9 @@ targets:
         CFBundleURLTypes:
           - CFBundleURLSchemes:
               - com.googleusercontent.apps.610266617536-rs1havs16kj8hmfcananppassb7v6ads
+          # Deep link de invitaciones: forgeloop://user/<usuario> abre ese perfil en la app.
+          - CFBundleURLSchemes:
+              - forgeloop
         ITSAppUsesNonExemptEncryption: false
         NSSupportsLiveActivities: true
         LSApplicationCategoryType: public.app-category.healthcare-fitness
