@@ -37,7 +37,9 @@ struct RootView: View {
             }
             .onChange(of: tab) { t in FX.selection(); maybeShowTour(t) }
 
-            CustomTabBar(tab: tab, onSelect: { tab = $0 })
+            // .id(tab): fuerza el re-render de la barra al cambiar de pestaña — sin él,
+            // SwiftUI a veces se salta el refresco y el resaltado se queda "pegado".
+            CustomTabBar(tab: tab, onSelect: { tab = $0 }).id(tab)
         }
         .background(Brand.bg.ignoresSafeArea())
         .sheet(isPresented: $showForgey) { ForgeyChatView().environmentObject(store) }
