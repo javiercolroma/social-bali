@@ -82,7 +82,11 @@ struct PlanView: View {
 
     private func workoutRow(_ workout: WorkoutTemplate) -> some View {
         PanelCard {
-            HStack {
+            HStack(spacing: 12) {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 11).fill(Brand.greenSoft).frame(width: 42, height: 42)
+                    Image(systemName: "dumbbell.fill").font(.system(size: 16, weight: .bold)).foregroundColor(Color(hex: "10150a"))
+                }
                 VStack(alignment: .leading, spacing: 3) {
                     Text(workout.name).font(.system(size: 16, weight: .heavy)).foregroundColor(Brand.ink)
                     Text(workout.description).font(.footnote).foregroundColor(Brand.muted).lineLimit(1)
@@ -181,15 +185,21 @@ struct WorkoutExerciseList: View {
                     HStack(spacing: 12) {
                         if d.inSS {
                             Text(d.letter).font(.system(size: 12, weight: .heavy)).foregroundColor(Color(hex: "10150a"))
-                                .frame(width: 24, height: 24).background(Brand.green).clipShape(Circle())
+                                .frame(width: 26, height: 26).background(Brand.green).clipShape(Circle())
                         } else {
-                            Text("\(idx + 1)").font(.system(size: 14, weight: .heavy)).foregroundColor(Brand.muted).frame(width: 24)
+                            Text("\(idx + 1)").font(.system(size: 13, weight: .heavy)).foregroundColor(Color(hex: "4b6211"))
+                                .frame(width: 26, height: 26).background(Brand.greenSoft.opacity(0.5)).clipShape(Circle())
                         }
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text(ex.name).font(.system(size: 15, weight: .bold)).foregroundColor(Brand.ink)
-                            Text("\(ex.sets)×\(ex.reps) · \(weightText(ex.weight)) kg").font(.footnote).foregroundColor(Brand.muted)
-                        }
+                        Text(ex.name).font(.system(size: 15, weight: .bold)).foregroundColor(Brand.ink)
                         Spacer()
+                        Text("\(ex.sets)×\(ex.reps)")
+                            .font(.system(size: 12, weight: .heavy)).foregroundColor(Color(hex: "b8860b"))
+                            .padding(.horizontal, 8).padding(.vertical, 3)
+                            .background(Color(hex: "fff3d6")).clipShape(Capsule())
+                        Text("\(weightText(ex.weight)) kg")
+                            .font(.system(size: 12, weight: .heavy)).foregroundColor(Color(hex: "3d7dbb"))
+                            .padding(.horizontal, 8).padding(.vertical, 3)
+                            .background(Color(hex: "e5f0fb")).clipShape(Capsule())
                     }
                     .padding(12)
                     .background(d.inSS ? Brand.greenSoft.opacity(0.35) : Brand.panel)
@@ -310,7 +320,7 @@ struct CreateWorkoutView: View {
                     labeled("EJERCICIOS") {
                         VStack(spacing: 10) {
                             ForEach(Array(drafts.enumerated()), id: \.element.id) { idx, _ in
-                                exerciseCard($drafts[idx])
+                                exerciseCard($drafts[idx], index: idx)
                                 if idx < drafts.count - 1 { supersetLink(idx) }
                             }
                             addButton
@@ -355,7 +365,7 @@ struct CreateWorkoutView: View {
         }.frame(maxWidth: .infinity, alignment: .leading)
     }
 
-    private func exerciseCard(_ draft: Binding<DraftExercise>) -> some View {
+    private func exerciseCard(_ draft: Binding<DraftExercise>, index: Int = 0) -> some View {
         let id = draft.wrappedValue.id
         let suggestions = focusedExercise == id ? searchExercises(draft.wrappedValue.name) : []
         let trimmed = draft.wrappedValue.name.trimmingCharacters(in: .whitespaces)
@@ -364,6 +374,10 @@ struct CreateWorkoutView: View {
             && !exerciseCatalog.contains { $0.caseInsensitiveCompare(trimmed) == .orderedSame }
         return VStack(spacing: 12) {
             HStack(spacing: 8) {
+                // Número del ejercicio: burbuja verde (color y orden de un vistazo).
+                Text("\(index + 1)")
+                    .font(.system(size: 13, weight: .heavy)).foregroundColor(Color(hex: "10150a"))
+                    .frame(width: 28, height: 28).background(Brand.green).clipShape(Circle())
                 TextField("Nombre del ejercicio", text: draft.name)
                     .font(.system(size: 15, weight: .semibold))
                     .focused($focusedExercise, equals: id)
@@ -406,13 +420,16 @@ struct CreateWorkoutView: View {
                 .shadow(color: .black.opacity(0.06), radius: 8, y: 4)
             }
             HStack(spacing: 8) {
-                stepperBox("SERIES", text: "\(draft.wrappedValue.sets)",
+                stepperBox("SERIES", icon: "square.stack.3d.up.fill", tint: Color(hex: "4b6211"), bg: Brand.greenSoft.opacity(0.35),
+                           text: "\(draft.wrappedValue.sets)",
                            dec: { if draft.wrappedValue.sets > 1 { draft.wrappedValue.sets -= 1 } },
                            inc: { if draft.wrappedValue.sets < 10 { draft.wrappedValue.sets += 1 } })
-                stepperBox("REPS", text: "\(draft.wrappedValue.reps)",
+                stepperBox("REPS", icon: "repeat", tint: Color(hex: "b8860b"), bg: Color(hex: "fff3d6"),
+                           text: "\(draft.wrappedValue.reps)",
                            dec: { if draft.wrappedValue.reps > 1 { draft.wrappedValue.reps -= 1 } },
                            inc: { if draft.wrappedValue.reps < 50 { draft.wrappedValue.reps += 1 } })
-                stepperBox("KG", text: weightText(draft.wrappedValue.weight),
+                stepperBox("KG", icon: "scalemass.fill", tint: Color(hex: "3d7dbb"), bg: Color(hex: "e5f0fb"),
+                           text: weightText(draft.wrappedValue.weight),
                            dec: { if draft.wrappedValue.weight >= 2.5 { draft.wrappedValue.weight -= 2.5 } },
                            inc: { draft.wrappedValue.weight += 2.5 })
             }
@@ -421,9 +438,13 @@ struct CreateWorkoutView: View {
         .overlay(RoundedRectangle(cornerRadius: 14).stroke(Brand.line))
     }
 
-    private func stepperBox(_ label: String, text: String, dec: @escaping () -> Void, inc: @escaping () -> Void) -> some View {
+    private func stepperBox(_ label: String, icon: String, tint: Color, bg: Color,
+                            text: String, dec: @escaping () -> Void, inc: @escaping () -> Void) -> some View {
         VStack(spacing: 6) {
-            Text(label).font(.system(size: 10, weight: .heavy)).foregroundColor(Brand.muted)
+            HStack(spacing: 4) {
+                Image(systemName: icon).font(.system(size: 9, weight: .heavy))
+                Text(label).font(.system(size: 10, weight: .heavy))
+            }.foregroundColor(tint)
             HStack(spacing: 8) {
                 roundBtn("minus", action: dec)
                 Text(text).font(.system(size: 16, weight: .heavy)).foregroundColor(Brand.ink).frame(minWidth: 30)
@@ -431,7 +452,7 @@ struct CreateWorkoutView: View {
             }
         }
         .frame(maxWidth: .infinity).padding(.vertical, 10)
-        .background(Brand.surface).clipShape(RoundedRectangle(cornerRadius: 12))
+        .background(bg).clipShape(RoundedRectangle(cornerRadius: 12))
     }
 
     private func roundBtn(_ icon: String, action: @escaping () -> Void) -> some View {

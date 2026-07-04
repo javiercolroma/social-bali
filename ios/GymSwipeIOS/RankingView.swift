@@ -163,7 +163,9 @@ struct RankingView: View {
                     VStack(spacing: 8) {
                         Image(systemName: "map.fill").font(.system(size: 30)).foregroundColor(Color(hex: "6ea300"))
                         Text("Ver mapa de la comunidad").font(.system(size: 15, weight: .heavy)).foregroundColor(Brand.ink)
-                        Text("Descubre atletas cerca de ti").font(.caption).foregroundColor(Brand.muted)
+                        Text(BackendConfig.isConfigured && activeCount > 0
+                             ? "🟢 \(activeCount) atletas activos estos 30 días"
+                             : "Descubre atletas cerca de ti").font(.caption).foregroundColor(Brand.muted)
                     }
                     .frame(maxWidth: .infinity).frame(height: 160)
                     .background(Brand.surface).clipShape(RoundedRectangle(cornerRadius: 12))
@@ -172,6 +174,7 @@ struct RankingView: View {
             }
         }
         .sheet(item: $selectedMapPerson) { MapUserSheet(person: $0).environmentObject(store) }
+        .task { if BackendConfig.isConfigured { await loadHeatmap() } }
     }
 
     /// Burbuja de calor: tamaño e intensidad crecen con el nº de atletas en la celda.

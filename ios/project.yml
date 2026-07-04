@@ -59,6 +59,7 @@ targets:
         LSApplicationCategoryType: public.app-category.healthcare-fitness
         NSHealthShareUsageDescription: Forge Loop lee tu frecuencia cardíaca de la app Salud para registrarla en tus entrenamientos.
         NSLocationWhenInUseUsageDescription: Forge Loop usa tu ubicación para mostrarte el ranking y los compañeros de entreno cercanos.
+        NSCameraUsageDescription: Forge Loop usa la cámara para hacer la foto de tu entreno.
         UILaunchScreen:
           UIColorName: LaunchBackground
         UISupportedInterfaceOrientations:

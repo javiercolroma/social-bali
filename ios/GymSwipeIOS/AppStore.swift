@@ -453,7 +453,7 @@ final class AppStore: ObservableObject {
         // Plausibilidad (anti-fake): ÚNICO criterio = duración (media ≥ 20 s por serie).
         // Sin topes de series/XP (decisión de producto). El guardado de sesiones implausibles
         // se bloquea en la UI (TrainView); esto queda como cinturón para datos sincronizados.
-        let verified = elapsed >= totalSets * 20
+        let verified = totalSets >= 1 && elapsed >= max(60, totalSets * 20)
         // El histórico se escribe con la marca: el Gym Score ignora las entradas no verificadas.
         for var e in newEntries.reversed() { e.verified = verified; history.insert(e, at: 0) }
         let trimmed = name.trimmingCharacters(in: .whitespaces)
@@ -517,7 +517,10 @@ final class AppStore: ObservableObject {
             guard let uid = await Backend.shared.currentUserIdAsync() else { return }
             // Sube la foto del entreno a Storage (si hay) y guarda su URL en la fila.
             var photoURL: String? = nil
-            if let photo = s.photoData { photoURL = try? await Backend.shared.uploadSessionPhoto(photo, sessionId: s.id) }
+            if let photo = s.photoData {
+                do { photoURL = try await Backend.shared.uploadSessionPhoto(photo, sessionId: s.id) }
+                catch { print("[Backend] subir FOTO falló:", error) }   // visible, no silenciado
+            }
             do { try await Backend.shared.upsertSession(SessionRow(s, userId: uid, photoURL: photoURL)); print("[Backend] sesión subida: \(s.id)") }
             catch { print("[Backend] subir sesión falló:", error) }
         }
@@ -543,7 +546,25 @@ final class AppStore: ObservableObject {
                 }
                 // Merge SIN duplicados: server (fuente de verdad) + las locales que aún no están.
                 let localOnly = sessions.filter { !serverIds.contains($0.id.lowercased()) }
-                sessions = (server + localOnly).sorted { $0.date > $1.date }
+                // CURACIÓN de fotos: si el servidor tiene la sesión SIN photo_url pero aquí
+                // conservamos photoData (p. ej. la subida falló en su momento), re-súbela.
+                let localById = Dictionary(uniqueKeysWithValues: sessions.map { ($0.id.lowercased(), $0) })
+                var merged = server.map { srv -> WorkoutSession in
+                    var m = srv
+                    if m.photoURL == nil, let loc = localById[srv.id.lowercased()], loc.photoData != nil {
+                        m.photoData = loc.photoData
+                    }
+                    return m
+                }
+                for s in merged where s.photoURL == nil && s.photoData != nil {
+                    Task { [s] in
+                        if let url = try? await Backend.shared.uploadSessionPhoto(s.photoData!, sessionId: s.id) {
+                            try? await Backend.shared.upsertSession(SessionRow(s, userId: uid, photoURL: url))
+                            print("[Backend] foto curada para sesión \(s.id)")
+                        }
+                    }
+                }
+                sessions = (merged + localOnly).sorted { $0.date > $1.date }
                 // Reconstruye el histórico desde las sesiones para que el Gym Score / racha /
                 // récords / logros funcionen tras reinstalar o entrar en otro dispositivo.
                 rebuildHistoryFromSessions()

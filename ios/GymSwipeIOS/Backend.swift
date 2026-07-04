@@ -104,7 +104,7 @@ final class Backend {
     func deleteAccount() async throws {
         guard let client else { throw BackendError.notConfigured }
         if let uid = await currentUserIdAsync() {
-            let dir = uid.uuidString
+            let dir = uid.uuidString.lowercased()
             if let files = try? await client.storage.from("session-photos").list(path: dir) {
                 let paths = files.map { "\(dir)/\($0.name)" }
                 if !paths.isEmpty { _ = try? await client.storage.from("session-photos").remove(paths: paths) }
@@ -436,7 +436,7 @@ final class Backend {
     @discardableResult
     func uploadAvatar(_ data: Data) async throws -> String {
         guard let client, let uid = await currentUserIdAsync() else { throw BackendError.notConfigured }
-        let path = "\(uid.uuidString)/avatar.jpg"
+        let path = "\(uid.uuidString.lowercased())/avatar.jpg"
         _ = try await client.storage.from("avatars")
             .upload(path, data: data, options: FileOptions(contentType: "image/jpeg", upsert: true))
         return try client.storage.from("avatars").getPublicURL(path: path).absoluteString
@@ -446,7 +446,7 @@ final class Backend {
     @discardableResult
     func uploadSessionPhoto(_ data: Data, sessionId: String) async throws -> String {
         guard let client, let uid = await currentUserIdAsync() else { throw BackendError.notConfigured }
-        let path = "\(uid.uuidString)/\(sessionId).jpg"
+        let path = "\(uid.uuidString.lowercased())/\(sessionId.lowercased()).jpg"
         _ = try await client.storage.from("session-photos")
             .upload(path, data: data, options: FileOptions(contentType: "image/jpeg", upsert: true))
         return try client.storage.from("session-photos").getPublicURL(path: path).absoluteString

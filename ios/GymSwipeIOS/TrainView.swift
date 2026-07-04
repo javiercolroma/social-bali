@@ -13,6 +13,9 @@ struct TrainView: View {
     @State private var sessionNote = ""
     @State private var sessionPhoto: Data?
     @State private var sessionPickerItem: PhotosPickerItem?
+    @State private var showPhotoSource = false   // diálogo cámara/galería
+    @State private var showCamera = false
+    @State private var showLibrary = false
     @State private var visibility: WorkoutVisibility = .all
     @State private var restActive = false
     @State private var restElapsed = 0
@@ -50,7 +53,9 @@ struct TrainView: View {
     /// que no se guardará y no ofrece el guardado.
     private var sessionPlausible: Bool {
         let elapsed = finalElapsed > 0 ? finalElapsed : elapsedSeconds
-        return elapsed >= completedSets * 20
+        // Mínimos: ≥1 serie hecha, ≥60 s en total y media ≥20 s/serie (el agujero:
+        // con 0 series la regla pasaba trivialmente y un entreno de 2 s se guardaba).
+        return completedSets >= 1 && elapsed >= max(60, completedSets * 20)
     }
 
     var body: some View {
@@ -480,7 +485,7 @@ struct TrainView: View {
                         Image(systemName: "clock.badge.exclamationmark").font(.system(size: 20)).foregroundColor(Color(hex: "b8860b"))
                         VStack(alignment: .leading, spacing: 3) {
                             Text("Este entreno no se guardará").font(.system(size: 15, weight: .heavy)).foregroundColor(Brand.ink)
-                            Text("Duración demasiado baja: \(completedSets) series en \(timeString(finalElapsed)) (mínimo ~20 s por serie de media). No contaría para tu Gym Score, récords ni ranking.")
+                            Text("Duración demasiado baja: \(completedSets) series en \(timeString(finalElapsed)) (mínimo 1 min y ~20 s por serie de media). No contaría para tu Gym Score, récords ni ranking.")
                                 .font(.caption).foregroundColor(Brand.muted).fixedSize(horizontal: false, vertical: true)
                         }
                     }
@@ -514,7 +519,8 @@ struct TrainView: View {
                     .clipShape(RoundedRectangle(cornerRadius: 10))
 
                 summaryLabel("FOTO DEL ENTRENO (OPCIONAL)")
-                PhotoPickerLabel(item: $sessionPickerItem, onPicked: { sessionPhoto = $0 }) {
+                // Cámara O galería (antes solo galería: "quería hacer una foto y me llevaba a la galería").
+                Button { FX.tap(); if CameraPicker.isAvailable { showPhotoSource = true } else { showLibrary = true } } label: {
                     if let data = sessionPhoto, let ui = UIImage(data: data) {
                         Image(uiImage: ui).resizable().scaledToFill()
                             .frame(height: 120).frame(maxWidth: .infinity).clipped()
@@ -529,6 +535,24 @@ struct TrainView: View {
                             .background(Brand.greenSoft.opacity(0.22)).clipShape(RoundedRectangle(cornerRadius: 10))
                             .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(Color(hex: "9ec85a"), style: StrokeStyle(lineWidth: 1.5, dash: [6])))
                     }
+                }
+                .buttonStyle(.plain)
+                .confirmationDialog("Foto del entreno", isPresented: $showPhotoSource, titleVisibility: .visible) {
+                    Button("Hacer foto") { showCamera = true }
+                    Button("Elegir de la galería") { showLibrary = true }
+                    Button("Cancelar", role: .cancel) {}
+                }
+                .photosPicker(isPresented: $showLibrary, selection: $sessionPickerItem, matching: .images)
+                .onChange(of: sessionPickerItem) { item in
+                    guard let item else { return }
+                    Task {
+                        if let data = try? await item.loadTransferable(type: Data.self) {
+                            await MainActor.run { sessionPhoto = compressedImageData(data) }
+                        }
+                    }
+                }
+                .fullScreenCover(isPresented: $showCamera) {
+                    CameraPicker { sessionPhoto = $0 }.ignoresSafeArea()
                 }
 
                 Button {

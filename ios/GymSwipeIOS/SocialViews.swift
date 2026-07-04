@@ -267,6 +267,9 @@ struct FriendsContent: View {
     var onOpenProfile: (String) -> Void
     var onEditAccount: () -> Void
 
+    @State private var realResults: [SocialPerson] = []
+    @State private var searchTask: Task<Void, Never>?
+
     private func rel(_ id: String) -> RelationshipStatus { store.relationship(id) }
     // Solicitudes recibidas: reales (cuentas privadas, del servidor) + demo.
     private var incoming: [SocialPerson] { store.incomingRequestPeople + store.people.filter { rel($0.id) == .incoming } }
@@ -274,10 +277,28 @@ struct FriendsContent: View {
     private var friends: [SocialPerson] { store.following }
     private var discover: [SocialPerson] { store.people.filter { rel($0.id) == .none || rel($0.id) == .outgoing } }
     private var results: [SocialPerson] {
+        // Con backend: resultados REALES del servidor (antes solo buscaba en la lista demo,
+        // vacía en producción → "no aparece nadie" aunque sí saliera en sugerencias).
+        if BackendConfig.isConfigured { return realResults }
         let q = query.folding(options: .diacriticInsensitive, locale: .current).lowercased().replacingOccurrences(of: "@", with: "")
         guard !q.isEmpty else { return [] }
         return store.people.filter {
             $0.name.folding(options: .diacriticInsensitive, locale: .current).lowercased().contains(q) || $0.handle.contains(q)
+        }
+    }
+
+    /// Búsqueda real con debounce (300 ms), cancelando la anterior.
+    private func scheduleSearch() {
+        searchTask?.cancel()
+        let q = query.trimmingCharacters(in: .whitespaces).replacingOccurrences(of: "@", with: "")
+        guard BackendConfig.isConfigured, !q.isEmpty else { realResults = []; return }
+        searchTask = Task {
+            try? await Task.sleep(nanoseconds: 300_000_000)
+            if Task.isCancelled { return }
+            let rows = (try? await Backend.shared.searchProfiles(q)) ?? []
+            if Task.isCancelled { return }
+            let me = await Backend.shared.currentUserIdAsync()
+            realResults = AppStore.asPeople(rows.filter { $0.id != me })
         }
     }
 
@@ -287,6 +308,7 @@ struct FriendsContent: View {
                 Image(systemName: "magnifyingglass").foregroundColor(Brand.soft)
                 TextField("Buscar por nombre o @usuario", text: $query)
                     .textInputAutocapitalization(.never).autocorrectionDisabled()
+                    .onChange(of: query) { _ in scheduleSearch() }
                 if !query.isEmpty { Button { query = "" } label: { Image(systemName: "xmark.circle.fill").foregroundColor(Brand.soft) } }
             }
             .padding(.horizontal, 12).frame(height: 44).background(Color.white).clipShape(Capsule())
@@ -343,7 +365,7 @@ struct FriendsContent: View {
         return HStack(spacing: 11) {
             Button { onOpenProfile(person.id) } label: {
                 HStack(spacing: 11) {
-                    ScoredAvatar(emoji: person.avatar, score: store.personScore(person.id))
+                    ScoredAvatar(emoji: person.avatar, avatarURL: person.avatarURL, score: store.personScore(person.id))
                     VStack(alignment: .leading, spacing: 1) {
                         Text(person.name).font(.system(size: 14, weight: .heavy)).foregroundColor(Brand.ink)
                         Text("@\(person.handle)").font(.caption).foregroundColor(Brand.muted)
