@@ -11,6 +11,7 @@ struct DiscoverPeopleView: View {
     @State private var loading = false
     @State private var searched = false
     @State private var searchTask: Task<Void, Never>?
+    @State private var profileTarget: IdString?   // perfil a previsualizar (toca avatar/nombre)
 
     var body: some View {
         NavigationStack {
@@ -52,6 +53,9 @@ struct DiscoverPeopleView: View {
             .background(Brand.bg)
             .navigationTitle("Buscar personas").navigationBarTitleDisplayMode(.inline)
             .task { await loadFollowing() }
+            .sheet(item: $profileTarget) { item in
+                if let p = store.person(item.id) { FriendProfileView(person: p).environmentObject(store) }
+            }
         }
     }
 
@@ -60,16 +64,21 @@ struct DiscoverPeopleView: View {
         let uid = p.id.uuidString.lowercased()
         let isFollowing = following.contains(uid)
         return HStack(spacing: 12) {
-            if let a = p.avatar_url, let u = URL(string: a) {
-                AsyncImage(url: u) { img in img.resizable().scaledToFill() } placeholder: { Brand.chip }
-                    .frame(width: 44, height: 44).clipShape(Circle())
-            } else {
-                Avatar(emoji: "🙂", size: 44)
-            }
-            VStack(alignment: .leading, spacing: 2) {
-                Text(p.name ?? p.handle ?? "Usuario").font(.system(size: 15, weight: .heavy)).foregroundColor(Brand.ink)
-                if let h = p.handle { Text("@\(h)").font(.caption).foregroundColor(Brand.muted) }
-            }
+            // Avatar + nombre TOCABLES: abren la previsualización del perfil (sigas o no a esa persona).
+            Button { FX.tap(); profileTarget = IdString(id: uid) } label: {
+                HStack(spacing: 12) {
+                    if let a = p.avatar_url, let u = URL(string: a) {
+                        AsyncImage(url: u) { img in img.resizable().scaledToFill() } placeholder: { Brand.chip }
+                            .frame(width: 44, height: 44).clipShape(Circle())
+                    } else {
+                        Avatar(emoji: "🙂", size: 44)
+                    }
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(p.name ?? p.handle ?? "Usuario").font(.system(size: 15, weight: .heavy)).foregroundColor(Brand.ink)
+                        if let h = p.handle { Text("@\(h)").font(.caption).foregroundColor(Brand.muted) }
+                    }
+                }
+            }.buttonStyle(.plain)
             Spacer()
             Button {
                 FX.tap()
@@ -113,8 +122,11 @@ struct DiscoverPeopleView: View {
             if Task.isCancelled { return }
             let r = (try? await Backend.shared.searchProfiles(q)) ?? []
             if Task.isCancelled { return }
-            let meId = Backend.shared.currentUserId
+            // ASYNC: el id síncrono es nil en arranque frío (sesión aún restaurando) y
+            // te aparecías tú mismo como "persona a seguir".
+            let meId = await Backend.shared.currentUserIdAsync()
             results = r.filter { $0.id != meId }
+            await loadFollowing()   // re-asegura el estado "Siguiendo" (evita ver «Seguir» en gente que ya sigues)
             loading = false; searched = true
         }
     }

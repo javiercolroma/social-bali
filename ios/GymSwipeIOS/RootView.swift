@@ -14,6 +14,7 @@ struct RootView: View {
     @State private var showProfile = false
     @State private var activeTour: Int?   // sección cuyo tutorial se está mostrando
     @State private var tourTarget: String?   // componente resaltado en el paso actual del tour
+    @State private var showForgey = false    // chat con Forgey (IA on-device)
 
     private let titles = ["Social", "Plan", "Entreno", "Comunidad", "Actividad"]
 
@@ -34,6 +35,7 @@ struct RootView: View {
             CustomTabBar(tab: tab, onSelect: { tab = $0 })
         }
         .background(Brand.bg.ignoresSafeArea())
+        .sheet(isPresented: $showForgey) { ForgeyChatView().environmentObject(store) }
         .onAppear { maybeShowTour(tab) }
         // Tras el onboarding (la cuenta pasa a existir), muestra el tour de Social.
         .onChange(of: store.account == nil) { isNil in if !isNil { maybeShowTour(tab) } }
@@ -221,6 +223,19 @@ struct RootView: View {
                 Text(titles[tab]).font(.system(size: 30, weight: .heavy)).foregroundColor(Brand.ink)
             }
             Spacer()
+            // Forgey IA: tu coach on-device, disponible desde CUALQUIER pantalla.
+            Button { FX.tap(); showForgey = true } label: {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 14).fill(Color.white)
+                        .frame(width: 46, height: 46)
+                        .overlay(RoundedRectangle(cornerRadius: 14).stroke(Brand.line))
+                    Mascot(size: 24)
+                    Image(systemName: "sparkles").font(.system(size: 10, weight: .heavy))
+                        .foregroundColor(Color(hex: "4b6211"))
+                        .offset(x: 13, y: -13)
+                }
+            }
+            .accessibilityLabel("Pregúntale a Forgey")
             headerButton(system: "envelope.fill", badge: store.unreadMessages) { FX.tap(); messagesTab = 1; showMessages = true }
             headerButton(system: "bell.fill", badge: store.unreadNotifications) { FX.tap(); showNotifications = true }
 }

@@ -5,6 +5,7 @@ struct PlanView: View {
     var onLoaded: () -> Void = {}
     @State private var preview: WorkoutTemplate?
     @State private var creating = false
+    @State private var aiCreating = false   // generar entreno con Forgey (IA on-device)
     @State private var pendingDelete: WorkoutTemplate?
 
     private var grouped: [(group: String, workouts: [WorkoutTemplate])] {
@@ -28,6 +29,19 @@ struct PlanView: View {
                 Button { creating = true } label: { Label("Crear entrenamiento", systemImage: "plus") }
                     .buttonStyle(PrimaryButtonStyle())
                     .tourAnchor("plan.create")
+
+                // Crear con IA on-device: descríbelo y Forgey monta el entreno.
+                Button { FX.tap(); aiCreating = true } label: {
+                    HStack(spacing: 8) {
+                        Image(systemName: "sparkles")
+                        Text("Crear con Forgey (IA)")
+                    }
+                    .font(.system(size: 15, weight: .heavy)).foregroundColor(Color(hex: "4b6211"))
+                    .frame(maxWidth: .infinity).frame(minHeight: 48)
+                    .background(Brand.greenSoft.opacity(0.28)).clipShape(RoundedRectangle(cornerRadius: 12))
+                    .overlay(RoundedRectangle(cornerRadius: 12)
+                        .strokeBorder(Color(hex: "9ec85a"), style: StrokeStyle(lineWidth: 1.5, dash: [6])))
+                }
 
                 ForEach(grouped, id: \.group) { section in
                     VStack(alignment: .leading, spacing: 8) {
@@ -53,6 +67,7 @@ struct PlanView: View {
         .background(Brand.bg)
         .sheet(item: $preview) { WorkoutPreview(workoutId: $0.id, onLoaded: onLoaded).environmentObject(store) }
         .sheet(isPresented: $creating) { CreateWorkoutView().environmentObject(store) }
+        .sheet(isPresented: $aiCreating) { AIWorkoutSheet().environmentObject(store) }
         .alert("¿Eliminar entreno?", isPresented: Binding(get: { pendingDelete != nil }, set: { if !$0 { pendingDelete = nil } }), presenting: pendingDelete) { w in
             Button("Eliminar", role: .destructive) { FX.warning(); store.deleteWorkout(w.id); pendingDelete = nil }
             Button("Cancelar", role: .cancel) { pendingDelete = nil }
