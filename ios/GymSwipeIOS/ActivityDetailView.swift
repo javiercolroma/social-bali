@@ -60,7 +60,13 @@ struct ActivityDetailView: View {
                             .frame(maxWidth: .infinity, alignment: .leading)
                     }
 
-                    WorkoutPhoto(data: item.photo, url: item.photoURL, height: 220)
+                    if item.photo != nil || item.photoURL != nil {
+                        WorkoutPhoto(data: item.photo, url: item.photoURL, height: 220)
+                    } else {
+                        WorkoutCover(elapsed: item.elapsed, sets: item.sets, volume: item.volume,
+                                     exercises: item.exercises,
+                                     seed: "\(item.title)-\(Int(item.date.timeIntervalSince1970))", height: 180)
+                    }
 
                     // Metrics
                     HStack(spacing: 10) {
