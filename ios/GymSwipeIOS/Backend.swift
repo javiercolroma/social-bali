@@ -134,6 +134,28 @@ final class Backend {
             .eq("follower_id", value: follower.uuidString).eq("following_id", value: me.uuidString).execute()
     }
 
+    // MARK: - Partner (planes de entrenamiento REALES)
+
+    func fetchTrainingPlans() async throws -> [TrainingPlanRow] {
+        guard let client else { return [] }
+        return try await client.from("training_plans")
+            .select("id,user_id,title,when_text,place,spots,note,created_at,author:profiles!training_plans_user_id_fkey(handle,name,avatar_url)")
+            .gte("created_at", value: BackendDate.iso.string(from: Date().addingTimeInterval(-14 * 24 * 3600)))
+            .order("created_at", ascending: false)
+            .limit(50)
+            .execute().value
+    }
+    func createTrainingPlan(title: String, when: String, place: String, spots: String, note: String?) async throws {
+        guard let client, let me = await currentUserIdAsync() else { throw BackendError.notConfigured }
+        struct Ins: Encodable { let user_id: String; let title: String; let when_text: String; let place: String; let spots: String; let note: String? }
+        try await client.from("training_plans")
+            .insert(Ins(user_id: me.uuidString.lowercased(), title: title, when_text: when, place: place, spots: spots, note: note)).execute()
+    }
+    func deleteTrainingPlan(id: String) async throws {
+        guard let client else { throw BackendError.notConfigured }
+        try await client.from("training_plans").delete().eq("id", value: id).execute()
+    }
+
     // MARK: - Presencia + mapa de calor (privacidad: celda de ~5 km, nunca exacta)
 
     /// Redondea a la celda de 0,05° (~5 km) y actualiza tu presencia. NUNCA se sube
@@ -664,6 +686,20 @@ struct SessionRow: Codable {
             items: items, avgHeartRate: avg_hr, maxHeartRate: max_hr,
             location: location, verified: verified, photoURL: photo_url)
     }
+}
+
+/// Plan de entrenamiento real (Partner), con su autor embebido.
+struct TrainingPlanRow: Codable {
+    struct Author: Codable { let handle: String?; let name: String?; let avatar_url: String? }
+    let id: UUID
+    let user_id: UUID
+    let title: String
+    let when_text: String
+    let place: String
+    let spots: String
+    let note: String?
+    let created_at: String
+    let author: Author?
 }
 
 /// Celda agregada del mapa de calor (sin identidades).

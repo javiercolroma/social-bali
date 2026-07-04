@@ -334,6 +334,58 @@ struct SlidingPages<A: View, B: View>: View {
     }
 }
 
+/// Portada visual para entrenos SIN foto: gradiente de marca, mancuerna en marca de
+/// agua y un dato héroe (volumen movido). El feed nunca se ve como una pila de texto.
+struct WorkoutCover: View {
+    let elapsed: Int
+    let sets: Int
+    let volume: Double
+    var height: CGFloat = 150
+
+    private var hero: (String, String) {
+        if volume >= 1000 { return (String(format: "%.1f t", volume / 1000).replacingOccurrences(of: ".", with: ","), "volumen movido") }
+        if volume > 0 { return ("\(Int(volume)) kg", "volumen movido") }
+        return ("\(sets)", sets == 1 ? "serie completada" : "series completadas")
+    }
+
+    var body: some View {
+        ZStack {
+            LinearGradient(colors: [Brand.greenSoft.opacity(0.85), Color(hex: "eef7d8")],
+                           startPoint: .topLeading, endPoint: .bottomTrailing)
+            Image(systemName: "dumbbell.fill")
+                .font(.system(size: height * 0.62, weight: .bold))
+                .foregroundColor(Brand.green.opacity(0.30))
+                .rotationEffect(.degrees(-18))
+                .offset(x: height * 0.62, y: height * 0.16)
+            VStack(alignment: .leading, spacing: 3) {
+                Text(hero.0).font(.system(size: 34, weight: .heavy)).foregroundColor(Brand.ink)
+                Text(hero.1).font(.system(size: 13, weight: .bold)).foregroundColor(Color(hex: "4b6211"))
+                HStack(spacing: 5) {
+                    Image(systemName: "clock").font(.system(size: 11, weight: .bold))
+                    Text("\(max(1, elapsed / 60)) min · \(sets) series").font(.system(size: 12, weight: .heavy))
+                }
+                .foregroundColor(Brand.muted).padding(.top, 5)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading).padding(.horizontal, 18)
+        }
+        .frame(height: height)
+        .clipShape(RoundedRectangle(cornerRadius: 12))
+    }
+}
+
+/// Flecha de VOLVER para hojas (pop-ups): circulito con chevron, arriba a la izquierda.
+/// (Deslizar hacia abajo sigue funcionando; esto da una salida visible y familiar.)
+struct SheetBackButton: View {
+    var action: () -> Void
+    var body: some View {
+        Button(action: action) {
+            Image(systemName: "chevron.backward")
+                .font(.system(size: 15, weight: .heavy)).foregroundColor(Brand.ink)
+                .frame(width: 34, height: 34).background(Brand.chip).clipShape(Circle())
+        }.buttonStyle(.plain)
+    }
+}
+
 func shortTime(_ date: Date) -> String {
     let cal = Calendar.current
     let f = DateFormatter()

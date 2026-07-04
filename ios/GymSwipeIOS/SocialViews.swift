@@ -724,6 +724,7 @@ struct SharedWorkoutPreview: View {
             .background(Brand.bg)
             .navigationTitle(template.name)
             .navigationBarTitleDisplayMode(.inline)
+            .toolbar { ToolbarItem(placement: .cancellationAction) { SheetBackButton { dismiss() } } }
         }
         .presentationDetents([.medium, .large])
         .presentationDragIndicator(.visible)
@@ -809,6 +810,7 @@ struct SaveSharedWorkoutSheet: View {
         }
         .padding(.horizontal, 20)
         .background(Brand.bg)
+        .overlay(alignment: .topLeading) { SheetBackButton { dismiss() }.padding(.leading, 14).padding(.top, 14) }
         .presentationDetents([.medium])
         .presentationDragIndicator(.visible)
         .onAppear { name = workout.name; group = workout.block.isEmpty ? "Compartidos" : workout.block }
@@ -851,6 +853,7 @@ struct ShareWorkoutPicker: View {
             .background(Brand.bg)
             .navigationTitle("Compartir entreno")
             .navigationBarTitleDisplayMode(.inline)
+            .toolbar { ToolbarItem(placement: .cancellationAction) { SheetBackButton { dismiss() } } }
         }
         .presentationDetents([.medium, .large])
     }

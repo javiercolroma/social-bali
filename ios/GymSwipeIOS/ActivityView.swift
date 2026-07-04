@@ -13,7 +13,6 @@ struct ActivityView: View {
     @State private var progressExercise: IdString?   // evolución de un ejercicio (hoja)
     @State private var showScoreDetail = false        // hoja con el desglose del Gym Score
     @State private var showAllLifts = false           // hoja con TODOS los ejercicios (fuerza)
-    @State private var showAllRecords = false         // hoja con TODOS los récords
     @State private var showEpleyInfo = false
     @State private var showScoreInfo = false
 
@@ -43,6 +42,7 @@ struct ActivityView: View {
                 ScrollView { VStack(spacing: 12) { gymScoreCard }.padding(14) }
                     .background(Brand.bg)
                     .navigationTitle("Gym Score").navigationBarTitleDisplayMode(.inline)
+                    .toolbar { ToolbarItem(placement: .cancellationAction) { SheetBackButton { showScoreDetail = false } } }
             }
             .presentationDetents([.large]).presentationDragIndicator(.visible)
         }
@@ -62,10 +62,10 @@ struct ActivityView: View {
                 }
                 .background(Brand.bg)
                 .navigationTitle("Fuerza por ejercicio").navigationBarTitleDisplayMode(.inline)
+                .toolbar { ToolbarItem(placement: .cancellationAction) { SheetBackButton { showAllLifts = false } } }
             }
             .presentationDetents([.large]).presentationDragIndicator(.visible)
         }
-        .sheet(isPresented: $showAllRecords) { AllRecordsSheet().environmentObject(store) }
     }
 
     private var switcher: some View {
@@ -155,22 +155,26 @@ struct ActivityView: View {
                     Text("1RM estimado (fórmula de Epley)").font(.caption2).foregroundColor(Brand.soft)
                 }
                 Spacer()
-                // Tendencia general integrada como chip (antes era una tarjeta entera).
-                if let pct = strengthTrendPct {
-                    let up = pct >= 0
-                    HStack(spacing: 3) {
-                        Image(systemName: up ? "arrow.up.right" : "arrow.down.right").font(.system(size: 10, weight: .heavy))
-                        Text("\(up ? "+" : "")\(Int(pct.rounded()))%").font(.system(size: 12, weight: .heavy))
-                    }
-                    .foregroundColor(up ? Color(hex: "3f7d12") : Color(hex: "a73232"))
-                    .padding(.horizontal, 8).padding(.vertical, 4)
-                    .background(up ? Brand.greenSoft.opacity(0.5) : Brand.redSoft).clipShape(Capsule())
-                }
                 Button { FX.tap(); showEpleyInfo = true } label: {
                     Image(systemName: "info.circle").font(.system(size: 19)).foregroundColor(Brand.soft)
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel("Qué es el 1RM estimado")
+            }
+            // La teja de la MANCUERNA con el % (recuperada a petición): tu progreso de
+            // carga global (1RM medio actual vs el primero registrado).
+            if let pct = strengthTrendPct {
+                let up = pct >= 0
+                VStack(spacing: 6) {
+                    Image(systemName: "dumbbell.fill").font(.system(size: 18)).foregroundColor(Color(hex: "6ea300"))
+                    HStack(spacing: 3) {
+                        Image(systemName: up ? "arrow.up.right" : "arrow.down.right").font(.system(size: 13, weight: .heavy))
+                        Text("\(up ? "+" : "")\(Int(pct.rounded()))%").font(.system(size: 22, weight: .heavy))
+                    }.foregroundColor(up ? Color(hex: "3f7d12") : Color(hex: "a73232"))
+                    Text("Carga (1RM medio)").font(.caption2).fontWeight(.bold).foregroundColor(Brand.muted)
+                }
+                .frame(maxWidth: .infinity).padding(.vertical, 12)
+                .background(Brand.surface).clipShape(RoundedRectangle(cornerRadius: 12))
             }
             if liftProgress.isEmpty {
                 Text("Registra series con peso y repeticiones para estimar tu 1RM.")
@@ -190,20 +194,6 @@ struct ActivityView: View {
                             .background(Brand.greenSoft.opacity(0.28)).clipShape(RoundedRectangle(cornerRadius: 10))
                     }.buttonStyle(.plain)
                 }
-            }
-            // Tus récords, unidos aquí (mismo tema: tus mejores marcas por ejercicio).
-            if !store.personalBests.isEmpty {
-                Divider()
-                Button { FX.tap(); showAllRecords = true } label: {
-                    HStack(spacing: 8) {
-                        Image(systemName: "trophy.fill").font(.system(size: 13)).foregroundColor(Color(hex: "e2a915"))
-                        Text("Tus récords").font(.system(size: 14, weight: .heavy)).foregroundColor(Brand.ink)
-                        Spacer()
-                        Text("\(store.personalBests.count)").font(.system(size: 13, weight: .heavy)).foregroundColor(Brand.soft)
-                        Image(systemName: "chevron.right").font(.system(size: 11, weight: .bold)).foregroundColor(Brand.soft)
-                    }
-                    .contentShape(Rectangle())
-                }.buttonStyle(.plain)
             }
         }
         .alert("1RM estimado (Epley)", isPresented: $showEpleyInfo) {

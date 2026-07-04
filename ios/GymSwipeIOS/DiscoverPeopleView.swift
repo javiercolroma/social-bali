@@ -5,6 +5,7 @@ import SwiftUI
 /// (la que habilita feed/chat reales); convive con la UI demo existente.
 struct DiscoverPeopleView: View {
     @EnvironmentObject var store: AppStore
+    @Environment(\.dismiss) private var dismiss
     @State private var query = ""
     @State private var results: [ProfileRow] = []
     @State private var following: Set<String> = []
@@ -52,6 +53,7 @@ struct DiscoverPeopleView: View {
             .padding(14)
             .background(Brand.bg)
             .navigationTitle("Buscar personas").navigationBarTitleDisplayMode(.inline)
+            .toolbar { ToolbarItem(placement: .cancellationAction) { SheetBackButton { dismiss() } } }
             .task { await loadFollowing() }
             .sheet(item: $profileTarget) { item in
                 if let p = store.person(item.id) { FriendProfileView(person: p).environmentObject(store) }
@@ -81,8 +83,8 @@ struct DiscoverPeopleView: View {
             }.buttonStyle(.plain)
             Spacer()
             Button {
-                FX.tap()
                 let willFollow = !isFollowing
+                if willFollow { FX.success() } else { FX.tap() }
                 if willFollow { following.insert(uid) } else { following.remove(uid) }
                 Task {
                     do {

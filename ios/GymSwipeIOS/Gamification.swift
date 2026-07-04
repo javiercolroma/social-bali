@@ -782,6 +782,8 @@ struct RecordsCard: View {
 /// Todos los récords personales, en su propia hoja (la tarjeta de Progreso muestra el top 3).
 struct AllRecordsSheet: View {
     @EnvironmentObject var store: AppStore
+    @Environment(\.dismiss) private var dismiss
+    private func dismissRecords() { dismiss() }
     var body: some View {
         let records = store.personalBests.values.sorted { $0.e1rm > $1.e1rm }
         NavigationStack {
@@ -806,6 +808,7 @@ struct AllRecordsSheet: View {
             }
             .background(Brand.bg)
             .navigationTitle("Tus récords").navigationBarTitleDisplayMode(.inline)
+            .toolbar { ToolbarItem(placement: .cancellationAction) { SheetBackButton { dismissRecords() } } }
         }
         .presentationDetents([.large]).presentationDragIndicator(.visible)
     }

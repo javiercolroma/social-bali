@@ -343,6 +343,8 @@ struct TrainView: View {
         lineSeed += 1
         lastEvent = done ? .done : .skip
 
+        // Vibración en el gesto MÁS repetido de la app: marcar serie (éxito) / desmarcar (suave).
+        if done { FX.success() } else { FX.tap() }
         withAnimation(.spring(response: 0.4, dampingFraction: 0.82)) { store.registerSet(ex.id, done: done) }
         // Descanso consciente de superserie: dentro de la rotación (vas al compañero) NO se
         // descansa; solo al cerrar la ronda o si el ejercicio es normal. Se decide DESPUÉS de

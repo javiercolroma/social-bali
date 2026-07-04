@@ -10,13 +10,15 @@ struct PartnerView: View {
     @State private var maxKm: Double = 100
 
     private var visiblePlans: [TrainingPlan] {
-        store.trainingPlans
+        // Con backend REAL: todos los planes recientes (sin km simulados), los más nuevos primero.
+        if BackendConfig.isConfigured { return store.trainingPlans }
+        return store.trainingPlans
             .filter { planKm($0) <= maxKm }
             .sorted { planKm($0) < planKm($1) }   // los más cercanos primero
     }
 
     /// Primera tarjeta de otra persona (para anclar el tutorial de Aceptar/Descartar).
-    private var firstOtherPlanId: String? { visiblePlans.first { $0.ownerId != "me" }?.id }
+    private var firstOtherPlanId: String? { visiblePlans.first { !store.isMyPlan($0) }?.id }
 
     var body: some View {
         ScrollView {
@@ -27,6 +29,9 @@ struct PartnerView: View {
                     }.buttonStyle(PrimaryButtonStyle())
                     .tourAnchor("partner.create")
 
+                    // El filtro por km era de la época demo (distancias simuladas); con
+                    // planes reales aún no guardamos coordenadas → fuera hasta que existan.
+                    if !BackendConfig.isConfigured {
                     VStack(spacing: 8) {
                         HStack {
                             Label("Cerca de mí", systemImage: "location.fill").font(.system(size: 13, weight: .heavy)).foregroundColor(Brand.muted)
@@ -37,10 +42,13 @@ struct PartnerView: View {
                     }
                     .padding(.top, 4)
                     .tourAnchor("partner.distance")
+                    }
                 }
 
                 if visiblePlans.isEmpty {
-                    Text("No hay compañeros a menos de \(Int(maxKm.rounded())) km. Amplía la distancia o publica tu plan.")
+                    Text(BackendConfig.isConfigured
+                         ? "Aún no hay planes publicados. ¡Publica el tuyo y encuentra compañero!"
+                         : "No hay compañeros a menos de \(Int(maxKm.rounded())) km. Amplía la distancia o publica tu plan.")
                         .font(.footnote).foregroundColor(Brand.muted).multilineTextAlignment(.center)
                         .frame(maxWidth: .infinity).padding(.top, 30)
                 } else {
@@ -51,6 +59,7 @@ struct PartnerView: View {
             .animation(.easeInOut(duration: 0.2), value: visiblePlans.count)   // aparición/desaparición suave de planes
         }
         .background(Brand.bg)
+        .task { store.loadTrainingPlans() }
         .sheet(isPresented: $showCreator) { CreatePlanView().environmentObject(store) }
         .sheet(item: $profileTarget) { item in
             if let p = store.person(item.id) { FriendProfileView(person: p).environmentObject(store) }
@@ -73,23 +82,28 @@ struct PartnerView: View {
     }
 
     private func planCard(_ plan: TrainingPlan) -> some View {
-        let isMine = plan.ownerId == "me"
+        let isMine = store.isMyPlan(plan)
         let owner = store.person(plan.ownerId)
+        let real = BackendConfig.isConfigured
         return PanelCard {
-            // Quién propone + distancia (toca para ver el perfil)
+            // Quién propone (toca para ver el perfil)
             Button {
                 FX.tap()
-                if isMine { showMe = true } else if let o = owner { profileTarget = IdString(id: o.id) }
+                if isMine { showMe = true } else { profileTarget = IdString(id: plan.ownerId) }
             } label: {
                 HStack(spacing: 8) {
-                    Avatar(emoji: isMine ? "🙂" : (owner?.avatar ?? "👤"), size: 28)
-                    Text(isMine ? "Tu plan" : (owner?.name ?? "Compañero"))
+                    if real && !isMine {
+                        ScoredAvatar(emoji: "🙂", avatarURL: plan.authorAvatarURL, score: store.personScore(plan.ownerId), size: 28)
+                    } else {
+                        Avatar(emoji: isMine ? "🙂" : (owner?.avatar ?? "👤"), size: 28)
+                    }
+                    Text(isMine ? "Tu plan" : (plan.authorName ?? owner?.name ?? "Compañero"))
                         .font(.system(size: 14, weight: .heavy)).foregroundColor(Brand.ink)
                     Spacer()
-                    if !isMine {
+                    if !isMine && !real {
                         Text("a \(Int(planKm(plan))) km").font(.system(size: 12, weight: .heavy)).foregroundColor(Brand.soft)
                     }
-                    ScorePill(score: plan.score)
+                    if plan.score > 0 { ScorePill(score: plan.score) }
                 }
             }.buttonStyle(.plain)
 

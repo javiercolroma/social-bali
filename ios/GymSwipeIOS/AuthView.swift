@@ -87,6 +87,7 @@ struct AuthProviderSheet: View {
             .padding(.horizontal, 20)
             .background(Brand.bg)
             .navigationBarTitleDisplayMode(.inline)
+            .toolbar { ToolbarItem(placement: .cancellationAction) { SheetBackButton { dismiss() } } }
         }
         .presentationDetents([.medium])
         .presentationDragIndicator(.visible)

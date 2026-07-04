@@ -4,7 +4,7 @@ import Foundation
 /// se oculta en v1 para no mezclar gente falsa con usuarios reales. Ponlo a true cuando
 /// se migre a backend real (planes en Supabase + matching por cercanía).
 enum FeatureFlags {
-    static let partnerEnabled = false
+    static let partnerEnabled = true   // Partner REAL (planes en Supabase + chat real)
 }
 
 enum ExerciseStatus: String, Codable {
@@ -141,9 +141,13 @@ struct TrainingPlan: Identifiable, Codable, Hashable {
     var when: String
     var place: String
     var spots: String
-    var ownerId: String   // "me" or a person id
+    var ownerId: String   // "me", id demo o UUID real del autor
     var score: Int
     var note: String? = nil   // descripción opcional del plan
+    // Autor REAL (desde el servidor); nil en planes demo/locales.
+    var authorName: String? = nil
+    var authorHandle: String? = nil
+    var authorAvatarURL: String? = nil
 }
 
 // MARK: - Social

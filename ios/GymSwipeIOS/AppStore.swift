@@ -1073,6 +1073,13 @@ final class AppStore: ObservableObject {
 
     @discardableResult
     func acceptTrainingPlan(_ personId: String, _ text: String) -> String {
+        // Usuario REAL: el mensaje viaja por el chat real (Supabase), sin bots.
+        if BackendConfig.isConfigured, let uid = UUID(uuidString: personId) {
+            let id = conversationId(personId.lowercased())
+            appendLocalMessage(personId.lowercased(), ChatMessage(id: newId("m"), fromMe: true, text: text, at: Date()))
+            Task { try? await Backend.shared.sendMessage(to: uid, text: text) }
+            return id
+        }
         let id = conversationId(personId)
         append(message: ChatMessage(id: newId("m"), fromMe: true, text: text, at: Date()), to: personId, markRead: true)
         let name = person(personId)?.name ?? "tu compañero"
@@ -1085,6 +1092,14 @@ final class AppStore: ObservableObject {
     }
 
     func addPlan(title: String, when: String, place: String, spots: String, score: Int, note: String? = nil) {
+        if BackendConfig.isConfigured {
+            // Plan REAL: se publica en el servidor y se recarga la lista.
+            Task {
+                try? await Backend.shared.createTrainingPlan(title: title, when: when, place: place, spots: spots, note: note)
+                loadTrainingPlans()
+            }
+            return
+        }
         let plan = TrainingPlan(id: newId("plan"), title: title, when: when, place: place, spots: spots, ownerId: "me", score: score, note: note)
         trainingPlans.insert(plan, at: 0)
         trainingPlans = Array(trainingPlans.prefix(8))
@@ -1093,7 +1108,34 @@ final class AppStore: ObservableObject {
 
     func deletePlan(_ id: String) {
         trainingPlans.removeAll { $0.id == id }
+        if BackendConfig.isConfigured, UUID(uuidString: id) != nil {
+            Task { try? await Backend.shared.deleteTrainingPlan(id: id) }
+        }
         persist()
+    }
+
+    /// ¿Este plan es mío? (demo: ownerId == "me"; real: mi UUID)
+    func isMyPlan(_ plan: TrainingPlan) -> Bool {
+        if plan.ownerId == "me" { return true }
+        if let me = Backend.shared.currentUserId?.uuidString.lowercased() { return plan.ownerId.lowercased() == me }
+        return false
+    }
+
+    /// Planes REALES del servidor (últimos 14 días) → sustituyen a los demo con backend.
+    func loadTrainingPlans() {
+        guard BackendConfig.isConfigured else { return }
+        Task {
+            let rows = (try? await Backend.shared.fetchTrainingPlans()) ?? []
+            trainingPlans = rows.map { r in
+                TrainingPlan(id: r.id.uuidString.lowercased(), title: r.title, when: r.when_text,
+                             place: r.place, spots: r.spots, ownerId: r.user_id.uuidString.lowercased(),
+                             score: 0, note: r.note,
+                             authorName: r.author?.name ?? r.author?.handle,
+                             authorHandle: r.author?.handle,
+                             authorAvatarURL: r.author?.avatar_url)
+            }
+            persist()
+        }
     }
 
     // MARK: - Workouts (create / delete)

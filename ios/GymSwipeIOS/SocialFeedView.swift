@@ -507,7 +507,11 @@ struct SocialFeedView: View {
                         }
                     }
                 } else {
-                    Image(systemName: "chevron.right").font(.system(size: 12, weight: .bold)).foregroundColor(Brand.soft)
+                    // La flecha ABRE el detalle del entreno (era decorativa y confundía).
+                    Button { FX.tap(); activity = item } label: {
+                        Image(systemName: "chevron.right").font(.system(size: 12, weight: .bold)).foregroundColor(Brand.soft)
+                            .frame(width: 30, height: 34)
+                    }.buttonStyle(.plain)
                 }
             }
 
@@ -523,7 +527,12 @@ struct SocialFeedView: View {
                     if !item.note.isEmpty {
                         Text(item.note).font(.system(size: 14)).foregroundColor(Color(hex: "2c3127")).lineLimit(2).fixedSize(horizontal: false, vertical: true)
                     }
-                    WorkoutPhoto(data: item.photo, url: item.photoURL, height: 190)
+                    if item.photo != nil || item.photoURL != nil {
+                        WorkoutPhoto(data: item.photo, url: item.photoURL, height: 190)
+                    } else {
+                        // Sin foto: portada visual elegante (nada de pila de texto).
+                        WorkoutCover(elapsed: item.elapsed, sets: item.sets, volume: item.volume)
+                    }
                     WorkoutStatStrip(stats: WorkoutStatStrip.metrics(time: durationText(item.elapsed), sets: item.sets,
                                                      exercises: item.exercises, ppm: item.avgHeartRate), style: .full)
                 }

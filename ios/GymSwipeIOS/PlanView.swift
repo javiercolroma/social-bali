@@ -133,6 +133,7 @@ struct WorkoutPreview: View {
             }
             .background(Brand.bg)
             .navigationBarTitleDisplayMode(.inline)
+            .toolbar { ToolbarItem(placement: .cancellationAction) { SheetBackButton { dismiss() } } }
             .sheet(isPresented: $showEditor) {
                 if let workout { CreateWorkoutView(editing: workout).environmentObject(store) }
             }
@@ -341,6 +342,7 @@ struct CreateWorkoutView: View {
             }
             .background(Brand.bg)
             .navigationTitle(editing == nil ? "Crear entreno" : "Editar entreno").navigationBarTitleDisplayMode(.inline)
+            .toolbar { ToolbarItem(placement: .cancellationAction) { SheetBackButton { dismiss() } } }
             .onAppear {
                 prefill()
                 // Entreno nuevo: el cursor empieza en el Nombre para escribir directamente.
@@ -463,7 +465,7 @@ struct CreateWorkoutView: View {
     }
 
     private func roundBtn(_ icon: String, action: @escaping () -> Void) -> some View {
-        Button(action: action) {
+        Button(action: { FX.selection(); action() }) {
             Image(systemName: icon).font(.system(size: 13, weight: .heavy)).foregroundColor(Brand.ink)
                 .frame(width: 30, height: 30).background(Color.white).clipShape(Circle())
                 .overlay(Circle().stroke(Brand.line))

@@ -93,6 +93,7 @@ struct ForgeyChatView: View {
             }
             .background(Brand.bg)
             .navigationBarTitleDisplayMode(.inline)
+            .toolbar { ToolbarItem(placement: .cancellationAction) { SheetBackButton { dismiss() } } }
         }
         // «Crear entreno de esto»: generador prellenado con el último consejo de Forgey.
         .sheet(item: $genTopic) { t in
@@ -391,6 +392,7 @@ struct AIWorkoutSheet: View {
             }
             .background(Brand.bg)
             .navigationTitle("Crear con Forgey").navigationBarTitleDisplayMode(.inline)
+            .toolbar { ToolbarItem(placement: .cancellationAction) { SheetBackButton { dismiss() } } }
             // Editor completo prefijado con lo generado (nombre/grupo editados incluidos);
             // al guardar desde ahí se crea como entreno nuevo del plan.
             .sheet(isPresented: $adjusting, onDismiss: { dismiss() }) {
