@@ -342,11 +342,8 @@ struct WorkoutCover: View {
     let volume: Double
     var height: CGFloat = 150
 
-    private var hero: (String, String) {
-        if volume >= 1000 { return (String(format: "%.1f t", volume / 1000).replacingOccurrences(of: ".", with: ","), "volumen movido") }
-        if volume > 0 { return ("\(Int(volume)) kg", "volumen movido") }
-        return ("\(sets)", sets == 1 ? "serie completada" : "series completadas")
-    }
+    // Sin volumen (a petición): el héroe es el TIEMPO de entreno; series debajo.
+    private var hero: (String, String) { ("\(max(1, elapsed / 60)) min", "de entreno") }
 
     var body: some View {
         ZStack {
@@ -361,8 +358,8 @@ struct WorkoutCover: View {
                 Text(hero.0).font(.system(size: 34, weight: .heavy)).foregroundColor(Brand.ink)
                 Text(hero.1).font(.system(size: 13, weight: .bold)).foregroundColor(Color(hex: "4b6211"))
                 HStack(spacing: 5) {
-                    Image(systemName: "clock").font(.system(size: 11, weight: .bold))
-                    Text("\(max(1, elapsed / 60)) min · \(sets) series").font(.system(size: 12, weight: .heavy))
+                    Image(systemName: "checkmark.circle.fill").font(.system(size: 11, weight: .bold))
+                    Text(sets == 1 ? "1 serie completada" : "\(sets) series completadas").font(.system(size: 12, weight: .heavy))
                 }
                 .foregroundColor(Brand.muted).padding(.top, 5)
             }
