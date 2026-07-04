@@ -420,7 +420,15 @@ struct ActivityView: View {
                             .frame(width: 30, height: 34).contentShape(Rectangle())
                     }
                 }
-                WorkoutPhoto(data: s.photoData, url: s.photoURL, height: 120)
+                // Igual que en el feed: con foto, la foto; sin foto, la portada visual
+                // (minutos / series / ejercicios como héroe).
+                if s.photoData != nil || s.photoURL != nil {
+                    WorkoutPhoto(data: s.photoData, url: s.photoURL, height: 120)
+                } else {
+                    WorkoutCover(elapsed: s.elapsed, sets: s.sets, volume: s.volume,
+                                 exercises: s.exercises,
+                                 seed: "\(s.name)-\(Int(s.date.timeIntervalSince1970))", height: 120)
+                }
                 WorkoutStatStrip(stats: WorkoutStatStrip.metrics(time: durationText(s.elapsed), sets: s.sets,
                                                  exercises: s.exercises, ppm: s.avgHeartRate), style: .compact)
             }
