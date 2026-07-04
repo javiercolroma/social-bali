@@ -78,6 +78,8 @@ struct ForgeyChatView: View {
                                 .frame(width: 46, height: 46).background(Brand.chip).clipShape(Circle())
                         }
                         TextField("Pregúntale a Forgey…", text: $draft)
+                            // Tope de entrada: el modelo on-device es pequeño y las novelas lo marean.
+                            .onChange(of: draft) { v in if v.count > 200 { draft = String(v.prefix(200)) } }
                             .focused($focused)
                             .padding(.horizontal, 16).frame(height: 46).background(Color.white).clipShape(Capsule())
                             .overlay(Capsule().stroke(Brand.line))
@@ -97,7 +99,7 @@ struct ForgeyChatView: View {
         }
         // «Crear entreno de esto»: generador prellenado con el último consejo de Forgey.
         .sheet(item: $genTopic) { t in
-            AIWorkoutSheet(initialDescription: "Entreno enfocado en: \(t.id)").environmentObject(store)
+            AIWorkoutSheet(initialDescription: "Entreno enfocado en: \(t.id)", autoGenerate: true).environmentObject(store)
         }
     }
 
@@ -263,6 +265,9 @@ struct AIWorkoutSheet: View {
     var onLoaded: () -> Void = {}
     /// Descripción prellenada (p. ej. desde el chip «Crear entreno de esto» del chat).
     var initialDescription: String = ""
+    /// true → genera nada más abrirse (desde el chip del chat): el usuario aterriza
+    /// directamente en la TARJETA del entreno, sin pasar por la pantalla de texto.
+    var autoGenerate: Bool = false
     @State private var descriptionText = ""
     @State private var generated: WorkoutTemplate?
     @State private var generating = false
@@ -294,6 +299,7 @@ struct AIWorkoutSheet: View {
                     TextField("P. ej. «Espalda y bíceps, 1 hora, que incluya dominadas»",
                               text: $descriptionText, axis: .vertical)
                         .lineLimit(3...5).focused($focused)
+                        .onChange(of: descriptionText) { v in if v.count > 220 { descriptionText = String(v.prefix(220)) } }
                         .padding(12).background(Color.white).clipShape(RoundedRectangle(cornerRadius: 14))
                         .overlay(RoundedRectangle(cornerRadius: 14).stroke(focused ? Brand.green : Brand.line, lineWidth: focused ? 1.5 : 1))
 
