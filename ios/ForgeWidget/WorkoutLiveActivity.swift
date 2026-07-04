@@ -79,10 +79,32 @@ struct WorkoutLiveActivity: Widget {
 }
 
 @available(iOS 16.2, *)
+/// Vibración en los botones del widget: los intents no pueden disparar haptics directamente
+/// (proceso en segundo plano), pero `sensoryFeedback` vibra al CAMBIAR el estado que el
+/// botón modifica — el efecto para el usuario es "toco → vibra".
+private extension View {
+    @ViewBuilder func hapticOnChange<T: Equatable>(_ value: T) -> some View {
+        if #available(iOS 17.0, *) { self.sensoryFeedback(.impact(weight: .medium), trigger: value) } else { self }
+    }
+    @ViewBuilder func hapticSuccessOnChange<T: Equatable>(_ value: T) -> some View {
+        if #available(iOS 17.0, *) { self.sensoryFeedback(.success, trigger: value) } else { self }
+    }
+}
+
 private struct LockScreenView: View {
     let state: WorkoutActivityAttributes.ContentState
 
     var body: some View {
+        content
+            // Vibraciones del widget: ajustar reps/peso (toque), cerrar serie (éxito),
+            // empezar/terminar descanso (toque).
+            .hapticOnChange(state.reps)
+            .hapticOnChange(state.weight)
+            .hapticSuccessOnChange(state.closedSets)
+            .hapticOnChange(state.resting)
+    }
+
+    private var content: some View {
         VStack(spacing: 10) {
             // Una sola fila de cabecera. El cronómetro de entrenamiento se ha
             // eliminado; el chip "Serie X/Y" ocupa el hueco que dejó arriba a la derecha.
