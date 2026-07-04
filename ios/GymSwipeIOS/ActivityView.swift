@@ -98,6 +98,8 @@ struct ActivityView: View {
         // Panel compacto: cada bloque se lee de un VISTAZO y el detalle vive en hojas.
         sectionHeader("RESUMEN")
         heroRow.tourAnchor("activity.progress")
+        // El calendario, justo debajo de racha/score: tu mes de un vistazo.
+        calendarBlock
 
         sectionHeader("ESTA SEMANA")
         WeeklyQuestsCard()
@@ -110,11 +112,9 @@ struct ActivityView: View {
         } else {
             strengthCard
         }
+    }
 
-        sectionHeader("RÉCORDS")
-        RecordsCard(compact: true, onSeeAll: { showAllRecords = true })
-
-        sectionHeader("HISTORIAL")
+    private var calendarBlock: some View {
         TrainingCalendarView(sessions: sessions) { date, daySessions in
             daySheet = DayPayload(id: date, date: date, sessions: daySessions)
         }
@@ -193,6 +193,20 @@ struct ActivityView: View {
                             .background(Brand.greenSoft.opacity(0.28)).clipShape(RoundedRectangle(cornerRadius: 10))
                     }.buttonStyle(.plain)
                 }
+            }
+            // Tus récords, unidos aquí (mismo tema: tus mejores marcas por ejercicio).
+            if !store.personalBests.isEmpty {
+                Divider()
+                Button { FX.tap(); showAllRecords = true } label: {
+                    HStack(spacing: 8) {
+                        Image(systemName: "trophy.fill").font(.system(size: 13)).foregroundColor(Color(hex: "e2a915"))
+                        Text("Tus récords").font(.system(size: 14, weight: .heavy)).foregroundColor(Brand.ink)
+                        Spacer()
+                        Text("\(store.personalBests.count)").font(.system(size: 13, weight: .heavy)).foregroundColor(Brand.soft)
+                        Image(systemName: "chevron.right").font(.system(size: 11, weight: .bold)).foregroundColor(Brand.soft)
+                    }
+                    .contentShape(Rectangle())
+                }.buttonStyle(.plain)
             }
         }
         .alert("1RM estimado (Epley)", isPresented: $showEpleyInfo) {
