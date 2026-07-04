@@ -185,6 +185,13 @@ final class Backend {
             .eq("id", value: me.uuidString).execute()
     }
 
+    /// Sube MI Gym Score al perfil (fuente única para badges de feed/búsquedas).
+    func pushGymScore(_ score: Int) async {
+        guard let client, let me = await currentUserIdAsync() else { return }
+        _ = try? await client.from("profiles").update(["gym_score": score])
+            .eq("id", value: me.uuidString).execute()
+    }
+
     /// Mi celda (~5 km) guardada en el perfil; para calcular distancias aproximadas.
     func fetchMyCell() async -> (Double, Double)? {
         guard let client, let me = await currentUserIdAsync() else { return nil }
@@ -343,7 +350,7 @@ final class Backend {
     func fetchFeedWithAuthors(limit: Int = 50) async throws -> [FeedRow] {
         guard let client else { return [] }
         return try await client.from("workout_sessions")
-            .select("id,user_id,name,note,date,elapsed,exercises,sets,volume,xp,avg_hr,max_hr,location,photo_url,visibility,verified,items,author:profiles!workout_sessions_user_id_fkey(handle,name,avatar_url),kudos(count),comments(count)")
+            .select("id,user_id,name,note,date,elapsed,exercises,sets,volume,xp,avg_hr,max_hr,location,photo_url,visibility,verified,items,author:profiles!workout_sessions_user_id_fkey(handle,name,avatar_url,gym_score),kudos(count),comments(count)")
             .order("date", ascending: false)
             .limit(limit)
             .execute().value
@@ -518,6 +525,7 @@ struct ProfileRow: Codable {
     var city: String?
     var gym: String?
     var is_private: Bool?
+    var gym_score: Int?
 }
 
 /// Fila de `public.follows` (grafo social estilo Instagram).
@@ -528,7 +536,7 @@ struct FollowRow: Codable {
 }
 
 /// Autor incrustado en el feed.
-struct FeedAuthor: Codable { let handle: String?; let name: String?; let avatar_url: String? }
+struct FeedAuthor: Codable { let handle: String?; let name: String?; let avatar_url: String?; let gym_score: Int? }
 
 /// Contador incrustado (PostgREST `tabla(count)` → `[{count: N}]`).
 struct CountRow: Codable { let count: Int }
@@ -708,7 +716,7 @@ struct SessionRow: Codable {
 
 /// Plan de entrenamiento real (Partner), con su autor embebido.
 struct TrainingPlanRow: Codable {
-    struct Author: Codable { let handle: String?; let name: String?; let avatar_url: String? }
+    struct Author: Codable { let handle: String?; let name: String?; let avatar_url: String?; let gym_score: Int? }
     let id: UUID
     let user_id: UUID
     let title: String

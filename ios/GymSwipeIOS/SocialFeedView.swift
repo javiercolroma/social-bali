@@ -251,6 +251,8 @@ struct SocialFeedView: View {
 
     private func feedItem(from r: FeedRow, me: String?) -> FeedItem {
         let isMe = r.user_id.lowercased() == me
+        // Score canónico del autor (viene embebido del servidor) → misma insignia en todos lados.
+        if !isMe, let sc = r.author?.gym_score, sc > 0 { store.setPersonScore(r.user_id, sc) }
         return FeedItem(
             id: r.id,
             personId: isMe ? nil : r.user_id,
@@ -528,7 +530,18 @@ struct SocialFeedView: View {
                         Text(item.note).font(.system(size: 14)).foregroundColor(Color(hex: "2c3127")).lineLimit(2).fixedSize(horizontal: false, vertical: true)
                     }
                     if item.photo != nil || item.photoURL != nil {
-                        WorkoutPhoto(data: item.photo, url: item.photoURL, height: 190)
+                        // Con foto: la foto ES el post (entera, sin recortar) y, deslizando a la
+                        // derecha, una segunda página con la tarjeta visual de estadísticas.
+                        TabView {
+                            FullWorkoutPhoto(data: item.photo, url: item.photoURL, height: 320)
+                            WorkoutCover(elapsed: item.elapsed, sets: item.sets, volume: item.volume,
+                                         exercises: item.exercises,
+                                         seed: "\(item.title)-\(Int(item.date.timeIntervalSince1970))", height: 320)
+                        }
+                        .tabViewStyle(.page(indexDisplayMode: .automatic))
+                        .indexViewStyle(.page(backgroundDisplayMode: .always))
+                        .frame(height: 320)
+                        .clipShape(RoundedRectangle(cornerRadius: 12))
                     } else {
                         // Sin foto: portada visual elegante (nada de pila de texto).
                         WorkoutCover(elapsed: item.elapsed, sets: item.sets, volume: item.volume,

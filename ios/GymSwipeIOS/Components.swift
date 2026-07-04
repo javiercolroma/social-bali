@@ -387,6 +387,28 @@ struct WorkoutCover: View {
     }
 }
 
+/// Foto de entreno ENTERA (sin recortar): aspect-fit centrada sobre fondo oscuro
+/// suave. Para cuando la foto es la protagonista del post.
+struct FullWorkoutPhoto: View {
+    let data: Data?
+    let url: String?
+    var height: CGFloat = 320
+
+    var body: some View {
+        ZStack {
+            Color(hex: "171b12")
+            if let d = data, let ui = UIImage(data: d) {
+                Image(uiImage: ui).resizable().scaledToFit()
+            } else if let u = url, let link = URL(string: u) {
+                AsyncImage(url: link) { img in img.resizable().scaledToFit() } placeholder: { ProgressView().tint(.white) }
+            }
+        }
+        .frame(maxWidth: .infinity)
+        .frame(height: height)
+        .clipShape(RoundedRectangle(cornerRadius: 12))
+    }
+}
+
 /// Flecha de VOLVER para hojas (pop-ups): circulito con chevron, arriba a la izquierda.
 /// (Deslizar hacia abajo sigue funcionando; esto da una salida visible y familiar.)
 struct SheetBackButton: View {

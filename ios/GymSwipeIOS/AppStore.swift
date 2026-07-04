@@ -304,7 +304,8 @@ final class AppStore: ObservableObject {
                 byPartner[partner, default: []].append(m)
             }
             let ids = byPartner.keys.compactMap { UUID(uuidString: $0) }
-            messagedPeople = Self.asPeople((try? await Backend.shared.fetchProfiles(ids: ids)) ?? [])
+            let mp = (try? await Backend.shared.fetchProfiles(ids: ids)) ?? []
+            seedScores(mp); messagedPeople = Self.asPeople(mp)
             conversations = byPartner.map { (partner, rows) in
                 let msgs = rows.sorted { $0.created_at < $1.created_at }.map { r in
                     ChatMessage(id: r.id, fromMe: r.sender_id.lowercased() == meStr,
@@ -318,7 +319,9 @@ final class AppStore: ObservableObject {
         }
     }
 
-    private var scoreCache: [String: Int] = [:]
+    // @Published: al refrescar un score (perfil abierto, feed cargado) TODAS las insignias
+    // visibles se repintan a la vez — antes convivían valores viejos y nuevos (14 vs 16).
+    @Published private var scoreCache: [String: Int] = [:]
     /// Gym Score de cualquier perfil para el badge del avatar. El mío es el real;
     /// el de los demás es determinista (su historial demo no cambia) y se cachea.
     func personScore(_ id: String) -> Int {
@@ -335,6 +338,18 @@ final class AppStore: ObservableObject {
 
     /// Cachea el Gym Score REAL de un usuario (calculado de sus sesiones) para pintarlo en avatares.
     func setPersonScore(_ id: String, _ score: Int) { scoreCache[id.lowercased()] = score }
+
+    /// Siembra la caché desde perfiles del servidor (gym_score canónico que sube cada usuario).
+    func seedScores(_ rows: [ProfileRow]) {
+        for r in rows { if let sc = r.gym_score, sc > 0 { scoreCache[r.id.uuidString.lowercased()] = sc } }
+    }
+
+    /// Sube MI score al perfil: así todos me ven el mismo número en feed, búsquedas y perfil.
+    func pushMyScore() {
+        guard BackendConfig.isConfigured else { return }
+        let total = gymScore.total
+        Task { await Backend.shared.pushGymScore(total) }
+    }
 
     // MARK: - Training
 
@@ -824,7 +839,8 @@ final class AppStore: ObservableObject {
                 // Seguir puede desbloquear el logro "Sociable": celébralo (no estás entrenando).
                 refreshAchievements(celebrate: !isTraining)
                 Task {
-                    try? await Backend.shared.setFollow(uid, status: isPrivate ? "pending" : "accepted")
+                    do { try await Backend.shared.setFollow(uid, status: isPrivate ? "pending" : "accepted") }
+                    catch { print("[Backend] FOLLOW falló:", error) }
                     loadFollowing()
                 }
             }
@@ -914,7 +930,8 @@ final class AppStore: ObservableObject {
             let rows = (try? await Backend.shared.fetchFollowRequests()) ?? []
             let ids = rows.compactMap { UUID(uuidString: $0.follower_id) }
             guard !ids.isEmpty else { incomingRequestPeople = []; return }
-            incomingRequestPeople = Self.asPeople((try? await Backend.shared.fetchProfiles(ids: ids)) ?? [])
+            let ip = (try? await Backend.shared.fetchProfiles(ids: ids)) ?? []
+            seedScores(ip); incomingRequestPeople = Self.asPeople(ip)
         }
     }
 
@@ -949,7 +966,8 @@ final class AppStore: ObservableObject {
         Task {
             let follows = (try? await Backend.shared.fetchFollowing()) ?? []
             let ids = follows.filter { $0.status == "accepted" }.compactMap { UUID(uuidString: $0.following_id) }
-            followingPeople = Self.asPeople((try? await Backend.shared.fetchProfiles(ids: ids)) ?? [])
+            let fp = (try? await Backend.shared.fetchProfiles(ids: ids)) ?? []
+            seedScores(fp); followingPeople = Self.asPeople(fp)
             pendingFollowingIds = Set(follows.filter { $0.status == "pending" }.map { $0.following_id.lowercased() })
 
             let followers = (try? await Backend.shared.fetchFollowers()) ?? []
@@ -1116,6 +1134,7 @@ final class AppStore: ObservableObject {
         persist()
         if BackendConfig.isConfigured {
             Task { await Backend.shared.deleteSession(id: id) }
+            pushMyScore()
         }
     }
 
