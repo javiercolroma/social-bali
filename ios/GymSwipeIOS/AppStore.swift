@@ -66,6 +66,8 @@ final class AppStore: ObservableObject {
     @Published var messagedPeople: [SocialPerson] = []
     /// Perfil a abrir por deep link de invitación (forgeloop://user/<usuario>). Efímero.
     @Published var deepLinkPersonId: String? = nil
+    /// Mi celda (~5 km) del servidor, para distancias aproximadas en Partner.
+    @Published var myCell: (Double, Double)? = nil
     /// Solicitudes de seguimiento RECIBIDAS (tu cuenta es privada) pendientes de aceptar.
     @Published var incomingRequestPeople: [SocialPerson] = []
 
@@ -1132,8 +1134,10 @@ final class AppStore: ObservableObject {
                              score: 0, note: r.note,
                              authorName: r.author?.name ?? r.author?.handle,
                              authorHandle: r.author?.handle,
-                             authorAvatarURL: r.author?.avatar_url)
+                             authorAvatarURL: r.author?.avatar_url,
+                             cellLat: r.cell_lat, cellLon: r.cell_lon)
             }
+            myCell = await Backend.shared.fetchMyCell()
             persist()
         }
     }

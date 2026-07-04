@@ -148,6 +148,9 @@ struct TrainingPlan: Identifiable, Codable, Hashable {
     var authorName: String? = nil
     var authorHandle: String? = nil
     var authorAvatarURL: String? = nil
+    // Celda (~5 km) del autor al publicar; nil si no compartió ubicación.
+    var cellLat: Double? = nil
+    var cellLon: Double? = nil
 }
 
 // MARK: - Social

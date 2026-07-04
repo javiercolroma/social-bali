@@ -10,11 +10,25 @@ struct PartnerView: View {
     @State private var maxKm: Double = 100
 
     private var visiblePlans: [TrainingPlan] {
-        // Con backend REAL: todos los planes recientes (sin km simulados), los más nuevos primero.
-        if BackendConfig.isConfigured { return store.trainingPlans }
+        if BackendConfig.isConfigured {
+            // Distancia REAL aproximada (celdas de ~5 km). Los planes sin celda —o si yo
+            // no comparto ubicación— no se pueden medir: se muestran siempre, al final.
+            return store.trainingPlans
+                .filter { realKm($0).map { $0 <= maxKm } ?? true }
+                .sorted { (realKm($0) ?? .greatestFiniteMagnitude) < (realKm($1) ?? .greatestFiniteMagnitude) }
+        }
         return store.trainingPlans
             .filter { planKm($0) <= maxKm }
             .sorted { planKm($0) < planKm($1) }   // los más cercanos primero
+    }
+
+    /// Distancia aproximada entre mi celda y la del plan (haversine); nil si falta alguna.
+    private func realKm(_ plan: TrainingPlan) -> Double? {
+        guard let me = store.myCell, let la = plan.cellLat, let lo = plan.cellLon else { return nil }
+        let r = 6371.0, d2r = Double.pi / 180
+        let dLat = (la - me.0) * d2r, dLon = (lo - me.1) * d2r
+        let a = sin(dLat/2) * sin(dLat/2) + cos(me.0 * d2r) * cos(la * d2r) * sin(dLon/2) * sin(dLon/2)
+        return 2 * r * atan2(sqrt(a), sqrt(1 - a))
     }
 
     /// Primera tarjeta de otra persona (para anclar el tutorial de Aceptar/Descartar).
@@ -29,9 +43,6 @@ struct PartnerView: View {
                     }.buttonStyle(PrimaryButtonStyle())
                     .tourAnchor("partner.create")
 
-                    // El filtro por km era de la época demo (distancias simuladas); con
-                    // planes reales aún no guardamos coordenadas → fuera hasta que existan.
-                    if !BackendConfig.isConfigured {
                     VStack(spacing: 8) {
                         HStack {
                             Label("Cerca de mí", systemImage: "location.fill").font(.system(size: 13, weight: .heavy)).foregroundColor(Brand.muted)
@@ -42,7 +53,6 @@ struct PartnerView: View {
                     }
                     .padding(.top, 4)
                     .tourAnchor("partner.distance")
-                    }
                 }
 
                 if visiblePlans.isEmpty {
@@ -100,8 +110,12 @@ struct PartnerView: View {
                     Text(isMine ? "Tu plan" : (plan.authorName ?? owner?.name ?? "Compañero"))
                         .font(.system(size: 14, weight: .heavy)).foregroundColor(Brand.ink)
                     Spacer()
-                    if !isMine && !real {
-                        Text("a \(Int(planKm(plan))) km").font(.system(size: 12, weight: .heavy)).foregroundColor(Brand.soft)
+                    if !isMine {
+                        if real, let km = realKm(plan) {
+                            Text("a ~\(max(1, Int(km.rounded()))) km").font(.system(size: 12, weight: .heavy)).foregroundColor(Brand.soft)
+                        } else if !real {
+                            Text("a \(Int(planKm(plan))) km").font(.system(size: 12, weight: .heavy)).foregroundColor(Brand.soft)
+                        }
                     }
                     if plan.score > 0 { ScorePill(score: plan.score) }
                 }

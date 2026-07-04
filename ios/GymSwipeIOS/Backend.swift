@@ -139,7 +139,7 @@ final class Backend {
     func fetchTrainingPlans() async throws -> [TrainingPlanRow] {
         guard let client else { return [] }
         return try await client.from("training_plans")
-            .select("id,user_id,title,when_text,place,spots,note,created_at,author:profiles!training_plans_user_id_fkey(handle,name,avatar_url)")
+            .select("id,user_id,title,when_text,place,spots,note,created_at,cell_lat,cell_lon,author:profiles!training_plans_user_id_fkey(handle,name,avatar_url)")
             .gte("created_at", value: BackendDate.iso.string(from: Date().addingTimeInterval(-14 * 24 * 3600)))
             .order("created_at", ascending: false)
             .limit(50)
@@ -175,6 +175,16 @@ final class Backend {
         struct T: Encodable { let active_at: String }
         _ = try? await client.from("profiles").update(T(active_at: BackendDate.iso.string(from: Date())))
             .eq("id", value: me.uuidString).execute()
+    }
+
+    /// Mi celda (~5 km) guardada en el perfil; para calcular distancias aproximadas.
+    func fetchMyCell() async -> (Double, Double)? {
+        guard let client, let me = await currentUserIdAsync() else { return nil }
+        struct C: Codable { let geo_cell_lat: Double?; let geo_cell_lon: Double? }
+        let c: C? = try? await client.from("profiles").select("geo_cell_lat,geo_cell_lon")
+            .eq("id", value: me.uuidString).single().execute().value
+        guard let la = c?.geo_cell_lat, let lo = c?.geo_cell_lon else { return nil }
+        return (la, lo)
     }
 
     /// Celdas agregadas (celda → nº de usuarios activos 30 días). Sin identidades.
@@ -699,6 +709,8 @@ struct TrainingPlanRow: Codable {
     let spots: String
     let note: String?
     let created_at: String
+    let cell_lat: Double?
+    let cell_lon: Double?
     let author: Author?
 }
 
