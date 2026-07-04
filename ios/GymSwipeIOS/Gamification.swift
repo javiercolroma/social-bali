@@ -740,8 +740,11 @@ struct StreakCelebration: View {
 
 struct RecordsCard: View {
     @EnvironmentObject var store: AppStore
+    var compact = false                 // top 3 + «Ver todos» (el detalle vive en su hoja)
+    var onSeeAll: () -> Void = {}
     var body: some View {
         let records = store.personalBests.values.sorted { $0.e1rm > $1.e1rm }
+        let shown = compact ? 3 : 6
         PanelCard {
             HStack(spacing: 7) {
                 Image(systemName: "trophy.fill").font(.system(size: 13)).foregroundColor(Color(hex: "e2a915"))
@@ -752,17 +755,58 @@ struct RecordsCard: View {
                 Text("Registra entrenos para batir tus primeros récords 💪")
                     .font(.footnote).foregroundColor(Brand.muted).frame(maxWidth: .infinity, alignment: .leading).padding(.vertical, 4)
             } else {
-                ForEach(Array(records.prefix(6))) { r in
+                ForEach(Array(records.prefix(shown))) { r in
                     HStack {
                         Text(r.exercise).font(.system(size: 14, weight: .heavy)).foregroundColor(Brand.ink).lineLimit(1)
                         Spacer()
                         Text("\(fmt(r.weight)) kg × \(r.reps)").font(.system(size: 14, weight: .heavy)).foregroundColor(Brand.ink).monospacedDigit()
                         Text("· 1RM \(Int(r.e1rm.rounded()))").font(.system(size: 12, weight: .semibold)).foregroundColor(Brand.soft).monospacedDigit()
                     }
-                    if r.id != records.prefix(6).last?.id { Divider() }
+                    if r.id != records.prefix(shown).last?.id { Divider() }
+                }
+                if compact && records.count > shown {
+                    Button { FX.tap(); onSeeAll() } label: {
+                        Text("Ver los \(records.count) récords")
+                            .font(.system(size: 13, weight: .heavy)).foregroundColor(Color(hex: "4b6211"))
+                            .frame(maxWidth: .infinity).padding(.vertical, 8)
+                            .background(Brand.greenSoft.opacity(0.28)).clipShape(RoundedRectangle(cornerRadius: 10))
+                    }.buttonStyle(.plain)
                 }
             }
         }
     }
     private func fmt(_ v: Double) -> String { v == v.rounded() ? String(Int(v)) : String(format: "%.1f", v) }
+}
+
+
+/// Todos los récords personales, en su propia hoja (la tarjeta de Progreso muestra el top 3).
+struct AllRecordsSheet: View {
+    @EnvironmentObject var store: AppStore
+    var body: some View {
+        let records = store.personalBests.values.sorted { $0.e1rm > $1.e1rm }
+        NavigationStack {
+            ScrollView {
+                VStack(spacing: 0) {
+                    ForEach(Array(records.enumerated()), id: \.element.id) { i, r in
+                        HStack {
+                            Text(r.exercise).font(.system(size: 14, weight: .heavy)).foregroundColor(Brand.ink).lineLimit(1)
+                            Spacer()
+                            Text("\(r.weight == r.weight.rounded() ? String(Int(r.weight)) : String(format: "%.1f", r.weight)) kg × \(r.reps)")
+                                .font(.system(size: 14, weight: .heavy)).foregroundColor(Brand.ink).monospacedDigit()
+                            Text("· 1RM \(Int(r.e1rm.rounded()))").font(.system(size: 12, weight: .semibold)).foregroundColor(Brand.soft).monospacedDigit()
+                        }
+                        .padding(.vertical, 10)
+                        if i < records.count - 1 { Divider() }
+                    }
+                }
+                .padding(.horizontal, 16).padding(.vertical, 6)
+                .background(Color.white).clipShape(RoundedRectangle(cornerRadius: 16))
+                .overlay(RoundedRectangle(cornerRadius: 16).stroke(Brand.line))
+                .padding(14)
+            }
+            .background(Brand.bg)
+            .navigationTitle("Tus récords").navigationBarTitleDisplayMode(.inline)
+        }
+        .presentationDetents([.large]).presentationDragIndicator(.visible)
+    }
 }

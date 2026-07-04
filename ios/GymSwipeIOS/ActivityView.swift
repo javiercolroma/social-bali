@@ -11,6 +11,9 @@ struct ActivityView: View {
     @State private var detail: WorkoutSession?
     @State private var daySheet: DayPayload?
     @State private var progressExercise: IdString?   // evolución de un ejercicio (hoja)
+    @State private var showScoreDetail = false        // hoja con el desglose del Gym Score
+    @State private var showAllLifts = false           // hoja con TODOS los ejercicios (fuerza)
+    @State private var showAllRecords = false         // hoja con TODOS los récords
     @State private var showEpleyInfo = false
     @State private var showScoreInfo = false
 
@@ -35,6 +38,34 @@ struct ActivityView: View {
         .sheet(item: $detail) { ActivityDetailView(item: activityData($0)).environmentObject(store) }
         .sheet(item: $daySheet) { DaySessionsSheet(date: $0.date, sessions: $0.sessions).environmentObject(store) }
         .sheet(item: $progressExercise) { ExerciseProgressView(exerciseName: $0.id).environmentObject(store) }
+        .sheet(isPresented: $showScoreDetail) {
+            NavigationStack {
+                ScrollView { VStack(spacing: 12) { gymScoreCard }.padding(14) }
+                    .background(Brand.bg)
+                    .navigationTitle("Gym Score").navigationBarTitleDisplayMode(.inline)
+            }
+            .presentationDetents([.large]).presentationDragIndicator(.visible)
+        }
+        .sheet(isPresented: $showAllLifts) {
+            NavigationStack {
+                ScrollView {
+                    VStack(spacing: 0) {
+                        ForEach(Array(liftProgress.enumerated()), id: \.element.id) { i, lift in
+                            liftRow(lift)
+                            if i < liftProgress.count - 1 { Divider().padding(.vertical, 2) }
+                        }
+                    }
+                    .padding(.horizontal, 16).padding(.vertical, 8)
+                    .background(Color.white).clipShape(RoundedRectangle(cornerRadius: 16))
+                    .overlay(RoundedRectangle(cornerRadius: 16).stroke(Brand.line))
+                    .padding(14)
+                }
+                .background(Brand.bg)
+                .navigationTitle("Fuerza por ejercicio").navigationBarTitleDisplayMode(.inline)
+            }
+            .presentationDetents([.large]).presentationDragIndicator(.visible)
+        }
+        .sheet(isPresented: $showAllRecords) { AllRecordsSheet().environmentObject(store) }
     }
 
     private var switcher: some View {
@@ -64,28 +95,24 @@ struct ActivityView: View {
     // ranking) vive en Comunidad; aquí solo va TU progreso personal.
     @ViewBuilder
     private var progressContent: some View {
+        // Panel compacto: cada bloque se lee de un VISTAZO y el detalle vive en hojas.
         sectionHeader("RESUMEN")
-        rachaCard.tourAnchor("activity.progress")
-        gymScoreCard
+        heroRow.tourAnchor("activity.progress")
 
         sectionHeader("ESTA SEMANA")
         WeeklyQuestsCard()
 
-        sectionHeader("RÉCORDS Y PROGRESO")
-        RecordsCard()
+        sectionHeader("FUERZA POR EJERCICIO")
         if store.sessions.isEmpty {
             Text("Completa y guarda entrenos para medir tu evolución de carga.")
                 .font(.footnote).foregroundColor(Brand.muted)
                 .frame(maxWidth: .infinity, alignment: .center).padding(.top, 2)
         } else {
-            trendCard
             strengthCard
-            if store.sessions.count < 2 {
-                Text("Guarda al menos 2 entrenos para ver tendencias más fiables.")
-                    .font(.caption).foregroundColor(Brand.soft)
-                    .frame(maxWidth: .infinity, alignment: .center).padding(.top, 2)
-            }
         }
+
+        sectionHeader("RÉCORDS")
+        RecordsCard(compact: true, onSeeAll: { showAllRecords = true })
 
         sectionHeader("HISTORIAL")
         TrainingCalendarView(sessions: sessions) { date, daySessions in
@@ -101,17 +128,6 @@ struct ActivityView: View {
             .foregroundColor(Brand.ink)
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.top, 4).padding(.leading, 4)
-    }
-
-    /// Tendencia general: progreso de carga (1RM medio) + volumen semanal.
-    private var trendCard: some View {
-        PanelCard {
-            Text("TENDENCIA").font(.caption2).fontWeight(.heavy).foregroundColor(Brand.muted)
-                .frame(maxWidth: .infinity, alignment: .leading)
-            trendTile("Carga (1RM medio)", strengthTrendPct, "dumbbell.fill")
-            Text("Compara tu 1RM estimado actual con el primero que registraste, promediado entre tus ejercicios.")
-                .font(.caption2).foregroundColor(Brand.soft)
-        }
     }
 
     private func trendTile(_ label: String, _ pct: Double?, _ icon: String) -> some View {
@@ -142,6 +158,17 @@ struct ActivityView: View {
                     Text("1RM estimado (fórmula de Epley)").font(.caption2).foregroundColor(Brand.soft)
                 }
                 Spacer()
+                // Tendencia general integrada como chip (antes era una tarjeta entera).
+                if let pct = strengthTrendPct {
+                    let up = pct >= 0
+                    HStack(spacing: 3) {
+                        Image(systemName: up ? "arrow.up.right" : "arrow.down.right").font(.system(size: 10, weight: .heavy))
+                        Text("\(up ? "+" : "")\(Int(pct.rounded()))%").font(.system(size: 12, weight: .heavy))
+                    }
+                    .foregroundColor(up ? Color(hex: "3f7d12") : Color(hex: "a73232"))
+                    .padding(.horizontal, 8).padding(.vertical, 4)
+                    .background(up ? Brand.greenSoft.opacity(0.5) : Brand.redSoft).clipShape(Capsule())
+                }
                 Button { FX.tap(); showEpleyInfo = true } label: {
                     Image(systemName: "info.circle").font(.system(size: 19)).foregroundColor(Brand.soft)
                 }
@@ -153,10 +180,18 @@ struct ActivityView: View {
                     .font(.footnote).foregroundColor(Brand.muted)
             } else {
                 VStack(spacing: 0) {
-                    ForEach(Array(liftProgress.prefix(6).enumerated()), id: \.element.id) { i, lift in
+                    ForEach(Array(liftProgress.prefix(4).enumerated()), id: \.element.id) { i, lift in
                         liftRow(lift)
-                        if i < min(6, liftProgress.count) - 1 { Divider().padding(.vertical, 2) }
+                        if i < min(4, liftProgress.count) - 1 { Divider().padding(.vertical, 2) }
                     }
+                }
+                if liftProgress.count > 4 {
+                    Button { FX.tap(); showAllLifts = true } label: {
+                        Text("Ver los \(liftProgress.count) ejercicios")
+                            .font(.system(size: 13, weight: .heavy)).foregroundColor(Color(hex: "4b6211"))
+                            .frame(maxWidth: .infinity).padding(.vertical, 8)
+                            .background(Brand.greenSoft.opacity(0.28)).clipShape(RoundedRectangle(cornerRadius: 10))
+                    }.buttonStyle(.plain)
                 }
             }
         }
@@ -231,36 +266,56 @@ struct ActivityView: View {
     }
 
     /// Racha en horizontal, de extremo a extremo, con el número dentro de una llama.
-    private var rachaCard: some View {
-        let s = store.player.streak
-        return PanelCard {
-            HStack(spacing: 16) {
-                ZStack {
-                    Circle().fill(Color(hex: "fff0e0")).frame(width: 64, height: 64)
-                    Image(systemName: "flame.fill")
-                        .font(.system(size: 34))
-                        .foregroundStyle(LinearGradient(colors: [Color(hex: "ffb33b"), Color(hex: "f0560a")],
-                                                        startPoint: .top, endPoint: .bottom))
+    /// Cabecera de un vistazo: Racha y Gym Score lado a lado, compactos.
+    /// El detalle del score (pilares, fiabilidad, explicación) vive en su hoja.
+    private var heroRow: some View {
+        let score = store.gymScore
+        let tier = ScoreTier.of(score.total)
+        return HStack(spacing: 10) {
+            // Racha
+            VStack(alignment: .leading, spacing: 5) {
+                HStack(spacing: 5) {
+                    Image(systemName: "flame.fill").font(.system(size: 12))
+                        .foregroundStyle(LinearGradient(colors: [Color(hex: "ffb33b"), Color(hex: "f0560a")], startPoint: .top, endPoint: .bottom))
+                    Text("RACHA").font(.caption2).fontWeight(.heavy).foregroundColor(Brand.muted)
+                    Spacer()
+                    Text("🧊 \(store.streakFreezes)").font(.system(size: 11, weight: .heavy)).foregroundColor(Brand.soft)
                 }
-                VStack(alignment: .leading, spacing: 2) {
-                    HStack(alignment: .firstTextBaseline, spacing: 6) {
-                        Text("\(s)").font(.system(size: 40, weight: .heavy)).foregroundColor(Brand.ink)
-                        Text(s > 0 ? "en racha" : "sin racha")
-                            .font(.system(size: 15, weight: .heavy)).foregroundColor(Color(hex: "e8820c"))
-                    }
-                    Text(streakSubtitle)
-                        .font(.system(size: 13, weight: .bold)).foregroundColor(Brand.soft)
-                        .fixedSize(horizontal: false, vertical: true)
+                HStack(alignment: .firstTextBaseline, spacing: 5) {
+                    Text("\(store.player.streak)").font(.system(size: 34, weight: .heavy)).foregroundColor(Brand.ink)
+                    Text("días").font(.system(size: 13, weight: .heavy)).foregroundColor(Color(hex: "e8820c"))
                 }
-                Spacer()
-                // Congeladores: protegen la racha si te saltas algún día.
-                VStack(spacing: 3) {
-                    Text("🧊").font(.system(size: 22))
-                    Text("\(store.streakFreezes)").font(.system(size: 15, weight: .heavy)).foregroundColor(Brand.ink)
-                    Text("protege").font(.system(size: 9, weight: .heavy)).foregroundColor(Brand.soft)
-                }
+                Text("Máx. 3 días de descanso").font(.system(size: 10, weight: .semibold)).foregroundColor(Brand.soft)
             }
-            .frame(maxWidth: .infinity)
+            .padding(14).frame(maxWidth: .infinity, alignment: .leading)
+            .background(Color.white).clipShape(RoundedRectangle(cornerRadius: 16))
+            .overlay(RoundedRectangle(cornerRadius: 16).stroke(Brand.line))
+
+            // Gym Score → hoja con el desglose completo
+            Button { FX.tap(); showScoreDetail = true } label: {
+                VStack(alignment: .leading, spacing: 5) {
+                    HStack(spacing: 5) {
+                        Text("GYM SCORE").font(.caption2).fontWeight(.heavy).foregroundColor(Brand.muted)
+                        Spacer()
+                        Image(systemName: "chevron.right").font(.system(size: 10, weight: .bold)).foregroundColor(Brand.soft)
+                    }
+                    HStack(alignment: .firstTextBaseline, spacing: 5) {
+                        Text("\(score.total)").font(.system(size: 34, weight: .heavy)).foregroundColor(Brand.ink)
+                        Text("/100").font(.system(size: 12, weight: .heavy)).foregroundColor(Brand.soft)
+                    }
+                    HStack(spacing: 4) {
+                        Image(systemName: tier.symbol).font(.system(size: 9, weight: .heavy))
+                        Text(tier.name).font(.system(size: 11, weight: .heavy))
+                    }
+                    .foregroundColor(tier.textColor)
+                    .padding(.horizontal, 8).padding(.vertical, 3)
+                    .background(tier.fill).clipShape(Capsule())
+                    .overlay(Capsule().stroke(.white.opacity(0.6), lineWidth: 1))
+                }
+                .padding(14).frame(maxWidth: .infinity, alignment: .leading)
+                .background(Color.white).clipShape(RoundedRectangle(cornerRadius: 16))
+                .overlay(RoundedRectangle(cornerRadius: 16).stroke(Brand.line))
+            }.buttonStyle(.plain)
         }
     }
 
