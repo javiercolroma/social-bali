@@ -30,6 +30,11 @@ struct RootView: View {
                 screen(4) { ActivityView() }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
+            // Forgey se ASOMA por el lateral, esperando a ayudar (toca → chat IA).
+            .overlay(alignment: .bottomTrailing) {
+                ForgeyPeek { FX.tap(); showForgey = true }
+                    .padding(.bottom, 96)
+            }
             .onChange(of: tab) { t in FX.selection(); maybeShowTour(t) }
 
             CustomTabBar(tab: tab, onSelect: { tab = $0 })
@@ -223,19 +228,6 @@ struct RootView: View {
                 Text(titles[tab]).font(.system(size: 30, weight: .heavy)).foregroundColor(Brand.ink)
             }
             Spacer()
-            // Forgey IA: tu coach on-device, disponible desde CUALQUIER pantalla.
-            Button { FX.tap(); showForgey = true } label: {
-                ZStack {
-                    RoundedRectangle(cornerRadius: 14).fill(Color.white)
-                        .frame(width: 46, height: 46)
-                        .overlay(RoundedRectangle(cornerRadius: 14).stroke(Brand.line))
-                    Mascot(size: 24)
-                    Image(systemName: "sparkles").font(.system(size: 10, weight: .heavy))
-                        .foregroundColor(Color(hex: "4b6211"))
-                        .offset(x: 13, y: -13)
-                }
-            }
-            .accessibilityLabel("Pregúntale a Forgey")
             headerButton(system: "envelope.fill", badge: store.unreadMessages) { FX.tap(); messagesTab = 1; showMessages = true }
             headerButton(system: "bell.fill", badge: store.unreadNotifications) { FX.tap(); showNotifications = true }
 }
@@ -344,5 +336,42 @@ struct CustomTabBar: View {
         .frame(maxWidth: .infinity)
         .contentShape(Rectangle())
         .onTapGesture { onSelect(idx) }
+    }
+}
+
+
+/// Forgey asomándose por el borde derecho de la pantalla, como esperando a ayudar:
+/// medio cuerpo fuera, inclinado y saludando. Cada pocos segundos hace un pequeño
+/// "hola" (se asoma un poco más) para recordarte que está ahí. Toca → chat IA.
+struct ForgeyPeek: View {
+    var action: () -> Void
+    @State private var peeking = false
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    var body: some View {
+        Button(action: action) {
+            Mascot(size: 52, wave: true)
+                .rotationEffect(.degrees(-16))
+                .shadow(color: .black.opacity(0.14), radius: 8, x: -2, y: 3)
+                // En reposo: medio cuerpo fuera. Al "asomarse": entra un poco más.
+                .offset(x: peeking ? 18 : 30)
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Pregúntale a Forgey")
+        .onAppear {
+            guard !reduceMotion else { return }
+            scheduleWiggle()
+        }
+    }
+
+    /// Se asoma 1,2 s cada ~6 s (suave, sin ser pesado).
+    private func scheduleWiggle() {
+        DispatchQueue.main.asyncAfter(deadline: .now() + Double.random(in: 4.5...7.5)) {
+            withAnimation(.spring(response: 0.45, dampingFraction: 0.7)) { peeking = true }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
+                withAnimation(.spring(response: 0.5, dampingFraction: 0.8)) { peeking = false }
+                scheduleWiggle()
+            }
+        }
     }
 }
