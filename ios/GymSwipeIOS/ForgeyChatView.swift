@@ -61,7 +61,6 @@ struct ForgeyChatView: View {
                 }
             }
             .background(Brand.bg)
-            .toolbar { ToolbarItem(placement: .cancellationAction) { Button("Cerrar") { dismiss() }.foregroundColor(Brand.soft) } }
             .navigationBarTitleDisplayMode(.inline)
         }
     }
@@ -295,7 +294,6 @@ struct AIWorkoutSheet: View {
             }
             .background(Brand.bg)
             .navigationTitle("Crear con Forgey").navigationBarTitleDisplayMode(.inline)
-            .toolbar { ToolbarItem(placement: .cancellationAction) { Button("Cerrar") { dismiss() }.foregroundColor(Brand.soft) } }
             // Editor completo prefijado con lo generado (nombre/grupo editados incluidos);
             // al guardar desde ahí se crea como entreno nuevo del plan.
             .sheet(isPresented: $adjusting, onDismiss: { dismiss() }) {

@@ -86,11 +86,6 @@ struct AuthProviderSheet: View {
             }
             .padding(.horizontal, 20)
             .background(Brand.bg)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancelar") { dismiss() }.foregroundColor(Brand.soft)
-                }
-            }
             .navigationBarTitleDisplayMode(.inline)
         }
         .presentationDetents([.medium])

@@ -1073,15 +1073,17 @@ final class AppStore: ObservableObject {
     }
 
     /// Añade a TU plan un entreno recibido por el chat, como entreno EDITABLE. Re-genera ids
-    /// (para no colisionar con los del emisor). Si ya tienes uno con ese nombre, lo añade con un
-    /// sufijo « (2)» — así puedes tener ambos y editarlos por separado.
+    /// (para no colisionar con los del emisor). Puedes darle TU nombre y grupo al guardarlo;
+    /// si el nombre ya existe, se añade un sufijo « (2)» para poder editar ambos por separado.
     @discardableResult
-    func addSharedWorkout(_ t: WorkoutTemplate) -> WorkoutTemplate {
-        var finalName = t.name
+    func addSharedWorkout(_ t: WorkoutTemplate, name: String? = nil, group: String? = nil) -> WorkoutTemplate {
+        let base = (name?.trimmingCharacters(in: .whitespaces)).flatMap { $0.isEmpty ? nil : $0 } ?? t.name
+        let blockOverride = (group?.trimmingCharacters(in: .whitespaces)).flatMap { $0.isEmpty ? nil : $0 }
+        var finalName = base
         if hasSavedWorkoutNamed(finalName) {
             var n = 2
-            while hasSavedWorkoutNamed("\(t.name) (\(n))") { n += 1 }
-            finalName = "\(t.name) (\(n))"
+            while hasSavedWorkoutNamed("\(base) (\(n))") { n += 1 }
+            finalName = "\(base) (\(n))"
         }
         let reid = t.exercises.map { e -> Exercise in
             var c = e
@@ -1090,7 +1092,7 @@ final class AppStore: ObservableObject {
         }
         let w = WorkoutTemplate(id: newId("w"), name: finalName,
                                 description: AppStore.summary(of: reid),
-                                block: t.block.isEmpty ? "Compartidos" : t.block, exercises: reid)
+                                block: blockOverride ?? (t.block.isEmpty ? "Compartidos" : t.block), exercises: reid)
         savedWorkouts.insert(w, at: 0)
         FX.success()
         persist()
