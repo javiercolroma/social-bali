@@ -67,7 +67,7 @@ struct PlanView: View {
         .background(Brand.bg)
         .sheet(item: $preview) { WorkoutPreview(workoutId: $0.id, onLoaded: onLoaded).environmentObject(store) }
         .sheet(isPresented: $creating) { CreateWorkoutView().environmentObject(store) }
-        .sheet(isPresented: $aiCreating) { AIWorkoutSheet().environmentObject(store) }
+        .sheet(isPresented: $aiCreating) { AIWorkoutSheet(onLoaded: onLoaded).environmentObject(store) }
         .alert("¿Eliminar entreno?", isPresented: Binding(get: { pendingDelete != nil }, set: { if !$0 { pendingDelete = nil } }), presenting: pendingDelete) { w in
             Button("Eliminar", role: .destructive) { FX.warning(); store.deleteWorkout(w.id); pendingDelete = nil }
             Button("Cancelar", role: .cancel) { pendingDelete = nil }

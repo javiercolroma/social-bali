@@ -199,6 +199,8 @@ struct ForgeyChatView: View {
 struct AIWorkoutSheet: View {
     @EnvironmentObject var store: AppStore
     @Environment(\.dismiss) private var dismiss
+    /// Al «Guardar y entrenar»: además de guardar, se carga el entreno y se navega a Entreno.
+    var onLoaded: () -> Void = {}
     @State private var descriptionText = ""
     @State private var generated: WorkoutTemplate?
     @State private var generating = false
@@ -293,14 +295,25 @@ struct AIWorkoutSheet: View {
                                 }
                             }
 
+                            // Guardar + CARGAR + ir a Entreno (lo natural si venías a entrenar).
+                            Button {
+                                FX.start()
+                                let saved = save(w)
+                                store.loadWorkout(saved)
+                                dismiss()
+                                onLoaded()
+                            } label: { Label("Guardar y entrenar ahora", systemImage: "dumbbell.fill").frame(maxWidth: .infinity) }
+                                .buttonStyle(PrimaryButtonStyle())
+
                             Button {
                                 FX.success()
-                                store.addWorkout(name: editName.isEmpty ? w.name : editName,
-                                                 group: editGroup.isEmpty ? w.block : editGroup,
-                                                 exercises: w.exercises)
+                                _ = save(w)
                                 dismiss()
-                            } label: { Label("Guardar en mi plan", systemImage: "checkmark").frame(maxWidth: .infinity) }
-                                .buttonStyle(PrimaryButtonStyle())
+                            } label: {
+                                Text("Solo guardar en el plan").font(.system(size: 14, weight: .heavy)).foregroundColor(Brand.ink)
+                                    .frame(maxWidth: .infinity).frame(minHeight: 44)
+                                    .background(Brand.chip).clipShape(RoundedRectangle(cornerRadius: 12))
+                            }
 
                             // Para tocar series/reps/pesos o quitar ejercicios: editor completo.
                             Button { adjusting = true } label: {
@@ -337,6 +350,18 @@ struct AIWorkoutSheet: View {
         for g in store.customGroups + ["Pierna", "Pecho", "Espalda", "Push", "Pull", "Full body", "Otros"]
         where seen.insert(g).inserted { out.append(g) }
         return out
+    }
+
+    /// Guarda con el nombre/grupo elegidos (el `day` de los ejercicios pasa a ser el nombre
+    /// final, para que el encabezado del entreno muestre lo que TÚ escribiste) y devuelve
+    /// la plantilla lista para cargar.
+    private func save(_ w: WorkoutTemplate) -> WorkoutTemplate {
+        let finalName = editName.isEmpty ? w.name : editName
+        let finalGroup = editGroup.isEmpty ? w.block : editGroup
+        let exercises = w.exercises.map { e -> Exercise in var c = e; c.day = finalName; return c }
+        store.addWorkout(name: finalName, group: finalGroup, exercises: exercises)
+        return WorkoutTemplate(id: w.id, name: finalName, description: w.description,
+                               block: finalGroup, exercises: exercises)
     }
 
     private func generate() {
