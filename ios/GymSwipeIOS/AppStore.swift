@@ -461,7 +461,7 @@ final class AppStore: ObservableObject {
         // Plausibilidad (anti-fake): ÚNICO criterio = duración (media ≥ 20 s por serie).
         // Sin topes de series/XP (decisión de producto). El guardado de sesiones implausibles
         // se bloquea en la UI (TrainView); esto queda como cinturón para datos sincronizados.
-        let verified = totalSets >= 1 && elapsed >= max(60, totalSets * 20)
+        let verified = FeatureFlags.allowShortWorkouts || (totalSets >= 1 && elapsed >= max(60, totalSets * 20))
         // El histórico se escribe con la marca: el Gym Score ignora las entradas no verificadas.
         for var e in newEntries.reversed() { e.verified = verified; history.insert(e, at: 0) }
         let trimmed = name.trimmingCharacters(in: .whitespaces)

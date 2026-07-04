@@ -52,6 +52,7 @@ struct TrainView: View {
     /// (media ≥ 20 s por serie completada). El resumen se muestra normal, pero avisa de
     /// que no se guardará y no ofrece el guardado.
     private var sessionPlausible: Bool {
+        if FeatureFlags.allowShortWorkouts { return true }   // ⚠️ flag de pruebas
         let elapsed = finalElapsed > 0 ? finalElapsed : elapsedSeconds
         // Mínimos: ≥1 serie hecha, ≥60 s en total y media ≥20 s/serie (el agujero:
         // con 0 series la regla pasaba trivialmente y un entreno de 2 s se guardaba).

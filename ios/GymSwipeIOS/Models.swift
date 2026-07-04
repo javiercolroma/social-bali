@@ -5,6 +5,9 @@ import Foundation
 /// se migre a backend real (planes en Supabase + matching por cercanía).
 enum FeatureFlags {
     static let partnerEnabled = true   // Partner REAL (planes en Supabase + chat real)
+    /// ⚠️ SOLO PRUEBAS: permite guardar entrenos cortos/implausibles (ignora la regla
+    /// anti-fake en el cliente). APAGAR antes de cualquier lanzamiento público.
+    static let allowShortWorkouts = true
 }
 
 enum ExerciseStatus: String, Codable {
