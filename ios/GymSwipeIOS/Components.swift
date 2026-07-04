@@ -387,8 +387,8 @@ struct WorkoutCover: View {
     }
 }
 
-/// Foto de entreno ENTERA (sin recortar): aspect-fit centrada sobre fondo oscuro
-/// suave. Para cuando la foto es la protagonista del post.
+/// Foto de entreno ENTERA (sin recortar): aspect-fit centrada sobre BLANCO, como el
+/// fondo de la tarjeta — sin bandas negras (feedback: homogéneo con la app clara).
 struct FullWorkoutPhoto: View {
     let data: Data?
     let url: String?
@@ -396,11 +396,11 @@ struct FullWorkoutPhoto: View {
 
     var body: some View {
         ZStack {
-            Color(hex: "171b12")
+            Color.white
             if let d = data, let ui = UIImage(data: d) {
                 Image(uiImage: ui).resizable().scaledToFit()
             } else if let u = url, let link = URL(string: u) {
-                AsyncImage(url: link) { img in img.resizable().scaledToFit() } placeholder: { ProgressView().tint(.white) }
+                AsyncImage(url: link) { img in img.resizable().scaledToFit() } placeholder: { ProgressView() }
             }
         }
         .frame(maxWidth: .infinity)
