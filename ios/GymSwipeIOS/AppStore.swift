@@ -207,7 +207,13 @@ final class AppStore: ObservableObject {
         let minClosed = members.map { $0.closedSets }.min() ?? 0
         return members.first { $0.closedSets == minClosed } ?? first
     }
-    var allWorkouts: [WorkoutTemplate] { (templates + savedWorkouts).filter { !hiddenWorkoutIds.contains($0.id) } }
+    /// Tus entrenos: los guardados PISAN a la plantilla predefinida con el mismo id
+    /// (así, editar una predefinida conserva el id y la previsualización ve los cambios).
+    var allWorkouts: [WorkoutTemplate] {
+        let savedIds = Set(savedWorkouts.map { $0.id })
+        return (templates.filter { !savedIds.contains($0.id) } + savedWorkouts)
+            .filter { !hiddenWorkoutIds.contains($0.id) }
+    }
 
     /// Miembros de la superserie de `ex` (en orden). Vacío si no es una superserie.
     func supersetPeers(of ex: Exercise) -> [Exercise] {
@@ -1176,7 +1182,16 @@ final class AppStore: ObservableObject {
             persist()
             pushWorkoutToBackend(w)   // sube el cambio al servidor
         } else {
-            addWorkout(name: name, group: group, exercises: exercises)
+            // Plantilla predefinida: la copia editable CONSERVA el id → la lista y la
+            // previsualización muestran los cambios al instante (antes se creaba con id
+            // nuevo y parecía que "no se guardaba").
+            let g = group.trimmingCharacters(in: .whitespaces)
+            let copy = WorkoutTemplate(id: id, name: name.isEmpty ? "Mi entreno" : name,
+                                       description: AppStore.summary(of: exercises),
+                                       block: g.isEmpty ? "Otros" : g, exercises: exercises)
+            savedWorkouts.insert(copy, at: 0)
+            persist()
+            pushWorkoutToBackend(copy)
         }
     }
 

@@ -304,6 +304,7 @@ struct CreateWorkoutView: View {
 
     var body: some View {
         NavigationStack {
+            ScrollViewReader { proxy in
             ScrollView {
                 VStack(spacing: 14) {
                     labeled("NOMBRE") {
@@ -320,7 +321,7 @@ struct CreateWorkoutView: View {
                     labeled("EJERCICIOS") {
                         VStack(spacing: 10) {
                             ForEach(Array(drafts.enumerated()), id: \.element.id) { idx, _ in
-                                exerciseCard($drafts[idx], index: idx)
+                                exerciseCard($drafts[idx], index: idx).id(drafts[idx].id)
                                 if idx < drafts.count - 1 { supersetLink(idx) }
                             }
                             addButton
@@ -331,6 +332,16 @@ struct CreateWorkoutView: View {
                         .buttonStyle(PrimaryButtonStyle(enabled: canSave)).disabled(!canSave)
                 }
                 .padding(16)
+                .padding(.bottom, 260)   // aire para que el teclado nunca tape la tarjeta activa
+            }
+            // Con el teclado abierto, desplaza SIEMPRE hasta la tarjeta que estás editando.
+            .onChange(of: focusedExercise) { id in
+                guard let id else { return }
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
+                    withAnimation(.easeOut(duration: 0.25)) { proxy.scrollTo(id, anchor: .center) }
+                }
+            }
+            .scrollDismissesKeyboard(.interactively)
             }
             .background(Brand.bg)
             .navigationTitle(editing == nil ? "Crear entreno" : "Editar entreno").navigationBarTitleDisplayMode(.inline)
