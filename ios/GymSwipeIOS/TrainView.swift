@@ -45,13 +45,12 @@ struct TrainView: View {
     private var elapsedSeconds: Int { sessionStart.map { max(0, Int(-$0.timeIntervalSinceNow)) } ?? 0 }
     private var finished: Bool { store.activeExercise == nil && !store.exercises.isEmpty }
 
-    /// Misma regla anti-fake que el guardado y el servidor (15 s de media por serie + topes).
-    /// Si la sesión es implausible, el resumen NI SIQUIERA ofrece guardarla.
+    /// Misma regla anti-fake que el guardado y el servidor: ÚNICO criterio, la duración
+    /// (media ≥ 20 s por serie completada). El resumen se muestra normal, pero avisa de
+    /// que no se guardará y no ofrece el guardado.
     private var sessionPlausible: Bool {
-        let done = completedSets
-        let xp = store.exercises.reduce(0) { $0 + $1.completedSets * 12 + ($1.completedSets > 0 ? 18 : 0) }
         let elapsed = finalElapsed > 0 ? finalElapsed : elapsedSeconds
-        return elapsed >= done * 15 && done <= 60 && xp <= 600
+        return elapsed >= completedSets * 20
     }
 
     var body: some View {
@@ -475,18 +474,31 @@ struct TrainView: View {
                 Divider().padding(.vertical, 2)
 
                 if !sessionPlausible {
-                    // Entreno falseado: no se puede guardar (protege ranking, score y récords).
-                    VStack(spacing: 8) {
-                        Image(systemName: "hare.fill").font(.system(size: 30)).foregroundColor(Color(hex: "a73232"))
-                        Text("Demasiado rápido para ser real").font(.system(size: 16, weight: .heavy)).foregroundColor(Brand.ink)
-                        Text("Has cerrado \(completedSets) series en \(timeString(finalElapsed)). Un entreno así no se puede guardar: rompería tu Gym Score, tus récords y el ranking.")
-                            .font(.footnote).foregroundColor(Brand.muted).multilineTextAlignment(.center)
+                    // La pantalla final se muestra NORMAL (arriba están tus estadísticas);
+                    // aquí solo se avisa de que no se guardará, con tono informativo.
+                    HStack(alignment: .top, spacing: 10) {
+                        Image(systemName: "clock.badge.exclamationmark").font(.system(size: 20)).foregroundColor(Color(hex: "b8860b"))
+                        VStack(alignment: .leading, spacing: 3) {
+                            Text("Este entreno no se guardará").font(.system(size: 15, weight: .heavy)).foregroundColor(Brand.ink)
+                            Text("Duración demasiado baja: \(completedSets) series en \(timeString(finalElapsed)) (mínimo ~20 s por serie de media). No contaría para tu Gym Score, récords ni ranking.")
+                                .font(.caption).foregroundColor(Brand.muted).fixedSize(horizontal: false, vertical: true)
+                        }
                     }
-                    .frame(maxWidth: .infinity).padding(14)
-                    .background(Brand.redSoft.opacity(0.5)).clipShape(RoundedRectangle(cornerRadius: 12))
-                    Button(role: .destructive) { store.discardSession(); resetLocal() } label: {
-                        Label("Descartar entreno", systemImage: "trash").frame(maxWidth: .infinity)
-                    }.padding(.top, 2)
+                    .frame(maxWidth: .infinity, alignment: .leading).padding(12)
+                    .background(Color(hex: "fff3d6")).clipShape(RoundedRectangle(cornerRadius: 12))
+                    // ¿Le diste a "Finalizar" antes de tiempo? Vuelve y sigue con la sesión.
+                    if store.activeExercise != nil {
+                        Button { FX.tap(); withAnimation { showSummary = false } } label: {
+                            Label("Seguir entrenando", systemImage: "arrow.uturn.backward")
+                                .font(.system(size: 15, weight: .heavy)).foregroundColor(Brand.ink)
+                                .frame(maxWidth: .infinity).frame(minHeight: 48)
+                                .background(Brand.chip).clipShape(RoundedRectangle(cornerRadius: 12))
+                        }
+                    }
+                    // Salir de aquí sin dramas: el entreno simplemente no se guarda.
+                    Button { FX.tap(); store.discardSession(); resetLocal() } label: {
+                        Label("Continuar", systemImage: "checkmark").frame(maxWidth: .infinity)
+                    }.buttonStyle(PrimaryButtonStyle()).padding(.top, 2)
                 } else {
                 summaryLabel("NOMBRE DEL ENTRENO")
                 TextField(defaultSessionName, text: $sessionName)
