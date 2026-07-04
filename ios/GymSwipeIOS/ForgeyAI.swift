@@ -35,47 +35,59 @@ final class ForgeyAI: ObservableObject {
     // MARK: - Contexto: resumen COMPACTO de tus entrenos (el modelo on-device tiene contexto corto)
 
     /// Resumen del historial del usuario para que Forgey responda con TUS datos.
+    /// ESTRUCTURADO y con los datos clave PRE-CALCULADOS (mejor ejercicio, progresión
+    /// mejor/peor…): el modelo on-device es pequeño y responde bien cuando el dato exacto
+    /// ya está servido; con prosa larga tiende a "resumir el perfil" en vez de contestar.
     static func context(from store: AppStore) -> String {
-        var out: [String] = []
         let score = store.gymScore
-        out.append("Usuario: \(store.account?.name ?? "atleta"). Racha: \(store.player.streak) días. Gym Score: \(score.total)/100 (fuerza \(score.strength), constancia \(score.consistency), volumen \(score.volume)).")
+        var out: [String] = []
+        out.append("PERFIL: \(store.account?.name ?? "atleta") · racha \(store.player.streak) días · Gym Score \(score.total)/100 (fuerza \(score.strength), constancia \(score.consistency), volumen \(score.volume)).")
 
-        // Últimas sesiones (máx 10): fecha, nombre y mejor serie por ejercicio.
-        let f = DateFormatter(); f.dateFormat = "d MMM"; f.locale = Locale(identifier: "es_ES")
-        let recent = store.sessions.sorted { $0.date > $1.date }.prefix(10)
-        if recent.isEmpty {
-            out.append("Aún no tiene entrenos guardados.")
-        } else {
-            out.append("Últimos entrenos:")
-            for s in recent {
-                let exs = (s.items ?? []).map { it -> String in
-                    let sets = it.logs ?? []
-                    let best = sets.max { $0.weight * (1 + Double($0.reps) / 30) < $1.weight * (1 + Double($1.reps) / 30) }
-                    let w = best?.weight ?? it.weight, r = best?.reps ?? it.reps
-                    return "\(it.name) \(w == w.rounded() ? String(Int(w)) : String(format: "%.1f", w))kg×\(r)"
-                }.joined(separator: ", ")
-                out.append("- \(f.string(from: s.date)) «\(s.name)»: \(exs)")
-            }
-        }
-
-        // Progresión por ejercicio (primera vs última marca): para "¿dónde progreso menos?".
-        var firstBest: [String: Double] = [:], lastBest: [String: Double] = [:], count: [String: Int] = [:]
+        // Por ejercicio: mejor 1RM estimado, nº de sesiones y progresión primera→última.
+        struct Stat { var bestE: Double = 0; var bestW: Double = 0; var bestR: Int = 0; var first: Double = 0; var last: Double = 0; var n = 0 }
+        var stats: [String: Stat] = [:]
         for s in store.sessions.sorted(by: { $0.date < $1.date }) {
             for it in (s.items ?? []) {
                 let sets = it.logs ?? [SetLog(reps: it.reps, weight: it.weight)]
-                guard let e = sets.map({ $0.weight * (1 + Double(min(20, $0.reps)) / 30) }).max(), e > 0 else { continue }
-                if firstBest[it.name] == nil { firstBest[it.name] = e }
-                lastBest[it.name] = e
-                count[it.name, default: 0] += 1
+                guard let best = sets.max(by: { e1($0) < e1($1) }), e1(best) > 0 else { continue }
+                var st = stats[it.name] ?? Stat()
+                if e1(best) > st.bestE { st.bestE = e1(best); st.bestW = best.weight; st.bestR = best.reps }
+                if st.n == 0 { st.first = e1(best) }
+                st.last = e1(best); st.n += 1
+                stats[it.name] = st
             }
         }
-        let prog = firstBest.keys.compactMap { name -> String? in
-            guard let a = firstBest[name], let b = lastBest[name], count[name, default: 0] >= 2, a > 0 else { return nil }
-            return "\(name): \(Int(((b - a) / a * 100).rounded()))% (\(count[name]!) sesiones)"
+
+        if stats.isEmpty {
+            out.append("SIN ENTRENOS GUARDADOS todavía.")
+        } else {
+            // Mejores marcas, de mayor a menor → responde directo a "¿en qué soy mejor?".
+            let ranked = stats.sorted { $0.value.bestE > $1.value.bestE }
+            out.append("MEJORES MARCAS (1RM estimado, de mejor a peor): " + ranked.prefix(8).map {
+                "\($0.key) \(Int($0.value.bestE.rounded())) kg (mejor serie \(fmtW($0.value.bestW))×\($0.value.bestR), \($0.value.n) sesiones)"
+            }.joined(separator: "; ") + ".")
+            out.append("TU MEJOR EJERCICIO (marca más alta): \(ranked.first!.key).")
+            out.append("EL QUE MÁS ENTRENAS: \(stats.max { $0.value.n < $1.value.n }!.key).")
+
+            let withTrend = stats.filter { $0.value.n >= 2 && $0.value.first > 0 }
+            if !withTrend.isEmpty {
+                let pct: (Stat) -> Int = { Int((($0.last - $0.first) / $0.first * 100).rounded()) }
+                let sortedTrend = withTrend.sorted { pct($0.value) > pct($1.value) }
+                out.append("PROGRESIÓN desde el primer registro: " + sortedTrend.map { "\($0.key) \(pct($0.value) >= 0 ? "+" : "")\(pct($0.value))%" }.joined(separator: "; ") + ".")
+                out.append("MAYOR PROGRESO: \(sortedTrend.first!.key). MENOR PROGRESO: \(sortedTrend.last!.key).")
+            }
+
+            let f = DateFormatter(); f.dateFormat = "d MMM"; f.locale = Locale(identifier: "es_ES")
+            let recent = store.sessions.sorted { $0.date > $1.date }.prefix(6)
+            out.append("ÚLTIMOS ENTRENOS: " + recent.map { s in
+                "\(f.string(from: s.date)) «\(s.name)» (\(s.sets) series)"
+            }.joined(separator: "; ") + ".")
         }
-        if !prog.isEmpty { out.append("Progresión de 1RM estimado por ejercicio: " + prog.joined(separator: "; ") + ".") }
         return out.joined(separator: "\n")
     }
+
+    private static func e1(_ s: SetLog) -> Double { s.weight * (1 + Double(min(20, s.reps)) / 30) }
+    private static func fmtW(_ w: Double) -> String { w == w.rounded() ? String(Int(w)) : String(format: "%.1f", w) }
 
     // MARK: - Conversación
 
@@ -85,11 +97,22 @@ final class ForgeyAI: ObservableObject {
         if #available(iOS 26.0, *) {
             let session = LanguageModelSession(instructions: """
             Eres Forgey, la mascota y coach de gimnasio de la app Forge Loop. Responde SIEMPRE en español, \
-            en 120 palabras o menos, con tono cercano y motivador (puedes usar algún emoji). \
-            Escribe en TEXTO PLANO, sin Markdown (nada de asteriscos ni almohadillas); usa guiones para listas. \
-            Basa tus respuestas en los datos REALES del usuario que tienes debajo; si no hay datos \
-            suficientes, dilo con honestidad y da un consejo general seguro. No inventes marcas ni fechas. \
-            No des consejos médicos; ante dolor, recomienda descansar y consultar a un profesional.
+            con tono cercano y motivador (algún emoji está bien).
+
+            PRECISIÓN (lo más importante): responde EXACTAMENTE a lo que se pregunta, con el dato \
+            concreto de los DATOS DEL USUARIO, en 2-4 frases. VE AL GRANO: la PRIMERA frase ya es \
+            la respuesta, sin preámbulos ni relleno (nada de «¡Estoy emocionado de decirte…!», \
+            «¡Gran pregunta!» ni similares). NO resumas el perfil completo, NO enumeres datos \
+            que no se han pedido. Ejemplos: si preguntan «¿en qué ejercicio soy \
+            mejor?» responde con TU MEJOR EJERCICIO y su marca; si preguntan «¿dónde progreso \
+            menos?» responde con MENOR PROGRESO y su %.
+
+            FORMATO: texto plano, frases cortas. Sin Markdown (nada de asteriscos ni almohadillas). \
+            Si necesitas una lista, una línea por elemento empezando por «- ».
+
+            Si no hay datos suficientes, dilo con honestidad y da un consejo general seguro. No \
+            inventes marcas ni fechas. No des consejos médicos; ante dolor, recomienda descansar \
+            y consultar a un profesional.
 
             DATOS DEL USUARIO:
             \(ForgeyAI.context(from: store))

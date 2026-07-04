@@ -33,7 +33,7 @@ struct RootView: View {
             // Forgey se ASOMA por el lateral, esperando a ayudar (toca → chat IA).
             .overlay(alignment: .bottomTrailing) {
                 ForgeyPeek { FX.tap(); showForgey = true }
-                    .padding(.bottom, 96)
+                    .padding(.bottom, 400)
             }
             .onChange(of: tab) { t in FX.selection(); maybeShowTour(t) }
 
@@ -352,6 +352,17 @@ struct ForgeyPeek: View {
         Button(action: action) {
             Mascot(size: 52, wave: true)
                 .rotationEffect(.degrees(-16))
+                // El símbolo clásico de IA (✨) sobre la parte visible, siempre derecho.
+                .overlay(alignment: .topLeading) {
+                    Image(systemName: "sparkles")
+                        .font(.system(size: 11, weight: .heavy))
+                        .foregroundColor(Color(hex: "4b6211"))
+                        .padding(5)
+                        .background(Circle().fill(Color.white))
+                        .overlay(Circle().stroke(Brand.line))
+                        .shadow(color: .black.opacity(0.10), radius: 3, y: 1)
+                        .offset(x: -4, y: 0)
+                }
                 .shadow(color: .black.opacity(0.14), radius: 8, x: -2, y: 3)
                 // En reposo: medio cuerpo fuera. Al "asomarse": entra un poco más.
                 .offset(x: peeking ? 18 : 30)

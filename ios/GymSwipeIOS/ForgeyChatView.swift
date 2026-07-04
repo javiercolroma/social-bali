@@ -128,13 +128,36 @@ struct ForgeyChatView: View {
                     .background(Brand.greenSoft).clipShape(RoundedRectangle(cornerRadius: 15))
             } else {
                 Mascot(size: 26).offset(y: 2)
-                Text(m.text).font(.system(size: 15)).foregroundColor(Color(hex: "2c3127"))
-                    .padding(.horizontal, 12).padding(.vertical, 9)
+                pretty(m.text)
+                    .font(.system(size: 15))
+                    .foregroundColor(Color(hex: "2c3127"))
+                    .lineSpacing(3.5)
+                    .padding(.horizontal, 13).padding(.vertical, 10)
                     .background(Color.white).clipShape(RoundedRectangle(cornerRadius: 15))
                     .overlay(RoundedRectangle(cornerRadius: 15).stroke(Brand.line))
                 Spacer(minLength: 40)
             }
         }
+    }
+
+    /// Formato bonito de la respuesta: interpreta el Markdown inline línea a línea
+    /// (las **negritas** se ven en negrita, no como asteriscos) y limpia viñetas «* » → «• ».
+    private func pretty(_ text: String) -> Text {
+        var out = Text("")
+        let lines = text.split(separator: "\n", omittingEmptySubsequences: false)
+        for (i, raw) in lines.enumerated() {
+            var line = String(raw)
+            if line.hasPrefix("* ") || line.hasPrefix("- ") { line = "•  " + line.dropFirst(2) }
+            let t: Text
+            if let attr = try? AttributedString(markdown: line,
+                options: AttributedString.MarkdownParsingOptions(interpretedSyntax: .inlineOnlyPreservingWhitespace)) {
+                t = Text(attr)
+            } else {
+                t = Text(line)
+            }
+            out = i == 0 ? t : out + Text("\n") + t
+        }
+        return out
     }
 
     private var thinkingBubble: some View {
