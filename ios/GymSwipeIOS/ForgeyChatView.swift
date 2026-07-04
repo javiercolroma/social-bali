@@ -1,4 +1,5 @@
 import SwiftUI
+import PhotosUI
 
 /// Chat con Forgey (IA on-device). UN punto central, accesible desde la cabecera de
 /// TODAS las pantallas: le preguntas lo que quieras sobre tu entrenamiento y responde
@@ -9,9 +10,16 @@ struct ForgeyChatView: View {
     @State private var messages: [ChatLine] = []
     @State private var draft = ""
     @State private var thinking = false
+    @State private var photoItem: PhotosPickerItem?
+    @State private var genTopic: IdString?   // «Crear entreno de esto» → generador prellenado
     @FocusState private var focused: Bool
 
-    struct ChatLine: Identifiable { let id = UUID(); let fromMe: Bool; let text: String }
+    struct ChatLine: Identifiable {
+        let id = UUID()
+        let fromMe: Bool
+        let text: String
+        var image: Data? = nil   // foto enviada (análisis de físico)
+    }
 
     private let suggestions = [
         "¿Qué debería entrenar hoy?",
@@ -34,6 +42,24 @@ struct ForgeyChatView: View {
                                 emptyIntro
                             }
                             ForEach(messages) { bubble($0).id($0.id) }
+                            // Follow-up accionable: convertir el último consejo en un entreno, a un toque.
+                            if !thinking, let last = messages.last, !last.fromMe {
+                                Button {
+                                    FX.tap()
+                                    genTopic = IdString(id: String(last.text.replacingOccurrences(of: "\n", with: " ").prefix(160)))
+                                } label: {
+                                    HStack(spacing: 6) {
+                                        Image(systemName: "sparkles")
+                                        Text("Crear entreno de esto")
+                                    }
+                                    .font(.system(size: 13, weight: .heavy)).foregroundColor(Color(hex: "4b6211"))
+                                    .padding(.horizontal, 14).padding(.vertical, 9)
+                                    .background(Brand.greenSoft.opacity(0.4)).clipShape(Capsule())
+                                    .overlay(Capsule().stroke(Color(hex: "9ec85a")))
+                                }
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .padding(.leading, 34)
+                            }
                             if thinking { thinkingBubble.id("thinking") }
                         }
                         .padding(14)
@@ -46,6 +72,11 @@ struct ForgeyChatView: View {
 
                 if unavailable == nil {
                     HStack(spacing: 8) {
+                        // Foto del físico → análisis de proporciones + consejo.
+                        PhotoPickerLabel(item: $photoItem, onPicked: { analyzePhoto($0) }) {
+                            Image(systemName: "camera.fill").font(.system(size: 15, weight: .semibold)).foregroundColor(Brand.ink)
+                                .frame(width: 46, height: 46).background(Brand.chip).clipShape(Circle())
+                        }
                         TextField("Pregúntale a Forgey…", text: $draft)
                             .focused($focused)
                             .padding(.horizontal, 16).frame(height: 46).background(Color.white).clipShape(Capsule())
@@ -62,6 +93,10 @@ struct ForgeyChatView: View {
             }
             .background(Brand.bg)
             .navigationBarTitleDisplayMode(.inline)
+        }
+        // «Crear entreno de esto»: generador prellenado con el último consejo de Forgey.
+        .sheet(item: $genTopic) { t in
+            AIWorkoutSheet(initialDescription: "Entreno enfocado en: \(t.id)").environmentObject(store)
         }
     }
 
@@ -123,9 +158,16 @@ struct ForgeyChatView: View {
         HStack(alignment: .bottom, spacing: 8) {
             if m.fromMe {
                 Spacer(minLength: 40)
-                Text(m.text).font(.system(size: 15)).foregroundColor(Color(hex: "10150a"))
-                    .padding(.horizontal, 12).padding(.vertical, 9)
-                    .background(Brand.greenSoft).clipShape(RoundedRectangle(cornerRadius: 15))
+                VStack(alignment: .trailing, spacing: 6) {
+                    if let img = m.image, let ui = UIImage(data: img) {
+                        Image(uiImage: ui).resizable().scaledToFill()
+                            .frame(width: 150, height: 190).clipped()
+                            .clipShape(RoundedRectangle(cornerRadius: 14))
+                    }
+                    Text(m.text).font(.system(size: 15)).foregroundColor(Color(hex: "10150a"))
+                        .padding(.horizontal, 12).padding(.vertical, 9)
+                        .background(Brand.greenSoft).clipShape(RoundedRectangle(cornerRadius: 15))
+                }
             } else {
                 Mascot(size: 26).offset(y: 2)
                 pretty(m.text)
@@ -174,6 +216,23 @@ struct ForgeyChatView: View {
         }
     }
 
+    /// Foto del físico: Vision mide proporciones y Forgey aconseja (todo on-device).
+    private func analyzePhoto(_ data: Data) {
+        guard !thinking else { return }
+        FX.tap()
+        messages.append(ChatLine(fromMe: true, text: "¿Qué partes debería mejorar? 📷", image: data))
+        thinking = true
+        Task {
+            do {
+                let answer = try await ForgeyAI.shared.analyzeBody(photo: data, store: store)
+                messages.append(ChatLine(fromMe: false, text: answer))
+            } catch {
+                messages.append(ChatLine(fromMe: false, text: "No he podido analizar la foto 😅 \(error.localizedDescription)"))
+            }
+            thinking = false
+        }
+    }
+
     private func send() {
         let q = draft.trimmingCharacters(in: .whitespaces)
         guard !q.isEmpty, !thinking else { return }
@@ -201,6 +260,8 @@ struct AIWorkoutSheet: View {
     @Environment(\.dismiss) private var dismiss
     /// Al «Guardar y entrenar»: además de guardar, se carga el entreno y se navega a Entreno.
     var onLoaded: () -> Void = {}
+    /// Descripción prellenada (p. ej. desde el chip «Crear entreno de esto» del chat).
+    var initialDescription: String = ""
     @State private var descriptionText = ""
     @State private var generated: WorkoutTemplate?
     @State private var generating = false

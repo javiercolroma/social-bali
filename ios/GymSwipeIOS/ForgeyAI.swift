@@ -1,4 +1,6 @@
 import Foundation
+import UIKit
+import Vision
 #if canImport(FoundationModels)
 import FoundationModels
 #endif
@@ -114,6 +116,9 @@ final class ForgeyAI: ObservableObject {
             sueltas cortas empezando por «- » (máximo 3). Texto plano, sin Markdown (nada de \
             asteriscos ni almohadillas).
 
+            CIERRE: termina SIEMPRE con UNA pregunta breve de seguimiento ofreciendo el siguiente \
+            paso concreto (p. ej. «¿Quieres que te prepare un entreno para mejorarlo?»).
+
             Si no hay datos suficientes, dilo con honestidad y da un consejo general seguro. No \
             inventes marcas ni fechas. No des consejos médicos; ante dolor, recomienda descansar \
             y consultar a un profesional.
@@ -122,6 +127,83 @@ final class ForgeyAI: ObservableObject {
             \(ForgeyAI.context(from: store))
             """)
             return try await session.respond(to: question).content
+        }
+        #endif
+        throw NSError(domain: "ForgeyAI", code: 1,
+                      userInfo: [NSLocalizedDescriptionKey: ForgeyAI.unavailableReason() ?? "No disponible"])
+    }
+
+    // MARK: - Foto del físico: Vision (proporciones reales) + reparto de entreno + consejo
+
+    /// Métricas HONESTAS de la foto vía Vision (pose corporal): no podemos juzgar "músculo"
+    /// desde una foto con APIs on-device, pero sí medir proporciones (hombros/cadera) y
+    /// detectar que hay un cuerpo. nil = no se detecta una persona con confianza.
+    static func bodyMetrics(from data: Data) -> String? {
+        guard let ui = UIImage(data: data), let cg = ui.cgImage else { return nil }
+        let req = VNDetectHumanBodyPoseRequest()
+        try? VNImageRequestHandler(cgImage: cg, options: [:]).perform([req])
+        guard let obs = req.results?.first else { return nil }
+        func pt(_ j: VNHumanBodyPoseObservation.JointName) -> CGPoint? {
+            guard let p = try? obs.recognizedPoint(j), p.confidence > 0.3 else { return nil }
+            return p.location
+        }
+        guard let ls = pt(.leftShoulder), let rs = pt(.rightShoulder) else { return nil }
+        var lines: [String] = ["En la foto se detecta una persona (análisis de proporciones aproximado)."]
+        let shoulder = hypot(ls.x - rs.x, ls.y - rs.y)
+        if let lh = pt(.leftHip), let rh = pt(.rightHip) {
+            let hip = hypot(lh.x - rh.x, lh.y - rh.y)
+            if hip > 0.01 {
+                let ratio = shoulder / hip
+                lines.append(String(format: "Proporción anchura hombros/cadera ≈ %.2f (referencia: <1,25 estrecha → prioriza deltoides lateral y dorsal ancho; >1,45 V marcada).", ratio))
+            }
+        }
+        // Asimetría de hombros (postura) si es visible.
+        if abs(ls.y - rs.y) > 0.035 { lines.append("Se aprecia un hombro algo más alto que el otro (posible asimetría postural).") }
+        return lines.joined(separator: " ")
+    }
+
+    /// Reparto REAL del volumen de entreno por patrón (solo sesiones fiables): la señal más
+    /// honesta de qué zonas están descuidadas.
+    static func trainingSplit(from store: AppStore) -> String {
+        var vol: [String: Double] = [:]
+        for s in store.sessions where s.verified {
+            for it in (s.items ?? []) {
+                let sets = it.logs ?? [SetLog(reps: it.reps, weight: it.weight)]
+                let v = sets.reduce(0.0) { $0 + Double($1.reps) * max(1, $1.weight) }
+                vol[GymScoreEngine.pattern(for: it.name).group, default: 0] += v
+            }
+        }
+        let total = vol.values.reduce(0, +)
+        guard total > 0 else { return "Aún no hay entrenos fiables registrados." }
+        let names = ["empuje": "empuje (pecho/hombro/tríceps)", "tiron": "tirón (espalda/bíceps)",
+                     "pierna": "pierna", "bisagra": "cadena posterior (femoral/glúteo)",
+                     "condicion": "core/condición", "accesorio": "accesorios"]
+        let parts = vol.sorted { $0.value > $1.value }.map { "\(names[$0.key] ?? $0.key) \(Int(($0.value / total * 100).rounded()))%" }
+        return "Reparto de su volumen de entreno: " + parts.joined(separator: ", ") + "."
+    }
+
+    /// Analiza una foto del físico: métricas de Vision + reparto de entreno → zonas a priorizar.
+    func analyzeBody(photo: Data, store: AppStore) async throws -> String {
+        guard let metrics = ForgeyAI.bodyMetrics(from: photo) else {
+            return "No consigo ver un cuerpo completo en la foto 📷. Prueba con una foto de cuerpo entero, de frente y con buena luz. ¿La intentamos de nuevo?"
+        }
+        #if canImport(FoundationModels)
+        if #available(iOS 26.0, *) {
+            let session = LanguageModelSession(instructions: """
+            Eres Forgey, coach de gimnasio de Forge Loop. El usuario envía una foto de su físico. \
+            NO puedes ver la foto: recibes MEDICIONES aproximadas de ella (proporciones por visión \
+            artificial) y el reparto real de su volumen de entreno. Con ambas señales, indica 2-3 \
+            zonas a priorizar con 1-2 ejercicios concretos por zona.
+
+            FORMATO (estricto): máximo 70 palabras, en español. Primera línea: valoración en una \
+            frase. Después una línea «- » por zona (zona → ejercicios). Deja claro con una palabra \
+            que es un análisis APROXIMADO. Nada de párrafos. Tono positivo, sin juicios estéticos \
+            duros, sin consejos médicos. CIERRE: una pregunta ofreciendo crear un entreno para ello.
+
+            MEDICIONES DE LA FOTO: \(metrics)
+            ENTRENO DEL USUARIO: \(ForgeyAI.trainingSplit(from: store))
+            """)
+            return try await session.respond(to: "¿Qué partes debería mejorar?").content
         }
         #endif
         throw NSError(domain: "ForgeyAI", code: 1,
