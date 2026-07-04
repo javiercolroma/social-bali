@@ -340,10 +340,25 @@ struct WorkoutCover: View {
     let elapsed: Int
     let sets: Int
     let volume: Double
+    var exercises: Int = 0
+    var seed: String = ""     // algo estable del post (título+fecha) para variar el héroe
     var height: CGFloat = 150
 
-    // Sin volumen (a petición): el héroe es el TIEMPO de entreno; series debajo.
-    private var hero: (String, String) { ("\(max(1, elapsed / 60)) min", "de entreno") }
+    /// Héroe VARIADO por tarjeta (estable por post, no cambia al re-renderizar):
+    /// a veces el tiempo, a veces las series, a veces los ejercicios.
+    private var hero: (String, String, String) {
+        var h: UInt64 = 1469598103934665603
+        for c in seed.unicodeScalars { h = (h ^ UInt64(c.value)) &* 1099511628211 }
+        var options: [(String, String, String)] = []
+        if elapsed >= 60 { options.append(("\(max(1, elapsed / 60)) min", "de entreno",
+            "\(sets) series" + (exercises > 0 ? " · \(exercises) ejercicios" : ""))) }
+        if sets > 0 { options.append(("\(sets)", sets == 1 ? "serie completada" : "series completadas",
+            "\(max(1, elapsed / 60)) min" + (exercises > 0 ? " · \(exercises) ejercicios" : ""))) }
+        if exercises > 0 { options.append(("\(exercises)", exercises == 1 ? "ejercicio" : "ejercicios",
+            "\(max(1, elapsed / 60)) min · \(sets) series")) }
+        guard !options.isEmpty else { return ("💪", "entreno completado", "") }
+        return options[Int(h % UInt64(options.count))]
+    }
 
     var body: some View {
         ZStack {
@@ -357,11 +372,13 @@ struct WorkoutCover: View {
             VStack(alignment: .leading, spacing: 3) {
                 Text(hero.0).font(.system(size: 34, weight: .heavy)).foregroundColor(Brand.ink)
                 Text(hero.1).font(.system(size: 13, weight: .bold)).foregroundColor(Color(hex: "4b6211"))
-                HStack(spacing: 5) {
-                    Image(systemName: "checkmark.circle.fill").font(.system(size: 11, weight: .bold))
-                    Text(sets == 1 ? "1 serie completada" : "\(sets) series completadas").font(.system(size: 12, weight: .heavy))
+                if !hero.2.isEmpty {
+                    HStack(spacing: 5) {
+                        Image(systemName: "checkmark.circle.fill").font(.system(size: 11, weight: .bold))
+                        Text(hero.2).font(.system(size: 12, weight: .heavy))
+                    }
+                    .foregroundColor(Brand.muted).padding(.top, 5)
                 }
-                .foregroundColor(Brand.muted).padding(.top, 5)
             }
             .frame(maxWidth: .infinity, alignment: .leading).padding(.horizontal, 18)
         }

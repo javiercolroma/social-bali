@@ -531,7 +531,9 @@ struct SocialFeedView: View {
                         WorkoutPhoto(data: item.photo, url: item.photoURL, height: 190)
                     } else {
                         // Sin foto: portada visual elegante (nada de pila de texto).
-                        WorkoutCover(elapsed: item.elapsed, sets: item.sets, volume: item.volume)
+                        WorkoutCover(elapsed: item.elapsed, sets: item.sets, volume: item.volume,
+                                     exercises: item.exercises,
+                                     seed: "\(item.title)-\(Int(item.date.timeIntervalSince1970))")
                     }
                     WorkoutStatStrip(stats: WorkoutStatStrip.metrics(time: durationText(item.elapsed), sets: item.sets,
                                                      exercises: item.exercises, ppm: item.avgHeartRate), style: .full)
