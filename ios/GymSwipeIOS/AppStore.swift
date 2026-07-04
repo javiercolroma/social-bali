@@ -378,7 +378,8 @@ final class AppStore: ObservableObject {
     /// "Última vez: 60 kg × 8" en la tarjeta del entreno — la razón nº1 de usar una app de gym.
     func lastPerformance(of name: String) -> (weight: Double, reps: Int, date: Date)? {
         let key = name.folding(options: .diacriticInsensitive, locale: .current).lowercased()
-        for s in sessions.sorted(by: { $0.date > $1.date }) {
+        // Solo entrenos FIABLES: los falseados no valen como referencia.
+        for s in sessions.filter({ $0.verified }).sorted(by: { $0.date > $1.date }) {
             for it in (s.items ?? []) where it.name.folding(options: .diacriticInsensitive, locale: .current).lowercased() == key {
                 let sets: [(w: Double, r: Int)] = it.logs?.map { ($0.weight, $0.reps) } ?? [(it.weight, it.reps)]
                 guard let best = sets.max(by: {
@@ -447,9 +448,10 @@ final class AppStore: ObservableObject {
                 volume: Double(ex.completedSets) * Double(ex.reps) * ex.weight,
                 xp: xp, completedAt: Date(), sessionId: sid))
         }
-        // Plausibilidad (anti-fake): una sesión demasiado rápida NO cuenta para liga, récords
-        // NI Gym Score (seguramente es fake). ~20 s por serie + topes por sesión.
-        let verified = elapsed >= totalSets * 20 && totalSets <= 60 && gained <= 600
+        // Plausibilidad (anti-fake): 15 s de MEDIA por serie + topes. El guardado de sesiones
+        // implausibles se BLOQUEA en la UI (TrainView); esto queda como cinturón de seguridad
+        // y para datos sincronizados/antiguos.
+        let verified = elapsed >= totalSets * 15 && totalSets <= 60 && gained <= 600
         // El histórico se escribe con la marca: el Gym Score ignora las entradas no verificadas.
         for var e in newEntries.reversed() { e.verified = verified; history.insert(e, at: 0) }
         let trimmed = name.trimmingCharacters(in: .whitespaces)

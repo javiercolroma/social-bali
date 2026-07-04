@@ -28,7 +28,7 @@ struct ExerciseProgressView: View {
     private var allMarks: [Mark] {
         let key = exerciseName.folding(options: .diacriticInsensitive, locale: .current).lowercased()
         var out: [Mark] = []
-        for s in store.sessions {
+        for s in store.sessions where s.verified {   // solo entrenos fiables
             for it in (s.items ?? [])
             where it.name.folding(options: .diacriticInsensitive, locale: .current).lowercased() == key {
                 let sets: [SetLog] = it.logs ?? Array(repeating: SetLog(reps: it.reps, weight: it.weight), count: max(1, it.sets))

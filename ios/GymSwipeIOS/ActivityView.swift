@@ -445,7 +445,7 @@ struct ActivityView: View {
 
     private var liftProgress: [LiftProgress] {
         var map: [String: [E1RMPoint]] = [:]
-        for s in sessionsChrono {
+        for s in sessionsChrono where s.verified {   // solo entrenos fiables
             for ex in (s.items ?? []) {
                 let sets = ex.logs ?? Array(repeating: SetLog(reps: ex.reps, weight: ex.weight), count: max(1, ex.sets))
                 let best = sets.map { e1rm($0.weight, $0.reps) }.max() ?? 0

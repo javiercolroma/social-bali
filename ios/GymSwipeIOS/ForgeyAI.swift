@@ -40,13 +40,15 @@ final class ForgeyAI: ObservableObject {
     /// ya está servido; con prosa larga tiende a "resumir el perfil" en vez de contestar.
     static func context(from store: AppStore) -> String {
         let score = store.gymScore
+        // SOLO entrenos fiables: los implausibles no alimentan a la IA ni a las estadísticas.
+        let reliable = store.sessions.filter { $0.verified }
         var out: [String] = []
         out.append("PERFIL: \(store.account?.name ?? "atleta") · racha \(store.player.streak) días · Gym Score \(score.total)/100 (fuerza \(score.strength), constancia \(score.consistency), volumen \(score.volume)).")
 
         // Por ejercicio: mejor 1RM estimado, nº de sesiones y progresión primera→última.
         struct Stat { var bestE: Double = 0; var bestW: Double = 0; var bestR: Int = 0; var first: Double = 0; var last: Double = 0; var n = 0 }
         var stats: [String: Stat] = [:]
-        for s in store.sessions.sorted(by: { $0.date < $1.date }) {
+        for s in reliable.sorted(by: { $0.date < $1.date }) {
             for it in (s.items ?? []) {
                 let sets = it.logs ?? [SetLog(reps: it.reps, weight: it.weight)]
                 guard let best = sets.max(by: { e1($0) < e1($1) }), e1(best) > 0 else { continue }
@@ -78,7 +80,7 @@ final class ForgeyAI: ObservableObject {
             }
 
             let f = DateFormatter(); f.dateFormat = "d MMM"; f.locale = Locale(identifier: "es_ES")
-            let recent = store.sessions.sorted { $0.date > $1.date }.prefix(6)
+            let recent = reliable.sorted { $0.date > $1.date }.prefix(6)
             out.append("ÚLTIMOS ENTRENOS: " + recent.map { s in
                 "\(f.string(from: s.date)) «\(s.name)» (\(s.sets) series)"
             }.joined(separator: "; ") + ".")
@@ -107,8 +109,10 @@ final class ForgeyAI: ObservableObject {
             mejor?» responde con TU MEJOR EJERCICIO y su marca; si preguntan «¿dónde progreso \
             menos?» responde con MENOR PROGRESO y su %.
 
-            FORMATO: texto plano, frases cortas. Sin Markdown (nada de asteriscos ni almohadillas). \
-            Si necesitas una lista, una línea por elemento empezando por «- ».
+            FORMATO (estricto): máximo 50 palabras. NADA de párrafos largos. Estructura: \
+            primera línea = la respuesta con su dato; si hay más datos o consejos, líneas \
+            sueltas cortas empezando por «- » (máximo 3). Texto plano, sin Markdown (nada de \
+            asteriscos ni almohadillas).
 
             Si no hay datos suficientes, dilo con honestidad y da un consejo general seguro. No \
             inventes marcas ni fechas. No des consejos médicos; ante dolor, recomienda descansar \

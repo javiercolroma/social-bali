@@ -45,6 +45,15 @@ struct TrainView: View {
     private var elapsedSeconds: Int { sessionStart.map { max(0, Int(-$0.timeIntervalSinceNow)) } ?? 0 }
     private var finished: Bool { store.activeExercise == nil && !store.exercises.isEmpty }
 
+    /// Misma regla anti-fake que el guardado y el servidor (15 s de media por serie + topes).
+    /// Si la sesión es implausible, el resumen NI SIQUIERA ofrece guardarla.
+    private var sessionPlausible: Bool {
+        let done = completedSets
+        let xp = store.exercises.reduce(0) { $0 + $1.completedSets * 12 + ($1.completedSets > 0 ? 18 : 0) }
+        let elapsed = finalElapsed > 0 ? finalElapsed : elapsedSeconds
+        return elapsed >= done * 15 && done <= 60 && xp <= 600
+    }
+
     var body: some View {
         ScrollView {
             VStack(spacing: 14) {
@@ -465,6 +474,20 @@ struct TrainView: View {
 
                 Divider().padding(.vertical, 2)
 
+                if !sessionPlausible {
+                    // Entreno falseado: no se puede guardar (protege ranking, score y récords).
+                    VStack(spacing: 8) {
+                        Image(systemName: "hare.fill").font(.system(size: 30)).foregroundColor(Color(hex: "a73232"))
+                        Text("Demasiado rápido para ser real").font(.system(size: 16, weight: .heavy)).foregroundColor(Brand.ink)
+                        Text("Has cerrado \(completedSets) series en \(timeString(finalElapsed)). Un entreno así no se puede guardar: rompería tu Gym Score, tus récords y el ranking.")
+                            .font(.footnote).foregroundColor(Brand.muted).multilineTextAlignment(.center)
+                    }
+                    .frame(maxWidth: .infinity).padding(14)
+                    .background(Brand.redSoft.opacity(0.5)).clipShape(RoundedRectangle(cornerRadius: 12))
+                    Button(role: .destructive) { store.discardSession(); resetLocal() } label: {
+                        Label("Descartar entreno", systemImage: "trash").frame(maxWidth: .infinity)
+                    }.padding(.top, 2)
+                } else {
                 summaryLabel("NOMBRE DEL ENTRENO")
                 TextField(defaultSessionName, text: $sessionName)
                     .font(.system(size: 15, weight: .semibold))
@@ -508,8 +531,9 @@ struct TrainView: View {
                 Button(role: .destructive) { store.discardSession(); resetLocal() } label: {
                     Label("Descartar", systemImage: "trash").frame(maxWidth: .infinity)
                 }.padding(.top, 2)
+                }
             }
-            ConfettiView().frame(height: 320).allowsHitTesting(false)
+            if sessionPlausible { ConfettiView().frame(height: 320).allowsHitTesting(false) }
         }
         .onAppear { fxFinish(); if sessionName.isEmpty { sessionName = defaultSessionName }; if finalElapsed == 0 { finalElapsed = elapsedSeconds } }
     }
