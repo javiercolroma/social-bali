@@ -5,6 +5,8 @@ import GoogleSignIn
 struct GymSwipeIOSApp: App {
     @UIApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate   // token APNs
     @StateObject private var store = AppStore()
+
+    init() { L10n.bootstrap() }   // idioma forzado (si lo hay) desde el primer frame
     @Environment(\.scenePhase) private var scenePhase
 
     var body: some Scene {
@@ -16,6 +18,9 @@ struct GymSwipeIOSApp: App {
                     RootView()
                 }
             }
+            .id(store.languageToken)   // cambiar idioma en Ajustes reconstruye la UI al momento
+            // Vía NATIVA de SwiftUI: los Text localizan con el locale del entorno.
+            .environment(\.locale, L10n.locale)
             .environmentObject(store)
             .tint(Color(hex: "5e910e"))
             // Deep links: invitaciones forgeloop://user/<usuario> + callback OAuth de Google.

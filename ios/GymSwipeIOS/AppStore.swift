@@ -68,6 +68,8 @@ final class AppStore: ObservableObject {
     @Published var deepLinkPersonId: String? = nil
     /// Mi celda (~5 km) del servidor, para distancias aproximadas en Partner.
     @Published var myCell: (Double, Double)? = nil
+    /// Cambia al cambiar el idioma en Ajustes → reconstruye toda la UI al instante.
+    @Published var languageToken = UUID()
     /// Solicitudes de seguimiento RECIBIDAS (tu cuenta es privada) pendientes de aceptar.
     @Published var incomingRequestPeople: [SocialPerson] = []
 

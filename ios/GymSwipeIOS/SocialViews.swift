@@ -1371,13 +1371,31 @@ struct AccountSetupView: View {
     @ObservedObject private var health = HealthManager.shared
 
     private var normalized: String { normalizeHandle(handle) }
+    @State private var handleAvailability: Bool? = nil   // nil = sin comprobar/da igual
+    @State private var handleCheckTask: Task<Void, Never>?
+
+    /// Comprobación REAL contra el servidor (antes el «disponible» era solo formato local).
+    private func checkHandleAvailability(_ h: String) {
+        handleCheckTask?.cancel()
+        handleAvailability = nil
+        guard BackendConfig.isConfigured, !h.isEmpty else { return }
+        handleCheckTask = Task {
+            try? await Task.sleep(nanoseconds: 450_000_000)
+            if Task.isCancelled { return }
+            let ok = await Backend.shared.isHandleAvailable(h)
+            if !Task.isCancelled { handleAvailability = ok }
+        }
+    }
     private var taken: [String] { store.people.map { $0.handle } }
     private var handleError: String? {
         if normalized.count < 3 { return "Mínimo 3 caracteres" }
         if taken.contains(normalized) { return "Ese usuario ya existe" }
         return nil
     }
-    private var canSubmit: Bool { name.trimmingCharacters(in: .whitespaces).count >= 2 && handleError == nil }
+    private var canSubmit: Bool {
+        name.trimmingCharacters(in: .whitespaces).count >= 2 && handleError == nil
+            && handleAvailability != false   // con @ ocupado no se puede guardar
+    }
 
     var body: some View {
         VStack(spacing: 16) {
@@ -1409,13 +1427,21 @@ struct AccountSetupView: View {
                     HStack(spacing: 2) {
                         Text("@").font(.system(size: 16, weight: .heavy)).foregroundColor(Brand.soft)
                         TextField("tu_usuario", text: $handle).textInputAutocapitalization(.never).autocorrectionDisabled()
+                            .onChange(of: handle) { _ in checkHandleAvailability(normalized) }
                     }
                     .padding(.horizontal, 12).frame(height: 46).background(Color.white).clipShape(RoundedRectangle(cornerRadius: 10))
                     .overlay(RoundedRectangle(cornerRadius: 10).stroke(Brand.line))
                     if !normalized.isEmpty, let err = handleError {
                         Text(err).font(.caption).foregroundColor(Color(hex: "c14b46"))
                     } else if !normalized.isEmpty {
-                        Text("@\(normalized) disponible").font(.caption).foregroundColor(Color(hex: "4b8a1f"))
+                        // Estado REAL del servidor (con debounce), no solo formato.
+                        if handleAvailability == false {
+                            Text("Ese @usuario ya está cogido").font(.caption).foregroundColor(Color(hex: "c14b46"))
+                        } else if handleAvailability == true {
+                            Text("@\(normalized) disponible").font(.caption).foregroundColor(Color(hex: "4b8a1f"))
+                        } else if BackendConfig.isConfigured {
+                            Text("Comprobando disponibilidad…").font(.caption).foregroundColor(Brand.soft)
+                        }
                     }
                 }
                 Button {

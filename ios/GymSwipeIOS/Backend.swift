@@ -185,6 +185,19 @@ final class Backend {
             .eq("id", value: me.uuidString).execute()
     }
 
+    /// ¿Está libre este @usuario? (excluyendo al propio usuario). nil = no se pudo comprobar.
+    func isHandleAvailable(_ handle: String) async -> Bool? {
+        guard let client else { return nil }
+        let h = handle.trimmingCharacters(in: .whitespaces).lowercased()
+        guard !h.isEmpty else { return nil }
+        struct Row: Decodable { let id: UUID }
+        guard let rows: [Row] = try? await client.from("profiles").select("id")
+            .ilike("handle", pattern: h).limit(1).execute().value else { return nil }
+        if rows.isEmpty { return true }
+        let me = await currentUserIdAsync()
+        return rows.first?.id == me   // tu propio handle actual cuenta como disponible
+    }
+
     /// Registra una petición de IA (persistente por usuario y día; ver 0019_ai_usage).
     func bumpAIUsage(kind: String, inTokens: Int = 0, outTokens: Int = 0) async {
         guard let client else { return }

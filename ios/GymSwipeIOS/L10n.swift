@@ -1,4 +1,17 @@
 import Foundation
+import ObjectiveC
+
+/// Bundle dinámico: redirige NSLocalizedString/Text al .lproj del idioma elegido SIN
+/// reiniciar la app (swizzle clásico). Se activa en el arranque y al cambiar en Ajustes.
+private var l10nBundleKey: UInt8 = 0
+private final class LocalizedBundle: Bundle, @unchecked Sendable {
+    override func localizedString(forKey key: String, value: String?, table: String?) -> String {
+        if let b = objc_getAssociatedObject(self, &l10nBundleKey) as? Bundle {
+            return b.localizedString(forKey: key, value: value, table: table)
+        }
+        return super.localizedString(forKey: key, value: value, table: table)
+    }
+}
 
 /// Traducción de DATOS en tiempo de render (fase 2 de i18n): los nombres de ejercicios,
 /// plantillas y grupos son datos persistidos en español — no pasan por Localizable.strings.
@@ -40,6 +53,26 @@ enum L10n {
     private static func norm(_ s: String) -> String {
         s.folding(options: .diacriticInsensitive, locale: .current).lowercased()
             .trimmingCharacters(in: .whitespaces)
+    }
+
+    /// Locale SwiftUI del idioma activo: los `Text` resuelven su localización con el
+    /// locale del entorno → esta es la vía nativa para el cambio EN VIVO.
+    static var locale: Locale {
+        if let o = UserDefaults.standard.string(forKey: "forgeLangOverride") { return Locale(identifier: o) }
+        return .current
+    }
+
+    /// Aplica el idioma AL INSTANTE (bundle dinámico para NSLocalizedString). nil = sistema.
+    static func apply(_ code: String?) {
+        object_setClass(Bundle.main, LocalizedBundle.self)
+        let target = code.flatMap { Bundle.main.path(forResource: $0, ofType: "lproj") }
+            .flatMap(Bundle.init(path:))
+        objc_setAssociatedObject(Bundle.main, &l10nBundleKey, target, .OBJC_ASSOCIATION_RETAIN_NONATOMIC)
+    }
+
+    /// Llamar en el arranque: restaura el idioma forzado (si lo hay).
+    static func bootstrap() {
+        if let o = UserDefaults.standard.string(forKey: "forgeLangOverride") { apply(o) }
     }
 
     /// clave (es, normalizada) → (en, pt-PT, pt-BR, fr)

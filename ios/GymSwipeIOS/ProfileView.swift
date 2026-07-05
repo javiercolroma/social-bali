@@ -114,17 +114,58 @@ struct EditProfileView: View {
                 set: { var a = store.account ?? Account(name: "", handle: ""); a.name = $0; store.saveAccount(a) })
     }
 
+    @State private var editedHandle: String = ""
+    @State private var handleAvailability: Bool? = nil
+    @State private var handleCheckTask: Task<Void, Never>?
+
+    /// El @usuario ya NO se guarda a cada tecla: se comprueba la disponibilidad REAL en el
+    /// servidor (debounce) y solo se aplica si está libre (o es el tuyo actual).
     private var handleField: some View {
         VStack(alignment: .leading, spacing: 5) {
             Text("USUARIO").font(.caption2).fontWeight(.heavy).foregroundColor(Brand.muted)
             HStack(spacing: 2) {
                 Text("@").font(.system(size: 16, weight: .heavy)).foregroundColor(Brand.soft)
-                TextField("tu_usuario", text: Binding(
-                    get: { store.account?.handle ?? "" },
-                    set: { var a = store.account ?? Account(name: "", handle: ""); a.handle = normalizeHandle($0); store.saveAccount(a) }))
+                TextField("tu_usuario", text: $editedHandle)
                     .textInputAutocapitalization(.never).autocorrectionDisabled()
+                    .onChange(of: editedHandle) { v in
+                        let h = normalizeHandle(v)
+                        if h != v { editedHandle = h; return }
+                        scheduleHandleCheck(h)
+                    }
             }
             .padding(.horizontal, 12).frame(height: 44).background(Brand.surface).clipShape(RoundedRectangle(cornerRadius: 10))
+            if !editedHandle.isEmpty, editedHandle != (store.account?.handle ?? "") {
+                if handleAvailability == false {
+                    Text("Ese @usuario ya está cogido").font(.caption).foregroundColor(Color(hex: "c14b46"))
+                } else if handleAvailability == true {
+                    Text("Disponible ✓ guardado").font(.caption).foregroundColor(Color(hex: "4b8a1f"))
+                } else if BackendConfig.isConfigured {
+                    Text("Comprobando disponibilidad…").font(.caption).foregroundColor(Brand.soft)
+                }
+            }
+        }
+        .onAppear { if editedHandle.isEmpty { editedHandle = store.account?.handle ?? "" } }
+    }
+
+    private func scheduleHandleCheck(_ h: String) {
+        handleCheckTask?.cancel()
+        handleAvailability = nil
+        guard h != (store.account?.handle ?? "") else { return }
+        guard BackendConfig.isConfigured else {
+            // Sin backend: guarda directo (modo local).
+            var a = store.account ?? Account(name: "", handle: ""); a.handle = h; store.saveAccount(a)
+            return
+        }
+        guard !h.isEmpty else { return }
+        handleCheckTask = Task {
+            try? await Task.sleep(nanoseconds: 450_000_000)
+            if Task.isCancelled { return }
+            let ok = await Backend.shared.isHandleAvailable(h)
+            if Task.isCancelled { return }
+            handleAvailability = ok
+            if ok == true {
+                var a = store.account ?? Account(name: "", handle: ""); a.handle = h; store.saveAccount(a)
+            }
         }
     }
 
@@ -162,8 +203,6 @@ struct EditProfileView: View {
 // MARK: - Ajustes de la app
 
 struct SettingsView: View {
-    @State private var showLanguageRestart = false
-
     private var currentLanguageName: String {
         guard let langs = UserDefaults.standard.array(forKey: "AppleLanguages") as? [String],
               let first = langs.first, UserDefaults.standard.object(forKey: "forgeLangOverride") != nil else { return NSLocalizedString("Automático", comment: "") }
@@ -175,7 +214,7 @@ struct SettingsView: View {
     }
 
     private func setLanguage(_ code: String?) {
-        FX.tap()
+        FX.success()
         if let code {
             UserDefaults.standard.set([code], forKey: "AppleLanguages")
             UserDefaults.standard.set(code, forKey: "forgeLangOverride")
@@ -183,7 +222,9 @@ struct SettingsView: View {
             UserDefaults.standard.removeObject(forKey: "AppleLanguages")
             UserDefaults.standard.removeObject(forKey: "forgeLangOverride")
         }
-        showLanguageRestart = true
+        // EN VIVO: bundle dinámico + reconstrucción de toda la UI (nada de reiniciar).
+        L10n.apply(code)
+        store.languageToken = UUID()
     }
 
     @EnvironmentObject var store: AppStore
