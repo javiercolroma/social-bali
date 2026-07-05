@@ -121,7 +121,7 @@ struct ActivityView: View {
     /// Cabecera de grupo (un nivel por encima de los títulos internos de cada tarjeta)
     /// para que la pantalla se lea como secciones claras y no como una pila de tarjetas.
     private func sectionHeader(_ title: String) -> some View {
-        Text(title)
+        Text(LocalizedStringKey(title))
             .font(.system(size: 13, weight: .heavy))
             .foregroundColor(Brand.ink)
             .frame(maxWidth: .infinity, alignment: .leading)

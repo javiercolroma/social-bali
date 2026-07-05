@@ -369,7 +369,7 @@ struct CreateWorkoutView: View {
 
     private func labeled<Content: View>(_ title: String, @ViewBuilder content: () -> Content) -> some View {
         VStack(alignment: .leading, spacing: 7) {
-            Text(title).font(.caption2).fontWeight(.heavy).foregroundColor(Brand.muted)
+            Text(LocalizedStringKey(title)).font(.caption2).fontWeight(.heavy).foregroundColor(Brand.muted)
             content()
         }.frame(maxWidth: .infinity, alignment: .leading)
     }

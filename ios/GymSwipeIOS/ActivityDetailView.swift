@@ -101,7 +101,7 @@ struct ActivityDetailView: View {
         VStack(spacing: 4) {
             Image(systemName: icon).font(.system(size: 16)).foregroundColor(Color(hex: "6ea300"))
             Text(value).font(.system(size: 20, weight: .heavy)).foregroundColor(Brand.ink)
-            Text(label).font(.caption2).fontWeight(.bold).foregroundColor(Brand.muted)
+            Text(LocalizedStringKey(label)).font(.caption2).fontWeight(.bold).foregroundColor(Brand.muted)
         }
         .frame(maxWidth: .infinity).padding(.vertical, 14)
         .background(Brand.surface).clipShape(RoundedRectangle(cornerRadius: 12))

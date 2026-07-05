@@ -135,7 +135,7 @@ struct ForgeyChatView: View {
                     Button { FX.tap(); draft = s; send() } label: {
                         HStack {
                             Image(systemName: "sparkles").font(.system(size: 12, weight: .bold)).foregroundColor(Color(hex: "4b6211"))
-                            Text(s).font(.system(size: 14, weight: .heavy)).foregroundColor(Brand.ink)
+                            Text(LocalizedStringKey(s)).font(.system(size: 14, weight: .heavy)).foregroundColor(Brand.ink)
                             Spacer()
                             Image(systemName: "arrow.up.circle.fill").font(.system(size: 16)).foregroundColor(Brand.green)
                         }
@@ -405,6 +405,12 @@ struct AIWorkoutSheet: View {
             .background(Brand.bg)
             .navigationTitle("Crear con Forgey").navigationBarTitleDisplayMode(.inline)
             .toolbar { ToolbarItem(placement: .cancellationAction) { SheetBackButton { dismiss() } } }
+            // Desde el chip del chat: la descripción viene YA escrita por el LLM y se
+            // genera SOLA — el usuario no teclea nada (aterriza en la tarjeta del entreno).
+            .onAppear {
+                if descriptionText.isEmpty { descriptionText = initialDescription }
+                if autoGenerate && generated == nil && !generating { generate() }
+            }
             // Editor completo prefijado con lo generado (nombre/grupo editados incluidos);
             // al guardar desde ahí se crea como entreno nuevo del plan.
             .sheet(isPresented: $adjusting, onDismiss: { dismiss() }) {

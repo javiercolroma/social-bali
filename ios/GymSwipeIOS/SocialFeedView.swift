@@ -345,7 +345,7 @@ struct SocialFeedView: View {
     }
 
     private func sectionHeader(_ t: String) -> some View {
-        HStack { Text(t).font(.caption2).fontWeight(.heavy).foregroundColor(Brand.muted); Spacer() }
+        HStack { Text(LocalizedStringKey(t)).font(.caption2).fontWeight(.heavy).foregroundColor(Brand.muted); Spacer() }
             .padding(.horizontal, 4).padding(.top, 4)
     }
 

@@ -232,7 +232,7 @@ struct RootView: View {
                 Text("FORGE LOOP").font(.caption2).fontWeight(.heavy).kerning(1.4).foregroundColor(Color(hex: "4b6211"))
                 // En pantallas estrechas "Comunidad" se partía en dos líneas: una línea
                 // SIEMPRE, encogiendo la fuente lo necesario en cualquier dispositivo.
-                Text(titles[tab]).font(.system(size: 30, weight: .heavy)).foregroundColor(Brand.ink)
+                Text(LocalizedStringKey(titles[tab])).font(.system(size: 30, weight: .heavy)).foregroundColor(Brand.ink)
                     .lineLimit(1).minimumScaleFactor(0.55)
             }
             Spacer()
@@ -305,7 +305,7 @@ struct CustomTabBar: View {
                 .clipShape(Circle())
                 .overlay(Circle().stroke(active ? Color.clear : Brand.line, lineWidth: 1))
                 .shadow(color: active ? Brand.green.opacity(0.4) : .black.opacity(0.06), radius: active ? 8 : 4, y: 3)
-            Text(item.title).font(.system(size: 10, weight: .heavy)).foregroundStyle(active ? accent : Brand.soft)
+            Text(LocalizedStringKey(item.title)).font(.system(size: 10, weight: .heavy)).foregroundStyle(active ? accent : Brand.soft)
         }
         .frame(maxWidth: .infinity)
         .offset(y: -8)
@@ -337,7 +337,7 @@ struct CustomTabBar: View {
                     .scaleEffect(active ? 1.06 : 1)
             }
             .frame(height: 34)
-            Text(item.title)
+            Text(LocalizedStringKey(item.title))
                 .font(.system(size: 10, weight: active ? .heavy : .semibold))
                 .foregroundStyle(active ? accent : Brand.soft)
         }

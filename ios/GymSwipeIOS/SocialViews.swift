@@ -42,7 +42,7 @@ func profileCountsRow(entrenos: Int, seguidores: Int, siguiendo: Int, locked: Bo
 private func profileCountTile(_ value: String, _ label: String) -> some View {
     VStack(spacing: 2) {
         Text(value).font(.system(size: 18, weight: .heavy)).foregroundColor(Brand.ink)
-        Text(label).font(.caption2).foregroundColor(Brand.muted)
+        Text(LocalizedStringKey(label)).font(.caption2).foregroundColor(Brand.muted)
     }.frame(maxWidth: .infinity)
 }
 
@@ -1163,7 +1163,7 @@ struct FriendProfileView: View {
 
     private func statTile(_ label: String, _ value: String) -> some View {
         VStack(spacing: 3) {
-            Text(label).font(.caption2).fontWeight(.heavy).foregroundColor(Brand.muted)
+            Text(LocalizedStringKey(label)).font(.caption2).fontWeight(.heavy).foregroundColor(Brand.muted)
             Text(value).font(.system(size: 22, weight: .heavy)).foregroundColor(Brand.ink)
         }.frame(maxWidth: .infinity).padding(.vertical, 12)
         .background(Brand.panel).clipShape(RoundedRectangle(cornerRadius: 12))
@@ -1344,7 +1344,7 @@ struct MeProfileView: View {
 
     private func statTile(_ label: String, _ value: String) -> some View {
         VStack(spacing: 3) {
-            Text(label).font(.caption2).fontWeight(.heavy).foregroundColor(Brand.muted)
+            Text(LocalizedStringKey(label)).font(.caption2).fontWeight(.heavy).foregroundColor(Brand.muted)
             Text(value).font(.system(size: 22, weight: .heavy)).foregroundColor(Brand.ink)
         }.frame(maxWidth: .infinity).padding(.vertical, 12)
         .background(Brand.panel).clipShape(RoundedRectangle(cornerRadius: 12))

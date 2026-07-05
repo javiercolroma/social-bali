@@ -275,7 +275,7 @@ struct WorkoutStatStrip: View {
                 Text(s.value).font(.system(size: valueSize, weight: .heavy, design: .rounded))
                     .foregroundColor(Brand.ink).monospacedDigit().lineLimit(1).minimumScaleFactor(0.8)
             }
-            Text(s.label.uppercased()).font(.system(size: 9, weight: .bold)).tracking(0.4)
+            Text(NSLocalizedString(s.label, comment: "").uppercased()).font(.system(size: 9, weight: .bold)).tracking(0.4)
                 .foregroundColor(Brand.muted).lineLimit(1)
         }
         .frame(maxWidth: .infinity).contentShape(Rectangle())
