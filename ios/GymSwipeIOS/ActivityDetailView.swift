@@ -118,7 +118,7 @@ struct ActivityDetailView: View {
         let sets = expandedSets(ex)
         return VStack(alignment: .leading, spacing: 10) {
             HStack {
-                Text(ex.name).font(.system(size: 16, weight: .heavy)).foregroundColor(Brand.ink)
+                Text(L10n.x(ex.name)).font(.system(size: 16, weight: .heavy)).foregroundColor(Brand.ink)
                 Spacer()
                 Text("\(sets.count) \(sets.count == 1 ? "serie" : "series")")
                     .font(.system(size: 12, weight: .heavy)).foregroundColor(Color(hex: "4b6211"))

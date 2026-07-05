@@ -80,7 +80,7 @@ struct ExerciseProgressView: View {
                 .padding(16)
             }
             .background(Brand.bg)
-            .navigationTitle(exerciseName)
+            .navigationTitle(L10n.x(exerciseName))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar { ToolbarItem(placement: .cancellationAction) { SheetBackButton { dismiss() } } }
         }

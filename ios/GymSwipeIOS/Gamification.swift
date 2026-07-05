@@ -674,7 +674,7 @@ struct PRCelebration: View {
                         .shadow(color: Brand.green.opacity(0.7), radius: 16)
                     Image(systemName: "trophy.fill").font(.system(size: 46, weight: .heavy)).foregroundColor(Color(hex: "10150a"))
                 }.scaleEffect(pop)
-                Text(pr.exercise).font(.system(size: 21, weight: .heavy)).foregroundColor(Brand.ink).multilineTextAlignment(.center)
+                Text(L10n.x(pr.exercise)).font(.system(size: 21, weight: .heavy)).foregroundColor(Brand.ink).multilineTextAlignment(.center)
                 Text("\(fmt(pr.weight)) kg × \(pr.reps)").font(.system(size: 26, weight: .heavy)).foregroundColor(Brand.ink)
                 Text("1RM estimado ~\(Int(pr.e1rm.rounded())) kg").font(.system(size: 13, weight: .bold)).foregroundColor(Brand.soft)
                 Button { onDismiss() } label: { Text("¡Vamos!").frame(maxWidth: .infinity) }
@@ -757,7 +757,7 @@ struct RecordsCard: View {
             } else {
                 ForEach(Array(records.prefix(shown))) { r in
                     HStack {
-                        Text(r.exercise).font(.system(size: 14, weight: .heavy)).foregroundColor(Brand.ink).lineLimit(1)
+                        Text(L10n.x(r.exercise)).font(.system(size: 14, weight: .heavy)).foregroundColor(Brand.ink).lineLimit(1)
                         Spacer()
                         Text("\(fmt(r.weight)) kg × \(r.reps)").font(.system(size: 14, weight: .heavy)).foregroundColor(Brand.ink).monospacedDigit()
                         Text("· 1RM \(Int(r.e1rm.rounded()))").font(.system(size: 12, weight: .semibold)).foregroundColor(Brand.soft).monospacedDigit()
@@ -791,7 +791,7 @@ struct AllRecordsSheet: View {
                 VStack(spacing: 0) {
                     ForEach(Array(records.enumerated()), id: \.element.id) { i, r in
                         HStack {
-                            Text(r.exercise).font(.system(size: 14, weight: .heavy)).foregroundColor(Brand.ink).lineLimit(1)
+                            Text(L10n.x(r.exercise)).font(.system(size: 14, weight: .heavy)).foregroundColor(Brand.ink).lineLimit(1)
                             Spacer()
                             Text("\(r.weight == r.weight.rounded() ? String(Int(r.weight)) : String(format: "%.1f", r.weight)) kg × \(r.reps)")
                                 .font(.system(size: 14, weight: .heavy)).foregroundColor(Brand.ink).monospacedDigit()

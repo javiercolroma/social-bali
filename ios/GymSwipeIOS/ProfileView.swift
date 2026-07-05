@@ -167,7 +167,11 @@ struct SettingsView: View {
     private var currentLanguageName: String {
         guard let langs = UserDefaults.standard.array(forKey: "AppleLanguages") as? [String],
               let first = langs.first, UserDefaults.standard.object(forKey: "forgeLangOverride") != nil else { return NSLocalizedString("Automático", comment: "") }
-        return first.hasPrefix("en") ? "English" : "Español"
+        if first.hasPrefix("en") { return "English" }
+        if first.hasPrefix("pt-BR") { return "Português (BR)" }
+        if first.hasPrefix("pt") { return "Português (PT)" }
+        if first.hasPrefix("fr") { return "Français" }
+        return "Español"
     }
 
     private func setLanguage(_ code: String?) {
@@ -221,6 +225,9 @@ struct SettingsView: View {
                             Button("Automático (sistema)") { setLanguage(nil) }
                             Button("Español") { setLanguage("es") }
                             Button("English") { setLanguage("en") }
+                            Button("Português (Portugal)") { setLanguage("pt-PT") }
+                            Button("Português (Brasil)") { setLanguage("pt-BR") }
+                            Button("Français") { setLanguage("fr") }
                         } label: {
                             HStack {
                                 Label("Idioma", systemImage: "globe")

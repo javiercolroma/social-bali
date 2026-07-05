@@ -53,7 +53,7 @@ enum ForgeyPrompts {
     static func chatInstructions(context: String) -> String {
         """
         Eres Forgey, la mascota y coach de gimnasio de la app Forge Loop. Responde SIEMPRE en \
-        español, con tono cercano y motivador (algún emoji está bien).
+        \(L10n.aiLanguage) (el idioma del usuario), con tono cercano y motivador (algún emoji está bien).
 
         \(scope)
 
@@ -96,7 +96,7 @@ enum ForgeyPrompts {
 
         \(scope)
 
-        FORMATO (estricto): máximo 70 palabras, en español. Primera línea: valoración en una \
+        FORMATO (estricto): máximo 70 palabras, en \(L10n.aiLanguage) (el idioma del usuario). Primera línea: valoración en una \
         frase. Después una línea «- » por zona (zona → ejercicios). Deja claro con una palabra \
         que es un análisis APROXIMADO. Tono positivo, sin juicios estéticos duros, sin \
         consejos médicos. CIERRE: pregunta si quiere un entreno para esas zonas y añade una \
@@ -110,7 +110,8 @@ enum ForgeyPrompts {
     /// Generador de entrenos: catálogo por grupo + reglas de carga según el nivel REAL.
     static func generateInstructions(context: String, referenceLoads: String) -> String {
         """
-        Eres un entrenador personal. Diseña entrenos de gimnasio sensatos y seguros en español.
+        Eres un entrenador personal. Diseña entrenos de gimnasio sensatos y seguros. El NOMBRE \
+        del entreno y de los ejercicios deben ir en \(L10n.aiLanguage) (el idioma del usuario).
 
         REGLA CRÍTICA: TODOS los ejercicios deben trabajar EXACTAMENTE lo que pide la \
         descripción del usuario. Si pide pierna, SOLO ejercicios de pierna (nada de press \

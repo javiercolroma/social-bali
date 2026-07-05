@@ -492,7 +492,7 @@ struct ChatView: View {
                         Image(systemName: "doc.text.fill").font(.system(size: 14)).foregroundColor(Color(hex: "4b6211"))
                         VStack(alignment: .leading, spacing: 1) {
                             Text("Entreno adjunto").font(.system(size: 10, weight: .heavy)).foregroundColor(Brand.soft)
-                            Text(w.name).font(.system(size: 14, weight: .heavy)).foregroundColor(Brand.ink).lineLimit(1)
+                            Text(L10n.x(w.name)).font(.system(size: 14, weight: .heavy)).foregroundColor(Brand.ink).lineLimit(1)
                         }
                         Spacer()
                         Button { withAnimation { pendingWorkout = nil } } label: {
@@ -614,7 +614,7 @@ struct SharedWorkoutCard: View {
                 }
                 VStack(alignment: .leading, spacing: 2) {
                     Text("ENTRENO COMPARTIDO").font(.system(size: 9, weight: .heavy)).foregroundColor(Brand.soft).tracking(0.5)
-                    Text(workout.name).font(.system(size: 16, weight: .heavy)).foregroundColor(Brand.ink).lineLimit(1)
+                    Text(L10n.x(workout.name)).font(.system(size: 16, weight: .heavy)).foregroundColor(Brand.ink).lineLimit(1)
                 }
                 Spacer(minLength: 0)
                 Image(systemName: "chevron.right").font(.system(size: 12, weight: .bold)).foregroundColor(Brand.soft)
@@ -626,7 +626,7 @@ struct SharedWorkoutCard: View {
                 ForEach(workout.exercises.prefix(4)) { e in
                     HStack(spacing: 6) {
                         Circle().fill(Brand.line).frame(width: 4, height: 4)
-                        Text(e.name).font(.system(size: 12)).foregroundColor(Brand.muted).lineLimit(1)
+                        Text(L10n.x(e.name)).font(.system(size: 12)).foregroundColor(Brand.muted).lineLimit(1)
                         Spacer()
                         Text("\(e.sets)×\(e.reps)").font(.system(size: 11, weight: .semibold)).foregroundColor(Brand.soft)
                     }
@@ -723,7 +723,7 @@ struct SharedWorkoutPreview: View {
                 }.padding(16)
             }
             .background(Brand.bg)
-            .navigationTitle(template.name)
+            .navigationTitle(L10n.x(template.name))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar { ToolbarItem(placement: .cancellationAction) { SheetBackButton { dismiss() } } }
         }
@@ -839,7 +839,7 @@ struct ShareWorkoutPicker: View {
                                     Image(systemName: "dumbbell.fill").font(.system(size: 17, weight: .bold)).foregroundColor(Color(hex: "10150a"))
                                 }
                                 VStack(alignment: .leading, spacing: 2) {
-                                    Text(w.name).font(.system(size: 15, weight: .heavy)).foregroundColor(Brand.ink)
+                                    Text(L10n.x(w.name)).font(.system(size: 15, weight: .heavy)).foregroundColor(Brand.ink)
                                     Text("\(w.exercises.count) ejercicios · \(w.block)").font(.caption).foregroundColor(Brand.muted)
                                 }
                                 Spacer()

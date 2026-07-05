@@ -36,7 +36,7 @@ struct PlanView: View {
                 ForEach(grouped, id: \.group) { section in
                     VStack(alignment: .leading, spacing: 8) {
                         HStack {
-                            Text(section.group.uppercased()).font(.caption2).fontWeight(.heavy).foregroundColor(Brand.muted)
+                            Text(L10n.x(section.group).uppercased()).font(.caption2).fontWeight(.heavy).foregroundColor(Brand.muted)
                             Spacer()
                             Text("\(section.workouts.count)").font(.caption2).fontWeight(.heavy).foregroundColor(Brand.soft)
                         }
@@ -88,7 +88,7 @@ struct PlanView: View {
                     Image(systemName: "dumbbell.fill").font(.system(size: 16, weight: .bold)).foregroundColor(Color(hex: "10150a"))
                 }
                 VStack(alignment: .leading, spacing: 3) {
-                    Text(workout.name).font(.system(size: 16, weight: .heavy)).foregroundColor(Brand.ink)
+                    Text(L10n.x(workout.name)).font(.system(size: 16, weight: .heavy)).foregroundColor(Brand.ink)
                     Text(workout.description).font(.footnote).foregroundColor(Brand.muted).lineLimit(1)
                 }
                 Spacer()
@@ -193,7 +193,7 @@ struct WorkoutExerciseList: View {
                             Text("\(idx + 1)").font(.system(size: 14, weight: .heavy)).foregroundColor(Brand.muted).frame(width: 24)
                         }
                         VStack(alignment: .leading, spacing: 2) {
-                            Text(ex.name).font(.system(size: 15, weight: .bold)).foregroundColor(Brand.ink)
+                            Text(L10n.x(ex.name)).font(.system(size: 15, weight: .bold)).foregroundColor(Brand.ink)
                             Text("\(ex.sets)×\(ex.reps) · \(weightText(ex.weight)) kg").font(.footnote).foregroundColor(Brand.muted)
                         }
                         Spacer()

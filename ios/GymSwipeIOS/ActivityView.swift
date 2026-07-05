@@ -217,7 +217,7 @@ struct ActivityView: View {
         let hasTrend = lift.points.count >= 2
         return Button { FX.tap(); progressExercise = IdString(id: lift.name) } label: { HStack(spacing: 10) {
             VStack(alignment: .leading, spacing: 3) {
-                Text(lift.name).font(.system(size: 14, weight: .heavy)).foregroundColor(Brand.ink).lineLimit(1)
+                Text(L10n.x(lift.name)).font(.system(size: 14, weight: .heavy)).foregroundColor(Brand.ink).lineLimit(1)
                 HStack(spacing: 6) {
                     Text("\(fmt(lift.current)) kg").font(.system(size: 13, weight: .heavy)).foregroundColor(Color(hex: "10150a"))
                         .padding(.horizontal, 8).padding(.vertical, 2).background(Brand.greenSoft).clipShape(Capsule())

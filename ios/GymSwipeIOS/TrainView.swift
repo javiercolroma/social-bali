@@ -235,7 +235,7 @@ struct TrainView: View {
                 Text("SERIE \(current) DE \(ex.sets)").font(.caption2).fontWeight(.heavy).foregroundColor(Color(hex: "4b6211"))
             }
             if peers.count > 1 { supersetStrip(peers: peers, active: ex) }
-            Text(ex.name).font(.system(size: 28, weight: .heavy)).foregroundColor(Brand.ink).lineLimit(2)
+            Text(L10n.x(ex.name)).font(.system(size: 28, weight: .heavy)).foregroundColor(Brand.ink).lineLimit(2)
             // "La última vez": tu mejor serie de la sesión anterior con este ejercicio.
             if let last = store.lastPerformance(of: ex.name) {
                 HStack(spacing: 6) {
