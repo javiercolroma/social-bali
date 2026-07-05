@@ -151,16 +151,21 @@ final class ForgeyAI: ObservableObject {
     /// Métricas HONESTAS de la foto vía Vision (pose corporal): no podemos juzgar "músculo"
     /// desde una foto con APIs on-device, pero sí medir proporciones (hombros/cadera) y
     /// detectar que hay un cuerpo. nil = no se detecta una persona con confianza.
-    static func bodyMetrics(from data: Data) -> String? {
-        guard let ui = UIImage(data: data), let cg = ui.cgImage else { return nil }
+    /// Resultado de mirar la foto: métricas, "no hay persona", o Vision no disponible
+    /// (p. ej. el modelo de pose NO existe en el simulador — error Code=9; en iPhone real sí).
+    enum BodyDetection { case metrics(String); case noPerson; case unavailable }
+
+    static func detectBody(from data: Data) -> BodyDetection {
+        guard let ui = UIImage(data: data), let cg = ui.cgImage else { return .noPerson }
         let req = VNDetectHumanBodyPoseRequest()
-        try? VNImageRequestHandler(cgImage: cg, options: [:]).perform([req])
-        guard let obs = req.results?.first else { return nil }
+        do { try VNImageRequestHandler(cgImage: cg, options: [:]).perform([req]) }
+        catch { return .unavailable }
+        guard let obs = req.results?.first else { return .noPerson }
         func pt(_ j: VNHumanBodyPoseObservation.JointName) -> CGPoint? {
             guard let p = try? obs.recognizedPoint(j), p.confidence > 0.3 else { return nil }
             return p.location
         }
-        guard let ls = pt(.leftShoulder), let rs = pt(.rightShoulder) else { return nil }
+        guard let ls = pt(.leftShoulder), let rs = pt(.rightShoulder) else { return .noPerson }
         var lines: [String] = ["En la foto se detecta una persona (análisis de proporciones aproximado)."]
         let shoulder = hypot(ls.x - rs.x, ls.y - rs.y)
         if let lh = pt(.leftHip), let rh = pt(.rightHip) {
@@ -172,7 +177,7 @@ final class ForgeyAI: ObservableObject {
         }
         // Asimetría de hombros (postura) si es visible.
         if abs(ls.y - rs.y) > 0.035 { lines.append("Se aprecia un hombro algo más alto que el otro (posible asimetría postural).") }
-        return lines.joined(separator: " ")
+        return .metrics(lines.joined(separator: " "))
     }
 
     /// Reparto REAL del volumen de entreno por patrón (solo sesiones fiables): la señal más
@@ -197,8 +202,17 @@ final class ForgeyAI: ObservableObject {
 
     /// Analiza una foto del físico: métricas de Vision + reparto de entreno → zonas a priorizar.
     func analyzeBody(photo: Data, store: AppStore) async throws -> String {
-        guard let metrics = ForgeyAI.bodyMetrics(from: photo) else {
+        let metrics: String
+        switch ForgeyAI.detectBody(from: photo) {
+        case .noPerson:
+            // Vision funcionó y NO hay persona: pedir otra foto (mensaje honesto).
             return "No consigo ver un cuerpo completo en la foto 📷. Prueba con una foto de cuerpo entero, de frente y con buena luz. ¿La intentamos de nuevo?"
+        case .unavailable:
+            // Vision no está disponible (p. ej. simulador): seguimos SOLO con el reparto
+            // de entreno, sin fingir que medimos la foto.
+            metrics = "No disponibles en este dispositivo (analiza solo con el reparto de entreno; dilo en una frase)."
+        case .metrics(let m):
+            metrics = m
         }
         #if canImport(FoundationModels)
         if #available(iOS 26.0, *) {
