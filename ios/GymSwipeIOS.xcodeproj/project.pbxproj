@@ -58,6 +58,7 @@
 		DA05549BBC317153BBD6F71E /* AuthConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = F74AC0B6B4A95C6A9638E399 /* AuthConfig.swift */; };
 		E16DCF8706F165D2CD3C5A8C /* Gamification.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3ED686425803AD9C87827576 /* Gamification.swift */; };
 		E35C82D5E1A78190A0815909 /* LiveActivityManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 51E3F8B26293A58B6A5DC2F4 /* LiveActivityManager.swift */; };
+		E3BC76FCF75A45B14DF0E40E /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = 08ABDE21F18C293A914D2A67 /* Localizable.strings */; };
 		EF71FBCBDF30D20460C49750 /* TrainView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1DF8FC23C0BF2E64342C5D7 /* TrainView.swift */; };
 		F76E1D63AB375BD1BF06411F /* ForgeyPrompts.swift in Sources */ = {isa = PBXBuildFile; fileRef = 38A97EC1D8DFDFC712E3799C /* ForgeyPrompts.swift */; };
 		FBCDEE4F608FFD8E2591F44A /* GymSwipeIOSApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9CAC012CB53EB545C20ED468 /* GymSwipeIOSApp.swift */; };
@@ -89,6 +90,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		08ABDE21F18C293A914D2A67 /* Localizable.strings */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = Localizable.strings; path = en.lproj/Localizable.strings; sourceTree = "<group>"; };
 		1250C29A42354C7EA62ADC58 /* GymScore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GymScore.swift; sourceTree = "<group>"; };
 		1D19B1F26226F79DC0669B52 /* Countries.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Countries.swift; sourceTree = "<group>"; };
 		29747A9B85AA4E6D8D9D3843 /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
@@ -224,6 +226,7 @@
 				48EC08BA00B1509F5F295C62 /* HealthManager.swift */,
 				45AAAB98E146869DA2747469 /* Info.plist */,
 				51E3F8B26293A58B6A5DC2F4 /* LiveActivityManager.swift */,
+				08ABDE21F18C293A914D2A67 /* Localizable.strings */,
 				F46519F370ACB4CE695F4928 /* LocationManager.swift */,
 				D1596E5BECE9666DDA76867A /* Models.swift */,
 				65AB2F19CF6DCC5B645AB356 /* NotificationManager.swift */,
@@ -312,11 +315,12 @@
 				};
 			};
 			buildConfigurationList = 2F318D80FF755CBCABE5E35D /* Build configuration list for PBXProject "GymSwipeIOS" */;
-			developmentRegion = en;
+			developmentRegion = es;
 			hasScannedForEncodings = 0;
 			knownRegions = (
 				Base,
 				en,
+				es,
 			);
 			mainGroup = 9C4D981609085AAFB38BE24C;
 			minimizedProjectReferenceProxies = 1;
@@ -341,6 +345,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				5D87F9D09E700FC924A4C724 /* Assets.xcassets in Resources */,
+				E3BC76FCF75A45B14DF0E40E /* Localizable.strings in Resources */,
 				44168B322E9C8DF64A6B35D2 /* PrivacyInfo.xcprivacy in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

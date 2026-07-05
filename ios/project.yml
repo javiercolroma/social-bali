@@ -1,5 +1,6 @@
 name: GymSwipeIOS
 options:
+  developmentLanguage: es   # las cadenas del código SON las claves; en.lproj traduce
   bundleIdPrefix: com.javiercolroma
   deploymentTarget:
     iOS: "16.0"

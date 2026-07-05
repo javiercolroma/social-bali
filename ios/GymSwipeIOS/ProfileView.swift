@@ -162,6 +162,26 @@ struct EditProfileView: View {
 // MARK: - Ajustes de la app
 
 struct SettingsView: View {
+    @State private var showLanguageRestart = false
+
+    private var currentLanguageName: String {
+        guard let langs = UserDefaults.standard.array(forKey: "AppleLanguages") as? [String],
+              let first = langs.first, UserDefaults.standard.object(forKey: "forgeLangOverride") != nil else { return NSLocalizedString("Automático", comment: "") }
+        return first.hasPrefix("en") ? "English" : "Español"
+    }
+
+    private func setLanguage(_ code: String?) {
+        FX.tap()
+        if let code {
+            UserDefaults.standard.set([code], forKey: "AppleLanguages")
+            UserDefaults.standard.set(code, forKey: "forgeLangOverride")
+        } else {
+            UserDefaults.standard.removeObject(forKey: "AppleLanguages")
+            UserDefaults.standard.removeObject(forKey: "forgeLangOverride")
+        }
+        showLanguageRestart = true
+    }
+
     @EnvironmentObject var store: AppStore
     @Environment(\.dismiss) private var dismiss
     @AppStorage("fxSound") private var soundOn = true
@@ -195,7 +215,20 @@ struct SettingsView: View {
                         Toggle(isOn: $soundOn) { Label("Sonidos", systemImage: "speaker.wave.2.fill") }.tint(Brand.green)
                         Toggle(isOn: $hapticsOn) { Label("Vibración", systemImage: "iphone.radiowaves.left.and.right") }.tint(Brand.green)
                         Divider()
-                        HStack { Label("Idioma", systemImage: "globe"); Spacer(); Text("Español").foregroundColor(Brand.soft) }
+                        // Idioma: automático (sistema) o forzado. iOS aplica el cambio al
+                        // RELANZAR la app (mecanismo estándar de AppleLanguages).
+                        Menu {
+                            Button("Automático (sistema)") { setLanguage(nil) }
+                            Button("Español") { setLanguage("es") }
+                            Button("English") { setLanguage("en") }
+                        } label: {
+                            HStack {
+                                Label("Idioma", systemImage: "globe")
+                                Spacer()
+                                Text(currentLanguageName).foregroundColor(Brand.soft)
+                                Image(systemName: "chevron.up.chevron.down").font(.system(size: 11, weight: .bold)).foregroundColor(Brand.soft)
+                            }
+                        }
                             .font(.system(size: 15, weight: .semibold)).foregroundColor(Brand.ink)
                     }
 

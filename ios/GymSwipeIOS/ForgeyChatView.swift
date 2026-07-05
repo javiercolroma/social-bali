@@ -82,7 +82,8 @@ struct ForgeyChatView: View {
                             Image(systemName: "camera.fill").font(.system(size: 15, weight: .semibold)).foregroundColor(Brand.ink)
                                 .frame(width: 46, height: 46).background(Brand.chip).clipShape(Circle())
                         }
-                        TextField("Pregúntale a Forgey…", text: $draft)
+                        TextField("Pregúntale a Forgey…", text: $draft, axis: .vertical)
+                            .lineLimit(1...4)
                             // Tope de entrada: el modelo on-device es pequeño y las novelas lo marean.
                             .onChange(of: draft) { v in if v.count > 200 { draft = String(v.prefix(200)) } }
                             .focused($focused)

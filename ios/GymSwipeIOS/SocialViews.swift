@@ -507,7 +507,8 @@ struct ChatView: View {
                         Image(systemName: "plus").font(.system(size: 20, weight: .semibold)).foregroundColor(Brand.ink)
                             .frame(width: 46, height: 46).background(Brand.chip).clipShape(Circle())
                     }
-                    TextField("Escribe un mensaje", text: $draft)
+                    TextField("Escribe un mensaje", text: $draft, axis: .vertical)
+                .lineLimit(1...4)
                         .padding(.horizontal, 16).frame(height: 46).background(Color.white).clipShape(Capsule())
                         .overlay(Capsule().stroke(Brand.line))
                     Button { send() } label: {
