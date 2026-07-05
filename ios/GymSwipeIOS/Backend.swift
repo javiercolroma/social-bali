@@ -185,6 +185,13 @@ final class Backend {
             .eq("id", value: me.uuidString).execute()
     }
 
+    /// Registra una petición de IA (persistente por usuario y día; ver 0019_ai_usage).
+    func bumpAIUsage(kind: String, inTokens: Int = 0, outTokens: Int = 0) async {
+        guard let client else { return }
+        struct P: Encodable { let p_kind: String; let p_in: Int; let p_out: Int }
+        _ = try? await client.rpc("bump_ai_usage", params: P(p_kind: kind, p_in: inTokens, p_out: outTokens)).execute()
+    }
+
     /// Sube MI Gym Score al perfil (fuente única para badges de feed/búsquedas).
     func pushGymScore(_ score: Int) async {
         guard let client, let me = await currentUserIdAsync() else { return }

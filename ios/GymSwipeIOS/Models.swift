@@ -8,6 +8,10 @@ enum FeatureFlags {
     /// ⚠️ SOLO PRUEBAS: permite guardar entrenos cortos/implausibles (ignora la regla
     /// anti-fake en el cliente). APAGAR antes de cualquier lanzamiento público.
     static let allowShortWorkouts = true
+    /// IA en la NUBE para dispositivos sin Apple Intelligence (Claude vía Edge Function).
+    /// Desactivada de momento (pendiente de pruebas y de configurar ANTHROPIC_API_KEY en
+    /// los secretos de Supabase). La infraestructura está desplegada y lista.
+    static let cloudAIEnabled = false
 }
 
 enum ExerciseStatus: String, Codable {

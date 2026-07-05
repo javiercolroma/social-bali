@@ -19,6 +19,9 @@ struct ForgeyChatView: View {
         let fromMe: Bool
         let text: String
         var image: Data? = nil   // foto enviada (análisis de físico)
+        /// Descripción de entreno escrita por el LLM (protocolo ENTRENO_SUGERIDO): si existe,
+        /// se muestra «Crear entreno de esto» — SOLO cuando tiene sentido, ya redactada.
+        var suggestion: String? = nil
     }
 
     private let suggestions = [
@@ -27,7 +30,7 @@ struct ForgeyChatView: View {
         "¿En qué crees que debo mejorar?",
         "¿Cómo va mi constancia este mes?",
     ]
-    private var unavailable: String? { ForgeyAI.unavailableReason() }
+    private var unavailable: String? { ForgeyEngine.unavailableReason() }
 
     var body: some View {
         NavigationStack {
@@ -42,11 +45,13 @@ struct ForgeyChatView: View {
                                 emptyIntro
                             }
                             ForEach(messages) { bubble($0).id($0.id) }
-                            // Follow-up accionable: convertir el último consejo en un entreno, a un toque.
-                            if !thinking, let last = messages.last, !last.fromMe {
+                            // Botón SOLO cuando el modelo sugiere entreno (ENTRENO_SUGERIDO):
+                            // la descripción viene YA escrita por el LLM con el contexto de la
+                            // conversación — el usuario no tiene que teclear nada.
+                            if !thinking, let last = messages.last, !last.fromMe, let sug = last.suggestion {
                                 Button {
                                     FX.tap()
-                                    genTopic = IdString(id: String(last.text.replacingOccurrences(of: "\n", with: " ").prefix(160)))
+                                    genTopic = IdString(id: sug)
                                 } label: {
                                     HStack(spacing: 6) {
                                         Image(systemName: "sparkles")
@@ -99,7 +104,7 @@ struct ForgeyChatView: View {
         }
         // «Crear entreno de esto»: generador prellenado con el último consejo de Forgey.
         .sheet(item: $genTopic) { t in
-            AIWorkoutSheet(initialDescription: "Entreno enfocado en: \(t.id)", autoGenerate: true).environmentObject(store)
+            AIWorkoutSheet(initialDescription: t.id, autoGenerate: true).environmentObject(store)
         }
     }
 
@@ -227,8 +232,8 @@ struct ForgeyChatView: View {
         thinking = true
         Task {
             do {
-                let answer = try await ForgeyAI.shared.analyzeBody(photo: data, store: store)
-                messages.append(ChatLine(fromMe: false, text: answer))
+                let r = try await ForgeyEngine.analyzeBody(photo: data, store: store)
+                messages.append(ChatLine(fromMe: false, text: r.text, suggestion: r.suggestion))
             } catch {
                 messages.append(ChatLine(fromMe: false, text: "No he podido analizar la foto 😅 \(error.localizedDescription)"))
             }
@@ -244,8 +249,8 @@ struct ForgeyChatView: View {
         draft = ""; thinking = true
         Task {
             do {
-                let answer = try await ForgeyAI.shared.ask(q, store: store)
-                messages.append(ChatLine(fromMe: false, text: answer))
+                let r = try await ForgeyEngine.ask(q, store: store)
+                messages.append(ChatLine(fromMe: false, text: r.text, suggestion: r.suggestion))
             } catch {
                 messages.append(ChatLine(fromMe: false, text: "Ups, no he podido pensar la respuesta 😅 \(error.localizedDescription)"))
             }
@@ -438,7 +443,7 @@ struct AIWorkoutSheet: View {
         error = nil; generating = true; FX.tap()
         Task {
             do {
-                let w = try await ForgeyAI.shared.generateWorkout(from: descriptionText, store: store)
+                let w = try await ForgeyEngine.generateWorkout(from: descriptionText, store: store)
                 generated = w; editName = w.name; editGroup = w.block
                 FX.success()
             }

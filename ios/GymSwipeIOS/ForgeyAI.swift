@@ -112,33 +112,7 @@ final class ForgeyAI: ObservableObject {
     func ask(_ question: String, store: AppStore) async throws -> String {
         #if canImport(FoundationModels)
         if #available(iOS 26.0, *) {
-            let session = LanguageModelSession(instructions: """
-            Eres Forgey, la mascota y coach de gimnasio de la app Forge Loop. Responde SIEMPRE en español, \
-            con tono cercano y motivador (algún emoji está bien).
-
-            PRECISIÓN (lo más importante): responde EXACTAMENTE a lo que se pregunta, con el dato \
-            concreto de los DATOS DEL USUARIO, en 2-4 frases. VE AL GRANO: la PRIMERA frase ya es \
-            la respuesta, sin preámbulos ni relleno (nada de «¡Estoy emocionado de decirte…!», \
-            «¡Gran pregunta!» ni similares). NO resumas el perfil completo, NO enumeres datos \
-            que no se han pedido. Ejemplos: si preguntan «¿en qué ejercicio soy \
-            mejor?» responde con TU MEJOR EJERCICIO y su marca; si preguntan «¿dónde progreso \
-            menos?» responde con MENOR PROGRESO y su %.
-
-            FORMATO (estricto): máximo 50 palabras. NADA de párrafos largos. Estructura: \
-            primera línea = la respuesta con su dato; si hay más datos o consejos, líneas \
-            sueltas cortas empezando por «- » (máximo 3). Texto plano, sin Markdown (nada de \
-            asteriscos ni almohadillas).
-
-            CIERRE: termina SIEMPRE con UNA pregunta breve de seguimiento ofreciendo el siguiente \
-            paso concreto (p. ej. «¿Quieres que te prepare un entreno para mejorarlo?»).
-
-            Si no hay datos suficientes, dilo con honestidad y da un consejo general seguro. No \
-            inventes marcas ni fechas. No des consejos médicos; ante dolor, recomienda descansar \
-            y consultar a un profesional.
-
-            DATOS DEL USUARIO:
-            \(ForgeyAI.context(from: store))
-            """)
+            let session = LanguageModelSession(instructions: ForgeyPrompts.chatInstructions(context: ForgeyAI.context(from: store)))
             return try await session.respond(to: question).content
         }
         #endif
@@ -200,36 +174,13 @@ final class ForgeyAI: ObservableObject {
         return "Reparto de su volumen de entreno: " + parts.joined(separator: ", ") + "."
     }
 
-    /// Analiza una foto del físico: métricas de Vision + reparto de entreno → zonas a priorizar.
-    func analyzeBody(photo: Data, store: AppStore) async throws -> String {
-        let metrics: String
-        switch ForgeyAI.detectBody(from: photo) {
-        case .noPerson:
-            // Vision funcionó y NO hay persona: pedir otra foto (mensaje honesto).
-            return "No consigo ver un cuerpo completo en la foto 📷. Prueba con una foto de cuerpo entero, de frente y con buena luz. ¿La intentamos de nuevo?"
-        case .unavailable:
-            // Vision no está disponible (p. ej. simulador): seguimos SOLO con el reparto
-            // de entreno, sin fingir que medimos la foto.
-            metrics = "No disponibles en este dispositivo (analiza solo con el reparto de entreno; dilo en una frase)."
-        case .metrics(let m):
-            metrics = m
-        }
+    /// Analiza el físico a partir de las MÉTRICAS ya calculadas (Vision corre en el
+    /// engine, que decide los casos sin persona / sin Vision). Prompt compartido.
+    func analyzeBody(metrics: String, store: AppStore) async throws -> String {
         #if canImport(FoundationModels)
         if #available(iOS 26.0, *) {
-            let session = LanguageModelSession(instructions: """
-            Eres Forgey, coach de gimnasio de Forge Loop. El usuario envía una foto de su físico. \
-            NO puedes ver la foto: recibes MEDICIONES aproximadas de ella (proporciones por visión \
-            artificial) y el reparto real de su volumen de entreno. Con ambas señales, indica 2-3 \
-            zonas a priorizar con 1-2 ejercicios concretos por zona.
-
-            FORMATO (estricto): máximo 70 palabras, en español. Primera línea: valoración en una \
-            frase. Después una línea «- » por zona (zona → ejercicios). Deja claro con una palabra \
-            que es un análisis APROXIMADO. Nada de párrafos. Tono positivo, sin juicios estéticos \
-            duros, sin consejos médicos. CIERRE: una pregunta ofreciendo crear un entreno para ello.
-
-            MEDICIONES DE LA FOTO: \(metrics)
-            ENTRENO DEL USUARIO: \(ForgeyAI.trainingSplit(from: store))
-            """)
+            let session = LanguageModelSession(instructions: ForgeyPrompts.analyzeInstructions(
+                metrics: metrics, split: ForgeyAI.trainingSplit(from: store)))
             return try await session.respond(to: "¿Qué partes debería mejorar?").content
         }
         #endif
@@ -249,27 +200,9 @@ final class ForgeyAI: ObservableObject {
     func generateWorkout(from description: String, store: AppStore) async throws -> WorkoutTemplate {
         #if canImport(FoundationModels)
         if #available(iOS 26.0, *) {
-            let session = LanguageModelSession(instructions: """
-            Eres un entrenador personal. Diseña entrenos de gimnasio sensatos y seguros en español.
-
-            REGLA CRÍTICA: TODOS los ejercicios deben trabajar EXACTAMENTE lo que pide la \
-            descripción del usuario. Si pide pierna, SOLO ejercicios de pierna (nada de press \
-            banca, remo ni curl de bíceps). Si pide pecho, SOLO pecho y tríceps auxiliar si encaja.
-
-            Catálogo por grupo — elige SOLO del grupo que corresponda:
-            - Pierna/Glúteo: Sentadilla, Prensa de piernas, Zancadas, Hip thrust, Peso muerto rumano, Extensión de cuádriceps, Curl femoral, Elevación de gemelos, Sentadilla búlgara
-            - Pecho: Press banca, Press inclinado con mancuernas, Aperturas, Fondos, Flexiones
-            - Espalda: Remo con barra, Dominadas, Jalón al pecho, Remo en polea, Face pull
-            - Hombro: Press militar, Elevaciones laterales, Elevaciones frontales, Pájaros
-            - Bíceps: Curl con barra, Curl martillo, Curl inclinado
-            - Tríceps: Press francés, Extensión de tríceps en polea, Fondos en banco
-            - Core: Plancha, Crunch, Giro ruso, Elevación de piernas
-
-            Pesos iniciales conservadores acordes al nivel del usuario (0 kg si es con el peso corporal).
-
-            NIVEL DEL USUARIO:
-            \(ForgeyAI.context(from: store))
-            """)
+            let session = LanguageModelSession(instructions: ForgeyPrompts.generateInstructions(
+                context: ForgeyAI.context(from: store),
+                referenceLoads: ForgeyPrompts.referenceLoads(from: store)))
             func generate(_ prompt: String) async throws -> AIWorkout {
                 try await session.respond(to: prompt, generating: AIWorkout.self).content
             }

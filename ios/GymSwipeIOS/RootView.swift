@@ -32,7 +32,7 @@ struct RootView: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             // Forgey se ASOMA por el lateral, esperando a ayudar (toca → chat IA;
             // ARRASTRA para colocarlo a tu gusto). Solo si el dispositivo soporta la IA.
-            .overlay { if ForgeyAI.isSupported { ForgeyPeek { FX.tap(); showForgey = true } } }
+            .overlay { if ForgeyEngine.isAvailable { ForgeyPeek { FX.tap(); showForgey = true } } }
             .onChange(of: tab) { t in FX.selection(); maybeShowTour(t) }
 
             // .id(tab): fuerza el re-render de la barra al cambiar de pestaña — sin él,

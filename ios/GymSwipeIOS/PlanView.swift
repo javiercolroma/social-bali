@@ -31,7 +31,7 @@ struct PlanView: View {
                     .tourAnchor("plan.create")
 
                 // Crear con IA on-device: solo en dispositivos que la soportan.
-                if ForgeyAI.isSupported { aiCreateButton }
+                if ForgeyEngine.isAvailable { aiCreateButton }
 
                 ForEach(grouped, id: \.group) { section in
                     VStack(alignment: .leading, spacing: 8) {
