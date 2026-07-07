@@ -49,7 +49,7 @@ enum CloudAI {
         }
     }
 
-    // MARK: - Generador de entrenos (JSON estricto + misma validación local que on-device)
+    // MARK: - Generador de entrenos (JSON estricto)
 
     private struct CloudWorkout: Decodable {
         let name: String
@@ -76,20 +76,7 @@ enum CloudAI {
             return try parse(raw)
         }
 
-        var res = try await request("Crea un entreno para: \(description). Recuerda: TODOS los ejercicios deben corresponder a esa descripción.")
-
-        // Misma defensa que on-device: validación de grupo + un reintento correctivo.
-        if let targets = ForgeyAI.targetGroups(in: description) {
-            let bad = res.exercises.filter { ForgeyAI.clearlyOffTarget($0.name, targets: targets) }
-            if !bad.isEmpty {
-                if let r2 = try? await request("Estos ejercicios NO encajan con «\(description)»: \(bad.map(\.name).joined(separator: ", ")). Genera el entreno COMPLETO de nuevo usando ÚNICAMENTE ejercicios adecuados para: \(description)."),
-                   r2.exercises.filter({ ForgeyAI.clearlyOffTarget($0.name, targets: targets) }).count < bad.count {
-                    res = r2
-                }
-                let cleaned = res.exercises.filter { !ForgeyAI.clearlyOffTarget($0.name, targets: targets) }
-                if cleaned.count >= 3 { res = CloudWorkout(name: res.name, block: res.block, exercises: cleaned) }
-            }
-        }
+        let res = try await request("Crea un entreno para: \(description). Recuerda: TODOS los ejercicios deben corresponder a esa descripción.")
 
         let exercises = res.exercises.map {
             AppStore.makeExercise(res.name, $0.name, min(6, max(1, $0.sets)), min(30, max(1, $0.reps)),

@@ -130,8 +130,8 @@ enum ForgeyPrompts {
         usuario. Para ejercicios de sus CARGAS DE REFERENCIA usa el 65-80 % del máximo \
         indicado (trabajo efectivo, no récord). Para ejercicios parecidos, mantén coherencia \
         (una prensa admite más que una sentadilla; mancuernas menos que barra). Sin \
-        referencia, usa cargas de principiante conservadoras. 0 kg si es con peso corporal. \
-        NUNCA pongas un peso superior al máximo de referencia del usuario.
+        referencia, usa cargas de nivel INTERMEDIO (no de principiante). 0 kg si es con \
+        peso corporal. NUNCA pongas un peso superior al máximo de referencia del usuario.
 
         CARGAS DE REFERENCIA (máximos reales del usuario):
         \(referenceLoads)
@@ -141,7 +141,7 @@ enum ForgeyPrompts {
         """
     }
 
-    // MARK: - Cargas de referencia y validación de pesos
+    // MARK: - Cargas de referencia
 
     /// Mejor peso real usado por ejercicio (solo sesiones fiables), para que el generador
     /// proponga cargas coherentes con el nivel del usuario.
@@ -153,35 +153,8 @@ enum ForgeyPrompts {
                 if w > best[it.name] ?? 0 { best[it.name] = w }
             }
         }
-        guard !best.isEmpty else { return "Sin registros todavía (usuario nuevo: cargas conservadoras)." }
+        guard !best.isEmpty else { return "Sin registros todavía (usuario nuevo: usa cargas de nivel INTERMEDIO, no de principiante)." }
         return best.sorted { $0.value > $1.value }.prefix(12)
             .map { "\($0.key) \(Int($0.value.rounded())) kg" }.joined(separator: "; ") + "."
-    }
-
-    /// Cinturón local: si el modelo propone un peso por encima del máximo real del usuario
-    /// en un ejercicio conocido, lo baja al ~75 % de ese máximo (redondeado a 2,5).
-    static func clampWeights(_ exercises: [Exercise], store: AppStore) -> [Exercise] {
-        var best: [String: Double] = [:]
-        for s in store.sessions where s.verified {
-            for it in (s.items ?? []) {
-                let w = (it.logs ?? [SetLog(reps: it.reps, weight: it.weight)]).map(\.weight).max() ?? 0
-                if w > best[norm(it.name)] ?? 0 { best[norm(it.name)] = w }
-            }
-        }
-        guard !best.isEmpty else { return exercises }
-        return exercises.map { ex in
-            var e = ex
-            let n = norm(ex.name)
-            if let ref = best.first(where: { n.contains($0.key) || $0.key.contains(n) })?.value,
-               ref > 0, e.weight > ref {
-                e.weight = max(0, ((ref * 0.75) / 2.5).rounded() * 2.5)
-            }
-            return e
-        }
-    }
-
-    private static func norm(_ s: String) -> String {
-        s.folding(options: .diacriticInsensitive, locale: .current).lowercased()
-            .trimmingCharacters(in: .whitespaces)
     }
 }

@@ -191,37 +191,17 @@ final class ForgeyAI: ObservableObject {
     // MARK: - Generar un entreno desde una descripción (Plan)
 
     /// Genera un entreno estructurado a partir de una descripción en lenguaje natural.
-    ///
-    /// El modelo on-device es PEQUEÑO y a veces mezcla grupos musculares (pedías pierna y
-    /// colaba un press). Defensa en 3 capas: (1) catálogo de ejemplos POR GRUPO en las
-    /// instrucciones (los modelos pequeños copian los ejemplos que ven: si son de torso,
-    /// generan torso); (2) regla crítica explícita; (3) VERIFICACIÓN local de cada ejercicio
-    /// contra el grupo pedido + un reintento correctivo, y filtrado final si aún cuela algo.
+    /// Confiamos en el prompt (catálogo por grupo + regla crítica en `generateInstructions`)
+    /// y en la salida estructurada `@Generable`, sin post-validación de grupos musculares.
     func generateWorkout(from description: String, store: AppStore) async throws -> WorkoutTemplate {
         #if canImport(FoundationModels)
         if #available(iOS 26.0, *) {
             let session = LanguageModelSession(instructions: ForgeyPrompts.generateInstructions(
                 context: ForgeyAI.context(from: store),
                 referenceLoads: ForgeyPrompts.referenceLoads(from: store)))
-            func generate(_ prompt: String) async throws -> AIWorkout {
-                try await session.respond(to: prompt, generating: AIWorkout.self).content
-            }
-            var res = try await generate("Crea un entreno para: \(description). Recuerda: TODOS los ejercicios deben corresponder a esa descripción.")
-
-            // Verificación local contra el grupo muscular pedido + reintento correctivo.
-            if let targets = Self.targetGroups(in: description) {
-                let bad = res.exercises.filter { Self.clearlyOffTarget($0.name, targets: targets) }
-                if !bad.isEmpty {
-                    let feedback = "Estos ejercicios NO encajan con «\(description)»: \(bad.map(\.name).joined(separator: ", ")). Genera el entreno COMPLETO de nuevo usando ÚNICAMENTE ejercicios adecuados para: \(description)."
-                    if let r2 = try? await generate(feedback) {
-                        let bad2 = r2.exercises.filter { Self.clearlyOffTarget($0.name, targets: targets) }
-                        if bad2.count < bad.count { res = r2 }
-                    }
-                    // Última red: descarta lo claramente fuera de grupo si quedan ≥3 ejercicios.
-                    let cleaned = res.exercises.filter { !Self.clearlyOffTarget($0.name, targets: targets) }
-                    if cleaned.count >= 3 { res.exercises = cleaned }
-                }
-            }
+            let res = try await session.respond(
+                to: "Crea un entreno para: \(description). Recuerda: TODOS los ejercicios deben corresponder a esa descripción.",
+                generating: AIWorkout.self).content
 
             let exercises = res.exercises.map {
                 AppStore.makeExercise(res.name, $0.name, min(6, max(1, $0.sets)), min(30, max(1, $0.reps)),
@@ -234,56 +214,6 @@ final class ForgeyAI: ObservableObject {
         #endif
         throw NSError(domain: "ForgeyAI", code: 1,
                       userInfo: [NSLocalizedDescriptionKey: ForgeyAI.unavailableReason() ?? "No disponible"])
-    }
-
-    // MARK: - Validación de grupo muscular (local, sin IA)
-
-    private static func norm(_ s: String) -> String {
-        s.folding(options: .diacriticInsensitive, locale: .current).lowercased()
-    }
-    private static func has(_ s: String, _ pattern: String) -> Bool {
-        s.range(of: pattern, options: .regularExpression) != nil
-    }
-
-    /// Grupos musculares que PIDE la descripción del usuario. nil = no restringe (full body
-    /// o no se menciona ningún grupo) → no validamos.
-    static func targetGroups(in description: String) -> Set<String>? {
-        let d = norm(description)
-        if has(d, "full ?body|cuerpo completo|todo el cuerpo|general") { return nil }
-        var t = Set<String>()
-        if has(d, "pierna|cuadricep|femoral|gluteo|gemelo|tren inferior") { t.insert("pierna") }
-        if has(d, "pecho|pectoral") { t.insert("pecho") }
-        if has(d, "espalda|dorsal") { t.insert("espalda") }
-        if has(d, "hombro|deltoide") { t.insert("hombro") }
-        if has(d, "bicep") { t.insert("biceps") }
-        if has(d, "tricep") { t.insert("triceps") }
-        if has(d, "brazo") { t.formUnion(["biceps", "triceps"]) }
-        if has(d, "core|abdominal|abdomen") { t.insert("core") }
-        if has(d, "empuje|push") { t.formUnion(["pecho", "hombro", "triceps"]) }
-        if has(d, "tiron|pull|jalon") { t.formUnion(["espalda", "biceps"]) }
-        return t.isEmpty ? nil : t
-    }
-
-    /// Grupo(s) de un ejercicio por su nombre. nil = desconocido (no podemos afirmar que esté mal).
-    static func exerciseGroups(_ name: String) -> Set<String>? {
-        let n = norm(name)
-        // El orden importa: "curl femoral" es pierna (no bíceps); "elevación de piernas" es core.
-        if has(n, "elevacion(es)? de pierna") { return ["core"] }
-        if has(n, "sentadilla|prensa|zancada|gemelo|cuadricep|femoral|gluteo|hip ?thrust|peso muerto|rumano|bulgara|abductor|aductor|step ?up") { return ["pierna"] }
-        if has(n, "plancha|crunch|abdominal|ruso|core|rueda") { return ["core"] }
-        if has(n, "press (de )?banca|press inclinado|press declinado|apertura|pec ?deck|flexion|pullover") { return ["pecho"] }
-        if has(n, "fondos") { return ["pecho", "triceps"] }
-        if has(n, "remo|dominada|jalon|pull|hiperextension|buenos dias") { return ["espalda"] }
-        if has(n, "press militar|press de hombro|elevacion(es)? lateral|elevacion(es)? frontal|pajaro|arnold|deltoide") { return ["hombro"] }
-        if has(n, "tricep|frances|patada|press cerrado") { return ["triceps"] }
-        if has(n, "curl|martillo|bicep") { return ["biceps"] }
-        return nil
-    }
-
-    /// ¿El ejercicio está CLARAMENTE fuera de los grupos pedidos?
-    static func clearlyOffTarget(_ name: String, targets: Set<String>) -> Bool {
-        guard let g = exerciseGroups(name) else { return false }
-        return g.isDisjoint(with: targets)
     }
 }
 

@@ -90,19 +90,16 @@ enum ForgeyEngine {
     // MARK: - Generador de entrenos
 
     static func generateWorkout(from description: String, store: AppStore) async throws -> WorkoutTemplate {
-        var template: WorkoutTemplate
         switch mode {
         case .onDevice:
-            template = try await ForgeyAI.shared.generateWorkout(from: description, store: store)
+            let template = try await ForgeyAI.shared.generateWorkout(from: description, store: store)
             bumpDeviceUsage()
+            return template
         case .cloud:
-            template = try await CloudAI.generateWorkout(from: description, store: store)
+            return try await CloudAI.generateWorkout(from: description, store: store)
         case .none:
             throw err(ForgeyAI.unavailableReason() ?? "IA no disponible")
         }
-        // Cinturón final compartido: cargas coherentes con el nivel real del usuario.
-        template.exercises = ForgeyPrompts.clampWeights(template.exercises, store: store)
-        return template
     }
 
     // MARK: - Registro de uso (persistente, por usuario y día; base del futuro plan de pago)
