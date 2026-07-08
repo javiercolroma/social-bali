@@ -27,6 +27,23 @@ struct ProgressInsight: Codable, Hashable, Identifiable {
     var before: Double = 0
     var after: Double = 0
 
+    init(kind: Kind, subject: String, amount: Double, before: Double = 0, after: Double = 0) {
+        self.kind = kind; self.subject = subject; self.amount = amount
+        self.before = before; self.after = after
+    }
+
+    /// Decodificación TOLERANTE: los registros antiguos (locales y del servidor) no traen
+    /// `before`/`after` (campos nuevos). Sin este init, el decoder sintetizado lanza
+    /// keyNotFound y tumba TODO el histórico (borraría los datos locales y vaciaría el feed).
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        kind = try c.decode(Kind.self, forKey: .kind)
+        subject = try c.decode(String.self, forKey: .subject)
+        amount = try c.decode(Double.self, forKey: .amount)
+        before = try c.decodeIfPresent(Double.self, forKey: .before) ?? 0
+        after = try c.decodeIfPresent(Double.self, forKey: .after) ?? 0
+    }
+
     var id: String { "\(kind.rawValue)|\(subject)" }
 
     private func fmtW(_ w: Double) -> String { w == w.rounded() ? String(Int(w)) : String(format: "%.1f", w) }
@@ -38,6 +55,15 @@ struct ProgressInsight: Codable, Hashable, Identifiable {
 
     /// ¿Es un avance de EJERCICIO (con Antes→Ahora)? false = grupo/otros.
     var isExercise: Bool { kind != .groupVolumeUp }
+
+    /// ¿Cuenta como MEJORA real (para «N mejoraron»)? «Igualaste con menos series» y el
+    /// volumen de grupo no son mejoras estrictas → no suman al conteo.
+    var isImprovement: Bool {
+        switch kind {
+        case .weightUp, .repsUp, .avgWeightUp, .e1rmUp, .volumeUp, .newPR: return true
+        default: return false
+        }
+    }
 
     /// ¿Hay una comparación Antes→Ahora numérica que mostrar como tarjeta?
     var hasBeforeAfter: Bool {

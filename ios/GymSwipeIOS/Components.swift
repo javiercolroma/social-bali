@@ -434,6 +434,7 @@ struct WorkoutProgressCards: View {
     var maxCards: Int = 3
 
     private var exercise: [ProgressInsight] { insights.filter { $0.isExercise } }
+    private var improvedCount: Int { insights.filter { $0.isImprovement }.count }
 
     var body: some View {
         let ex = exercise
@@ -442,11 +443,11 @@ struct WorkoutProgressCards: View {
         } else {
             VStack(spacing: 9) {
                 ForEach(ex.prefix(maxCards)) { card($0) }
-                if totalExercises > 0 {
+                if totalExercises > 0 && improvedCount > 0 {
                     HStack(spacing: 6) {
                         Image(systemName: "checkmark.circle.fill").font(.system(size: 13, weight: .bold)).foregroundColor(Brand.green)
                         Text(String(format: NSLocalizedString("%1$lld/%2$lld mejoraron", comment: ""),
-                                    min(ex.count, totalExercises), totalExercises))
+                                    min(improvedCount, totalExercises), totalExercises))
                             .font(.system(size: 12, weight: .heavy)).foregroundColor(Color(hex: "4b6211"))
                     }
                     .padding(.horizontal, 12).padding(.vertical, 6)

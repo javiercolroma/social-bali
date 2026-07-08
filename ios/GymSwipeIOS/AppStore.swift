@@ -147,7 +147,7 @@ final class AppStore: ObservableObject {
             if sessions[i].insights == nil || needsV2 {
                 sessions[i].insights = ProgressInsights.compute(for: sessions[i], history: all); changed = true
             }
-            if sessions[i].medals == nil {
+            if sessions[i].medals == nil || needsV2 {
                 sessions[i].medals = SessionMedals.compute(for: sessions[i], history: all); changed = true
             }
         }
@@ -607,10 +607,12 @@ final class AppStore: ObservableObject {
                     var m = srv
                     if let loc = localById[srv.id.lowercased()] {
                         if m.photoURL == nil, loc.photoData != nil { m.photoData = loc.photoData }
-                        // El servidor puede no traer insights/medallas: conserva los ya calculados
-                        // en local para que backfill no los recalcule en cada sincronización.
-                        if m.insights == nil { m.insights = loc.insights }
-                        if m.medals == nil { m.medals = loc.medals }
+                        // Insights/medallas de MIS sesiones = derivación LOCAL (fresca, con TODO
+                        // mi historial y en formato V2 con Antes→Ahora): prefiere SIEMPRE el valor
+                        // local sobre el del servidor (que puede ser de un formato viejo).
+                        // backfill recalcula las que no tengan copia local.
+                        if loc.insights != nil { m.insights = loc.insights }
+                        if loc.medals != nil { m.medals = loc.medals }
                     }
                     return m
                 }
@@ -630,13 +632,17 @@ final class AppStore: ObservableObject {
                 player.streak = currentStreak()
                 refreshAchievements(celebrate: false) // backfill silencioso (ya conseguidos antes)
                 backfillInsights()                    // las sesiones del servidor llegan sin insights: recalcúlalos
-                // Cura al servidor los insights/medallas de sesiones ya subidas SIN ellos
-                // (columnas nuevas) para que tus seguidores los vean; best-effort, recientes.
+                // Cura al servidor los insights/medallas para que tus seguidores los vean:
+                // (a) sesiones subidas SIN ellos (columnas nuevas) y (b) UNA vez, todas las
+                // recientes → sube el formato V2 (Antes→Ahora). Best-effort.
+                let v2Heal = !UserDefaults.standard.bool(forKey: "forgeSessionsV2Healed")
                 let serverMissing = Set(server.filter { $0.insights == nil || $0.medals == nil }.map { $0.id.lowercased() })
                 for s in sessions.prefix(120)
-                    where (s.insights?.isEmpty == false || s.medals?.isEmpty == false) && serverMissing.contains(s.id.lowercased()) {
+                    where (s.insights?.isEmpty == false || s.medals?.isEmpty == false)
+                        && (v2Heal || serverMissing.contains(s.id.lowercased())) {
                     Task { [s] in try? await Backend.shared.upsertSession(SessionRow(s, userId: uid, photoURL: s.photoURL)) }
                 }
+                if v2Heal && !sessions.isEmpty { UserDefaults.standard.set(true, forKey: "forgeSessionsV2Healed") }
                 persist()
                 print("[Backend] sesiones sincronizadas: \(server.count) servidor + \(localOnly.count) locales")
             } catch { print("[Backend] sync sesiones falló:", error) }
