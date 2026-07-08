@@ -435,9 +435,77 @@ struct WorkoutMedia: View {
             .frame(height: height)
             .clipShape(RoundedRectangle(cornerRadius: 12))
         } else {
+            // Sin foto: la portada es un gradiente → altura más moderada (una foto SÍ merece
+            // el tamaño protagonista; un gradiente enorme solo sería espacio vacío).
             WorkoutCover(elapsed: elapsed, sets: sets, volume: volume,
-                         exercises: exercises, seed: seed, height: height)
+                         exercises: exercises, seed: seed, height: min(height, 300))
         }
+    }
+}
+
+/// Visor a PANTALLA COMPLETA de la foto del entreno: aspect-fit sobre negro (sin recortes,
+/// proporción correcta) con pellizco para ampliar. Se cierra con la X.
+struct FullScreenPhotoView: View {
+    let data: Data?
+    let url: String?
+    var onClose: () -> Void
+    @State private var scale: CGFloat = 1
+
+    var body: some View {
+        ZStack {
+            Color.black.ignoresSafeArea()
+            Group {
+                if let d = data, let ui = UIImage(data: d) {
+                    Image(uiImage: ui).resizable().scaledToFit()
+                } else if let u = url, let link = URL(string: u) {
+                    AsyncImage(url: link) { img in img.resizable().scaledToFit() } placeholder: { ProgressView().tint(.white) }
+                }
+            }
+            .scaleEffect(scale)
+            .gesture(MagnificationGesture()
+                .onChanged { scale = max(1, min(4, $0)) }
+                .onEnded { _ in withAnimation(.spring(response: 0.3)) { scale = 1 } })
+            VStack {
+                HStack {
+                    Spacer()
+                    Button(action: onClose) {
+                        Image(systemName: "xmark").font(.system(size: 15, weight: .heavy)).foregroundColor(.white)
+                            .frame(width: 38, height: 38).background(.black.opacity(0.45)).clipShape(Circle())
+                    }.padding(16)
+                }
+                Spacer()
+            }
+        }
+    }
+}
+
+/// Foto PROTAGONISTA con efecto elástico: al tirar del scroll hacia abajo, la foto se
+/// amplía (estilo post). Aspect-fit sobre blanco (sin recortes). Tocarla → callback.
+struct StretchyWorkoutPhoto: View {
+    let data: Data?
+    let url: String?
+    var baseHeight: CGFloat
+    var onTap: () -> Void
+
+    var body: some View {
+        GeometryReader { geo in
+            let minY = geo.frame(in: .global).minY
+            let stretch = max(0, minY)   // cuánto se ha tirado hacia abajo
+            ZStack {
+                Color.white
+                if let d = data, let ui = UIImage(data: d) {
+                    Image(uiImage: ui).resizable().scaledToFit()
+                } else if let u = url, let link = URL(string: u) {
+                    AsyncImage(url: link) { img in img.resizable().scaledToFit() } placeholder: { Brand.chip }
+                }
+            }
+            .frame(width: geo.size.width, height: baseHeight + stretch)
+            .clipped()
+            .offset(y: -stretch)
+            .contentShape(Rectangle())
+            .onTapGesture(perform: onTap)
+        }
+        .frame(height: baseHeight)
     }
 }
 

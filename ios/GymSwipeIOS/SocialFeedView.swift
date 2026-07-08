@@ -462,7 +462,8 @@ struct SocialFeedView: View {
                      volume: item.volume, items: item.items,
                      avgHeartRate: item.avgHeartRate, maxHeartRate: item.maxHeartRate,
                      score: item.personId == nil ? store.gymScore.total : store.personScore(item.personId ?? ""),
-                     insights: insightsFor(item))
+                     insights: insightsFor(item),
+                     sessionId: item.personId == nil ? item.id : nil)
     }
 
     private func reportPost(_ item: FeedItem) {
@@ -548,7 +549,7 @@ struct SocialFeedView: View {
                     WorkoutMedia(photoData: item.photo, photoURL: item.photoURL,
                                  elapsed: item.elapsed, sets: item.sets, volume: item.volume,
                                  exercises: item.exercises,
-                                 seed: "\(item.title)-\(Int(item.date.timeIntervalSince1970))", height: 320)
+                                 seed: "\(item.title)-\(Int(item.date.timeIntervalSince1970))", height: 480)
                     WorkoutInsightsStrip(insights: insightsFor(item))
                     WorkoutStatStrip(stats: WorkoutStatStrip.metrics(time: durationText(item.elapsed), sets: item.sets,
                                                      exercises: item.exercises, ppm: item.avgHeartRate), style: .full)

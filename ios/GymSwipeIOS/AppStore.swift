@@ -1167,6 +1167,22 @@ final class AppStore: ObservableObject {
         }
     }
 
+    /// Edita nombre/descripción/foto de una sesión propia y la re-sincroniza al servidor.
+    /// `photo == nil` deja la foto como estaba; una foto nueva regenera su URL de Storage.
+    func updateSession(id: String, name: String, note: String, photo: Data?) {
+        guard let idx = sessions.firstIndex(where: { $0.id == id }) else { return }
+        let trimmed = name.trimmingCharacters(in: .whitespaces)
+        if !trimmed.isEmpty { sessions[idx].name = trimmed }
+        sessions[idx].note = note.trimmingCharacters(in: .whitespaces)
+        if let photo {
+            sessions[idx].photoData = photo
+            sessions[idx].photoURL = nil   // foto nueva → se vuelve a subir y se regenera la URL
+        }
+        persist()
+        pushSessionToBackend(sessions[idx])   // re-upsert (nombre/nota) + re-sube la foto si cambió
+        lastAction = "Actividad actualizada"
+    }
+
     func deletePlan(_ id: String) {
         trainingPlans.removeAll { $0.id == id }
         if BackendConfig.isConfigured, UUID(uuidString: id) != nil {
