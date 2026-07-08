@@ -343,6 +343,7 @@ struct WorkoutCover: View {
     var exercises: Int = 0
     var seed: String = ""     // algo estable del post (título+fecha) para variar el héroe
     var height: CGFloat = 150
+    var medals: [SessionMedal] = []   // medallas sutiles en la esquina (si las hay)
 
     /// Héroe VARIADO por tarjeta (estable por post, no cambia al re-renderizar):
     /// a veces el tiempo, a veces las series, a veces los ejercicios.
@@ -383,6 +384,9 @@ struct WorkoutCover: View {
             .frame(maxWidth: .infinity, alignment: .leading).padding(.horizontal, 18)
         }
         .frame(height: height)
+        .overlay(alignment: .topLeading) {
+            if !medals.isEmpty { WorkoutMedalsRow(medals: medals, size: 22).padding(16) }
+        }
         .clipShape(RoundedRectangle(cornerRadius: 12))
     }
 }
@@ -411,20 +415,26 @@ struct FullWorkoutPhoto: View {
     }
 }
 
-/// Fila compacta de medallas del entreno (estilo Strava), SUTIL: iconos pequeños tintados
-/// oro/plata/bronce, sin emoji chillón ni brillos.
+/// Fila de medallas del entreno, estilo Strava: AGRUPA por nivel (un icono de oro/plata/bronce
+/// si hay de ese tipo) + el número TOTAL de logros. El desglose se explica en el detalle.
+/// Sutil: iconos pequeños tintados, sin emoji chillón ni brillos.
 struct WorkoutMedalsRow: View {
     let medals: [SessionMedal]
     var size: CGFloat = 22
+    /// Niveles presentes (oro > plata > bronce), uno por tipo.
+    private var tiers: [SessionMedal.Tier] {
+        SessionMedal.Tier.allCases.filter { t in medals.contains { $0.tier == t } }
+    }
     var body: some View {
         if medals.isEmpty { EmptyView() }
         else {
-            HStack(spacing: 5) {
-                ForEach(medals.prefix(6)) { m in
-                    Image(systemName: "medal.fill")
-                        .font(.system(size: size, weight: .medium))
-                        .foregroundStyle(m.achTier.color)
+            HStack(spacing: 4) {
+                ForEach(tiers, id: \.self) { t in
+                    Image(systemName: "medal.fill").font(.system(size: size, weight: .medium))
+                        .foregroundStyle(t.color)
                 }
+                Text("\(medals.count)").font(.system(size: size * 0.9, weight: .heavy))
+                    .foregroundColor(Brand.ink).monospacedDigit().padding(.leading, 1)
             }
         }
     }
@@ -553,14 +563,15 @@ struct WorkoutMedia: View {
     var medals: [SessionMedal] = []
 
     private var hasPhoto: Bool { photoData != nil || photoURL != nil }
-    private var hasHighlights: Bool { !medals.isEmpty || insights.contains { $0.isExercise } }
+    /// Hay avances de ejercicio → mostrar el panel premium «Antes → Ahora».
+    private var hasProgress: Bool { insights.contains { $0.isExercise } }
 
     var body: some View {
         if hasPhoto {
-            if hasHighlights {
+            if hasProgress || !medals.isEmpty {
                 TabView {
                     FullWorkoutPhoto(data: photoData, url: photoURL, height: height)
-                    WorkoutInfoPanel(exercises: exercises, insights: insights, medals: medals, height: height)
+                    infoPage(height: height)
                 }
                 .tabViewStyle(.page(indexDisplayMode: .automatic))
                 // Puntitos discretos: sin la cápsula de fondo del sistema.
@@ -570,14 +581,24 @@ struct WorkoutMedia: View {
             } else {
                 FullWorkoutPhoto(data: photoData, url: photoURL, height: height)
             }
-        } else if hasHighlights {
-            // Sin foto pero con logros/progreso: el panel ES la tarjeta (ajustado al contenido).
+        } else if hasProgress {
+            // Sin foto pero con progreso: el panel premium ES la tarjeta (ajustado al contenido).
             WorkoutInfoPanel(exercises: exercises, insights: insights, medals: medals, height: nil)
         } else {
-            // Sin foto y sin logros: portada visual (una foto merece protagonismo; un gradiente
-            // enorme sería vacío).
+            // Sin foto y sin progreso: portada visual bonita (con medallas si las hay) — nunca
+            // una tarjeta pobre.
             WorkoutCover(elapsed: elapsed, sets: sets, volume: volume,
-                         exercises: exercises, seed: seed, height: min(height, 300))
+                         exercises: exercises, seed: seed, height: min(height, 300), medals: medals)
+        }
+    }
+
+    /// 2ª página del pager: progreso premium si lo hay; si solo hay medallas, la portada con ellas.
+    @ViewBuilder private func infoPage(height: CGFloat) -> some View {
+        if hasProgress {
+            WorkoutInfoPanel(exercises: exercises, insights: insights, medals: medals, height: height)
+        } else {
+            WorkoutCover(elapsed: elapsed, sets: sets, volume: volume,
+                         exercises: exercises, seed: seed, height: height, medals: medals)
         }
     }
 }

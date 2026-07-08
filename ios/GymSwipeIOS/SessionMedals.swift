@@ -15,7 +15,14 @@ struct SessionMedal: Codable, Hashable, Identifiable {
         case weeklyStreak      // varios entrenos esta semana
         case bestOfMonth       // mejor entreno del mes
     }
-    enum Tier: String, Codable { case gold, silver, bronze }
+    enum Tier: String, Codable, CaseIterable {
+        case gold, silver, bronze
+        var color: Color {
+            switch self { case .gold: return AchTier.gold.color; case .silver: return AchTier.silver.color; case .bronze: return AchTier.bronze.color }
+        }
+        /// Orden de prestigio para agrupar (oro primero).
+        var order: Int { switch self { case .gold: return 0; case .silver: return 1; case .bronze: return 2 } }
+    }
 
     var kind: Kind
     var tier: Tier
