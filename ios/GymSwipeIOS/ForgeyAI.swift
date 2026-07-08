@@ -1,6 +1,5 @@
 import Foundation
 import UIKit
-import Vision
 #if canImport(FoundationModels)
 import FoundationModels
 #endif
@@ -120,42 +119,11 @@ final class ForgeyAI: ObservableObject {
                       userInfo: [NSLocalizedDescriptionKey: ForgeyAI.unavailableReason() ?? "No disponible"])
     }
 
-    // MARK: - Foto del físico: Vision (proporciones reales) + reparto de entreno + consejo
-
-    /// Métricas HONESTAS de la foto vía Vision (pose corporal): no podemos juzgar "músculo"
-    /// desde una foto con APIs on-device, pero sí medir proporciones (hombros/cadera) y
-    /// detectar que hay un cuerpo. nil = no se detecta una persona con confianza.
-    /// Resultado de mirar la foto: métricas, "no hay persona", o Vision no disponible
-    /// (p. ej. el modelo de pose NO existe en el simulador — error Code=9; en iPhone real sí).
-    enum BodyDetection { case metrics(String); case noPerson; case unavailable }
-
-    static func detectBody(from data: Data) -> BodyDetection {
-        guard let ui = UIImage(data: data), let cg = ui.cgImage else { return .noPerson }
-        let req = VNDetectHumanBodyPoseRequest()
-        do { try VNImageRequestHandler(cgImage: cg, options: [:]).perform([req]) }
-        catch { return .unavailable }
-        guard let obs = req.results?.first else { return .noPerson }
-        func pt(_ j: VNHumanBodyPoseObservation.JointName) -> CGPoint? {
-            guard let p = try? obs.recognizedPoint(j), p.confidence > 0.3 else { return nil }
-            return p.location
-        }
-        guard let ls = pt(.leftShoulder), let rs = pt(.rightShoulder) else { return .noPerson }
-        var lines: [String] = ["En la foto se detecta una persona (análisis de proporciones aproximado)."]
-        let shoulder = hypot(ls.x - rs.x, ls.y - rs.y)
-        if let lh = pt(.leftHip), let rh = pt(.rightHip) {
-            let hip = hypot(lh.x - rh.x, lh.y - rh.y)
-            if hip > 0.01 {
-                let ratio = shoulder / hip
-                lines.append(String(format: "Proporción anchura hombros/cadera ≈ %.2f (referencia: <1,25 estrecha → prioriza deltoides lateral y dorsal ancho; >1,45 V marcada).", ratio))
-            }
-        }
-        // Asimetría de hombros (postura) si es visible.
-        if abs(ls.y - rs.y) > 0.035 { lines.append("Se aprecia un hombro algo más alto que el otro (posible asimetría postural).") }
-        return .metrics(lines.joined(separator: " "))
-    }
+    // MARK: - Reparto de entreno (contexto para el análisis del físico por foto)
 
     /// Reparto REAL del volumen de entreno por patrón (solo sesiones fiables): la señal más
-    /// honesta de qué zonas están descuidadas.
+    /// honesta de qué zonas están descuidadas. Acompaña a la foto en el análisis del físico
+    /// (que es SOLO-nube: Claude ve la imagen; esto le dice además qué grupos entrenas poco).
     static func trainingSplit(from store: AppStore) -> String {
         var vol: [String: Double] = [:]
         for s in store.sessions where s.verified {
@@ -172,20 +140,6 @@ final class ForgeyAI: ObservableObject {
                      "condicion": "core/condición", "accesorio": "accesorios"]
         let parts = vol.sorted { $0.value > $1.value }.map { "\(names[$0.key] ?? $0.key) \(Int(($0.value / total * 100).rounded()))%" }
         return "Reparto de su volumen de entreno: " + parts.joined(separator: ", ") + "."
-    }
-
-    /// Analiza el físico a partir de las MÉTRICAS ya calculadas (Vision corre en el
-    /// engine, que decide los casos sin persona / sin Vision). Prompt compartido.
-    func analyzeBody(metrics: String, store: AppStore) async throws -> String {
-        #if canImport(FoundationModels)
-        if #available(iOS 26.0, *) {
-            let session = LanguageModelSession(instructions: ForgeyPrompts.analyzeInstructions(
-                metrics: metrics, split: ForgeyAI.trainingSplit(from: store)))
-            return try await session.respond(to: "¿Qué partes debería mejorar?").content
-        }
-        #endif
-        throw NSError(domain: "ForgeyAI", code: 1,
-                      userInfo: [NSLocalizedDescriptionKey: ForgeyAI.unavailableReason() ?? "No disponible"])
     }
 
     // MARK: - Generar un entreno desde una descripción (Plan)

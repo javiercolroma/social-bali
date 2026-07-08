@@ -16,8 +16,14 @@ enum ForgeyEngine {
         return .none
     }
 
-    /// ¿Se enseñan los accesos de IA (peek, botón del Plan, cámara del chat)?
+    /// ¿Se enseñan los accesos de IA de CHAT/GENERACIÓN (peek, botón del Plan)? Estos
+    /// funcionan on-device o en la nube.
     static var isAvailable: Bool { mode != .none }
+
+    /// ¿Está disponible el ANÁLISIS DEL FÍSICO por foto? Es SOLO-nube (el modelo de Apple no
+    /// ve imágenes): requiere la visión-nube activa y backend configurado. Gobierna la cámara
+    /// del chat, aparte de `isAvailable`. Apagado hasta poner la ANTHROPIC_API_KEY.
+    static var cloudVisionAvailable: Bool { FeatureFlags.cloudVisionEnabled && BackendConfig.isConfigured }
 
     /// nil = listo para hablar. Con nube activa nunca hay estados transitorios locales.
     static func unavailableReason() -> String? {
@@ -53,8 +59,7 @@ enum ForgeyEngine {
         return Reply(text: text, suggestion: suggestion)
     }
 
-    // MARK: - Análisis del físico (la foto NUNCA sale del dispositivo: Vision es local
-    // en ambos modos; a la nube solo viajan las MEDICIONES en texto)
+    // MARK: - Análisis del físico por foto (SOLO-nube: Claude ve la imagen)
 
     static func analyzeBody(photo: Data, store: AppStore) async throws -> Reply {
         // Seguridad de adjuntos: solo imágenes de verdad (los pickers ya filtran, esto
@@ -62,27 +67,10 @@ enum ForgeyEngine {
         guard UIImage(data: photo) != nil else {
             return Reply(text: "Solo puedo analizar imágenes 📷. Prueba con una foto de cuerpo entero.", suggestion: nil)
         }
-        let metrics: String
-        switch ForgeyAI.detectBody(from: photo) {
-        case .noPerson:
-            return Reply(text: "No consigo ver un cuerpo completo en la foto 📷. Prueba con una foto de cuerpo entero, de frente y con buena luz. ¿La intentamos de nuevo?", suggestion: nil)
-        case .unavailable:
-            metrics = "No disponibles en este dispositivo (analiza solo con el reparto de entreno; dilo en una frase)."
-        case .metrics(let m):
-            metrics = m
+        guard cloudVisionAvailable else {
+            throw err("El análisis del físico con IA no está disponible todavía.")
         }
-        let raw: String
-        switch mode {
-        case .onDevice:
-            raw = try await ForgeyAI.shared.analyzeBody(metrics: metrics, store: store)
-            bumpDeviceUsage()
-        case .cloud:
-            raw = try await CloudAI.complete(
-                system: ForgeyPrompts.analyzeInstructions(metrics: metrics, split: ForgeyAI.trainingSplit(from: store)),
-                prompt: "¿Qué partes debería mejorar?")
-        case .none:
-            throw err(ForgeyAI.unavailableReason() ?? "IA no disponible")
-        }
+        let raw = try await CloudAI.analyzeBody(photo: photo, store: store)
         let (text, suggestion) = ForgeyPrompts.extractSuggestion(raw)
         return Reply(text: text, suggestion: suggestion)
     }

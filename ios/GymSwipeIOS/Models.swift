@@ -12,6 +12,10 @@ enum FeatureFlags {
     /// Desactivada de momento (pendiente de pruebas y de configurar ANTHROPIC_API_KEY en
     /// los secretos de Supabase). La infraestructura está desplegada y lista.
     static let cloudAIEnabled = false
+    /// Análisis del físico por FOTO (Claude ve la imagen en la nube). Es SOLO-nube: no hay
+    /// on-device (el modelo de Apple no ve imágenes). Apagado hasta poner ANTHROPIC_API_KEY;
+    /// además exige consentimiento explícito del usuario (la foto sale del dispositivo).
+    static let cloudVisionEnabled = false
 }
 
 enum ExerciseStatus: String, Codable {

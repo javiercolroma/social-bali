@@ -12,6 +12,8 @@ struct ForgeyChatView: View {
     @State private var thinking = false
     @State private var photoItem: PhotosPickerItem?
     @State private var genTopic: IdString?   // «Crear entreno de esto» → generador prellenado
+    @State private var pendingPhoto: Data?           // foto a la espera de consentimiento
+    @State private var showVisionConsent = false     // opt-in: la foto sale a la nube
     @FocusState private var focused: Bool
 
     struct ChatLine: Identifiable {
@@ -77,10 +79,13 @@ struct ForgeyChatView: View {
 
                 if unavailable == nil {
                     HStack(spacing: 8) {
-                        // Foto del físico → análisis de proporciones + consejo.
-                        PhotoPickerLabel(item: $photoItem, onPicked: { analyzePhoto($0) }) {
-                            Image(systemName: "camera.fill").font(.system(size: 15, weight: .semibold)).foregroundColor(Brand.ink)
-                                .frame(width: 46, height: 46).background(Brand.chip).clipShape(Circle())
+                        // Foto del físico → análisis por IA en la nube (con consentimiento).
+                        // Solo si la visión-nube está activa (el modelo de Apple no ve imágenes).
+                        if ForgeyEngine.cloudVisionAvailable {
+                            PhotoPickerLabel(item: $photoItem, onPicked: { requestAnalyze($0) }) {
+                                Image(systemName: "camera.fill").font(.system(size: 15, weight: .semibold)).foregroundColor(Brand.ink)
+                                    .frame(width: 46, height: 46).background(Brand.chip).clipShape(Circle())
+                            }
                         }
                         TextField("Pregúntale a Forgey…", text: $draft, axis: .vertical)
                             .lineLimit(1...4)
@@ -102,6 +107,17 @@ struct ForgeyChatView: View {
             .background(Brand.bg)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar { ToolbarItem(placement: .cancellationAction) { SheetBackButton { dismiss() } } }
+        }
+        // Opt-in la PRIMERA vez que se analiza una foto (la imagen sale del dispositivo).
+        .alert("Analizar tu físico", isPresented: $showVisionConsent) {
+            Button("Cancelar", role: .cancel) { pendingPhoto = nil }
+            Button("Continuar") {
+                UserDefaults.standard.set(true, forKey: "forgeCloudVisionConsent")
+                if let d = pendingPhoto { analyzePhoto(d) }
+                pendingPhoto = nil
+            }
+        } message: {
+            Text("Para analizar tu físico, tu foto se enviará de forma segura a nuestro servicio de IA. No se guarda ni se comparte. ¿Quieres continuar?")
         }
         // «Crear entreno de esto»: generador prellenado con el último consejo de Forgey.
         .sheet(item: $genTopic) { t in
@@ -225,7 +241,17 @@ struct ForgeyChatView: View {
         }
     }
 
-    /// Foto del físico: Vision mide proporciones y Forgey aconseja (todo on-device).
+    /// Pide consentimiento la primera vez (la foto sale del dispositivo); luego analiza.
+    private func requestAnalyze(_ data: Data) {
+        if UserDefaults.standard.bool(forKey: "forgeCloudVisionConsent") {
+            analyzePhoto(data)
+        } else {
+            pendingPhoto = data
+            showVisionConsent = true
+        }
+    }
+
+    /// Foto del físico: Claude la analiza en la nube y Forgey aconseja zonas a priorizar.
     private func analyzePhoto(_ data: Data) {
         guard !thinking else { return }
         FX.tap()

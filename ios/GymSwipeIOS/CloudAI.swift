@@ -1,4 +1,5 @@
 import Foundation
+import UIKit
 
 /// Motor de IA en la NUBE: llama a la Edge Function `forgey-ai` de Supabase, que hace de
 /// proxy seguro a la API de Claude (modelo económico). La clave de Anthropic vive SOLO en
@@ -94,5 +95,55 @@ enum CloudAI {
         if let a = t.firstIndex(of: "{"), let b = t.lastIndex(of: "}") { t = String(t[a...b]) }
         guard let d = t.data(using: .utf8) else { throw CloudError.server("respuesta ilegible") }
         return try JSONDecoder().decode(CloudWorkout.self, from: d)
+    }
+
+    // MARK: - Análisis del físico por FOTO (Claude ve la imagen)
+
+    /// La foto viaja a la nube (con consentimiento previo). Se redimensiona y comprime ANTES
+    /// de salir: nunca se manda en crudo. Devuelve el texto del análisis.
+    static func analyzeBody(photo: Data, store: AppStore) async throws -> String {
+        guard let client = Backend.shared.client else { throw CloudError.notConfigured }
+        guard let token = try? await client.auth.session.accessToken else { throw CloudError.noSession }
+        guard let (b64, media) = downscaledJPEGBase64(photo) else { throw CloudError.server("imagen ilegible") }
+
+        var req = URLRequest(url: URL(string: "\(BackendConfig.supabaseURL)/functions/v1/forgey-ai")!)
+        req.httpMethod = "POST"
+        req.timeoutInterval = 60
+        req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        req.setValue(BackendConfig.supabaseAnonKey, forHTTPHeaderField: "apikey")
+        req.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        let system = ForgeyPrompts.analyzeInstructions(split: ForgeyAI.trainingSplit(from: store))
+        let body: [String: Any] = ["system": String(system.prefix(8000)),
+                                   "prompt": "¿Qué partes debería mejorar? Analiza mi físico.",
+                                   "maxTokens": 500,
+                                   "image": ["media_type": media, "data": b64]]
+        req.httpBody = try JSONSerialization.data(withJSONObject: body)
+
+        let (data, resp) = try await URLSession.shared.data(for: req)
+        let status = (resp as? HTTPURLResponse)?.statusCode ?? 0
+        switch status {
+        case 200:
+            struct R: Decodable { let text: String }
+            return try JSONDecoder().decode(R.self, from: data).text
+        case 401: throw CloudError.noSession
+        case 429: throw CloudError.dailyLimit
+        case 503: throw CloudError.notConfigured
+        default: throw CloudError.server("código \(status)")
+        }
+    }
+
+    /// Redimensiona (borde largo ≤ maxEdge) + comprime a JPEG + base64. Abarata la petición
+    /// (~1500 tokens de imagen) y respeta los límites de Anthropic; la original no sale nunca.
+    private static func downscaledJPEGBase64(_ data: Data, maxEdge: CGFloat = 1568) -> (String, String)? {
+        guard let img = UIImage(data: data) else { return nil }
+        let longest = max(img.size.width, img.size.height)
+        let scale = longest > maxEdge ? maxEdge / longest : 1
+        let target = CGSize(width: img.size.width * scale, height: img.size.height * scale)
+        let format = UIGraphicsImageRendererFormat.default(); format.scale = 1
+        let resized = UIGraphicsImageRenderer(size: target, format: format).image { _ in
+            img.draw(in: CGRect(origin: .zero, size: target))
+        }
+        guard let jpeg = resized.jpegData(compressionQuality: 0.7) else { return nil }
+        return (jpeg.base64EncodedString(), "image/jpeg")
     }
 }
