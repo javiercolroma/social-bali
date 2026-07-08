@@ -12,6 +12,30 @@
 "Igualaste tu marca en %1$@ con menos esfuerzo" = "You matched your mark on %1$@ with less effort";
 "Tu volumen de %1$@ subió un %2$lld%%" = "Your %1$@ volume rose %2$lld%%";
 
+/* Medals (Strava-style) + premium progress cards */
+"Logros" = "Achievements";
+"LOGROS" = "ACHIEVEMENTS";
+"%1$lld/%2$lld mejoraron" = "%1$lld/%2$lld improved";
+"+%lld reps" = "+%lld reps";
+"PR" = "PR";
+"Igualado" = "Matched";
+"Primer entreno" = "First workout";
+"Ejercicio nuevo" = "New exercise";
+"Entreno más largo" = "Longest workout";
+"Más volumen" = "Most volume";
+"Más series" = "Most sets";
+"Récord personal" = "Personal record";
+"Semana activa" = "Active week";
+"Mejor del mes" = "Best of the month";
+"¡Tu primer entrenamiento!" = "Your first workout!";
+"Estrenaste %@" = "You debuted %@";
+"Tu entreno más largo: %lld min" = "Your longest workout: %lld min";
+"Más peso movido que nunca: %lld kg" = "More weight moved than ever: %lld kg";
+"Tu récord de series: %lld" = "Your sets record: %lld";
+"Récord de %1$@: %2$lld kg" = "Record on %1$@: %2$lld kg";
+"%lld entrenos esta semana" = "%lld workouts this week";
+"Tu mejor entreno del mes" = "Your best workout of the month";
+
 "+15s" = "+15s";
 "1RM estimado (Epley)" = "Estimated 1RM (Epley)";
 "1RM estimado (fórmula de Epley)" = "Estimated 1RM (Epley formula)";

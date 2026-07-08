@@ -23,10 +23,67 @@ struct ProgressInsight: Codable, Hashable, Identifiable {
     /// Significado según kind: % (weight/e1rm/avg/volume/group), nº de reps (repsUp),
     /// peso máximo en kg (newPR), 0 (prMatchFewerSets).
     var amount: Double
+    /// Valores crudos ANTES/AHORA para la tarjeta premium «Antes → Ahora» (0 si no aplica).
+    var before: Double = 0
+    var after: Double = 0
 
     var id: String { "\(kind.rawValue)|\(subject)" }
 
     private func fmtW(_ w: Double) -> String { w == w.rounded() ? String(Int(w)) : String(format: "%.1f", w) }
+
+    // MARK: - Presentación «Antes → Ahora» (mockup premium de la tarjeta sin foto)
+
+    /// Nombre del ejercicio ya traducido.
+    var displaySubject: String { L10n.x(subject) }
+
+    /// ¿Es un avance de EJERCICIO (con Antes→Ahora)? false = grupo/otros.
+    var isExercise: Bool { kind != .groupVolumeUp }
+
+    /// ¿Hay una comparación Antes→Ahora numérica que mostrar como tarjeta?
+    var hasBeforeAfter: Bool {
+        switch kind {
+        case .weightUp, .repsUp, .avgWeightUp, .e1rmUp, .volumeUp, .newPR: return before > 0 || after > 0
+        default: return false
+        }
+    }
+
+    /// Unidad de los valores Antes/Ahora.
+    var unit: String {
+        switch kind {
+        case .weightUp, .newPR: return "kg"
+        case .repsUp: return "reps"
+        case .avgWeightUp: return "kg/rep"
+        case .e1rmUp: return "kg 1RM"
+        case .volumeUp: return "kg vol"
+        default: return ""
+        }
+    }
+
+    var beforeText: String { fmtW(before) }
+    var afterText: String { fmtW(after) }
+
+    /// Insignia del delta (a la derecha de la tarjeta): «+5%», «+3 reps», «PR».
+    var deltaBadge: String {
+        let n = Int(amount.rounded())
+        switch kind {
+        case .repsUp: return String(format: NSLocalizedString("+%lld reps", comment: ""), n)
+        case .newPR: return NSLocalizedString("PR", comment: "")
+        case .prMatchFewerSets: return NSLocalizedString("Igualado", comment: "")
+        default: return "+\(n)%"
+        }
+    }
+
+    /// Icono del ejercicio (aproximado por su grupo muscular).
+    var exerciseIcon: String {
+        switch GymScoreEngine.pattern(for: subject).group {
+        case "pierna": return "figure.strengthtraining.functional"
+        case "bisagra": return "figure.strengthtraining.traditional"
+        case "empuje": return "figure.strengthtraining.traditional"
+        case "tiron": return "figure.rower"
+        case "condicion": return "figure.core.training"
+        default: return "dumbbell.fill"
+        }
+    }
 
     /// Frase ya localizada y con el nombre del ejercicio traducido. Se recalcula al
     /// reconstruirse la vista tras un cambio de idioma (root .id(languageToken)).
@@ -180,30 +237,31 @@ enum ProgressInsights {
             guard let prevSession = priorWith.first, let prev = metricsFor(key, in: prevSession) else { continue }
 
             // Se elige UN insight por ejercicio, por prioridad (el titular más fuerte).
+            // Se guardan los valores Antes→Ahora para la tarjeta premium.
             // 1) RÉCORD: peso máximo nunca antes levantado en este ejercicio (esporádico).
             if allTimeMaxW > 0, cur.maxW > allTimeMaxW {
-                candidates.append((.init(kind: .newPR, subject: name, amount: cur.maxW), 1000)); continue
+                candidates.append((.init(kind: .newPR, subject: name, amount: cur.maxW, before: allTimeMaxW, after: cur.maxW), 1000)); continue
             }
             // 2) Más peso que la última vez (sin ser récord absoluto).
             if prev.maxW > 0, cur.maxW > prev.maxW, let p = pctChange(cur.maxW, prev.maxW) {
-                candidates.append((.init(kind: .weightUp, subject: name, amount: Double(p)), 300 + Double(p))); continue
+                candidates.append((.init(kind: .weightUp, subject: name, amount: Double(p), before: prev.maxW, after: cur.maxW), 300 + Double(p))); continue
             }
             // 3) Mismo peso (incluido peso corporal = 0) y más reps en la MEJOR serie a esa carga.
             if abs(cur.maxW - prev.maxW) < 0.01, cur.topReps - prev.topReps >= 2 {
                 let d = cur.topReps - prev.topReps
-                candidates.append((.init(kind: .repsUp, subject: name, amount: Double(d)), 250 + Double(d) * 15)); continue
+                candidates.append((.init(kind: .repsUp, subject: name, amount: Double(d), before: Double(prev.topReps), after: Double(cur.topReps)), 250 + Double(d) * 15)); continue
             }
             // 4) Más peso medio por rep en las series de TRABAJO (sin calentamientos).
             if prev.workingAvgWeight > 0, cur.workingAvgWeight > prev.workingAvgWeight, let p = pctChange(cur.workingAvgWeight, prev.workingAvgWeight) {
-                candidates.append((.init(kind: .avgWeightUp, subject: name, amount: Double(p)), 180 + Double(p))); continue
+                candidates.append((.init(kind: .avgWeightUp, subject: name, amount: Double(p), before: prev.workingAvgWeight, after: cur.workingAvgWeight), 180 + Double(p))); continue
             }
             // 5) Más fuerza estimada (1RM).
             if prev.bestE1 > 0, cur.bestE1 > prev.bestE1, let p = pctChange(cur.bestE1, prev.bestE1) {
-                candidates.append((.init(kind: .e1rmUp, subject: name, amount: Double(p)), 150 + Double(p))); continue
+                candidates.append((.init(kind: .e1rmUp, subject: name, amount: Double(p), before: prev.bestE1, after: cur.bestE1), 150 + Double(p))); continue
             }
             // 6) Más volumen total (tope 60%: por encima suele ser diferencia de nº de series, no progreso).
             if prev.totalVol > 0, cur.totalVol > prev.totalVol, let p = pctChange(cur.totalVol, prev.totalVol, min: 5, max: 60) {
-                candidates.append((.init(kind: .volumeUp, subject: name, amount: Double(p)), 120 + Double(p))); continue
+                candidates.append((.init(kind: .volumeUp, subject: name, amount: Double(p), before: prev.totalVol, after: cur.totalVol), 120 + Double(p))); continue
             }
             // 7) Igualaste tu marca con menos series (menor esfuerzo).
             if prev.bestE1 > 0, abs(cur.bestE1 - prev.bestE1) / prev.bestE1 < 0.01, cur.sets < prev.sets {
@@ -220,18 +278,12 @@ enum ProgressInsights {
             }
         }
 
-        // Selección: top 2 por ejercicio + 1 de grupo (si hay), máximo 3.
-        let exSorted = candidates.sorted { $0.rank > $1.rank }.map { $0.insight }
-        var out: [ProgressInsight]
-        if let g = groupBest?.0 {
-            out = Array(exSorted.prefix(2)) + [g]
-        } else {
-            out = Array(exSorted.prefix(3))
-        }
-        // Cinturón: ids únicos (Identifiable de la tira) por si un grupo coincidiera con un homónimo.
+        // Guarda TODOS los avances de ejercicio (ordenados por relevancia) + el mejor de grupo
+        // al final. El conteo "N/M mejoraron" los necesita todos; la UI capa lo que muestra.
+        var out = candidates.sorted { $0.rank > $1.rank }.map { $0.insight }
+        if let g = groupBest?.0 { out.append(g) }
         var seenIds = Set<String>()
-        out = out.filter { seenIds.insert($0.id).inserted }
-        return Array(out.prefix(3))
+        return out.filter { seenIds.insert($0.id).inserted }
     }
 
     /// % de subida redondeado; nil si por debajo del umbral o por encima del tope (marca previa

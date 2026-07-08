@@ -37,6 +37,7 @@
 		73730EAFA44F93E2D3C79893 /* WorkoutActivityAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = C6D25F1EF920215C121A1A33 /* WorkoutActivityAttributes.swift */; };
 		795FF8DED43C3C6F7CCF9D15 /* ForgeyEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 92ACFCE394CB452DED827B37 /* ForgeyEngine.swift */; };
 		7DA53196497D4AAA9BB0C7DC /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = BD4E961446D581D212A7AA07 /* Localizable.strings */; };
+		8671E3F8A5B32C37E66F0F3B /* SessionMedals.swift in Sources */ = {isa = PBXBuildFile; fileRef = B46E8A571424C3A565D16FC2 /* SessionMedals.swift */; };
 		8A7861D45E3C7C5C05C90F80 /* WorkoutLiveActivity.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B295ED7A599C8F0FDDE74F /* WorkoutLiveActivity.swift */; };
 		8B6903E3599064FC5BE0BB2C /* WorkoutActivityAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = C6D25F1EF920215C121A1A33 /* WorkoutActivityAttributes.swift */; };
 		942CEB3E1BDC0BABD1CB038F /* Exercises.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC0D952E1A0BC084FD9FDB7C /* Exercises.swift */; };
@@ -138,6 +139,7 @@
 		A415A6402658DC75C3C37C3C /* Components.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Components.swift; sourceTree = "<group>"; };
 		A94209F7155C5A09DA6E950A /* SocialViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SocialViews.swift; sourceTree = "<group>"; };
 		AC0D952E1A0BC084FD9FDB7C /* Exercises.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Exercises.swift; sourceTree = "<group>"; };
+		B46E8A571424C3A565D16FC2 /* SessionMedals.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionMedals.swift; sourceTree = "<group>"; };
 		B83B0B92285D78A53157123F /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		BD4E961446D581D212A7AA07 /* Localizable.strings */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = Localizable.strings; path = "pt-PT.lproj/Localizable.strings"; sourceTree = "<group>"; };
 		C6D25F1EF920215C121A1A33 /* WorkoutActivityAttributes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutActivityAttributes.swift; sourceTree = "<group>"; };
@@ -255,6 +257,7 @@
 				29747A9B85AA4E6D8D9D3843 /* RootView.swift */,
 				A13A6C62B64C684CF0D535E4 /* SearchFields.swift */,
 				6323375755B5CE9680137707 /* SessionFX.swift */,
+				B46E8A571424C3A565D16FC2 /* SessionMedals.swift */,
 				627A3AB04978CE24F42D32E8 /* SocialFeedView.swift */,
 				A94209F7155C5A09DA6E950A /* SocialViews.swift */,
 				4FDBAEC8202622CA34A302EA /* Theme.swift */,
@@ -428,6 +431,7 @@
 				6F3B3519B39CCE8280492005 /* RootView.swift in Sources */,
 				96BF0657964B419B9F01B3EB /* SearchFields.swift in Sources */,
 				C01A2049E004FBE4ADDF5F10 /* SessionFX.swift in Sources */,
+				8671E3F8A5B32C37E66F0F3B /* SessionMedals.swift in Sources */,
 				A4012CAB9F8D66E7AA47FCBE /* SocialFeedView.swift in Sources */,
 				B2BA2EDCA173DDEDD61FF8BD /* SocialViews.swift in Sources */,
 				388862FD824CE56B55EE672A /* Theme.swift in Sources */,

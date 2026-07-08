@@ -387,8 +387,9 @@ struct WorkoutCover: View {
     }
 }
 
-/// Foto de entreno ENTERA (sin recortar): aspect-fit centrada sobre BLANCO, fundida
-/// con la tarjeta (el usuario prefirió los márgenes blancos al fondo difuminado).
+/// Foto de la tarjeta: LLENA el marco (scaledToFill, recorte mínimo centrado) para que una
+/// foto horizontal 4:3 no deje márgenes ni descuadre el tamaño de la tarjeta — todas las
+/// tarjetas quedan idénticas. La versión SIN recortes vive en el visor a pantalla completa.
 struct FullWorkoutPhoto: View {
     let data: Data?
     let url: String?
@@ -396,22 +397,145 @@ struct FullWorkoutPhoto: View {
 
     var body: some View {
         ZStack {
-            Color.white
+            Brand.chip
             if let d = data, let ui = UIImage(data: d) {
-                Image(uiImage: ui).resizable().scaledToFit()
+                Image(uiImage: ui).resizable().scaledToFill()
             } else if let u = url, let link = URL(string: u) {
-                AsyncImage(url: link) { img in img.resizable().scaledToFit() } placeholder: { ProgressView() }
+                AsyncImage(url: link) { img in img.resizable().scaledToFill() } placeholder: { ProgressView() }
             }
         }
         .frame(maxWidth: .infinity)
+        .frame(height: height)
+        .clipped()
+        .clipShape(RoundedRectangle(cornerRadius: 12))
+    }
+}
+
+/// Fila compacta de medallas (emoji oro/plata/bronce) del entreno, estilo Strava.
+struct WorkoutMedalsRow: View {
+    let medals: [SessionMedal]
+    var size: CGFloat = 26
+    var body: some View {
+        if medals.isEmpty { EmptyView() }
+        else {
+            HStack(spacing: 6) {
+                ForEach(medals.prefix(5)) { m in Text(m.emoji).font(.system(size: size)) }
+            }
+        }
+    }
+}
+
+/// Tarjetas de PROGRESO estilo Strava: cada ejercicio mejorado como una tarjeta blanca con
+/// icono + nombre + «Antes → Ahora» + insignia del delta (+5%, +3 reps, PR), y una píldora
+/// «N/M mejoraron». Los avances tienen así más protagonismo que las métricas normales.
+struct WorkoutProgressCards: View {
+    let insights: [ProgressInsight]
+    let totalExercises: Int
+    var maxCards: Int = 3
+
+    private var exercise: [ProgressInsight] { insights.filter { $0.isExercise } }
+
+    var body: some View {
+        let ex = exercise
+        if ex.isEmpty {
+            EmptyView()
+        } else {
+            VStack(spacing: 9) {
+                ForEach(ex.prefix(maxCards)) { card($0) }
+                if totalExercises > 0 {
+                    HStack(spacing: 6) {
+                        Image(systemName: "checkmark.circle.fill").font(.system(size: 13, weight: .bold)).foregroundColor(Brand.green)
+                        Text(String(format: NSLocalizedString("%1$lld/%2$lld mejoraron", comment: ""),
+                                    min(ex.count, totalExercises), totalExercises))
+                            .font(.system(size: 12, weight: .heavy)).foregroundColor(Color(hex: "4b6211"))
+                    }
+                    .padding(.horizontal, 12).padding(.vertical, 6)
+                    .background(Color.white).clipShape(Capsule())
+                }
+            }
+        }
+    }
+
+    private func card(_ ins: ProgressInsight) -> some View {
+        let isPR = ins.kind == .newPR
+        return HStack(spacing: 12) {
+            RoundedRectangle(cornerRadius: 11, style: .continuous).fill(Brand.greenSoft)
+                .frame(width: 44, height: 44)
+                .overlay(Image(systemName: ins.exerciseIcon).font(.system(size: 18, weight: .semibold)).foregroundColor(Color(hex: "4b6211")))
+            VStack(alignment: .leading, spacing: 3) {
+                Text(ins.displaySubject).font(.system(size: 16, weight: .heavy)).foregroundColor(Brand.ink).lineLimit(1)
+                if ins.hasBeforeAfter {
+                    HStack(spacing: 6) {
+                        Text(ins.beforeText).font(.system(size: 15, weight: .heavy)).foregroundColor(Brand.soft)
+                        Image(systemName: "arrow.right").font(.system(size: 11, weight: .heavy)).foregroundColor(Brand.green)
+                        Text(ins.afterText).font(.system(size: 15, weight: .heavy)).foregroundColor(Brand.ink)
+                        Text(ins.unit).font(.system(size: 10, weight: .bold)).foregroundColor(Brand.muted)
+                    }
+                } else {
+                    Text(ins.localizedText).font(.system(size: 12, weight: .semibold)).foregroundColor(Brand.soft)
+                        .lineLimit(2).fixedSize(horizontal: false, vertical: true)
+                }
+            }
+            Spacer(minLength: 6)
+            VStack(spacing: 3) {
+                ZStack {
+                    Circle().fill(isPR ? Color(hex: "e8b020").opacity(0.18) : Brand.green.opacity(0.16)).frame(width: 30, height: 30)
+                    Image(systemName: ins.icon).font(.system(size: 13, weight: .bold))
+                        .foregroundColor(isPR ? Color(hex: "b8860b") : Color(hex: "4b6211"))
+                }
+                Text(ins.deltaBadge).font(.system(size: 13, weight: .heavy))
+                    .foregroundColor(isPR ? Color(hex: "b8860b") : Color(hex: "4b6211")).fixedSize()
+            }
+        }
+        .padding(12)
+        .background(Color.white)
+        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+    }
+}
+
+/// Página de INFORMACIÓN de la tarjeta: 2ª página del pager (al deslizar la foto) o portada
+/// cuando no hay foto. RESUMEN VISUAL premium: los LOGROS/PROGRESOS destacan (tarjetas
+/// Antes→Ahora + medallas) sobre las métricas normales (tira de stats abajo). La foto tiene
+/// la prioridad en la 1ª pantalla; al deslizar llega este detalle.
+struct WorkoutInfoPanel: View {
+    let elapsed: Int
+    let sets: Int
+    let exercises: Int
+    var ppm: Int? = nil
+    var insights: [ProgressInsight] = []
+    var medals: [SessionMedal] = []
+    /// Altura fija (página del pager, para casar con la foto) o nil = ajusta al contenido (sin foto).
+    var height: CGFloat? = nil
+
+    private var timeText: String {
+        let m = elapsed / 60
+        return m >= 60 ? "\(m / 60)h \(m % 60)m" : "\(max(1, m)) min"
+    }
+    private var hasHighlights: Bool { !medals.isEmpty || insights.contains { $0.isExercise } }
+    private var cardCount: Int { height == nil ? 3 : 2 }   // fijo (pager) muestra menos para casar altura
+
+    var body: some View {
+        ZStack {
+            LinearGradient(colors: [Brand.greenSoft.opacity(0.60), Color(hex: "eef7d8")],
+                           startPoint: .topLeading, endPoint: .bottomTrailing)
+            VStack(spacing: 12) {
+                if !medals.isEmpty { WorkoutMedalsRow(medals: medals, size: 30) }
+                WorkoutProgressCards(insights: insights, totalExercises: exercises, maxCards: cardCount)
+                WorkoutStatStrip(stats: WorkoutStatStrip.metrics(time: timeText, sets: sets,
+                                                 exercises: exercises, ppm: ppm), style: .full)
+            }
+            .padding(14).frame(maxWidth: .infinity)
+            .frame(maxHeight: height == nil ? nil : .infinity, alignment: .center)
+        }
         .frame(height: height)
         .clipShape(RoundedRectangle(cornerRadius: 12))
     }
 }
 
 /// EL medio visual de TODA tarjeta de entreno (regla: post = historial = perfiles =
-/// calendario = detalle). Con foto → pager [foto entera + tarjeta de stats]; sin foto
-/// → portada visual. Cambios de tarjeta se hacen AQUÍ, una vez.
+/// calendario = detalle). Con foto → pager [FOTO limpia protagonista | INFO (logros+stats+
+/// progreso)]: primero la foto, al deslizar el detalle. Sin foto → el panel de info directo.
+/// Cambios de tarjeta se hacen AQUÍ, una vez.
 struct WorkoutMedia: View {
     let photoData: Data?
     let photoURL: String?
@@ -421,13 +545,16 @@ struct WorkoutMedia: View {
     let exercises: Int
     let seed: String
     var height: CGFloat = 150
+    var ppm: Int? = nil
+    var insights: [ProgressInsight] = []
+    var medals: [SessionMedal] = []
 
     var body: some View {
         if photoData != nil || photoURL != nil {
             TabView {
                 FullWorkoutPhoto(data: photoData, url: photoURL, height: height)
-                WorkoutCover(elapsed: elapsed, sets: sets, volume: volume,
-                             exercises: exercises, seed: seed, height: height)
+                WorkoutInfoPanel(elapsed: elapsed, sets: sets, exercises: exercises,
+                                 ppm: ppm, insights: insights, medals: medals, height: height)
             }
             .tabViewStyle(.page(indexDisplayMode: .automatic))
             // Puntitos discretos: sin la cápsula de fondo del sistema.
@@ -435,10 +562,10 @@ struct WorkoutMedia: View {
             .frame(height: height)
             .clipShape(RoundedRectangle(cornerRadius: 12))
         } else {
-            // Sin foto: la portada es un gradiente → altura más moderada (una foto SÍ merece
-            // el tamaño protagonista; un gradiente enorme solo sería espacio vacío).
-            WorkoutCover(elapsed: elapsed, sets: sets, volume: volume,
-                         exercises: exercises, seed: seed, height: min(height, 300))
+            // Sin foto: el panel de info ES la tarjeta (resumen visual premium) y se ajusta a
+            // su contenido — sin gradiente vacío ni hueco reservado para imagen.
+            WorkoutInfoPanel(elapsed: elapsed, sets: sets, exercises: exercises,
+                             ppm: ppm, insights: insights, medals: medals, height: nil)
         }
     }
 }

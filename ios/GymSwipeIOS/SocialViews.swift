@@ -1099,10 +1099,8 @@ struct FriendProfileView: View {
                 WorkoutMedia(photoData: s.photoData, photoURL: s.photoURL,
                              elapsed: s.elapsed, sets: s.sets, volume: s.volume,
                              exercises: s.exercises,
-                             seed: "\(s.name)-\(Int(s.date.timeIntervalSince1970))", height: 380)
-                WorkoutInsightsStrip(insights: s.insights ?? [])
-                WorkoutStatStrip(stats: WorkoutStatStrip.metrics(time: durationText(s.elapsed), sets: s.sets,
-                                                 exercises: s.exercises, ppm: s.avgHeartRate), style: .compact)
+                             seed: "\(s.name)-\(Int(s.date.timeIntervalSince1970))", height: 380,
+                             ppm: s.avgHeartRate, insights: s.insights ?? [], medals: s.medals ?? [])
             }
         }.buttonStyle(.plain)
     }
@@ -1336,10 +1334,8 @@ struct MeProfileView: View {
                 WorkoutMedia(photoData: s.photoData, photoURL: s.photoURL,
                              elapsed: s.elapsed, sets: s.sets, volume: s.volume,
                              exercises: s.exercises,
-                             seed: "\(s.name)-\(Int(s.date.timeIntervalSince1970))", height: 380)
-                WorkoutInsightsStrip(insights: s.insights ?? [])
-                WorkoutStatStrip(stats: WorkoutStatStrip.metrics(time: durationText(s.elapsed), sets: s.sets,
-                                                 exercises: s.exercises, ppm: s.avgHeartRate), style: .compact)
+                             seed: "\(s.name)-\(Int(s.date.timeIntervalSince1970))", height: 380,
+                             ppm: s.avgHeartRate, insights: s.insights ?? [], medals: s.medals ?? [])
             }
         }.buttonStyle(.plain)
     }

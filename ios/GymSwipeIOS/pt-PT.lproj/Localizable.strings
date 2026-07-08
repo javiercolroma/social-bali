@@ -10,6 +10,30 @@
 "En %1$@ tu volumen subió un %2$lld%%" = "O teu volume em %1$@ subiu %2$lld%%";
 "Igualaste tu marca en %1$@ con menos esfuerzo" = "Igualaste a tua marca em %1$@ com menos esforço";
 "Tu volumen de %1$@ subió un %2$lld%%" = "O teu volume de %1$@ subiu %2$lld%%";
+
+/* Medalhas (estilo Strava) + cartões de progresso */
+"Logros" = "Conquistas";
+"LOGROS" = "CONQUISTAS";
+"%1$lld/%2$lld mejoraron" = "%1$lld/%2$lld melhoraram";
+"+%lld reps" = "+%lld reps";
+"PR" = "PR";
+"Igualado" = "Igualado";
+"Primer entreno" = "Primeiro treino";
+"Ejercicio nuevo" = "Exercício novo";
+"Entreno más largo" = "Treino mais longo";
+"Más volumen" = "Mais volume";
+"Más series" = "Mais séries";
+"Récord personal" = "Recorde pessoal";
+"Semana activa" = "Semana ativa";
+"Mejor del mes" = "Melhor do mês";
+"¡Tu primer entrenamiento!" = "O teu primeiro treino!";
+"Estrenaste %@" = "Estreaste %@";
+"Tu entreno más largo: %lld min" = "O teu treino mais longo: %lld min";
+"Más peso movido que nunca: %lld kg" = "Mais peso movido do que nunca: %lld kg";
+"Tu récord de series: %lld" = "O teu recorde de séries: %lld";
+"Récord de %1$@: %2$lld kg" = "Recorde em %1$@: %2$lld kg";
+"%lld entrenos esta semana" = "%lld treinos esta semana";
+"Tu mejor entreno del mes" = "O teu melhor treino do mês";
 "+15s" = "+15s";
 "1RM estimado (Epley)" = "1RM estimado (Epley)";
 "1RM estimado (fórmula de Epley)" = "1RM estimado (fórmula de Epley)";

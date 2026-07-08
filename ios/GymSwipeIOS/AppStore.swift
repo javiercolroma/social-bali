@@ -141,10 +141,19 @@ final class AppStore: ObservableObject {
         let cap = 120   // solo las más recientes (evita cargar el arranque con historiales enormes)
         let all = sessions
         var changed = false
-        for i in sessions.indices where i < cap && sessions[i].insights == nil && sessions[i].verified {
-            sessions[i].insights = ProgressInsights.compute(for: sessions[i], history: all)
-            changed = true
+        // V2: los insights antiguos no traen los valores Antes/Ahora → recálculo ÚNICO (una vez).
+        let needsV2 = !UserDefaults.standard.bool(forKey: "forgeInsightsV2")
+        for i in sessions.indices where i < cap && sessions[i].verified {
+            if sessions[i].insights == nil || needsV2 {
+                sessions[i].insights = ProgressInsights.compute(for: sessions[i], history: all); changed = true
+            }
+            if sessions[i].medals == nil {
+                sessions[i].medals = SessionMedals.compute(for: sessions[i], history: all); changed = true
+            }
         }
+        // Marca V2 solo cuando ya hay sesiones (en frío el arranque puede correr con la lista vacía
+        // y las sesiones llegar luego por sync).
+        if needsV2 && !sessions.isEmpty { UserDefaults.standard.set(true, forKey: "forgeInsightsV2") }
         if changed && loaded { persistSoon() }
     }
 
@@ -505,8 +514,11 @@ final class AppStore: ObservableObject {
             avgHeartRate: avgHeartRate, maxHeartRate: maxHeartRate,
             location: location?.trimmingCharacters(in: .whitespaces), verified: verified)
         sessions.insert(newSession, at: 0)
-        // Avances por-ejercicio vs. el historial propio (solo si la sesión cuenta).
-        if verified { sessions[0].insights = ProgressInsights.compute(for: sessions[0], history: sessions) }
+        // Avances por-ejercicio + logros/medallas vs. el historial propio (solo si cuenta).
+        if verified {
+            sessions[0].insights = ProgressInsights.compute(for: sessions[0], history: sessions)
+            sessions[0].medals = SessionMedals.compute(for: sessions[0], history: sessions)
+        }
         player.xp += gained
         applyStreakFreeze()                    // protege la racha con congeladores si hubo un hueco
         player.streak = currentStreak()
@@ -595,9 +607,10 @@ final class AppStore: ObservableObject {
                     var m = srv
                     if let loc = localById[srv.id.lowercased()] {
                         if m.photoURL == nil, loc.photoData != nil { m.photoData = loc.photoData }
-                        // El servidor no guarda los insights: conserva los ya calculados en local
-                        // para que backfillInsights no los recalcule en cada sincronización.
+                        // El servidor puede no traer insights/medallas: conserva los ya calculados
+                        // en local para que backfill no los recalcule en cada sincronización.
                         if m.insights == nil { m.insights = loc.insights }
+                        if m.medals == nil { m.medals = loc.medals }
                     }
                     return m
                 }
@@ -617,10 +630,11 @@ final class AppStore: ObservableObject {
                 player.streak = currentStreak()
                 refreshAchievements(celebrate: false) // backfill silencioso (ya conseguidos antes)
                 backfillInsights()                    // las sesiones del servidor llegan sin insights: recalcúlalos
-                // Cura al servidor los insights de sesiones ya subidas SIN ellos (columna nueva)
-                // para que tus seguidores los vean; best-effort, acotado a las recientes.
-                let serverMissing = Set(server.filter { $0.insights == nil }.map { $0.id.lowercased() })
-                for s in sessions.prefix(120) where (s.insights?.isEmpty == false) && serverMissing.contains(s.id.lowercased()) {
+                // Cura al servidor los insights/medallas de sesiones ya subidas SIN ellos
+                // (columnas nuevas) para que tus seguidores los vean; best-effort, recientes.
+                let serverMissing = Set(server.filter { $0.insights == nil || $0.medals == nil }.map { $0.id.lowercased() })
+                for s in sessions.prefix(120)
+                    where (s.insights?.isEmpty == false || s.medals?.isEmpty == false) && serverMissing.contains(s.id.lowercased()) {
                     Task { [s] in try? await Backend.shared.upsertSession(SessionRow(s, userId: uid, photoURL: s.photoURL)) }
                 }
                 persist()

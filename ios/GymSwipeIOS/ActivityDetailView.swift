@@ -22,6 +22,7 @@ struct ActivityData {
     var score: Int = 0   // Gym Score del autor, para el badge del avatar
     var xp: Int = 0      // XP ganado en la sesión (0 = no mostrar, p. ej. posts de otros)
     var insights: [ProgressInsight] = []   // avances vs. historial (solo en sesiones propias)
+    var medals: [SessionMedal] = []        // logros/medallas del entreno
     /// id de la sesión SI es mía (editable/eliminable). nil = ajena → sin menú de edición.
     var sessionId: String? = nil
 }
@@ -67,6 +68,7 @@ struct ActivityDetailView: View {
                                 .frame(maxWidth: .infinity, alignment: .leading)
                         }
                         WorkoutInsightsStrip(insights: data.insights)
+                        if !data.medals.isEmpty { medalsSection }
                         HStack(spacing: 10) {
                             metric(durationText(data.elapsed), "Tiempo", "clock")
                             metric("\(data.sets)", "Series", "checkmark.circle")
@@ -136,6 +138,26 @@ struct ActivityDetailView: View {
             }
             Button("Cancelar", role: .cancel) {}
         }
+    }
+
+    /// Logros del entreno (Strava): cada medalla con su descripción concreta.
+    private var medalsSection: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("LOGROS").font(.caption2).fontWeight(.heavy).foregroundColor(Brand.muted)
+            ForEach(data.medals) { m in
+                HStack(spacing: 12) {
+                    Text(m.emoji).font(.system(size: 28))
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(m.localizedTitle).font(.system(size: 15, weight: .heavy)).foregroundColor(Brand.ink)
+                        Text(m.localizedDetail).font(.system(size: 13)).foregroundColor(Brand.soft)
+                    }
+                    Spacer(minLength: 0)
+                }
+                .padding(12).background(Brand.panel).clipShape(RoundedRectangle(cornerRadius: 12))
+                .overlay(RoundedRectangle(cornerRadius: 12).stroke(Brand.line))
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     private var author: some View {

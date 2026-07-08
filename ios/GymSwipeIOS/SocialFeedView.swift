@@ -24,6 +24,7 @@ private struct FeedItem: Identifiable {
     var commentCount: Int = 0   // comentarios REALES del servidor
     var avatarURL: String? = nil // foto real del autor (Storage)
     var insights: [ProgressInsight] = []   // avances por-ejercicio del autor (del servidor)
+    var medals: [SessionMedal] = []        // logros/medallas del entreno (del servidor)
 }
 
 /// Comentario de un post (local). Soporta respuestas (1 nivel), likes y fecha.
@@ -268,7 +269,7 @@ struct SocialFeedView: View {
             kudosCount: r.kudos?.first?.count ?? 0,
             commentCount: r.comments?.first?.count ?? 0,
             avatarURL: isMe ? nil : r.author?.avatar_url,
-            insights: r.insights ?? [])
+            insights: r.insights ?? [], medals: r.medals ?? [])
     }
 
     private func feedCard(_ item: FeedItem) -> some View {
@@ -454,6 +455,16 @@ struct SocialFeedView: View {
         return item.insights
     }
 
+    /// Medallas del post (misma lógica que insights: local en los míos, servidor en los ajenos).
+    private func medalsFor(_ item: FeedItem) -> [SessionMedal] {
+        if item.personId == nil,
+           let local = store.sessions.first(where: { $0.id.lowercased() == item.id.lowercased() })?.medals,
+           !local.isEmpty {
+            return local
+        }
+        return item.medals
+    }
+
     private func feedItemView(_ item: FeedItem) -> ActivityData {
         ActivityData(authorName: item.authorName, avatarPhoto: item.avatarPhoto, avatarEmoji: item.avatarEmoji,
                      flag: item.flag, location: item.location, date: item.date, title: item.title, note: item.note,
@@ -462,7 +473,7 @@ struct SocialFeedView: View {
                      volume: item.volume, items: item.items,
                      avgHeartRate: item.avgHeartRate, maxHeartRate: item.maxHeartRate,
                      score: item.personId == nil ? store.gymScore.total : store.personScore(item.personId ?? ""),
-                     insights: insightsFor(item),
+                     insights: insightsFor(item), medals: medalsFor(item),
                      sessionId: item.personId == nil ? item.id : nil)
     }
 
@@ -549,10 +560,8 @@ struct SocialFeedView: View {
                     WorkoutMedia(photoData: item.photo, photoURL: item.photoURL,
                                  elapsed: item.elapsed, sets: item.sets, volume: item.volume,
                                  exercises: item.exercises,
-                                 seed: "\(item.title)-\(Int(item.date.timeIntervalSince1970))", height: 480)
-                    WorkoutInsightsStrip(insights: insightsFor(item))
-                    WorkoutStatStrip(stats: WorkoutStatStrip.metrics(time: durationText(item.elapsed), sets: item.sets,
-                                                     exercises: item.exercises, ppm: item.avgHeartRate), style: .full)
+                                 seed: "\(item.title)-\(Int(item.date.timeIntervalSince1970))", height: 480,
+                                 ppm: item.avgHeartRate, insights: insightsFor(item), medals: medalsFor(item))
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .contentShape(Rectangle())
@@ -715,7 +724,7 @@ struct SocialFeedView: View {
                 date: s.date, title: s.name, note: s.note, photo: s.photoData, photoURL: s.photoURL,
                 elapsed: s.elapsed, exercises: s.exercises, sets: s.sets, volume: s.volume,
                 items: s.items ?? [], avgHeartRate: s.avgHeartRate, maxHeartRate: s.maxHeartRate,
-                insights: s.insights ?? [])
+                insights: s.insights ?? [], medals: s.medals ?? [])
         }
     }
 

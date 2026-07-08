@@ -137,6 +137,8 @@ struct WorkoutSession: Identifiable, Codable {
     /// Avances por ejercicio vs. el historial propio (calculados al guardar). nil = sin calcular
     /// todavía (sesiones antiguas o ajenas) → la tarjeta no muestra la tira de progreso.
     var insights: [ProgressInsight]? = nil
+    /// Logros estilo Strava (medallas oro/plata/bronce) del entreno. nil = sin calcular todavía.
+    var medals: [SessionMedal]? = nil
 }
 
 struct WorkoutTemplate: Identifiable, Codable, Hashable {
