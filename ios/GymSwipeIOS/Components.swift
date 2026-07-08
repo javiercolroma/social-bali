@@ -485,12 +485,16 @@ struct StretchyWorkoutPhoto: View {
     let data: Data?
     let url: String?
     var baseHeight: CGFloat
+    /// Espacio de coordenadas del ScrollView contenedor: en él, en reposo, minY = 0 (arriba
+    /// del contenido), y solo crece al tirar hacia abajo. Con `.global` la línea base sería
+    /// el inset de la nav bar (~100pt) → la foto saldría pre-estirada y metida bajo la barra.
+    var space: String = "activityScroll"
     var onTap: () -> Void
 
     var body: some View {
         GeometryReader { geo in
-            let minY = geo.frame(in: .global).minY
-            let stretch = max(0, minY)   // cuánto se ha tirado hacia abajo
+            let minY = geo.frame(in: .named(space)).minY
+            let stretch = max(0, minY)   // cuánto se ha tirado hacia abajo (0 en reposo)
             ZStack {
                 Color.white
                 if let d = data, let ui = UIImage(data: d) {

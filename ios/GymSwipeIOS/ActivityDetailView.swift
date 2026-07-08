@@ -91,6 +91,7 @@ struct ActivityDetailView: View {
                     .padding(16)
                 }
             }
+            .coordinateSpace(name: "activityScroll")   // línea base de la foto elástica (reposo = 0)
             .background(Brand.bg)
             .navigationTitle("Actividad").navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -161,9 +162,10 @@ struct ActivityDetailView: View {
     }
 
     /// Aplica una edición: persiste en el store y refleja el cambio en la vista al instante.
+    /// Solo actualiza la vista si el store guardó de verdad (si no, no finge un guardado).
     private func applyEdit(name: String, note: String, photo: Data?) {
         guard let id = data.sessionId else { return }
-        store.updateSession(id: id, name: name, note: note, photo: photo)
+        guard store.updateSession(id: id, name: name, note: note, photo: photo) else { return }
         let trimmed = name.trimmingCharacters(in: .whitespaces)
         if !trimmed.isEmpty { data.title = trimmed }
         data.note = note.trimmingCharacters(in: .whitespaces)

@@ -49,13 +49,14 @@ Deno.serve(async (req) => {
     ];
   }
 
-  // Tope duro diario. La visión (con imagen) es más cara → cupo más bajo. Se contabiliza en
-  // el contador `cloud` (una columna dedicada `cloud_vision` queda como follow-up).
+  // Tope duro diario, con contadores SEPARADOS: la visión (con imagen) es más cara y tiene su
+  // propio cupo (30), independiente del texto (100). Así el chat no agota el cupo de la foto.
   const today = new Date().toISOString().slice(0, 10);
-  const { data: usage } = await supa.from("ai_usage").select("cloud")
+  const { data: usage } = await supa.from("ai_usage").select("cloud, cloud_vision")
     .eq("user_id", user.id).eq("day", today).maybeSingle();
+  const used = imgObj ? (usage?.cloud_vision ?? 0) : (usage?.cloud ?? 0);
   const cap = imgObj ? 30 : 100;
-  if ((usage?.cloud ?? 0) >= cap) return json({ error: "daily-limit" }, 429);
+  if (used >= cap) return json({ error: "daily-limit" }, 429);
 
   const resp = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
@@ -73,7 +74,7 @@ Deno.serve(async (req) => {
     .map((b: { text: string }) => b.text).join("");
 
   await supa.rpc("bump_ai_usage", {
-    p_kind: "cloud",
+    p_kind: imgObj ? "cloud_vision" : "cloud",
     p_in: data.usage?.input_tokens ?? 0,
     p_out: data.usage?.output_tokens ?? 0,
   });

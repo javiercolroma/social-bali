@@ -112,7 +112,7 @@ struct ForgeyChatView: View {
         .alert("Analizar tu físico", isPresented: $showVisionConsent) {
             Button("Cancelar", role: .cancel) { pendingPhoto = nil }
             Button("Continuar") {
-                UserDefaults.standard.set(true, forKey: "forgeCloudVisionConsent")
+                UserDefaults.standard.set(true, forKey: consentKey)
                 if let d = pendingPhoto { analyzePhoto(d) }
                 pendingPhoto = nil
             }
@@ -241,9 +241,13 @@ struct ForgeyChatView: View {
         }
     }
 
+    /// Consentimiento POR USUARIO (no device-wide): si en el móvil hay varias cuentas, cada
+    /// una debe dar su propio opt-in antes de que su foto salga a la nube.
+    private var consentKey: String { "forgeCloudVisionConsent-\(store.auth?.userId ?? "anon")" }
+
     /// Pide consentimiento la primera vez (la foto sale del dispositivo); luego analiza.
     private func requestAnalyze(_ data: Data) {
-        if UserDefaults.standard.bool(forKey: "forgeCloudVisionConsent") {
+        if UserDefaults.standard.bool(forKey: consentKey) {
             analyzePhoto(data)
         } else {
             pendingPhoto = data
