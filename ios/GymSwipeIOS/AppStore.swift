@@ -131,6 +131,21 @@ final class AppStore: ObservableObject {
         refreshAchievements(celebrate: false)
         resolveLeagueIfNeeded()   // ascenso/descenso si ha cambiado de semana
         claimedQuests = claimedQuests.filter { $0.hasPrefix("\(weekId):") }   // poda misiones de semanas pasadas
+        backfillInsights()        // rellena los avances de progreso de sesiones que aún no los tengan
+    }
+
+    /// Calcula los avances por-ejercicio (ProgressInsight) de las sesiones propias que aún
+    /// no los tienen (campo nuevo → antiguas en nil; también las sincronizadas del servidor).
+    /// Solo escribe donde falta, así que es barato y estable entre arranques.
+    func backfillInsights() {
+        let cap = 120   // solo las más recientes (evita cargar el arranque con historiales enormes)
+        let all = sessions
+        var changed = false
+        for i in sessions.indices where i < cap && sessions[i].insights == nil && sessions[i].verified {
+            sessions[i].insights = ProgressInsights.compute(for: sessions[i], history: all)
+            changed = true
+        }
+        if changed && loaded { persistSoon() }
     }
 
     // MARK: - Persistence
@@ -490,6 +505,8 @@ final class AppStore: ObservableObject {
             avgHeartRate: avgHeartRate, maxHeartRate: maxHeartRate,
             location: location?.trimmingCharacters(in: .whitespaces), verified: verified)
         sessions.insert(newSession, at: 0)
+        // Avances por-ejercicio vs. el historial propio (solo si la sesión cuenta).
+        if verified { sessions[0].insights = ProgressInsights.compute(for: sessions[0], history: sessions) }
         player.xp += gained
         applyStreakFreeze()                    // protege la racha con congeladores si hubo un hueco
         player.streak = currentStreak()
@@ -576,8 +593,11 @@ final class AppStore: ObservableObject {
                 let localById = Dictionary(uniqueKeysWithValues: sessions.map { ($0.id.lowercased(), $0) })
                 var merged = server.map { srv -> WorkoutSession in
                     var m = srv
-                    if m.photoURL == nil, let loc = localById[srv.id.lowercased()], loc.photoData != nil {
-                        m.photoData = loc.photoData
+                    if let loc = localById[srv.id.lowercased()] {
+                        if m.photoURL == nil, loc.photoData != nil { m.photoData = loc.photoData }
+                        // El servidor no guarda los insights: conserva los ya calculados en local
+                        // para que backfillInsights no los recalcule en cada sincronización.
+                        if m.insights == nil { m.insights = loc.insights }
                     }
                     return m
                 }
@@ -596,6 +616,7 @@ final class AppStore: ObservableObject {
                 detectPRsFromHistory()               // récords a partir del histórico reconstruido
                 player.streak = currentStreak()
                 refreshAchievements(celebrate: false) // backfill silencioso (ya conseguidos antes)
+                backfillInsights()                    // las sesiones del servidor llegan sin insights: recalcúlalos
                 persist()
                 print("[Backend] sesiones sincronizadas: \(server.count) servidor + \(localOnly.count) locales")
             } catch { print("[Backend] sync sesiones falló:", error) }

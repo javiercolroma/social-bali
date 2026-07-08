@@ -20,6 +20,7 @@ struct ActivityData {
     var maxHeartRate: Int? = nil
     var score: Int = 0   // Gym Score del autor, para el badge del avatar
     var xp: Int = 0      // XP ganado en la sesión (0 = no mostrar, p. ej. posts de otros)
+    var insights: [ProgressInsight] = []   // avances vs. historial (solo en sesiones propias)
 }
 
 struct ActivityDetailView: View {
@@ -64,6 +65,8 @@ struct ActivityDetailView: View {
                                  elapsed: item.elapsed, sets: item.sets, volume: item.volume,
                                  exercises: item.exercises,
                                  seed: "\(item.title)-\(Int(item.date.timeIntervalSince1970))", height: 260)
+
+                    WorkoutInsightsStrip(insights: item.insights)
 
                     // Metrics
                     HStack(spacing: 10) {

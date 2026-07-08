@@ -1,4 +1,15 @@
 /* Forge Loop — Français */
+
+/* Progrès (par exercice, vs. son propre historique) */
+"Progreso" = "Progrès";
+"Nuevo récord en %1$@: %2$@ kg" = "Nouveau record sur %1$@ : %2$@ kg";
+"En %1$@ subiste el peso máximo un %2$lld%%" = "Sur %1$@ tu as augmenté la charge max de %2$lld%%";
+"Con el mismo peso en %1$@, %2$lld reps más que la última vez" = "Même poids sur %1$@, %2$lld reps de plus que la dernière fois";
+"Tu fuerza estimada en %1$@ subió un %2$lld%%" = "Ta force estimée sur %1$@ a augmenté de %2$lld%%";
+"En %1$@ levantaste un %2$lld%% más de peso medio por rep" = "Sur %1$@ tu as soulevé %2$lld%% de plus de poids moyen par rep";
+"En %1$@ tu volumen subió un %2$lld%%" = "Ton volume sur %1$@ a augmenté de %2$lld%%";
+"Igualaste tu marca en %1$@ con menos esfuerzo" = "Tu as égalé ta marque sur %1$@ avec moins d'effort";
+"Tu volumen de %1$@ subió un %2$lld%%" = "Ton volume de %1$@ a augmenté de %2$lld%%";
 "+15s" = "+15s";
 "1RM estimado (Epley)" = "1RM estimé (Epley)";
 "1RM estimado (fórmula de Epley)" = "1RM estimé (formule d'Epley)";

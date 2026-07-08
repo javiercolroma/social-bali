@@ -1,6 +1,17 @@
 /* Forge Loop — English catalog. Development language is Spanish: the Spanish
    literals in code ARE the keys; anything missing here falls back to Spanish. */
 
+/* Progress insights (per-exercise, vs. own history) */
+"Progreso" = "Progress";
+"Nuevo récord en %1$@: %2$@ kg" = "New PR on %1$@: %2$@ kg";
+"En %1$@ subiste el peso máximo un %2$lld%%" = "You added %2$lld%% to your top weight on %1$@";
+"Con el mismo peso en %1$@, %2$lld reps más que la última vez" = "Same weight on %1$@, %2$lld more reps than last time";
+"Tu fuerza estimada en %1$@ subió un %2$lld%%" = "Your estimated strength on %1$@ rose %2$lld%%";
+"En %1$@ levantaste un %2$lld%% más de peso medio por rep" = "On %1$@ you lifted %2$lld%% more average weight per rep";
+"En %1$@ tu volumen subió un %2$lld%%" = "Your volume on %1$@ rose %2$lld%%";
+"Igualaste tu marca en %1$@ con menos esfuerzo" = "You matched your mark on %1$@ with less effort";
+"Tu volumen de %1$@ subió un %2$lld%%" = "Your %1$@ volume rose %2$lld%%";
+
 "+15s" = "+15s";
 "1RM estimado (Epley)" = "Estimated 1RM (Epley)";
 "1RM estimado (fórmula de Epley)" = "Estimated 1RM (Epley formula)";

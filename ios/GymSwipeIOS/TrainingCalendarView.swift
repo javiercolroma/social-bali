@@ -18,7 +18,8 @@ func meActivityData(_ s: WorkoutSession, _ store: AppStore) -> ActivityData {
         date: s.date, title: s.name, note: s.note, photo: s.photoData, photoURL: s.photoURL,
         elapsed: s.elapsed, exercises: s.exercises, sets: s.sets,
         volume: s.volume, items: s.items ?? [],
-        avgHeartRate: s.avgHeartRate, maxHeartRate: s.maxHeartRate, score: store.gymScore.total)
+        avgHeartRate: s.avgHeartRate, maxHeartRate: s.maxHeartRate, score: store.gymScore.total,
+        insights: s.insights ?? [])
 }
 
 /// ActivityData de la sesión de otra persona (autor = esa persona).
@@ -207,6 +208,7 @@ struct DaySessionsSheet: View {
                              elapsed: s.elapsed, sets: s.sets, volume: s.volume,
                              exercises: s.exercises,
                              seed: "\(s.name)-\(Int(s.date.timeIntervalSince1970))", height: 160)
+                WorkoutInsightsStrip(insights: s.insights ?? [])
                 WorkoutStatStrip(stats: WorkoutStatStrip.metrics(time: durationText(s.elapsed), sets: s.sets,
                                                  exercises: s.exercises, ppm: s.avgHeartRate), style: .compact)
             }

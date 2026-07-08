@@ -440,6 +440,13 @@ struct SocialFeedView: View {
 
     // MARK: - Card
 
+    /// Avances de progreso SOLO en mis propios posts (personId == nil): se resuelven desde
+    /// la sesión local por id. Los posts ajenos no llevan (no tenemos su historial).
+    private func insightsFor(_ item: FeedItem) -> [ProgressInsight] {
+        guard item.personId == nil else { return [] }
+        return store.sessions.first { $0.id.lowercased() == item.id.lowercased() }?.insights ?? []
+    }
+
     private func feedItemView(_ item: FeedItem) -> ActivityData {
         ActivityData(authorName: item.authorName, avatarPhoto: item.avatarPhoto, avatarEmoji: item.avatarEmoji,
                      flag: item.flag, location: item.location, date: item.date, title: item.title, note: item.note,
@@ -447,7 +454,8 @@ struct SocialFeedView: View {
                      elapsed: item.elapsed, exercises: item.exercises, sets: item.sets,
                      volume: item.volume, items: item.items,
                      avgHeartRate: item.avgHeartRate, maxHeartRate: item.maxHeartRate,
-                     score: item.personId == nil ? store.gymScore.total : store.personScore(item.personId ?? ""))
+                     score: item.personId == nil ? store.gymScore.total : store.personScore(item.personId ?? ""),
+                     insights: insightsFor(item))
     }
 
     private func reportPost(_ item: FeedItem) {
@@ -534,6 +542,7 @@ struct SocialFeedView: View {
                                  elapsed: item.elapsed, sets: item.sets, volume: item.volume,
                                  exercises: item.exercises,
                                  seed: "\(item.title)-\(Int(item.date.timeIntervalSince1970))", height: 320)
+                    WorkoutInsightsStrip(insights: insightsFor(item))
                     WorkoutStatStrip(stats: WorkoutStatStrip.metrics(time: durationText(item.elapsed), sets: item.sets,
                                                      exercises: item.exercises, ppm: item.avgHeartRate), style: .full)
                 }

@@ -441,6 +441,45 @@ struct WorkoutMedia: View {
     }
 }
 
+/// Tira de PROGRESO de la tarjeta: traduce el historial en 1-3 avances legibles
+/// ("En remo sentado subiste el peso un 5%"), en vez de cifras brutas. Se renderiza
+/// AQUÍ una vez (regla de fuente única) y aparece en toda tarjeta cuyo entreno lleve
+/// insights (solo los propios); vacío → no ocupa nada.
+struct WorkoutInsightsStrip: View {
+    let insights: [ProgressInsight]
+    var body: some View {
+        if insights.isEmpty {
+            EmptyView()
+        } else {
+            VStack(alignment: .leading, spacing: 8) {
+                HStack(spacing: 5) {
+                    Image(systemName: "chart.line.uptrend.xyaxis").font(.system(size: 10, weight: .heavy))
+                    Text(LocalizedStringKey("Progreso")).font(.system(size: 10, weight: .heavy)).tracking(0.6)
+                }
+                .foregroundColor(Color(hex: "4b6211"))
+                ForEach(insights.prefix(3)) { ins in
+                    HStack(spacing: 9) {
+                        ZStack {
+                            Circle().fill(ins.kind == .newPR ? Color(hex: "e8b020").opacity(0.20) : Brand.green.opacity(0.16))
+                                .frame(width: 24, height: 24)
+                            Image(systemName: ins.icon).font(.system(size: 11, weight: .bold))
+                                .foregroundColor(ins.kind == .newPR ? Color(hex: "b8860b") : Color(hex: "4b6211"))
+                        }
+                        Text(ins.localizedText).font(.system(size: 13, weight: .semibold))
+                            .foregroundColor(Brand.ink).fixedSize(horizontal: false, vertical: true)
+                        Spacer(minLength: 0)
+                    }
+                }
+            }
+            .padding(11)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(Brand.greenSoft.opacity(0.35))
+            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).stroke(Brand.green.opacity(0.22)))
+        }
+    }
+}
+
 /// Flecha de VOLVER para hojas (pop-ups): circulito con chevron, arriba a la izquierda.
 /// (Deslizar hacia abajo sigue funcionando; esto da una salida visible y familiar.)
 struct SheetBackButton: View {

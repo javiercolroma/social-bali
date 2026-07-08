@@ -1100,6 +1100,7 @@ struct FriendProfileView: View {
                              elapsed: s.elapsed, sets: s.sets, volume: s.volume,
                              exercises: s.exercises,
                              seed: "\(s.name)-\(Int(s.date.timeIntervalSince1970))", height: 160)
+                WorkoutInsightsStrip(insights: s.insights ?? [])
                 WorkoutStatStrip(stats: WorkoutStatStrip.metrics(time: durationText(s.elapsed), sets: s.sets,
                                                  exercises: s.exercises, ppm: s.avgHeartRate), style: .compact)
             }
@@ -1336,6 +1337,7 @@ struct MeProfileView: View {
                              elapsed: s.elapsed, sets: s.sets, volume: s.volume,
                              exercises: s.exercises,
                              seed: "\(s.name)-\(Int(s.date.timeIntervalSince1970))", height: 160)
+                WorkoutInsightsStrip(insights: s.insights ?? [])
                 WorkoutStatStrip(stats: WorkoutStatStrip.metrics(time: durationText(s.elapsed), sets: s.sets,
                                                  exercises: s.exercises, ppm: s.avgHeartRate), style: .compact)
             }
