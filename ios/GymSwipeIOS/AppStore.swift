@@ -520,7 +520,7 @@ final class AppStore: ObservableObject {
         }
         if !verified { flashMessage = "Entreno guardado. Por ser muy rápido, no cuenta para la liga, los récords ni el Gym Score." }
         persist()
-        pushSessionToBackend(newSession)       // sube la sesión a Supabase (best-effort, gateado)
+        pushSessionToBackend(sessions[0])      // sesiones[0] = la nueva YA con sus insights (best-effort, gateado)
         refreshAchievements(celebrate: true)   // desbloquea + celebra logros nuevos
         NotificationManager.shared.afterWorkoutSaved(streak: player.streak)   // aviso de racha en 3 días
     }
@@ -617,6 +617,12 @@ final class AppStore: ObservableObject {
                 player.streak = currentStreak()
                 refreshAchievements(celebrate: false) // backfill silencioso (ya conseguidos antes)
                 backfillInsights()                    // las sesiones del servidor llegan sin insights: recalcúlalos
+                // Cura al servidor los insights de sesiones ya subidas SIN ellos (columna nueva)
+                // para que tus seguidores los vean; best-effort, acotado a las recientes.
+                let serverMissing = Set(server.filter { $0.insights == nil }.map { $0.id.lowercased() })
+                for s in sessions.prefix(120) where (s.insights?.isEmpty == false) && serverMissing.contains(s.id.lowercased()) {
+                    Task { [s] in try? await Backend.shared.upsertSession(SessionRow(s, userId: uid, photoURL: s.photoURL)) }
+                }
                 persist()
                 print("[Backend] sesiones sincronizadas: \(server.count) servidor + \(localOnly.count) locales")
             } catch { print("[Backend] sync sesiones falló:", error) }

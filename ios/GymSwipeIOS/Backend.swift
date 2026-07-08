@@ -370,7 +370,7 @@ final class Backend {
     func fetchFeedWithAuthors(limit: Int = 50) async throws -> [FeedRow] {
         guard let client else { return [] }
         return try await client.from("workout_sessions")
-            .select("id,user_id,name,note,date,elapsed,exercises,sets,volume,xp,avg_hr,max_hr,location,photo_url,visibility,verified,items,author:profiles!workout_sessions_user_id_fkey(handle,name,avatar_url,gym_score),kudos(count),comments(count)")
+            .select("id,user_id,name,note,date,elapsed,exercises,sets,volume,xp,avg_hr,max_hr,location,photo_url,visibility,verified,items,insights,author:profiles!workout_sessions_user_id_fkey(handle,name,avatar_url,gym_score),kudos(count),comments(count)")
             .order("date", ascending: false)
             .limit(limit)
             .execute().value
@@ -580,6 +580,7 @@ struct FeedRow: Codable {
     let visibility: String
     let verified: Bool
     let items: [SessionExercise]
+    let insights: [ProgressInsight]?
     let author: FeedAuthor?
     let kudos: [CountRow]?
     let comments: [CountRow]?
@@ -701,6 +702,7 @@ struct SessionRow: Codable {
     let visibility: String
     let verified: Bool
     let items: [SessionExercise]
+    let insights: [ProgressInsight]?   // avances por-ejercicio (jsonb); para que tus seguidores los vean
 
     init(_ s: WorkoutSession, userId: UUID, photoURL: String? = nil) {
         id = s.id.lowercased()   // determinista: Postgres normaliza el UUID a minúscula
@@ -720,6 +722,7 @@ struct SessionRow: Codable {
         visibility = s.visibility.rawValue
         verified = s.verified
         items = s.items ?? []
+        insights = s.insights
     }
 
     /// Sesión local a partir de la fila del servidor (la foto llegará con Storage, Fase 5).
@@ -730,7 +733,7 @@ struct SessionRow: Codable {
             elapsed: elapsed, exercises: exercises, sets: sets, volume: volume, xp: xp,
             photoData: nil, visibility: WorkoutVisibility(rawValue: visibility) ?? .all,
             items: items, avgHeartRate: avg_hr, maxHeartRate: max_hr,
-            location: location, verified: verified, photoURL: photo_url)
+            location: location, verified: verified, photoURL: photo_url, insights: insights)
     }
 }
 

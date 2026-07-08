@@ -23,6 +23,7 @@ private struct FeedItem: Identifiable {
     var kudosCount: Int = 0     // likes REALES del servidor (0 si nadie ha dado like)
     var commentCount: Int = 0   // comentarios REALES del servidor
     var avatarURL: String? = nil // foto real del autor (Storage)
+    var insights: [ProgressInsight] = []   // avances por-ejercicio del autor (del servidor)
 }
 
 /// Comentario de un post (local). Soporta respuestas (1 nivel), likes y fecha.
@@ -266,7 +267,8 @@ struct SocialFeedView: View {
             items: r.items, avgHeartRate: r.avg_hr, maxHeartRate: r.max_hr,
             kudosCount: r.kudos?.first?.count ?? 0,
             commentCount: r.comments?.first?.count ?? 0,
-            avatarURL: isMe ? nil : r.author?.avatar_url)
+            avatarURL: isMe ? nil : r.author?.avatar_url,
+            insights: r.insights ?? [])
     }
 
     private func feedCard(_ item: FeedItem) -> some View {
@@ -440,11 +442,16 @@ struct SocialFeedView: View {
 
     // MARK: - Card
 
-    /// Avances de progreso SOLO en mis propios posts (personId == nil): se resuelven desde
-    /// la sesión local por id. Los posts ajenos no llevan (no tenemos su historial).
+    /// Avances de progreso del post. En MIS propios posts (personId == nil) prefiero el
+    /// cálculo local (más fresco, con todo mi historial); en los de otros, los que trae el
+    /// servidor en el propio post (los calculó su autor en su móvil).
     private func insightsFor(_ item: FeedItem) -> [ProgressInsight] {
-        guard item.personId == nil else { return [] }
-        return store.sessions.first { $0.id.lowercased() == item.id.lowercased() }?.insights ?? []
+        if item.personId == nil,
+           let local = store.sessions.first(where: { $0.id.lowercased() == item.id.lowercased() })?.insights,
+           !local.isEmpty {
+            return local
+        }
+        return item.insights
     }
 
     private func feedItemView(_ item: FeedItem) -> ActivityData {
@@ -706,7 +713,8 @@ struct SocialFeedView: View {
                 flag: countryFlag(store.profile.country), location: loc,
                 date: s.date, title: s.name, note: s.note, photo: s.photoData, photoURL: s.photoURL,
                 elapsed: s.elapsed, exercises: s.exercises, sets: s.sets, volume: s.volume,
-                items: s.items ?? [], avgHeartRate: s.avgHeartRate, maxHeartRate: s.maxHeartRate)
+                items: s.items ?? [], avgHeartRate: s.avgHeartRate, maxHeartRate: s.maxHeartRate,
+                insights: s.insights ?? [])
         }
     }
 
