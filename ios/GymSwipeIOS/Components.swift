@@ -411,15 +411,20 @@ struct FullWorkoutPhoto: View {
     }
 }
 
-/// Fila compacta de medallas (emoji oro/plata/bronce) del entreno, estilo Strava.
+/// Fila compacta de medallas del entreno (estilo Strava), SUTIL: iconos pequeños tintados
+/// oro/plata/bronce, sin emoji chillón ni brillos.
 struct WorkoutMedalsRow: View {
     let medals: [SessionMedal]
-    var size: CGFloat = 26
+    var size: CGFloat = 22
     var body: some View {
         if medals.isEmpty { EmptyView() }
         else {
-            HStack(spacing: 6) {
-                ForEach(medals.prefix(5)) { m in Text(m.emoji).font(.system(size: size)) }
+            HStack(spacing: 5) {
+                ForEach(medals.prefix(6)) { m in
+                    Image(systemName: "medal.fill")
+                        .font(.system(size: size, weight: .medium))
+                        .foregroundStyle(m.achTier.color)
+                }
             }
         }
     }
@@ -494,36 +499,33 @@ struct WorkoutProgressCards: View {
     }
 }
 
-/// Página de INFORMACIÓN de la tarjeta: 2ª página del pager (al deslizar la foto) o portada
-/// cuando no hay foto. RESUMEN VISUAL premium: los LOGROS/PROGRESOS destacan (tarjetas
-/// Antes→Ahora + medallas) sobre las métricas normales (tira de stats abajo). La foto tiene
-/// la prioridad en la 1ª pantalla; al deslizar llega este detalle.
+/// Panel de HIGHLIGHTS de la tarjeta: 2ª página del pager (al deslizar la foto) o portada
+/// cuando no hay foto. Destaca los LOGROS/PROGRESOS (medallas sutiles + tarjetas Antes→Ahora).
+/// Las stats principales (tiempo/series/ejercicios/ppm) NO van aquí: son FIJAS y viven fuera,
+/// debajo del medio, siempre visibles (incluso con foto).
 struct WorkoutInfoPanel: View {
-    let elapsed: Int
-    let sets: Int
     let exercises: Int
-    var ppm: Int? = nil
     var insights: [ProgressInsight] = []
     var medals: [SessionMedal] = []
     /// Altura fija (página del pager, para casar con la foto) o nil = ajusta al contenido (sin foto).
     var height: CGFloat? = nil
 
-    private var timeText: String {
-        let m = elapsed / 60
-        return m >= 60 ? "\(m / 60)h \(m % 60)m" : "\(max(1, m)) min"
-    }
-    private var hasHighlights: Bool { !medals.isEmpty || insights.contains { $0.isExercise } }
     private var cardCount: Int { height == nil ? 3 : 2 }   // fijo (pager) muestra menos para casar altura
 
     var body: some View {
         ZStack {
             LinearGradient(colors: [Brand.greenSoft.opacity(0.60), Color(hex: "eef7d8")],
                            startPoint: .topLeading, endPoint: .bottomTrailing)
-            VStack(spacing: 12) {
-                if !medals.isEmpty { WorkoutMedalsRow(medals: medals, size: 30) }
+            VStack(spacing: 10) {
+                if !medals.isEmpty {
+                    HStack(spacing: 7) {
+                        Text(LocalizedStringKey("Logros")).font(.system(size: 10, weight: .heavy)).tracking(0.6)
+                            .foregroundColor(Color(hex: "4b6211"))
+                        WorkoutMedalsRow(medals: medals, size: 22)
+                        Spacer(minLength: 0)
+                    }
+                }
                 WorkoutProgressCards(insights: insights, totalExercises: exercises, maxCards: cardCount)
-                WorkoutStatStrip(stats: WorkoutStatStrip.metrics(time: timeText, sets: sets,
-                                                 exercises: exercises, ppm: ppm), style: .full)
             }
             .padding(14).frame(maxWidth: .infinity)
             .frame(maxHeight: height == nil ? nil : .infinity, alignment: .center)
@@ -534,8 +536,9 @@ struct WorkoutInfoPanel: View {
 }
 
 /// EL medio visual de TODA tarjeta de entreno (regla: post = historial = perfiles =
-/// calendario = detalle). Con foto → pager [FOTO limpia protagonista | INFO (logros+stats+
-/// progreso)]: primero la foto, al deslizar el detalle. Sin foto → el panel de info directo.
+/// calendario = detalle). Con foto → si hay logros/progreso, pager [FOTO limpia | HIGHLIGHTS];
+/// si no, solo la foto. Sin foto → panel de highlights (si los hay) o portada visual.
+/// Las STATS (tiempo/series/ejercicios/ppm) van FUERA, fijas debajo (ver los sitios de uso).
 /// Cambios de tarjeta se hacen AQUÍ, una vez.
 struct WorkoutMedia: View {
     let photoData: Data?
@@ -546,27 +549,35 @@ struct WorkoutMedia: View {
     let exercises: Int
     let seed: String
     var height: CGFloat = 150
-    var ppm: Int? = nil
     var insights: [ProgressInsight] = []
     var medals: [SessionMedal] = []
 
+    private var hasPhoto: Bool { photoData != nil || photoURL != nil }
+    private var hasHighlights: Bool { !medals.isEmpty || insights.contains { $0.isExercise } }
+
     var body: some View {
-        if photoData != nil || photoURL != nil {
-            TabView {
+        if hasPhoto {
+            if hasHighlights {
+                TabView {
+                    FullWorkoutPhoto(data: photoData, url: photoURL, height: height)
+                    WorkoutInfoPanel(exercises: exercises, insights: insights, medals: medals, height: height)
+                }
+                .tabViewStyle(.page(indexDisplayMode: .automatic))
+                // Puntitos discretos: sin la cápsula de fondo del sistema.
+                .indexViewStyle(.page(backgroundDisplayMode: .never))
+                .frame(height: height)
+                .clipShape(RoundedRectangle(cornerRadius: 12))
+            } else {
                 FullWorkoutPhoto(data: photoData, url: photoURL, height: height)
-                WorkoutInfoPanel(elapsed: elapsed, sets: sets, exercises: exercises,
-                                 ppm: ppm, insights: insights, medals: medals, height: height)
             }
-            .tabViewStyle(.page(indexDisplayMode: .automatic))
-            // Puntitos discretos: sin la cápsula de fondo del sistema.
-            .indexViewStyle(.page(backgroundDisplayMode: .never))
-            .frame(height: height)
-            .clipShape(RoundedRectangle(cornerRadius: 12))
+        } else if hasHighlights {
+            // Sin foto pero con logros/progreso: el panel ES la tarjeta (ajustado al contenido).
+            WorkoutInfoPanel(exercises: exercises, insights: insights, medals: medals, height: nil)
         } else {
-            // Sin foto: el panel de info ES la tarjeta (resumen visual premium) y se ajusta a
-            // su contenido — sin gradiente vacío ni hueco reservado para imagen.
-            WorkoutInfoPanel(elapsed: elapsed, sets: sets, exercises: exercises,
-                             ppm: ppm, insights: insights, medals: medals, height: nil)
+            // Sin foto y sin logros: portada visual (una foto merece protagonismo; un gradiente
+            // enorme sería vacío).
+            WorkoutCover(elapsed: elapsed, sets: sets, volume: volume,
+                         exercises: exercises, seed: seed, height: min(height, 300))
         }
     }
 }

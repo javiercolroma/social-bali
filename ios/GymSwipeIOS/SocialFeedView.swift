@@ -561,7 +561,9 @@ struct SocialFeedView: View {
                                  elapsed: item.elapsed, sets: item.sets, volume: item.volume,
                                  exercises: item.exercises,
                                  seed: "\(item.title)-\(Int(item.date.timeIntervalSince1970))", height: 480,
-                                 ppm: item.avgHeartRate, insights: insightsFor(item), medals: medalsFor(item))
+                                 insights: insightsFor(item), medals: medalsFor(item))
+                    WorkoutStatStrip(stats: WorkoutStatStrip.metrics(time: durationText(item.elapsed), sets: item.sets,
+                                                     exercises: item.exercises, ppm: item.avgHeartRate), style: .full)
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .contentShape(Rectangle())

@@ -146,7 +146,8 @@ struct ActivityDetailView: View {
             Text("LOGROS").font(.caption2).fontWeight(.heavy).foregroundColor(Brand.muted)
             ForEach(data.medals) { m in
                 HStack(spacing: 12) {
-                    Text(m.emoji).font(.system(size: 28))
+                    Image(systemName: "medal.fill").font(.system(size: 26)).foregroundStyle(m.achTier.color)
+                        .frame(width: 30)
                     VStack(alignment: .leading, spacing: 2) {
                         Text(m.localizedTitle).font(.system(size: 15, weight: .heavy)).foregroundColor(Brand.ink)
                         Text(m.localizedDetail).font(.system(size: 13)).foregroundColor(Brand.soft)
