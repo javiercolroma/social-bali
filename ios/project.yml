@@ -10,7 +10,7 @@ settings:
   CURRENT_PROJECT_VERSION: "1"
   # Firma para iPhone físico (Personal Team del Apple ID añadido en Xcode).
   # Al vivir aquí, sobrevive a las regeneraciones de xcodegen.
-  DEVELOPMENT_TEAM: H8K8QNTDBA
+  DEVELOPMENT_TEAM: 5JHD53WQ67
   CODE_SIGN_STYLE: Automatic
 packages:
   GoogleSignIn:
@@ -38,10 +38,9 @@ targets:
       properties:
         com.apple.developer.healthkit: true
         com.apple.developer.healthkit.access: []
-        # ⚠️ RESTAURAR al pasar a la cuenta de developer DE PAGO (los Personal Team
-        # gratuitos no soportan Sign in with Apple y bloquean la firma para iPhone):
-        # com.apple.developer.applesignin:
-        #   - Default
+        # Restaurado al pasar a la cuenta de developer DE PAGO (2026-07-27).
+        com.apple.developer.applesignin:
+          - Default
     info:
       path: GymSwipeIOS/Info.plist
       properties:
