@@ -74,7 +74,32 @@ La frecuencia cardíaca se lee de HealthKit **solo con permiso** y únicamente p
 
 Se puede **eliminar la cuenta desde la propia app** (Perfil → Ajustes → Eliminar cuenta), que borra los datos del servidor.
 
-⚠️ **PENDIENTE: crear una cuenta de prueba y ponerla aquí.** Al haber login, Apple **exige** credenciales de demo. Como el acceso por correo es con código de un solo uso, hay que darles o bien un buzón al que puedan acceder, o bien un usuario con contraseña fija habilitado para la revisión.
+**Cuenta de demo: NO hace falta.** Marca `demoAccountRequired = false`. El revisor entra con **su propio Apple ID** mediante Sign in with Apple (verificado funcionando en la build 3 el 2026-07-28). Lo que **sí** hay que hacer es decírselo explícitamente, porque si intenta el acceso por correo se queda esperando un código que llega a un buzón que no controla.
+
+### Texto listo para App Review Information → Notes (en inglés, que es lo que leen)
+
+```
+No demo account needed. On the welcome screen tap "Iniciar sesión" and use
+Sign in with Apple with your own Apple ID (or Continue with Google). Email
+sign-in sends a one-time code to the address you type, so please use Apple
+or Google instead.
+
+Native SwiftUI app. Backend is Supabase: accounts, workouts and social
+features (follow, feed, comments, weekly leagues) are real between users.
+
+User-generated content: blocking, reporting and account deletion are
+available in-app (Perfil > Ajustes).
+
+Location is optional, used for the Ranking and to find nearby training
+partners, and is sent rounded to ~5 km cells, never the exact position.
+
+Heart rate is read from HealthKit only with permission, to attach it to a
+workout. The app never writes to Health.
+```
+
+### Contacto de revisión
+- **Nombre:** Javier Colás · **Correo:** javiercolroma@gmail.com
+- **Teléfono:** *(no se guarda aquí a propósito — es dato personal y este repo podría hacerse público; ponlo directamente en App Store Connect)*
 
 ## Capturas (Screenshots) — pendiente
 Apple exige al menos el tamaño de iPhone 6.9" (1320×2868). Recomendado capturar 3–6:
