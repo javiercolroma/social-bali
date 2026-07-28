@@ -208,6 +208,16 @@ Ultima actualizacion: 2026-07-08
 > ```
 > `ExportOptions.plist`: `method=app-store-connect`, `teamID=5JHD53WQ67`, `signingStyle=automatic`, `uploadSymbols=true`, `destination=export`. Valida antes con `altool --validate-app` (mismos flags). Para subir builds la API key **sí** tiene permisos; el 403 era exclusivo de certificados.
 >
+> **La build 1 fue RECHAZADA en el procesado (`ITMS-90683`)** y con ella salieron dos fallos:
+> 1. **Faltaba `NSHealthUpdateUsageDescription`.** La app solo LEE de Salud (`HealthManager.swift` pide `toShare: []`), pero Apple exige la cadena de *escritura* por el simple hecho de tener el entitlement `com.apple.developer.healthkit`, se use o no. Añadida en `project.yml` diciendo la verdad («no guarda datos en la app Salud; solo lee tu frecuencia cardíaca»).
+> 2. **`CFBundleVersion` estaba CONGELADO a `"1"`** — fallo latente y peor que el anterior. xcodegen, si no se lo dices, escribe un literal en el `Info.plist` en vez de enlazarlo a `CURRENT_PROJECT_VERSION`, así que subir el número en `project.yml` **no hacía absolutamente nada** y toda subida futura habría muerto por «build duplicada» sin motivo aparente. Igual pasaba con `CFBundleShortVersionString`/`MARKETING_VERSION`. Arreglado en los **dos** targets (la extensión DEBE llevar la misma versión que la app o falla la subida):
+>
+> ```yaml
+> CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+> CFBundleShortVersionString: $(MARKETING_VERSION)
+> ```
+> A partir de ahora, para subir una build nueva basta con incrementar `CURRENT_PROJECT_VERSION` en `ios/project.yml` y regenerar. **Comprueba siempre** que cuajó: `plutil -p ios/GymSwipeIOS/Info.plist | grep CFBundleVersion` debe mostrar la variable, y el `Info.plist` DENTRO del `.xcarchive` el número ya resuelto.
+>
 > **Pendiente para meter a los amigos** (testers *externos*): necesitan Beta App Review (1-2 días) y **URL de política de privacidad**, y las páginas de `docs/` siguen dando **404** — hay que activar GitHub Pages (Settings → Pages → `main` /`docs`). Además `STORE.md` todavía dice «Local-first: tus datos viven en tu dispositivo. Sin cuentas en servidores», **falso** desde que Supabase está en vivo: hay que reescribirlo antes de enviar nada a revisión.
 >
 > **Comandos nativos:** `npm run ios:generate` (xcodegen) tras añadir archivos Swift; build con `xcodebuild -project ios/GymSwipeIOS.xcodeproj -scheme GymSwipeIOS -destination 'platform=iOS Simulator,name=iPhone 17 Pro' build`. Ya NO hace falta `npm run ios:sync`.
