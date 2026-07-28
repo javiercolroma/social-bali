@@ -66,7 +66,13 @@ echo "=== verificación de firma ==="
 codesign --verify --deep --strict --verbose=2 "$APP" 2>&1 | tail -3
 
 echo "=== entitlements finales de la app ==="
-codesign -d --entitlements - "$APP" 2>/dev/null | plutil -p - | grep -E "applesignin|healthkit|application-identifier|beta-reports"
+# Ojo: `| plutil -p -` falla aquí (el volcado no es plist limpio) y con
+# `set -o pipefail` aborta el script. Se leen como texto plano.
+codesign -d --entitlements :- "$APP" 2>/dev/null | tr -d '\0' \
+  | grep -oE "com\.apple\.developer\.[a-z.-]+|application-identifier|beta-reports-active|Default"
+echo "=== entitlements del widget ==="
+codesign -d --entitlements :- "$APPEX" 2>/dev/null | tr -d '\0' \
+  | grep -oE "com\.apple\.developer\.[a-z.-]+|application-identifier|beta-reports-active"
 
 # Empaqueta el .ipa
 rm -rf "$SP/ipa" "$SP/export"; mkdir -p "$SP/ipa/Payload" "$SP/export"
