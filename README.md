@@ -218,6 +218,8 @@ Ultima actualizacion: 2026-07-08
 > ```
 > A partir de ahora, para subir una build nueva basta con incrementar `CURRENT_PROJECT_VERSION` en `ios/project.yml` y regenerar. **Comprueba siempre** que cuajó: `plutil -p ios/GymSwipeIOS/Info.plist | grep CFBundleVersion` debe mostrar la variable, y el `Info.plist` DENTRO del `.xcarchive` el número ya resuelto.
 >
+> ✅ **Con esos dos arreglos, la build 2 pasó el procesado** (`processingState: VALID`), quedó asignada al grupo «Internos» y el tester pasó a `INVITED`. **Objetivo cumplido: la app se puede probar en el iPhone sin cable.** Nota de diagnóstico para el futuro: mientras no haya una build procesada, TestFlight muestra «un desarrollador tiene que invitarte» — es la pantalla vacía genérica, NO un problema de permisos; y un build rechazado en el procesado **no aparece** en `GET /v1/builds` (total 0), el aviso llega solo por correo al titular.
+>
 > **Pendiente para meter a los amigos** (testers *externos*): necesitan Beta App Review (1-2 días) y **URL de política de privacidad**, y las páginas de `docs/` siguen dando **404** — hay que activar GitHub Pages (Settings → Pages → `main` /`docs`). Además `STORE.md` todavía dice «Local-first: tus datos viven en tu dispositivo. Sin cuentas en servidores», **falso** desde que Supabase está en vivo: hay que reescribirlo antes de enviar nada a revisión.
 >
 > **Comandos nativos:** `npm run ios:generate` (xcodegen) tras añadir archivos Swift; build con `xcodebuild -project ios/GymSwipeIOS.xcodeproj -scheme GymSwipeIOS -destination 'platform=iOS Simulator,name=iPhone 17 Pro' build`. Ya NO hace falta `npm run ios:sync`.
