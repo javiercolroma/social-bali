@@ -188,6 +188,28 @@ Ultima actualizacion: 2026-07-08
 >
 > **Cuenta de developer DE PAGO + Sign in with Apple restaurado (2026-07-27):** se abandona el **Personal Team gratuito** (`H8K8QNTDBA`) y se pasa al equipo del **Apple Developer Program** (`5JHD53WQ67`) en `ios/project.yml` (`DEVELOPMENT_TEAM`, sobrevive a xcodegen) y en el `.xcodeproj`. Con la cuenta de pago **ya se puede firmar con Sign in with Apple**, así que se **descomenta** la capacidad `com.apple.developer.applesignin: [Default]` en `project.yml` y en `ios/GymSwipeIOS/GymSwipeIOS.entitlements`. El código nunca se tocó: `AuthView.swift` ya trae `SignInWithAppleButton` + nonce + `Backend.signInWithApple(idToken:nonce:)`, solo estaba muerto por falta del entitlement. Consecuencias: **el botón de Apple del login ya funciona en iPhone real** (en simulador depende de la cuenta de iCloud del simulador) y **la app deja de caducar a los 7 días**. Build verificado en simulador (`BUILD SUCCEEDED`, producto `Forge Loop.app`). ⚠️ Al abrir el proyecto, **Xcode reescribe el `.xcscheme`** y le pone `BuildableName = "GymSwipeIOS.app"` en vez de `Forge Loop.app` (el `PRODUCT_NAME` real): si aparece ese cambio en el `git status`, **descartarlo** (`git checkout -- ios/GymSwipeIOS.xcodeproj/xcshareddata/xcschemes/GymSwipeIOS.xcscheme`) o regenerar con xcodegen.
 >
+> **Primera subida a TestFlight (2026-07-28) — pipeline entero por terminal, sin Xcode ni cable:** el objetivo era probar la app en el iPhone **sin cable** (el emparejamiento inicial por USB es obligatorio, así que instalar por Wi-Fi con Xcode estaba descartado). La vía es **TestFlight**, y como **tester interno no hay Beta App Review**: la build llega en minutos. Estado final: app `6795445451` (`Forge Loop` / `com.javiercolroma.gymswipeios` / SKU `forgeloop-001`), grupo interno **«Internos»** (`hasAccessToAllBuilds`) y el titular `javiercolroma@gmail.com` como tester. **Ojo: el Apple ID de la cuenta de developer es `javiercolroma@gmail.com`**, no el de git.
+>
+> Cuatro trampas que costaron tiempo, documentadas para no repetirlas:
+> 1. **La API de App Store Connect NO permite crear apps** (`403 — The resource 'apps' does not allow 'CREATE'`). El registro de la app se crea **a mano en la web**, sin excepción. Sí se pueden crear por API: bundle IDs, perfiles, grupos beta y testers.
+> 2. **La API key `869JC2XBQL` no puede crear certificados** (`403 — You are not allowed to perform this operation`): su rol está por debajo de *Admin*. El certificado de distribución se creó subiendo un **CSR generado con openssl** a developer.apple.com → Certificates → «+» → Apple Distribution, y luego emparejándolo con su clave privada.
+> 3. **`openssl pkcs12 -export` de OpenSSL 3 produce un `.p12` que `security import` no lee** (`MAC verification failed … wrong password?`). Hay que forzar los algoritmos antiguos: `-certpbe PBE-SHA1-3DES -keypbe PBE-SHA1-3DES -macalg sha1`.
+> 4. **`xcodebuild archive` firma en modo DESARROLLO**, y un perfil de desarrollo exige ≥1 dispositivo registrado — con la cuenta recién creada hay **cero**, así que el archive fallaba (`Your team has no devices…`). La solución es **archivar SIN firmar y firmar al exportar** (el `.ipa` de App Store no necesita dispositivos):
+>
+> ```bash
+> xcodebuild -project ios/GymSwipeIOS.xcodeproj -scheme GymSwipeIOS \
+>   -destination 'generic/platform=iOS' -clonedSourcePackagesDirPath ios/.spm-cache \
+>   -archivePath /tmp/ForgeLoop.xcarchive \
+>   CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" archive
+> xcodebuild -exportArchive -archivePath /tmp/ForgeLoop.xcarchive \
+>   -exportOptionsPlist ExportOptions.plist -exportPath /tmp/export -allowProvisioningUpdates
+> xcrun altool --upload-app -f "/tmp/export/Forge Loop.ipa" -t ios \
+>   --apiKey 869JC2XBQL --apiIssuer <ISSUER_ID>
+> ```
+> `ExportOptions.plist`: `method=app-store-connect`, `teamID=5JHD53WQ67`, `signingStyle=automatic`, `uploadSymbols=true`, `destination=export`. Valida antes con `altool --validate-app` (mismos flags). Para subir builds la API key **sí** tiene permisos; el 403 era exclusivo de certificados.
+>
+> **Pendiente para meter a los amigos** (testers *externos*): necesitan Beta App Review (1-2 días) y **URL de política de privacidad**, y las páginas de `docs/` siguen dando **404** — hay que activar GitHub Pages (Settings → Pages → `main` /`docs`). Además `STORE.md` todavía dice «Local-first: tus datos viven en tu dispositivo. Sin cuentas en servidores», **falso** desde que Supabase está en vivo: hay que reescribirlo antes de enviar nada a revisión.
+>
 > **Comandos nativos:** `npm run ios:generate` (xcodegen) tras añadir archivos Swift; build con `xcodebuild -project ios/GymSwipeIOS.xcodeproj -scheme GymSwipeIOS -destination 'platform=iOS Simulator,name=iPhone 17 Pro' build`. Ya NO hace falta `npm run ios:sync`.
 
 
