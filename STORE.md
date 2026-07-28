@@ -56,7 +56,7 @@ gimnasio,entreno,rutina,fuerza,pesas,fitness,workout,progreso,gym,musculacion,ra
   - **Datos opcionales del perfil:** sexo, fecha de nacimiento, país, ciudad, gimnasio, redes sociales.
 - **Tracking:** No. No hay SDKs de publicidad ni se comparten datos con terceros para marketing.
 - **Finalidad:** funcionalidad de la app (todo). Nada de publicidad ni analítica de terceros.
-- ⚠️ **`PrivacyInfo.xcprivacy` sigue declarando `NSPrivacyCollectedDataTypes: []`** (= no recopilo nada). **Hay que actualizarlo antes de enviar a revisión** para que cuadre con lo de arriba; hoy se contradicen.
+- ✅ **`PrivacyInfo.xcprivacy` reescrito el 2026-07-28** y ya cuadra con lo de arriba: declara los 11 tipos (correo, nombre, salud, fitness, ubicación aproximada, fotos, mensajes, otro contenido, user ID, device ID y otros datos del perfil), todos `Linked = true`, `Tracking = false` y con finalidad `AppFunctionality`. Declara también el uso de **UserDefaults** con motivo `CA92.1`. **Si añades datos nuevos al backend, actualiza los dos sitios a la vez** (este fichero y las etiquetas de App Store Connect).
 
 ## Notas para el revisor (App Review Information → Notes)
 
