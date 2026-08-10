@@ -152,7 +152,8 @@ final class ForgeyAI: ObservableObject {
         if #available(iOS 26.0, *) {
             let session = LanguageModelSession(instructions: ForgeyPrompts.generateInstructions(
                 context: ForgeyAI.context(from: store),
-                referenceLoads: ForgeyPrompts.referenceLoads(from: store)))
+                referenceLoads: ForgeyPrompts.referenceLoads(from: store),
+                catalog: ForgeyPrompts.catalog(for: description)))
             let res = try await session.respond(
                 to: "Crea un entreno para: \(description). Recuerda: TODOS los ejercicios deben corresponder a esa descripción.",
                 generating: AIWorkout.self).content

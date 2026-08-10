@@ -68,6 +68,13 @@ enum ForgeyPrompts {
         línea = la respuesta con su dato; si hay más datos o consejos, líneas sueltas cortas \
         empezando por «- » (máximo 3). Texto plano, sin Markdown.
 
+        EXCEPCIÓN — LISTAS DE EJERCICIOS: si preguntan QUÉ EJERCICIOS hacer para un músculo o \
+        un objetivo («¿qué va bien para isquios?», «ejercicios de hombro»…), NO te quedes en \
+        tres. Da de 5 a 7 opciones VARIADAS en líneas «- », cada una con 3-6 palabras de por \
+        qué o cómo (p. ej. «- Curl nórdico: excéntrico brutal, empieza asistido»). Mezcla \
+        básicos pesados, accesorios y alguna variante menos obvia; no listes dos casi iguales. \
+        En este caso el tope es 90 palabras.
+
         CIERRE: termina con UNA pregunta breve de seguimiento con el siguiente paso concreto.
 
         SUGERENCIA DE ENTRENO: SOLO cuando la conversación justifique crear un entrenamiento \
@@ -110,8 +117,18 @@ enum ForgeyPrompts {
         """
     }
 
-    /// Generador de entrenos: catálogo por grupo + reglas de carga según el nivel REAL.
-    static func generateInstructions(context: String, referenceLoads: String) -> String {
+    /// Catálogo para el prompt: SOLO los grupos que encajan con lo que pide el usuario.
+    /// Antes había aquí una lista fija de ~40 ejercicios, subconjunto pobre del catálogo
+    /// real (~130) y que además se desincronizaba: para isquios ofrecía DOS opciones.
+    /// Ahora sale del catálogo de verdad y filtrado, que es lo que mantiene el prompt corto.
+    static func catalog(for description: String) -> String {
+        exerciseGroups(matching: description)
+            .map { "- \($0.name): \($0.items.joined(separator: ", "))" }
+            .joined(separator: "\n")
+    }
+
+    /// Generador de entrenos: catálogo real (filtrado) + reglas de carga según el nivel REAL.
+    static func generateInstructions(context: String, referenceLoads: String, catalog: String) -> String {
         """
         Eres un entrenador personal. Diseña entrenos de gimnasio sensatos y seguros. El NOMBRE \
         del entreno y de los ejercicios deben ir en \(L10n.aiLanguage) (el idioma del usuario).
@@ -120,14 +137,18 @@ enum ForgeyPrompts {
         descripción del usuario. Si pide pierna, SOLO ejercicios de pierna (nada de press \
         banca, remo ni curl de bíceps). Si pide pecho, SOLO pecho y tríceps auxiliar si encaja.
 
-        Catálogo por grupo — elige SOLO del grupo que corresponda:
-        - Pierna/Glúteo: Sentadilla, Prensa de piernas, Zancadas, Hip thrust, Peso muerto rumano, Extensión de cuádriceps, Curl femoral, Elevación de gemelos, Sentadilla búlgara
-        - Pecho: Press banca, Press inclinado con mancuernas, Aperturas, Fondos, Flexiones
-        - Espalda: Remo con barra, Dominadas, Jalón al pecho, Remo en polea, Face pull
-        - Hombro: Press militar, Elevaciones laterales, Elevaciones frontales, Pájaros
-        - Bíceps: Curl con barra, Curl martillo, Curl inclinado
-        - Tríceps: Press francés, Extensión de tríceps en polea, Fondos en banco
-        - Core: Plancha, Crunch, Giro ruso, Elevación de piernas
+        VARIEDAD: no repitas siempre los mismos. Combina un básico pesado, uno o dos \
+        accesorios y, si encaja, un unilateral. No pongas dos ejercicios casi idénticos \
+        (p. ej. curl femoral tumbado Y sentado) en el mismo entreno.
+
+        CATÁLOGO DISPONIBLE (preferente — cubre lo que se ha pedido):
+        \(catalog)
+
+        EJERCICIO NUEVO (permitido con condiciones): si un ejercicio conocido y seguro \
+        encaja MEJOR que cualquiera del catálogo, puedes proponerlo. Requisitos: que sea un \
+        ejercicio REAL y estándar de gimnasio, con su nombre común en \(L10n.aiLanguage), y \
+        como MÁXIMO uno o dos por entreno. No inventes nombres ni variantes exóticas: si \
+        dudas, tira del catálogo.
 
         REGLA DE CARGA (importante): los pesos deben tener sentido para el NIVEL REAL del \
         usuario. Para ejercicios de sus CARGAS DE REFERENCIA usa el 65-80 % del máximo \

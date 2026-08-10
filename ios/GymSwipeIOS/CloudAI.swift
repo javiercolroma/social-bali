@@ -67,7 +67,8 @@ enum CloudAI {
     static func generateWorkout(from description: String, store: AppStore) async throws -> WorkoutTemplate {
         let system = ForgeyPrompts.generateInstructions(
             context: ForgeyAI.context(from: store),
-            referenceLoads: ForgeyPrompts.referenceLoads(from: store))
+            referenceLoads: ForgeyPrompts.referenceLoads(from: store),
+            catalog: ForgeyPrompts.catalog(for: description))
             + "\n\nSALIDA (estricto): SOLO un objeto JSON válido, sin markdown ni texto extra: "
             + #"{"name":"…","block":"…","exercises":[{"name":"…","sets":4,"reps":10,"weightKg":40}]}"#
             + " Entre 3 y 8 ejercicios."

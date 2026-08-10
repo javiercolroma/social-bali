@@ -16,7 +16,6 @@ struct RootView: View {
     @State private var tourTarget: String?   // componente resaltado en el paso actual del tour
     @State private var showForgey = false    // chat con Forgey (IA on-device)
 
-    private let titles = ["Social", "Plan", "Entreno", "Comunidad", "Actividad"]
 
     var body: some View {
         VStack(spacing: 0) {
@@ -232,13 +231,13 @@ struct RootView: View {
                     }
             }
             .accessibilityLabel("Perfil · Gym Score \(store.gymScore.total)")
-            VStack(alignment: .leading, spacing: 2) {
-                Text("FORGE LOOP").font(.caption2).fontWeight(.heavy).kerning(1.4).foregroundColor(Color(hex: "4b6211"))
-                // En pantallas estrechas "Comunidad" se partía en dos líneas: una línea
-                // SIEMPRE, encogiendo la fuente lo necesario en cualquier dispositivo.
-                Text(LocalizedStringKey(titles[tab])).font(.system(size: 30, weight: .heavy)).foregroundColor(Brand.ink)
-                    .lineLimit(1).minimumScaleFactor(0.55)
-            }
+            // Solo la marca: el título de la sección (Social, Plan…) se quitó porque ya lo
+            // dice la barra de abajo, que además va resaltada. Repetirlo en 30pt comía una
+            // franja de pantalla en cada vista para no aportar nada.
+            Text("FORGE LOOP")
+                .font(.system(size: 17, weight: .heavy)).kerning(1.6)
+                .foregroundColor(Color(hex: "4b6211"))
+                .lineLimit(1)
             Spacer()
             headerButton(system: "envelope.fill", badge: store.unreadMessages) { FX.tap(); messagesTab = 1; showMessages = true }
             headerButton(system: "bell.fill", badge: store.unreadNotifications) { FX.tap(); showNotifications = true }

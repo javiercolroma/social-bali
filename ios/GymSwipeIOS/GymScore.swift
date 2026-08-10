@@ -9,11 +9,16 @@ enum GymScoreEngine {
 
     static func pattern(for name: String) -> Pattern {
         let n = name.folding(options: .diacriticInsensitive, locale: .current).lowercased()
-        if n.range(of: "sentadilla|prensa|zancada|pierna|gemelo", options: .regularExpression) != nil {
-            return Pattern(group: "pierna", benchmark: 185, compound: 1.08)
-        }
-        if n.range(of: "peso muerto|rumano|hip thrust", options: .regularExpression) != nil {
+        // OJO al orden: la cadena posterior va ANTES que cuádriceps, porque «peso muerto
+        // rumano» o «sentadilla búlgara» contienen palabras de ambos y manda el isquio.
+        // Antes «curl femoral», «buenos días» o «hip thrust a una pierna» caían en el
+        // cajón de sastre «accesorio» (benchmark 70 en vez de 220): el trabajo de isquios
+        // contaba de menos en el Gym Score y salía distorsionado en el reparto que ve la IA.
+        if n.range(of: "peso muerto|rumano|hip thrust|femoral|isquio|gluteo|buenos dias|good morning|nordic|glute-ham|hiperextension|puente de gluteo|bulgara", options: .regularExpression) != nil {
             return Pattern(group: "bisagra", benchmark: 220, compound: 1.12)
+        }
+        if n.range(of: "sentadilla|prensa|zancada|pierna|gemelo|cuadriceps|hack squat|step up|pistol|sissy|aductor|abductor", options: .regularExpression) != nil {
+            return Pattern(group: "pierna", benchmark: 185, compound: 1.08)
         }
         if n.range(of: "press banca|fondos|press inclinado|aperturas", options: .regularExpression) != nil {
             return Pattern(group: "empuje", benchmark: 140, compound: 1.05)

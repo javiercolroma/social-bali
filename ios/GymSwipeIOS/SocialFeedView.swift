@@ -180,7 +180,6 @@ struct SocialFeedView: View {
                     // Usuario nuevo: sugerencias arriba (activación) + feed de cercanos.
                     // El modo se congela hasta el próximo refresh: seguir a alguien NO
                     // reorganiza el muro al instante (las sugerencias solo se bajan al refrescar).
-                    newUserHeader
                     if hasSuggestions { suggestionsStrip }
                     if seguidosFeed.isEmpty {
                         emptyFeed("Sigue a atletas o registra un entreno para llenar tu muro.")
@@ -309,13 +308,6 @@ struct SocialFeedView: View {
         // Las sugerencias intercaladas aparecen al refrescar manualmente, no en la carga inicial.
         if manual { showInterleavedSuggestions = true }
         seguidosLoaded = true
-    }
-
-    private var newUserHeader: some View {
-        VStack(alignment: .leading, spacing: 3) {
-            Text("Hola, \(store.account?.name ?? "atleta") 👋").font(.system(size: 20, weight: .heavy)).foregroundColor(Brand.ink)
-            Text("Pon en marcha tu Forge Loop").font(.footnote).foregroundColor(Brand.muted)
-        }.frame(maxWidth: .infinity, alignment: .leading)
     }
 
     // MARK: - PARA TI (solo posts de gente cercana que aún no sigues)
