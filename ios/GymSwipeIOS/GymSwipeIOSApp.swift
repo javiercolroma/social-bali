@@ -22,6 +22,12 @@ struct GymSwipeIOSApp: App {
             // Vía NATIVA de SwiftUI: los Text localizan con el locale del entorno.
             .environment(\.locale, L10n.locale)
             .environmentObject(store)
+            // La paleta de Brand es CLARA fija (fondos blancos, tinta casi negra) y los
+            // fondos se escriben a mano con `Color.white`. En un iPhone en modo oscuro,
+            // todo lo que NO lleva color explícito (el texto que escribes en un TextField,
+            // sobre todo) se volvía BLANCO SOBRE BLANCO: invisible. Hasta que exista un
+            // tema oscuro de verdad, la app se declara clara y se ve igual en ambos modos.
+            .preferredColorScheme(.light)
             .tint(Color(hex: "5e910e"))
             // Deep links: invitaciones forgeloop://user/<usuario> + callback OAuth de Google.
             .onOpenURL { url in

@@ -209,6 +209,15 @@ struct SocialFeedView: View {
         }
         .onAppear { if !seguidosLoaded { refreshSeguidos(manual: false) } }
         .task { await loadRealFeed() }
+        // Las 5 pantallas viven en un ZStack SIEMPRE montado (`RootView.screen` solo cambia
+        // la opacidad), así que `onAppear`/`task` corren UNA vez en toda la vida de la app:
+        // al guardar un entreno, el muro se quedaba con la foto de antes hasta que hacías
+        // pull-to-refresh. Reconstruye en cuanto cambia el nº de sesiones (tu entreno nuevo
+        // aparece al instante vía `myItems`) y, en paralelo, resincroniza con el servidor.
+        .onChange(of: store.sessions.count) { _ in
+            refreshSeguidos(manual: false)
+            Task { await loadRealFeed() }
+        }
     }
 
     /// Carga el feed real (tuyo + de a quien sigues) desde Supabase y reconstruye la lista.

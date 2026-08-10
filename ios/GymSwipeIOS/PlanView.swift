@@ -121,9 +121,17 @@ struct WorkoutPreview: View {
                                 Label("Editar", systemImage: "pencil").font(.system(size: 15, weight: .heavy)).foregroundColor(Brand.ink)
                                     .frame(maxWidth: .infinity).frame(minHeight: 48).background(Brand.chip).clipShape(RoundedRectangle(cornerRadius: 12))
                             }
-                            Button(role: .destructive) { confirmDelete = true } label: {
-                                Label("Eliminar entreno", systemImage: "trash").frame(maxWidth: .infinity)
-                            }.padding(.top, 2)
+                            // Mismo formato que «Cargar» y «Editar» (antes era un botón suelto
+                            // sin estilo, más pequeño y desalineado), pero en rojo para que se
+                            // lea como destructivo sin gritar: fondo suave + borde, no relleno.
+                            Button { FX.tap(); confirmDelete = true } label: {
+                                Label("Eliminar entreno", systemImage: "trash")
+                                    .font(.system(size: 15, weight: .heavy)).foregroundColor(Brand.red)
+                                    .frame(maxWidth: .infinity).frame(minHeight: 48)
+                                    .background(Brand.redSoft)
+                                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                                    .overlay(RoundedRectangle(cornerRadius: 12).stroke(Brand.red.opacity(0.22)))
+                            }
                         }.padding(16)
                     }
                     .navigationTitle(workout.name)

@@ -8,7 +8,11 @@ struct OnboardingView: View {
     @ObservedObject private var health = HealthManager.shared
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
-    enum Step: Int, CaseIterable { case welcome, name, handle, goal, level, days, motivation, photo, about, place, health, done }
+    // `birth` y `sex` estaban juntos en un solo paso `about` con DOS ruedas apiladas:
+    // no se podía elegir nada, porque `.clipped()` recorta el dibujo pero NO el área
+    // táctil, así que las dos ruedas (216pt intrínsecos cada una) se solapaban y se
+    // robaban los toques. Una rueda por pantalla, y con su altura natural.
+    enum Step: Int, CaseIterable { case welcome, name, handle, goal, level, days, motivation, photo, birth, sex, place, health, done }
     private enum Field { case name, handle }
 
     @State private var step: Step = .welcome
@@ -132,7 +136,8 @@ struct OnboardingView: View {
         case .days: surveyStep(OnboardingSurvey.days, selection: $daysSel)
         case .motivation: surveyMultiStep(OnboardingSurvey.motivation, selection: $motivSel, isLast: true)
         case .photo: photoStep
-        case .about: aboutStep
+        case .birth: birthStep
+        case .sex: sexStep
         case .place: placeStep
         case .health: healthStep
         case .done: doneStep
@@ -330,29 +335,55 @@ struct OnboardingView: View {
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) { showFramer = true }
     }
 
-    private var aboutStep: some View {
+    private var birthStep: some View {
         layout {
             Mascot(size: 88)
-            TypingBubble("Cuéntame un poco sobre ti",
-                         typing: !shownBubbles.contains(Step.about.rawValue)) { shownBubbles.insert(Step.about.rawValue) }
-            VStack(spacing: 0) {
-                wheelLabel("¿Cuándo naciste?")
+            TypingBubble("¿Cuándo naciste?",
+                         typing: !shownBubbles.contains(Step.birth.rawValue)) { shownBubbles.insert(Step.birth.rawValue) }
+            wheelCard {
                 Picker("Año", selection: $birthYear) {
-                    ForEach(years, id: \.self) { Text(String($0)).tag($0) }
-                }.pickerStyle(.wheel).frame(height: 104).clipped()
-                Divider().overlay(Brand.line)
-                wheelLabel("¿Cuál es tu sexo?")
-                Picker("Género", selection: $sexSel) {
-                    ForEach(sexes, id: \.self) { Text($0).tag($0) }
-                }.pickerStyle(.wheel).frame(height: 104).clipped()
+                    ForEach(years, id: \.self) {
+                        Text(String($0)).font(.system(size: 20, weight: .bold)).foregroundColor(Brand.ink).tag($0)
+                    }
+                }
+                .pickerStyle(.wheel)
+                .frame(height: 170)
             }
-            .frame(maxWidth: .infinity)
-            .background(Color.white).clipShape(RoundedRectangle(cornerRadius: 16))
-            .overlay(RoundedRectangle(cornerRadius: 16).stroke(Brand.line))
         } actions: {
             primary("Continuar") { aboutDone = true; advance() }
             skip()
         }
+    }
+
+    private var sexStep: some View {
+        layout {
+            Mascot(size: 88)
+            TypingBubble("¿Cuál es tu sexo?",
+                         typing: !shownBubbles.contains(Step.sex.rawValue)) { shownBubbles.insert(Step.sex.rawValue) }
+            wheelCard {
+                Picker("Sexo", selection: $sexSel) {
+                    ForEach(sexes, id: \.self) {
+                        Text($0).font(.system(size: 20, weight: .bold)).foregroundColor(Brand.ink).tag($0)
+                    }
+                }
+                .pickerStyle(.wheel)
+                .frame(height: 170)
+            }
+        } actions: {
+            primary("Continuar") { aboutDone = true; advance() }
+            skip()
+        }
+    }
+
+    /// Tarjeta blanca que envuelve una rueda. Sin `.clipped()`: recortaba el dibujo
+    /// pero no el área táctil, que es lo que rompía la selección.
+    private func wheelCard<C: View>(@ViewBuilder _ content: () -> C) -> some View {
+        content()
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 6)
+            .background(Color.white)
+            .clipShape(RoundedRectangle(cornerRadius: 16))
+            .overlay(RoundedRectangle(cornerRadius: 16).stroke(Brand.line))
     }
 
     private var placeStep: some View {
@@ -365,7 +396,9 @@ struct OnboardingView: View {
                 CitySearchField(label: "", selected: city, country: country) { city = $0 }
                 HStack(spacing: 10) {
                     Image(systemName: "dumbbell.fill").foregroundColor(Brand.soft)
-                    TextField("Tu gimnasio (opcional)", text: $gym).font(.system(size: 16, weight: .semibold)).tint(Brand.ink)
+                    TextField("Tu gimnasio (opcional)", text: $gym)
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundColor(Brand.ink).tint(Brand.ink)
                 }
                 .padding(.horizontal, 14).frame(height: 50).background(Color.white)
                 .clipShape(RoundedRectangle(cornerRadius: 12)).overlay(RoundedRectangle(cornerRadius: 12).stroke(Brand.line))
@@ -993,7 +1026,17 @@ struct CoachTour: View {
     @State private var appear = false
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
-    private var steps: [CoachStep] { CoachTour.content[section] ?? [] }
+    private var steps: [CoachStep] {
+        var s = CoachTour.content[section] ?? []
+        // Forgey se asoma por el borde DERECHO en todas las pantallas, pero nadie lo
+        // explicaba: se veía una mascota flotante sin saber qué hacía ni que se puede mover.
+        // Va al final del primer tour (Social) y solo si el dispositivo soporta la IA.
+        if section == 0, ForgeyEngine.isAvailable {
+            s.append(CoachStep("Y ese de la derecha soy yo 👋 Tócame para pedirme un entreno o un consejo. Si te estorbo, arrástrame arriba o abajo.",
+                               target: "forgey.peek"))
+        }
+        return s
+    }
     private var current: String { steps.indices.contains(step) ? steps[step].text : "" }
     private var currentTarget: String? { steps.indices.contains(step) ? steps[step].target : nil }
     private var isLast: Bool { step >= steps.count - 1 }

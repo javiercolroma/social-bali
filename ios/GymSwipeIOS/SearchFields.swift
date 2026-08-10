@@ -43,6 +43,7 @@ struct CountryField: View {
                 fieldBox(focused) {
                     Text(countryFlag(query.isEmpty ? selected : query))
                     TextField("Elegir país", text: $query).focused($focused)
+                        .foregroundColor(Brand.ink).tint(Brand.ink)
                     if !query.isEmpty {
                         Button { query = "" } label: { Image(systemName: "xmark.circle.fill").foregroundColor(Brand.soft) }
                     }
@@ -120,6 +121,7 @@ struct CitySearchField: View {
                     Image(systemName: "magnifyingglass").font(.caption).foregroundColor(Brand.soft)
                     TextField("Busca tu ciudad", text: $query)
                         .focused($focused)
+                        .foregroundColor(Brand.ink).tint(Brand.ink)
                         .onChange(of: query) { completer.update($0) }
                     if !query.isEmpty {
                         Button { query = ""; completer.update("") } label: { Image(systemName: "xmark.circle.fill").foregroundColor(Brand.soft) }
