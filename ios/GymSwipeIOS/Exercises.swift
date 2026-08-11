@@ -89,6 +89,17 @@ let exerciseCatalog: [String] = {
 /// Grupos que encajan con lo que ha pedido el usuario, para no mandarle al modelo
 /// las 130 opciones (el on-device tiene contexto corto y se satura). Si no se
 /// reconoce nada, devuelve los grupos de fuerza principales.
+/// Grupo nombrado EXPLÍCITAMENTE en el texto (nil si no se menciona ninguno). A
+/// diferencia de `exerciseGroups(matching:)`, no cae a un valor por defecto: sirve para
+/// saber si el usuario nombró un grupo de verdad.
+func namedExerciseGroup(in text: String) -> ExerciseGroup? {
+    let d = text.folding(options: .diacriticInsensitive, locale: .current).lowercased()
+    // El más específico primero: «isquios» debe ganar a «pierna».
+    return exerciseGroups
+        .filter { g in g.keywords.contains { d.contains($0.folding(options: .diacriticInsensitive, locale: .current).lowercased()) } }
+        .min { $0.keywords.count > $1.keywords.count }
+}
+
 func exerciseGroups(matching description: String) -> [ExerciseGroup] {
     let d = description.folding(options: .diacriticInsensitive, locale: .current).lowercased()
     let hits = exerciseGroups.filter { g in

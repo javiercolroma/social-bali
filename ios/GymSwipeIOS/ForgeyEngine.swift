@@ -56,7 +56,9 @@ enum ForgeyEngine {
             throw err(ForgeyAI.unavailableReason() ?? "IA no disponible")
         }
         let (text, suggestion) = ForgeyPrompts.extractSuggestion(raw)
-        return Reply(text: text, suggestion: suggestion)
+        // Si el modelo se saltó el marcador pero la pregunta pedía ejercicios de un grupo,
+        // lo ponemos nosotros: el botón de crear entreno debe salir igual.
+        return Reply(text: text, suggestion: suggestion ?? ForgeyPrompts.fallbackSuggestion(for: question))
     }
 
     // MARK: - Análisis del físico por foto (SOLO-nube: Claude ve la imagen)

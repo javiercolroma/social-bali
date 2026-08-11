@@ -27,11 +27,36 @@ enum ForgeyPrompts {
             let desc = String(t[r.upperBound...])
                 .trimmingCharacters(in: CharacterSet.whitespaces.union(.init(charactersIn: ":*·-—")))
             if !desc.isEmpty { suggestion = String(desc.prefix(200)) }
-            lines.remove(at: i)
+            // Si el modelo mete el marcador al final de una frase («¿Te lo monto?
+            // ENTRENO_SUGERIDO: …»), conserva lo de delante en vez de tirar la línea
+            // entera y comerse texto que el usuario debería leer.
+            let before = String(t[..<r.lowerBound])
+                .trimmingCharacters(in: CharacterSet.whitespaces.union(.init(charactersIn: "-•*# ")))
+            if before.isEmpty { lines.remove(at: i) } else { lines[i] = before }
             break
         }
         let text = lines.joined(separator: "\n").trimmingCharacters(in: .whitespacesAndNewlines)
         return (text.isEmpty ? raw : text, suggestion)
+    }
+
+    /// Red de seguridad del protocolo `ENTRENO_SUGERIDO`. El modelo on-device es pequeño y
+    /// a veces omite la línea aunque el prompt se la pida. Si la pregunta era claramente
+    /// «qué ejercicios para <grupo>», fabricamos la sugerencia aquí para que el botón de
+    /// crear entreno salga IGUAL. Solo se usa cuando el modelo no la ha puesto.
+    static func fallbackSuggestion(for question: String) -> String? {
+        let q = question.folding(options: .diacriticInsensitive, locale: .current).lowercased()
+        // Preguntas sobre SUS datos: aquí no toca ofrecer entreno («¿mi mejor marca en
+        // sentadilla?» nombra un grupo, pero es una consulta, no una petición de rutina).
+        let isAboutHisData = q.range(
+            of: #"marca|record|récord|racha|gym score|puntuacion|cuanto (he|llevo|peso)|progres|1rm|maximo|máximo|pr\b"#,
+            options: .regularExpression) != nil
+        guard !isAboutHisData else { return nil }
+
+        let asksForTraining = q.range(
+            of: #"ejercicio|entren|rutina|trabajar|fortalec|desarroll|mejorar|recomien|sugier|va bien|van bien|bueno|buenos|buena|buenas|mejor(es)? para|que hago|que puedo hacer|como .*(gano|hago|trabajo)"#,
+            options: .regularExpression) != nil
+        guard asksForTraining, let g = namedExerciseGroup(in: question) else { return nil }
+        return "Entreno de \(g.name.lowercased())"
     }
 
     // MARK: - Ámbito (seguridad de prompt)
@@ -77,11 +102,20 @@ enum ForgeyPrompts {
 
         CIERRE: termina con UNA pregunta breve de seguimiento con el siguiente paso concreto.
 
-        SUGERENCIA DE ENTRENO: SOLO cuando la conversación justifique crear un entrenamiento \
-        concreto (mejorar un punto débil, qué entrenar hoy/mañana, un plan para un objetivo…) \
-        añade además una ÚLTIMA línea aparte EXACTAMENTE así: \
-        «\(suggestionMarker) <descripción concreta del entreno en 6-15 palabras (grupo, objetivo)>». \
-        En preguntas informativas (marcas, datos, dudas generales) NO añadas esa línea.
+        SUGERENCIA DE ENTRENO: cuando la conversación permita crear un entrenamiento concreto, \
+        añade una ÚLTIMA línea aparte EXACTAMENTE así: \
+        «\(suggestionMarker) <descripción concreta del entreno en 6-15 palabras (grupo, objetivo)>».
+
+        AÑÁDELA SIEMPRE en estos casos, sin excepción:
+        - Te piden EJERCICIOS de un grupo muscular o zona («¿qué va bien para cuádriceps?», \
+        «ejercicios de espalda», «algo para isquios»). Tras listarlos, ofrece montar el entreno \
+        con ellos. ESTE ES EL CASO MÁS FRECUENTE: no lo olvides.
+        - Preguntan qué entrenar hoy o mañana, o piden un plan o rutina.
+        - Hablan de un punto débil, un estancamiento o un objetivo concreto.
+
+        NO la añadas solo cuando la pregunta va de DATOS suyos (marcas, racha, Gym Score, \
+        cuánto han progresado) o es una duda general de técnica o descanso sin relación con \
+        montar un entreno.
 
         Si no hay datos suficientes, dilo con honestidad y da un consejo general seguro. No \
         inventes marcas ni fechas. No des consejos médicos; ante dolor, recomienda descansar \
