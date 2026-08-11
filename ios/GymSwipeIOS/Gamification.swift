@@ -96,7 +96,9 @@ extension AppStore {
     func isUnlocked(_ id: String) -> Bool { unlockedAchievements.contains(id) }
     func achievementValue(_ a: Achievement) -> Int { min(a.goal, a.value(self)) }
 
-    /// Desbloquea los logros cuyo objetivo ya se cumple, suma sus monedas y (si procede) los encola para celebrar.
+    /// Desbloquea los logros cuyo objetivo ya se cumple y (si procede) los encola para celebrar.
+    /// `coins` se sigue acumulando en el modelo por compatibilidad de datos, pero NO se muestra:
+    /// no había tienda donde gastarlas, así que la moneda no significaba nada para el usuario.
     func refreshAchievements(celebrate: Bool) {
         var newly: [Achievement] = []
         for a in Achievements.all where !unlockedAchievements.contains(a.id) {
@@ -120,7 +122,7 @@ struct WeeklyQuest: Identifiable {
     let icon: String
     let goal: Int
     let unit: String              // "días", "series", "min"…
-    let reward: Int               // monedas
+    let reward: Int               // monedas (histórico: ya no se muestra, ver arriba)
     let xpReward: Int             // XP (alimenta nivel + liga)
     let progress: @MainActor (AppStore) -> Int
 }
@@ -166,7 +168,7 @@ extension AppStore {
 
 struct WeeklyQuestsCard: View {
     @EnvironmentObject var store: AppStore
-    @State private var flash: String? = nil   // id de la misión con destello "+🪙"
+    @State private var flash: String? = nil   // id de la misión con destello "+XP"
 
     var body: some View {
         PanelCard {
@@ -213,18 +215,18 @@ struct WeeklyQuestsCard: View {
                     withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) { store.claimQuest(q) }
                     DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { if flash == q.id { flash = nil } }
                 } label: {
-                    Text("🪙 \(q.reward)").font(.system(size: 13, weight: .heavy)).foregroundColor(Color(hex: "10150a"))
+                    Text("+\(q.xpReward) XP").font(.system(size: 13, weight: .heavy)).foregroundColor(Color(hex: "10150a"))
                         .padding(.horizontal, 11).frame(height: 34).background(Brand.green).clipShape(Capsule())
                 }.buttonStyle(.plain)
-                .accessibilityLabel("Reclamar \(q.reward) monedas y \(q.xpReward) XP")
+                .accessibilityLabel("Reclamar \(q.xpReward) XP")
                 .overlay(alignment: .top) {
                     if flash == q.id {
-                        Text("+🪙\(q.reward)").font(.system(size: 12, weight: .heavy)).foregroundColor(Color(hex: "b0824a"))
+                        Text("+\(q.xpReward) XP").font(.system(size: 12, weight: .heavy)).foregroundColor(Color(hex: "6ea300"))
                             .offset(y: -22).transition(.move(edge: .bottom).combined(with: .opacity))
                     }
                 }
             } else {
-                Text("🪙 \(q.reward)").font(.system(size: 12, weight: .heavy)).foregroundColor(Brand.soft)
+                Text("+\(q.xpReward) XP").font(.system(size: 12, weight: .heavy)).foregroundColor(Brand.soft)
             }
         }
     }
@@ -251,11 +253,7 @@ struct QuestCompleteCelebration: View {
                     Image(systemName: quest.icon).font(.system(size: 46, weight: .heavy)).foregroundColor(Color(hex: "10150a"))
                 }.scaleEffect(pop)
                 Text(quest.title).font(.system(size: 21, weight: .heavy)).foregroundColor(Brand.ink).multilineTextAlignment(.center)
-                HStack(spacing: 6) {
-                    Text("🪙 \(quest.reward)").font(.system(size: 14, weight: .heavy)).foregroundColor(Color(hex: "b0824a"))
-                    Text("·").foregroundColor(Brand.soft)
-                    Text("\(quest.xpReward) XP").font(.system(size: 14, weight: .heavy)).foregroundColor(Color(hex: "6ea300"))
-                }
+                Text("+\(quest.xpReward) XP").font(.system(size: 14, weight: .heavy)).foregroundColor(Color(hex: "6ea300"))
                 .padding(.horizontal, 14).padding(.vertical, 8).background(Brand.chip).clipShape(Capsule())
                 Button { onClaim() } label: { Text("Reclamar recompensa").frame(maxWidth: .infinity) }
                     .buttonStyle(PrimaryButtonStyle()).padding(.top, 4)
@@ -478,7 +476,7 @@ struct LeagueView: View {
     }
 }
 
-// MARK: - Tarjeta de perfil: nivel + monedas + logros
+// MARK: - Tarjeta de perfil: nivel + logros
 
 struct GamificationCard: View {
     @EnvironmentObject var store: AppStore
@@ -505,20 +503,9 @@ struct GamificationCard: View {
                     Text("\(store.player.xp - lv.current) / \(lv.next - lv.current) XP").font(.system(size: 11, weight: .bold)).foregroundColor(Brand.soft)
                 }
                 Spacer(minLength: 8)
-                VStack(spacing: 2) {
-                    Text("🪙").font(.system(size: 20))
-                    Text("\(store.coins)").font(.system(size: 14, weight: .heavy)).foregroundColor(Brand.ink).monospacedDigit()
-                }
             }
             Divider()
             gamRow("Logros", "trophy.fill", Color(hex: "e2a915"), trailing: "\(store.unlockedCount)/\(store.totalAchievements)", action: onOpenLogros)
-            Divider()
-            HStack(spacing: 10) {
-                Image(systemName: "circle.hexagongrid.fill").font(.system(size: 15)).foregroundColor(Brand.gold)
-                Text("Monedas").font(.system(size: 15, weight: .heavy)).foregroundColor(Brand.ink)
-                Spacer()
-                Text("🪙 \(store.coins)").font(.system(size: 13, weight: .heavy)).foregroundColor(Brand.muted)
-            }.padding(.vertical, 4)
         }
     }
 
@@ -551,8 +538,6 @@ struct LogrosView: View {
                             Text("logros conseguidos").font(.footnote).foregroundColor(Brand.muted)
                         }
                         Spacer()
-                        HStack(spacing: 5) { Text("🪙").font(.system(size: 18)); Text("\(store.coins)").font(.system(size: 17, weight: .heavy)).foregroundColor(Brand.ink) }
-                            .padding(.horizontal, 12).frame(height: 40).background(Brand.chip).clipShape(Capsule())
                     }
                     LazyVGrid(columns: cols, spacing: 12) {
                         ForEach(Achievements.all) { a in AchievementTile(a: a) }
@@ -585,7 +570,8 @@ struct AchievementTile: View {
             Text(a.title).font(.system(size: 12, weight: .heavy)).foregroundColor(unlocked ? Brand.ink : Brand.muted)
                 .multilineTextAlignment(.center).lineLimit(2).frame(height: 30)
             if unlocked {
-                Text("🪙 \(a.coins)").font(.system(size: 11, weight: .heavy)).foregroundColor(Color(hex: "b0824a"))
+                Text(a.detail).font(.system(size: 10, weight: .semibold)).foregroundColor(Brand.soft)
+                    .multilineTextAlignment(.center).lineLimit(2)
             } else if a.goal > 1 {
                 // Barra de progreso para logros de conteo
                 GeometryReader { geo in
@@ -633,11 +619,6 @@ struct AchievementCelebration: View {
                     Text(achievement.title).font(.system(size: 22, weight: .heavy)).foregroundColor(Brand.ink)
                     Text(achievement.detail).font(.system(size: 14, weight: .semibold)).foregroundColor(Brand.muted).multilineTextAlignment(.center)
                 }
-                HStack(spacing: 6) {
-                    Text("🪙").font(.system(size: 18))
-                    Text("+\(achievement.coins) monedas").font(.system(size: 15, weight: .heavy)).foregroundColor(Color(hex: "b0824a"))
-                }
-                .padding(.horizontal, 14).padding(.vertical, 8).background(Brand.chip).clipShape(Capsule())
                 Button { onDismiss() } label: { Text("¡Genial!").frame(maxWidth: .infinity) }
                     .buttonStyle(PrimaryButtonStyle()).padding(.top, 4)
             }
@@ -716,14 +697,10 @@ struct StreakCelebration: View {
                 }.scaleEffect(pop)
                 Text("\(days) días de racha").font(.system(size: 22, weight: .heavy)).foregroundColor(Brand.ink)
                 Text("¡Sigue así, no la pierdas!").font(.system(size: 14, weight: .semibold)).foregroundColor(Brand.muted)
-                HStack(spacing: 6) {
-                    Text("🪙 +\(days * 3)").font(.system(size: 14, weight: .heavy)).foregroundColor(Color(hex: "b0824a"))
-                    if gotFreeze {
-                        Text("·").foregroundColor(Brand.soft)
-                        Text("🧊 +1 congelador").font(.system(size: 14, weight: .heavy)).foregroundColor(Color(hex: "2b8fd6"))
-                    }
+                if gotFreeze {
+                    Text("🧊 +1 congelador").font(.system(size: 14, weight: .heavy)).foregroundColor(Color(hex: "2b8fd6"))
+                        .padding(.horizontal, 14).padding(.vertical, 8).background(Brand.chip).clipShape(Capsule())
                 }
-                .padding(.horizontal, 14).padding(.vertical, 8).background(Brand.chip).clipShape(Capsule())
                 Button { onDismiss() } label: { Text("¡A por más!").frame(maxWidth: .infinity) }
                     .buttonStyle(PrimaryButtonStyle()).padding(.top, 4)
             }

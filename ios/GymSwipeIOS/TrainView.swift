@@ -525,12 +525,27 @@ struct TrainView: View {
                 // Cámara O galería (antes solo galería: "quería hacer una foto y me llevaba a la galería").
                 Button { FX.tap(); if CameraPicker.isAvailable { showPhotoSource = true } else { showLibrary = true } } label: {
                     if let data = sessionPhoto, let ui = UIImage(data: data) {
-                        Image(uiImage: ui).resizable().scaledToFill()
-                            .frame(height: 120).frame(maxWidth: .infinity).clipped()
-                            .clipShape(RoundedRectangle(cornerRadius: 10))
-                            .overlay(alignment: .bottomTrailing) {
-                                Image(systemName: "pencil.circle.fill").font(.system(size: 24)).foregroundColor(.white).padding(6)
-                            }
+                        // WYSIWYG: la vista previa usa la MISMA proporción que la tarjeta del
+                        // muro (3:4). Antes era una franja de 120pt de alto y la tarjeta real
+                        // mide 480: veías un recorte que no tenía nada que ver con el resultado.
+                        VStack(spacing: 6) {
+                            Image(uiImage: ui).resizable().scaledToFill()
+                                .frame(maxWidth: .infinity)
+                                .aspectRatio(3.0 / 4.0, contentMode: .fit)
+                                .clipped()
+                                .clipShape(RoundedRectangle(cornerRadius: 10))
+                                .overlay(alignment: .bottomTrailing) {
+                                    HStack(spacing: 5) {
+                                        Image(systemName: "pencil.circle.fill").font(.system(size: 15, weight: .bold))
+                                        Text("Cambiar").font(.system(size: 13, weight: .heavy))
+                                    }
+                                    .foregroundColor(.white)
+                                    .padding(.horizontal, 10).padding(.vertical, 6)
+                                    .background(.black.opacity(0.45)).clipShape(Capsule())
+                                    .padding(10)
+                                }
+                            Text("Así se verá en tu muro").font(.caption2).foregroundColor(Brand.soft)
+                        }
                     } else {
                         HStack(spacing: 8) { Image(systemName: "camera.fill"); Text("Añadir foto") }
                             .font(.system(size: 15, weight: .heavy)).foregroundColor(Color(hex: "4b6211"))

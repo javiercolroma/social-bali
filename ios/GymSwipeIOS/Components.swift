@@ -520,7 +520,15 @@ struct WorkoutInfoPanel: View {
     /// Altura fija (página del pager, para casar con la foto) o nil = ajusta al contenido (sin foto).
     var height: CGFloat? = nil
 
-    private var cardCount: Int { height == nil ? 3 : 2 }   // fijo (pager) muestra menos para casar altura
+    /// Cuántas tarjetas de progreso caben. Antes era fijo a 2 en el pager, pensado para
+    /// tarjetas de 150pt; pero las de verdad miden 380-480, así que quedaban dos tarjetitas
+    /// perdidas en medio de un panel enorme. Ahora escala con la altura real.
+    private var cardCount: Int {
+        guard let h = height else { return 3 }
+        if h >= 420 { return 4 }
+        if h >= 320 { return 3 }
+        return 2
+    }
 
     var body: some View {
         ZStack {
@@ -537,8 +545,10 @@ struct WorkoutInfoPanel: View {
                 }
                 WorkoutProgressCards(insights: insights, totalExercises: exercises, maxCards: cardCount)
             }
-            .padding(14).frame(maxWidth: .infinity)
-            .frame(maxHeight: height == nil ? nil : .infinity, alignment: .center)
+            .padding(height == nil ? 14 : 18).frame(maxWidth: .infinity)
+            // En el pager, arriba: centrado dejaba un hueco raro cuando el contenido no
+            // llenaba los 480pt de la tarjeta.
+            .frame(maxHeight: height == nil ? nil : .infinity, alignment: height == nil ? .center : .top)
         }
         .frame(height: height)
         .clipShape(RoundedRectangle(cornerRadius: 12))
