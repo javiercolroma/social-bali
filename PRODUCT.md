@@ -160,9 +160,12 @@ rehecho alrededor de esto. Migración de `profiles`.
 
 - [x] Dominio (`SocialClub.swift`), `Profile` extendido, migración `0023`, backend en ambos sentidos.
 - [x] **Onboarding rehecho**: 6 pasos nuevos (deportes, zona + gimnasio, estancia, origen, bio, intenciones), en inglés y verificados en simulador. Salen los 4 pasos de encuesta fitness (`goal`, `level`, `days`, `motivation`): se escribían y **no se leían en ninguna parte**.
-- [ ] **Mostrar la identidad en el perfil** (bio, deportes, barrio, estancia, intenciones). Hoy se captura pero no se ve en ningún sitio.
-- [ ] **Editar perfil**: quien ya tenga cuenta no puede rellenar estos campos — solo se piden en el alta.
-- [ ] Traducir al español/francés/portugués las cadenas nuevas (`es.lproj` etc.).
+- [ ] **Mostrar la identidad en el perfil** (bio, deportes, barrio, estancia, intenciones). Verificado: `profile.bio`, `sportList`, `stay`, `area` e `intentList` **no se leen en NINGUNA pantalla**. Se captura y se guarda, pero es invisible.
+- [ ] **Editar perfil**: `EditProfileView` solo toca `birthdate, city, country, gym, instagram, isPrivate, region, sex, tiktok, twitter`. Ninguno de los campos del club. Consecuencia: **quien ya tenga cuenta no puede rellenarlos nunca** — solo se piden en el alta.
+- [ ] **`SocialPerson` no lleva los campos del club** (0 de 5). Es el modelo con el que se pinta a *los demás*, así que sin esto no se puede mostrar la identidad de otra persona — ni en el perfil ajeno ni, más adelante, en Discover.
+- [ ] **Onboarding bilingüe**: al pasar la base a inglés quedó a medias. Bocadillos en español: bienvenida, nombre, nacimiento y sexo; en inglés los 6 del club. Además los botones («Continuar» vs «Continue») y el array `sexes` (`Hombre`/`Mujer`/`Otro`/`No especificar`), que encima se compara por texto en `commit()`.
+- [ ] **Traducir al español/francés/portugués** las cadenas nuevas (hoy solo existen en inglés en el código).
+- [ ] **Edad mínima 18** si `dating` está entre las intenciones (requisito de la App Store, ligado a la tensión #3).
 
 ### Fase 2 · Discover
 «Today's People»: 10-15 perfiles al día, curados, con final explícito. Tarjeta de perfil
