@@ -2,6 +2,35 @@
 
 Ultima actualizacion: 2026-07-08
 
+> 🔴 **EL BACKEND DESAPARECIÓ Y SE RECONSTRUYÓ (2026-09-28).** El proyecto Supabase
+> `xdczilodphmejbzvfdye` dejó de existir: `xdczilodphmejbzvfdye.supabase.co` **no resuelve
+> en DNS** (con `supabase.com` y `github.com` respondiendo 200 desde el mismo Mac). No es
+> una pausa por inactividad —esas siguen resolviendo y devuelven error—, sino un proyecto
+> **borrado**: Supabase libera el subdominio. **Los datos se perdieron** (cuentas, entrenos
+> subidos, follows, fotos del servidor). Lo local del dispositivo sobrevive.
+>
+> **El esquema sí se recuperó entero, porque vive en git**: las 23 migraciones se aplicaron
+> en orden sobre el proyecto nuevo **`jfdaybjgaaqfqczvwluq`** (`eu-west-1`), todas OK.
+> Verificado: 13 tablas, **RLS activo en 13/13**, buckets `avatars` + `session-photos`, y
+> las 8 columnas del club de la `0023`. Prueba de humo E2E superada (usuario → perfil de
+> club → **consulta tipo Discover** `sports=ov.{surf}&neighborhood=eq.pererenan` → borrado
+> en cascada). `BackendConfig.swift` apunta ya al proyecto nuevo.
+>
+> **Auth:** Apple (`com.javiercolroma.gymswipeios`) y Google reactivados por Management API.
+> ⚠️ **El login por EMAIL queda roto**: la API rechaza editar plantillas en plan gratuito sin
+> SMTP propio (`Email template modification is not available for free tier projects`), así
+> que el correo por defecto manda un **enlace** y la app espera un **código de 6 dígitos**.
+> Se arregla reponiendo la API key de **Resend** en el SMTP del proyecto. Mientras tanto,
+> entrar con **Apple o Google**.
+>
+> ⚠️ **Las builds 3, 4 y 5 de TestFlight apuntan a la URL MUERTA**: todo lo que toque el
+> servidor falla hasta publicar una build nueva con la config actual.
+>
+> 🛡️ **Para que no se repita:** en plan gratuito un proyecto se **pausa** tras ~1 semana sin
+> actividad y, si sigue pausado, acaba borrado. Si esto va a estar parado una temporada,
+> hay que entrar al panel de vez en cuando, subir de plan, o asumir que hay que reconstruir
+> (barato: `backend/supabase/migrations` + el script de aplicación).
+>
 > **Idioma base → INGLÉS (2026-09-28).** `developmentLanguage: es` → `en` en `project.yml`.
 > Las cadenas **nuevas** se escriben en inglés en el código; las históricas mantienen su
 > clave en español. Para que eso no rompa nada se genera **`es.lproj/Localizable.strings`
