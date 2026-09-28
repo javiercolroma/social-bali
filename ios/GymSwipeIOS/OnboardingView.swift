@@ -12,7 +12,13 @@ struct OnboardingView: View {
     // no se podía elegir nada, porque `.clipped()` recorta el dibujo pero NO el área
     // táctil, así que las dos ruedas (216pt intrínsecos cada una) se solapaban y se
     // robaban los toques. Una rueda por pantalla, y con su altura natural.
-    enum Step: Int, CaseIterable { case welcome, name, handle, goal, level, days, motivation, photo, birth, sex, place, health, done }
+    // Flujo del CLUB (PRODUCT.md · Fase 1). Fuera los 4 pasos de la encuesta fitness
+    // —goal, level, days, motivation—: se escribían en el perfil y NO se leían en ninguna
+    // parte, o sea 4 pantallas para generar datos muertos. En su lugar entran los que
+    // alimentan Discover: deportes, zona, estancia, origen, bio e intenciones.
+    enum Step: Int, CaseIterable {
+        case welcome, name, handle, sports, area, stay, home, photo, birth, sex, bio, intents, health, done
+    }
     private enum Field { case name, handle }
 
     @State private var step: Step = .welcome
@@ -34,11 +40,13 @@ struct OnboardingView: View {
     @State private var city = ""
     @State private var gym = ""
 
-    // Encuesta tipo tarjeta. Objetivo y motivación son MULTI-selección; nivel y días, única.
-    @State private var goalSel: Set<String> = []
-    @State private var levelSel: String?
-    @State private var daysSel: String?
-    @State private var motivSel: Set<String> = []
+    // Identidad del club (ver SocialClub.swift). Se guardan rawValues.
+    @State private var sportsSel: Set<String> = []
+    @State private var areaSel: String?
+    @State private var stayKindSel: String?
+    @State private var stayDate = Calendar.current.date(byAdding: .month, value: 2, to: Date()) ?? Date()
+    @State private var bioText = ""
+    @State private var intentsSel: Set<String> = []
     @State private var shownBubbles: Set<Int> = []   // pasos cuyo bocadillo ya se escribió (no re-typear al volver)
     @State private var bounceTrigger = 0             // anima a Forgey al elegir
     @State private var reactionLine: String?         // chip de reacción de Forgey
@@ -131,14 +139,15 @@ struct OnboardingView: View {
         case .welcome: welcomeStep
         case .name: nameStep
         case .handle: handleStep
-        case .goal: surveyMultiStep(OnboardingSurvey.goal, selection: $goalSel)
-        case .level: surveyStep(OnboardingSurvey.level, selection: $levelSel)
-        case .days: surveyStep(OnboardingSurvey.days, selection: $daysSel)
-        case .motivation: surveyMultiStep(OnboardingSurvey.motivation, selection: $motivSel, isLast: true)
+        case .sports: sportsStep
+        case .area: areaStep
+        case .stay: stayStep
+        case .home: homeStep
         case .photo: photoStep
         case .birth: birthStep
         case .sex: sexStep
-        case .place: placeStep
+        case .bio: bioStep
+        case .intents: intentsStep
         case .health: healthStep
         case .done: doneStep
         }
@@ -197,79 +206,6 @@ struct OnboardingView: View {
 
     /// Pregunta de encuesta (selección única, estilo conversacional): Forgey escribe
     /// la pregunta, aparecen tarjetas, eliges una (con reacción de Forgey) y continúas.
-    private func surveyStep(_ q: SurveyQuestion, selection: Binding<String?>, isLast: Bool = false) -> some View {
-        let done = shownBubbles.contains(step.rawValue)
-        return layout {
-            // Reacción de Forgey: en su PROPIO espacio, encima de la cabeza (no sobre la cara).
-            ZStack {
-                if let line = reactionLine {
-                    ReactionChip(text: line).transition(.scale(scale: 0.6).combined(with: .opacity))
-                }
-            }
-            .frame(height: 32)
-            .animation(.spring(response: 0.3, dampingFraction: 0.55), value: reactionLine)
-            Mascot(size: 88, bounceTrigger: bounceTrigger)
-            TypingBubble(q.prompt, typing: !done) { shownBubbles.insert(step.rawValue) }
-            VStack(spacing: 10) {
-                ForEach(Array(q.options.enumerated()), id: \.element.label) { idx, opt in
-                    SelectCard(emoji: opt.emoji, label: opt.label, selected: selection.wrappedValue == opt.label) {
-                        guard selection.wrappedValue != opt.label else { return }
-                        FX.selection()
-                        selection.wrappedValue = opt.label
-                        bounceTrigger += 1
-                        withAnimation(.easeOut(duration: 0.2)) { reactionLine = q.reaction(opt.label) }
-                    }
-                    .opacity(done ? 1 : 0).offset(y: done ? 0 : 10)
-                    .animation(.spring(response: 0.4, dampingFraction: 0.85).delay(done ? Double(idx) * 0.05 : 0), value: done)
-                    .allowsHitTesting(done)
-                }
-            }
-        } actions: {
-            primary("Continuar", enabled: selection.wrappedValue != nil) {
-                if isLast { FX.success() }
-                advance()
-            }
-        }
-    }
-
-    /// Igual que `surveyStep` pero de MULTI-selección (puedes marcar varias).
-    private func surveyMultiStep(_ q: SurveyQuestion, selection: Binding<Set<String>>, isLast: Bool = false) -> some View {
-        let done = shownBubbles.contains(step.rawValue)
-        return layout {
-            ZStack {
-                if let line = reactionLine {
-                    ReactionChip(text: line).transition(.scale(scale: 0.6).combined(with: .opacity))
-                }
-            }
-            .frame(height: 32)
-            .animation(.spring(response: 0.3, dampingFraction: 0.55), value: reactionLine)
-            Mascot(size: 88, bounceTrigger: bounceTrigger)
-            TypingBubble(q.prompt, typing: !done) { shownBubbles.insert(step.rawValue) }
-            VStack(spacing: 10) {
-                ForEach(Array(q.options.enumerated()), id: \.element.label) { idx, opt in
-                    SelectCard(emoji: opt.emoji, label: opt.label, selected: selection.wrappedValue.contains(opt.label)) {
-                        FX.selection()
-                        if selection.wrappedValue.contains(opt.label) {
-                            selection.wrappedValue.remove(opt.label)
-                        } else {
-                            selection.wrappedValue.insert(opt.label)
-                            bounceTrigger += 1
-                            withAnimation(.easeOut(duration: 0.2)) { reactionLine = q.reaction(opt.label) }
-                        }
-                    }
-                    .opacity(done ? 1 : 0).offset(y: done ? 0 : 10)
-                    .animation(.spring(response: 0.4, dampingFraction: 0.85).delay(done ? Double(idx) * 0.05 : 0), value: done)
-                    .allowsHitTesting(done)
-                }
-            }
-        } actions: {
-            primary("Continuar", enabled: !selection.wrappedValue.isEmpty) {
-                if isLast { FX.success() }
-                advance()
-            }
-        }
-    }
-
     private var photoStep: some View {
         layout {
             TypingBubble(firstName.isEmpty ? "¡Ya te conozco mejor! 🙌 ¿Le ponemos cara?" : "¡Ya te conozco mejor, \(firstName)! 🙌 ¿Le ponemos cara?",
@@ -386,26 +322,172 @@ struct OnboardingView: View {
             .overlay(RoundedRectangle(cornerRadius: 16).stroke(Brand.line))
     }
 
-    private var placeStep: some View {
+    // MARK: - Pasos del club (PRODUCT.md · Fase 1 «Identidad»)
+    //
+    // Estos 6 pasos son los que hacen posible Discover: sin ellos la tarjeta de una
+    // persona está vacía y no se puede decidir si te apetece conocerla. Se escriben en
+    // INGLÉS (idioma base del producto desde 2026-09-28).
+
+    /// Deportes: 23 opciones, así que rejilla de chips en vez de tarjetas apiladas.
+    private var sportsStep: some View {
+        let done = shownBubbles.contains(Step.sports.rawValue)
+        return layout {
+            ZStack {
+                if let line = reactionLine {
+                    ReactionChip(text: line).transition(.scale(scale: 0.6).combined(with: .opacity))
+                }
+            }
+            .frame(height: 30)
+            .animation(.spring(response: 0.3, dampingFraction: 0.55), value: reactionLine)
+            Mascot(size: 76, bounceTrigger: bounceTrigger)
+            TypingBubble("What do you move with?",
+                         typing: !done) { shownBubbles.insert(Step.sports.rawValue) }
+            ChipGrid(items: Sport.curated.map { ($0.rawValue, "\($0.emoji) \($0.label)") },
+                     selected: sportsSel) { raw in
+                FX.selection()
+                if sportsSel.contains(raw) { sportsSel.remove(raw) }
+                else {
+                    sportsSel.insert(raw)
+                    bounceTrigger += 1
+                    if let s = Sport(rawValue: raw) {
+                        withAnimation(.easeOut(duration: 0.2)) { reactionLine = "\(s.emoji) \(s.label)" }
+                    }
+                }
+            }
+        } actions: {
+            primary("Continue", enabled: !sportsSel.isEmpty) { advance() }
+        }
+    }
+
+    /// Zona de Bali + gimnasio. Van juntos porque ambos responden a «dónde estás».
+    /// El barrio es DECLARADO: el GPS se redondea a ~5,5 km y no distingue Canggu de
+    /// Pererenan (ver SocialClub.swift).
+    private var areaStep: some View {
         layout {
-            Mascot(size: 88)
-            TypingBubble("¿Dónde sueles entrenar?",
-                         typing: !shownBubbles.contains(Step.place.rawValue)) { shownBubbles.insert(Step.place.rawValue) }
+            Mascot(size: 76)
+            TypingBubble("Where in Bali are you based?",
+                         typing: !shownBubbles.contains(Step.area.rawValue)) { shownBubbles.insert(Step.area.rawValue) }
+            ChipGrid(items: Neighborhood.allCases.map { ($0.rawValue, $0.label) },
+                     selected: areaSel.map { [$0] } ?? []) { raw in
+                FX.selection(); areaSel = (areaSel == raw) ? nil : raw
+            }
+            HStack(spacing: 10) {
+                Image(systemName: "dumbbell.fill").foregroundColor(Brand.soft)
+                TextField("Your gym or studio (optional)", text: $gym)
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundColor(Brand.ink).tint(Brand.ink)
+            }
+            .padding(.horizontal, 14).frame(height: 50).background(Color.white)
+            .clipShape(RoundedRectangle(cornerRadius: 12))
+            .overlay(RoundedRectangle(cornerRadius: 12).stroke(Brand.line))
+        } actions: {
+            primary("Continue", enabled: areaSel != nil) { advance() }
+        }
+    }
+
+    /// Estancia. Es de lo más importante del perfil: cambia por completo la utilidad de
+    /// una conexión saber si alguien vive aquí o se va el martes.
+    private var stayStep: some View {
+        layout {
+            Mascot(size: 76)
+            TypingBubble("How long are you around?",
+                         typing: !shownBubbles.contains(Step.stay.rawValue)) { shownBubbles.insert(Step.stay.rawValue) }
+            VStack(spacing: 10) {
+                ForEach(StayKind.allCases) { k in
+                    SelectCard(emoji: k == .livingHere ? "🏝️" : (k == .longTerm ? "🗓️" : "✈️"),
+                               label: k.label, selected: stayKindSel == k.rawValue) {
+                        FX.selection()
+                        stayKindSel = k.rawValue
+                    }
+                }
+                if stayKindSel == StayKind.until.rawValue {
+                    DatePicker("Leaving on", selection: $stayDate, in: Date()..., displayedComponents: .date)
+                        .datePickerStyle(.compact)
+                        .font(.system(size: 15, weight: .heavy))
+                        .foregroundColor(Brand.ink)
+                        .padding(.horizontal, 14).frame(height: 52).background(Color.white)
+                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                        .overlay(RoundedRectangle(cornerRadius: 12).stroke(Brand.line))
+                        .transition(.opacity.combined(with: .move(edge: .top)))
+                }
+            }
+            .animation(.spring(response: 0.34, dampingFraction: 0.85), value: stayKindSel)
+        } actions: {
+            primary("Continue", enabled: stayKindSel != nil) { advance() }
+        }
+    }
+
+    /// De dónde eres (≠ dónde estás). Es lo que da el «Barcelona 🇪🇸» de la tarjeta.
+    /// Escribe también `country`/`city`, que son los que alimentan la banderita ya existente.
+    private var homeStep: some View {
+        layout {
+            Mascot(size: 76)
+            TypingBubble("And where are you from?",
+                         typing: !shownBubbles.contains(Step.home.rawValue)) { shownBubbles.insert(Step.home.rawValue) }
             VStack(spacing: 10) {
                 CountryField(label: "", selected: country) { country = $0 }
                 CitySearchField(label: "", selected: city, country: country) { city = $0 }
-                HStack(spacing: 10) {
-                    Image(systemName: "dumbbell.fill").foregroundColor(Brand.soft)
-                    TextField("Tu gimnasio (opcional)", text: $gym)
-                        .font(.system(size: 16, weight: .semibold))
-                        .foregroundColor(Brand.ink).tint(Brand.ink)
-                }
-                .padding(.horizontal, 14).frame(height: 50).background(Color.white)
-                .clipShape(RoundedRectangle(cornerRadius: 12)).overlay(RoundedRectangle(cornerRadius: 12).stroke(Brand.line))
             }
         } actions: {
-            primary("Continuar") { advance() }
+            primary("Continue") { advance() }
             skip()
+        }
+    }
+
+    /// Bio de una línea: lo que hace que alguien piense «me apetecería conocer a esta
+    /// persona». Es el campo con más peso de la tarjeta de Discover.
+    private var bioStep: some View {
+        layout {
+            Mascot(size: 76)
+            TypingBubble("Sum yourself up in one line",
+                         typing: !shownBubbles.contains(Step.bio.rawValue)) { shownBubbles.insert(Step.bio.rawValue) }
+            VStack(alignment: .leading, spacing: 8) {
+                TextField("Sunrise surf → coffee → work.", text: $bioText, axis: .vertical)
+                    .font(.system(size: 17, weight: .semibold))
+                    .foregroundColor(Brand.ink).tint(Brand.ink)
+                    .lineLimit(2...4)
+                    .padding(.horizontal, 14).padding(.vertical, 12)
+                    .background(Color.white)
+                    .clipShape(RoundedRectangle(cornerRadius: 14))
+                    .overlay(RoundedRectangle(cornerRadius: 14).stroke(Brand.line))
+                    .onChange(of: bioText) { v in
+                        if v.count > 140 { bioText = String(v.prefix(140)) }
+                    }
+                Text("\(bioText.count)/140").font(.caption2).foregroundColor(Brand.soft)
+                    .frame(maxWidth: .infinity, alignment: .trailing)
+            }
+        } actions: {
+            primary("Continue", enabled: !bioText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty) { advance() }
+            skip()
+        }
+    }
+
+    /// Qué tipo de conexiones busca. Multi-selección y sin compartimentos: una sola
+    /// comunidad. Va al final porque es lo que más compromete.
+    private var intentsStep: some View {
+        let done = shownBubbles.contains(Step.intents.rawValue)
+        return layout {
+            Mascot(size: 76, bounceTrigger: bounceTrigger)
+            TypingBubble("What are you open to?",
+                         typing: !done) { shownBubbles.insert(Step.intents.rawValue) }
+            VStack(spacing: 10) {
+                ForEach(ConnectionIntent.allCases) { i in
+                    SelectCard(emoji: i == .training ? "🏋️" : (i == .friends ? "🤝" : "✨"),
+                               label: i.label, selected: intentsSel.contains(i.rawValue)) {
+                        FX.selection()
+                        if intentsSel.contains(i.rawValue) { intentsSel.remove(i.rawValue) }
+                        else { intentsSel.insert(i.rawValue); bounceTrigger += 1 }
+                    }
+                }
+                Text("You can pick more than one — and change it later.")
+                    .font(.footnote).foregroundColor(Brand.muted)
+                    .multilineTextAlignment(.center).padding(.top, 2)
+            }
+            .opacity(done ? 1 : 0)
+            .animation(.spring(response: 0.4, dampingFraction: 0.85), value: done)
+            .allowsHitTesting(done)
+        } actions: {
+            primary("Continue", enabled: !intentsSel.isEmpty) { FX.success(); advance() }
         }
     }
 
@@ -507,12 +589,6 @@ struct OnboardingView: View {
         withAnimation(.spring(response: 0.5, dampingFraction: 0.7).delay(0.15)) { avatarIn = true }
     }
 
-    /// Une una multi-selección respetando el orden de las opciones de la pregunta.
-    private func ordered(_ set: Set<String>, _ q: SurveyQuestion) -> String? {
-        let list = q.options.map { $0.label }.filter { set.contains($0) }
-        return list.isEmpty ? nil : list.joined(separator: ", ")
-    }
-
     private func commit() {
         var acc = Account(name: name.trimmingCharacters(in: .whitespaces), handle: normalized)
         acc.photoData = photoData
@@ -525,13 +601,22 @@ struct OnboardingView: View {
             if let d = Calendar.current.date(from: comp) { store.profile.birthdate = d }
             if sexSel != "No especificar" { store.profile.sex = sexSel }
         }
-        if !country.isEmpty { store.profile.country = country }
-        if !city.isEmpty { store.profile.city = city }
+        // De dónde eres. Se escribe también en country/city (legado) porque son los que
+        // alimentan la banderita que ya se pinta en el feed y los avatares.
+        if !country.isEmpty { store.profile.country = country; store.profile.homeCountry = country }
+        if !city.isEmpty { store.profile.city = city; store.profile.homeCity = city }
         if !gym.trimmingCharacters(in: .whitespaces).isEmpty { store.profile.gym = gym.trimmingCharacters(in: .whitespaces) }
-        store.profile.goal = ordered(goalSel, OnboardingSurvey.goal)
-        store.profile.level = levelSel
-        store.profile.weeklyDays = daysSel
-        store.profile.motivation = ordered(motivSel, OnboardingSurvey.motivation)
+
+        // Identidad del club (PRODUCT.md · Fase 1). Los deportes se guardan en el orden
+        // curado, no en el del Set, para que la tarjeta se vea igual en cada render.
+        store.profile.sports = Sport.curated.map(\.rawValue).filter(sportsSel.contains)
+        store.profile.neighborhood = areaSel
+        store.profile.stayKind = stayKindSel
+        store.profile.stayUntil = (stayKindSel == StayKind.until.rawValue) ? stayDate : nil
+        let bio = bioText.trimmingCharacters(in: .whitespacesAndNewlines)
+        store.profile.bio = bio.isEmpty ? nil : bio
+        store.profile.intents = ConnectionIntent.allCases.map(\.rawValue).filter(intentsSel.contains)
+
         store.persist()
         FX.success(sound: true)
     }
@@ -803,6 +888,38 @@ private struct TypingBubble: View {
 }
 
 /// Tarjeta de respuesta de selección única (estilo conversacional).
+/// Rejilla de chips con ajuste automático: para listas largas (23 deportes, 14 barrios)
+/// donde apilar `SelectCard` daría una pantalla interminable de scroll.
+/// `items` = (valor guardado, etiqueta visible).
+private struct ChipGrid: View {
+    let items: [(String, String)]
+    let selected: Set<String>
+    let onTap: (String) -> Void
+
+    var body: some View {
+        LazyVGrid(columns: [GridItem(.adaptive(minimum: 104), spacing: 8)], spacing: 8) {
+            ForEach(items, id: \.0) { value, label in
+                let on = selected.contains(value)
+                Button {
+                    onTap(value)
+                } label: {
+                    Text(label)
+                        .font(.system(size: 14, weight: .heavy))
+                        .foregroundColor(on ? Color(hex: "10150a") : Brand.ink)
+                        .lineLimit(1).minimumScaleFactor(0.8)
+                        .padding(.horizontal, 12).frame(height: 42).frame(maxWidth: .infinity)
+                        .background(on ? Brand.green : Color.white)
+                        .clipShape(Capsule())
+                        .overlay(Capsule().stroke(on ? Color.clear : Brand.line))
+                        .shadow(color: on ? Brand.green.opacity(0.30) : .clear, radius: 6, y: 3)
+                }
+                .buttonStyle(PressableButtonStyle())
+                .animation(.spring(response: 0.28, dampingFraction: 0.6), value: on)
+            }
+        }
+    }
+}
+
 private struct SelectCard: View {
     let emoji: String
     let label: String
@@ -885,71 +1002,6 @@ private struct OnboardingPhotoFramer: View {
 }
 
 // MARK: - Encuesta del onboarding (preguntas propias)
-
-private struct SurveyOption { let emoji: String; let label: String }
-private struct SurveyQuestion {
-    let prompt: String
-    let options: [SurveyOption]
-    let reaction: (String) -> String
-}
-
-private enum OnboardingSurvey {
-    static let goal = SurveyQuestion(
-        prompt: "¡Cuéntame de ti! ¿Qué quieres conseguir? Elige las que quieras 😉",
-        options: [.init(emoji: "💪", label: "Ganar músculo"), .init(emoji: "🔥", label: "Perder grasa"),
-                  .init(emoji: "🏋️", label: "Ganar fuerza"), .init(emoji: "⚡", label: "Mantenerme en forma"),
-                  .init(emoji: "🧘", label: "Salud y bienestar")],
-        reaction: { l in
-            switch l {
-            case "Ganar músculo": return "¡A por esos músculos! 💪"
-            case "Perder grasa": return "¡Vamos a quemar! 🔥"
-            case "Ganar fuerza": return "¡Más fuerte cada día! 🏋️"
-            case "Mantenerme en forma": return "¡La constancia es la clave! ⚡"
-            default: return "¡Tu cuerpo te lo agradecerá! 🧘"
-            }
-        })
-
-    static let level = SurveyQuestion(
-        prompt: "¿Cuánto tiempo llevas entrenando?",
-        options: [.init(emoji: "🌱", label: "Acabo de empezar"), .init(emoji: "📈", label: "Menos de un año"),
-                  .init(emoji: "💯", label: "Entre 1 y 3 años"), .init(emoji: "🔥", label: "Más de 3 años")],
-        reaction: { l in
-            switch l {
-            case "Acabo de empezar": return "¡Bienvenido/a al viaje! 🌱"
-            case "Menos de un año": return "¡Buen momento para crecer!"
-            case "Entre 1 y 3 años": return "¡Ya sabes lo que es bueno! 👌"
-            default: return "¡Toda una bestia! 🔥"
-            }
-        })
-
-    static let days = SurveyQuestion(
-        prompt: "¿Cuántos días quieres entrenar a la semana?",
-        options: [.init(emoji: "☕️", label: "1-2 días"), .init(emoji: "🗓️", label: "3 días"),
-                  .init(emoji: "🔁", label: "4 días"), .init(emoji: "🚀", label: "5 o más")],
-        reaction: { l in
-            switch l {
-            case "1-2 días": return "Constancia > intensidad ☕️"
-            case "3 días": return "El clásico que funciona 👌"
-            case "4 días": return "¡Buen ritmo!"
-            default: return "¡Qué máquina! 🚀"
-            }
-        })
-
-    static let motivation = SurveyQuestion(
-        prompt: "Última 🔥 ¿Qué es lo que más te mueve? Marca las que quieras",
-        options: [.init(emoji: "🪞", label: "Verme mejor"), .init(emoji: "🏆", label: "Superarme cada día"),
-                  .init(emoji: "😌", label: "Despejar la mente"), .init(emoji: "🤝", label: "Entrenar con gente"),
-                  .init(emoji: "💯", label: "Crear el hábito")],
-        reaction: { l in
-            switch l {
-            case "Verme mejor": return "¡Yo tampoco salgo del espejo! 😄"
-            case "Superarme cada día": return "¡Esa mentalidad! 🏆"
-            case "Despejar la mente": return "El gym también es mi terapia 😌"
-            case "Entrenar con gente": return "¡Mejor en equipo! 🤝"
-            default: return "Paso a paso, ¡así se hace! 💯"
-            }
-        })
-}
 
 // MARK: - Tutorial guiado por sección (Forgey te acompaña)
 

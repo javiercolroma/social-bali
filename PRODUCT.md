@@ -152,11 +152,17 @@ puede quedarse (es interno), pero el nombre de cara al público probablemente de
 El orden no es negociable en lo esencial: **sin identidad no hay Discover**, y sin
 Discover no hay conexión que medir.
 
-### Fase 1 · Identidad (el cimiento)
+### Fase 1 · Identidad (el cimiento) — 🟡 EN CURSO
 Perfil nuevo: bio de una línea, deportes/intereses, barrio, país de origen, **in Bali
 until** e intenciones (Dating / Friends / Training, multi-selección). Onboarding
 rehecho alrededor de esto. Migración de `profiles`.
 *Sin esta fase, todo lo demás muestra tarjetas vacías.*
+
+- [x] Dominio (`SocialClub.swift`), `Profile` extendido, migración `0023`, backend en ambos sentidos.
+- [x] **Onboarding rehecho**: 6 pasos nuevos (deportes, zona + gimnasio, estancia, origen, bio, intenciones), en inglés y verificados en simulador. Salen los 4 pasos de encuesta fitness (`goal`, `level`, `days`, `motivation`): se escribían y **no se leían en ninguna parte**.
+- [ ] **Mostrar la identidad en el perfil** (bio, deportes, barrio, estancia, intenciones). Hoy se captura pero no se ve en ningún sitio.
+- [ ] **Editar perfil**: quien ya tenga cuenta no puede rellenar estos campos — solo se piden en el alta.
+- [ ] Traducir al español/francés/portugués las cadenas nuevas (`es.lproj` etc.).
 
 ### Fase 2 · Discover
 «Today's People»: 10-15 perfiles al día, curados, con final explícito. Tarjeta de perfil
