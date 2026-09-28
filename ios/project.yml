@@ -1,6 +1,11 @@
 name: GymSwipeIOS
 options:
-  developmentLanguage: es   # las cadenas del código SON las claves; en.lproj traduce
+  # Idioma BASE del producto = inglés (club social internacional en Bali, 2026-09-28).
+  # Las cadenas NUEVAS se escriben en inglés en el código y se traducen en es/fr/pt.
+  # Las cadenas HISTÓRICAS siguen teniendo la clave en español: por eso existe
+  # `es.lproj` con mapeo identidad — sin él, un usuario en español caería en en.lproj
+  # (el nuevo idioma base) y vería la app en inglés. Ver PRODUCT.md.
+  developmentLanguage: en
   bundleIdPrefix: com.javiercolroma
   deploymentTarget:
     iOS: "16.0"

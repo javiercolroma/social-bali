@@ -772,7 +772,16 @@ final class AppStore: ObservableObject {
                 country: profile.country.isEmpty ? nil : profile.country,
                 city: profile.city.isEmpty ? nil : profile.city,
                 gym: profile.gym.isEmpty ? nil : profile.gym,
-                is_private: profile.isPrivate)
+                is_private: profile.isPrivate,
+                // Club social: identidad de la PERSONA (ver PRODUCT.md · Fase 1).
+                bio: profile.bio?.isEmpty == false ? profile.bio : nil,
+                sports: (profile.sports?.isEmpty == false) ? profile.sports : nil,
+                neighborhood: profile.neighborhood,
+                home_city: profile.homeCity?.isEmpty == false ? profile.homeCity : nil,
+                home_country: profile.homeCountry?.isEmpty == false ? profile.homeCountry : nil,
+                stay_kind: profile.stayKind,
+                stay_until: profile.stayUntil.map(StayDate.string(from:)),
+                intents: (profile.intents?.isEmpty == false) ? profile.intents : nil)
             do { try await Backend.shared.upsertProfile(row); print("[Backend] perfil sincronizado: @\(row.handle ?? "")") }
             catch { print("[Backend] upsert perfil falló:", error) }
         }
@@ -800,6 +809,16 @@ final class AppStore: ObservableObject {
                 if let c = p.city { profile.city = c }
                 if let g = p.gym { profile.gym = g }
                 if let pv = p.is_private { profile.isPrivate = pv }
+                // Club social: sin esto, quien reinstala o cambia de móvil perdería su
+                // identidad (bio, deportes, barrio, estancia) y Discover lo vería vacío.
+                profile.bio = p.bio
+                profile.sports = p.sports
+                profile.neighborhood = p.neighborhood
+                profile.homeCity = p.home_city
+                profile.homeCountry = p.home_country
+                profile.stayKind = p.stay_kind
+                profile.stayUntil = p.stay_until.flatMap(StayDate.date(from:))
+                profile.intents = p.intents
                 // Usuario que YA existía: no le repitas el tutorial guiado del menú.
                 seenTours.formUnion((0..<5).map { "tour-\($0)" })
                 persist()

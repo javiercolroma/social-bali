@@ -546,6 +546,32 @@ struct ProfileRow: Codable {
     var gym: String?
     var is_private: Bool?
     var gym_score: Int?
+
+    // ─── Club social (migración 0023) ────────────────────────────────────────
+    // Opcionales: hay perfiles en producción sin nada de esto.
+    var bio: String?
+    var sports: [String]?
+    var neighborhood: String?
+    var home_city: String?
+    var home_country: String?
+    var stay_kind: String?
+    /// `date` en Postgres → se manda como "yyyy-MM-dd" en texto, no como Date: el
+    /// codificador por defecto emite un timestamp ISO completo y la columna es `date`.
+    var stay_until: String?
+    var intents: [String]?
+}
+
+/// Formato de `profiles.stay_until` (columna `date` de Postgres).
+enum StayDate {
+    private static let fmt: DateFormatter = {
+        let f = DateFormatter()
+        f.locale = Locale(identifier: "en_US_POSIX")
+        f.timeZone = TimeZone(secondsFromGMT: 0)
+        f.dateFormat = "yyyy-MM-dd"
+        return f
+    }()
+    static func string(from date: Date) -> String { fmt.string(from: date) }
+    static func date(from string: String) -> Date? { fmt.date(from: String(string.prefix(10))) }
 }
 
 /// Fila de `public.follows` (grafo social estilo Instagram).

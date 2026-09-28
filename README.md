@@ -2,6 +2,19 @@
 
 Ultima actualizacion: 2026-07-08
 
+> **Idioma base → INGLÉS (2026-09-28).** `developmentLanguage: es` → `en` en `project.yml`.
+> Las cadenas **nuevas** se escriben en inglés en el código; las históricas mantienen su
+> clave en español. Para que eso no rompa nada se genera **`es.lproj/Localizable.strings`
+> con mapeo IDENTIDAD** (345 claves, `"Entreno" = "Entreno";`): sin él, al pasar la base a
+> inglés un usuario en español caería en `en.lproj` y vería la app en inglés. Verificado en
+> simulador **en los dos sentidos** (`-AppleLanguages '(es)'` sigue en español,
+> `'(en)'` traduce). ⚠️ **El catálogo inglés está INCOMPLETO**: al forzar inglés se ve una
+> mezcla (p. ej. «Siguiente», «Seguidos», «Para ti» y el texto del tour salen en español).
+> Detectados ≥16 literales directos sin traducir, y **el escaneo NO cubre las cadenas
+> embebidas en estructuras de datos** (pasos del tour, etiquetas del segmentado, opciones
+> de la encuesta del onboarding), que es justo donde están los huecos vistos. Completar el
+> catálogo es tarea pendiente y ahora es **prioritaria**: el público de Bali es angloparlante.
+>
 > 🧭 **NUEVA DIRECCIÓN DE PRODUCTO (2026-09-28) → ver [`PRODUCT.md`](PRODUCT.md).** La app
 > deja de pensarse como «fitness con funciones sociales» y pasa a ser **un club social
 > privado para personas activas en Bali**, donde el deporte es identidad, filtro de

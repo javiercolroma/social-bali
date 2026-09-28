@@ -76,6 +76,61 @@ struct Profile: Codable {
     var level: String? = nil
     var weeklyDays: String? = nil
     var motivation: String? = nil
+
+    // ─── Club social (PRODUCT.md · Fase 1 «Identidad») ───────────────────────────
+    // TODO opcional: son perfiles ya guardados los que se decodifican, y un campo no
+    // opcional que falte hace fallar TODO el decode (ya nos costó una pérdida de datos).
+    // Se guardan `rawValue` en texto plano para que el servidor no dependa del enum.
+
+    /// Bio de una línea. Es lo que da personalidad a la tarjeta de Discover:
+    /// «Sunrise surf → coffee → work.»
+    var bio: String? = nil
+    /// Deportes (rawValue de `Sport`). Identidad + filtro natural de comunidad.
+    var sports: [String]? = nil
+    /// Barrio DECLARADO dentro de Bali (rawValue de `Neighborhood`). Ver SocialClub.swift
+    /// sobre por qué no se deriva del GPS.
+    var neighborhood: String? = nil
+    /// De dónde eres (≠ dónde estás). Alimenta el «Barcelona 🇪🇸» de la tarjeta.
+    var homeCity: String? = nil
+    var homeCountry: String? = nil
+    /// Situación en Bali (rawValue de `StayKind`) + fecha de salida si la hay.
+    var stayKind: String? = nil
+    var stayUntil: Date? = nil
+    /// Qué tipo de conexiones busca (rawValue de `ConnectionIntent`), multi-selección.
+    var intents: [String]? = nil
+
+    // ─── Accesos tipados (el almacenamiento es texto; la app trabaja con enums) ───
+
+    var sportList: [Sport] {
+        get { (sports ?? []).compactMap(Sport.from) }
+        set { sports = newValue.map(\.rawValue) }
+    }
+
+    var intentList: [ConnectionIntent] {
+        get { (intents ?? []).compactMap(ConnectionIntent.init(rawValue:)) }
+        set { intents = newValue.map(\.rawValue) }
+    }
+
+    var area: Neighborhood? {
+        get { neighborhood.flatMap(Neighborhood.init(rawValue:)) }
+        set { neighborhood = newValue?.rawValue }
+    }
+
+    /// Estancia resuelta para mostrar; nil si la persona aún no la ha indicado.
+    var stay: Stay? {
+        guard let k = stayKind.flatMap(StayKind.init(rawValue:)) else { return nil }
+        return Stay(kind: k, until: stayUntil)
+    }
+
+    /// ¿Tiene el perfil lo mínimo para aparecer en Discover? (§11 «perfil mínimo
+    /// obligatorio»): sin esto la tarjeta sale vacía y no se puede decidir nada.
+    var isClubReady: Bool {
+        !(bio ?? "").trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+            && !sportList.isEmpty
+            && area != nil
+            && stay != nil
+            && !intentList.isEmpty
+    }
 }
 
 struct HistoryEntry: Identifiable, Codable {
