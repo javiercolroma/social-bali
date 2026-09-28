@@ -2,6 +2,15 @@
 
 Ultima actualizacion: 2026-07-08
 
+> 🧭 **NUEVA DIRECCIÓN DE PRODUCTO (2026-09-28) → ver [`PRODUCT.md`](PRODUCT.md).** La app
+> deja de pensarse como «fitness con funciones sociales» y pasa a ser **un club social
+> privado para personas activas en Bali**, donde el deporte es identidad, filtro de
+> comunidad y excusa para quedar. El fitness **no desaparece**: es la ventaja competitiva
+> (identidad *demostrada*, no declarada). Este README sigue siendo la memoria **técnica**;
+> `PRODUCT.md` manda en cualquier duda de **alcance o producto**, e incluye la auditoría de
+> qué código actual sirve, las tensiones abiertas (idioma, clasificación por edad,
+> gamificación, demo) y la hoja de ruta por fases.
+
 > ⚠️ **MIGRACION A NATIVO (en curso).** La app iOS se esta reescribiendo a **SwiftUI 100% nativa** (Fase 1 completada). El antiguo enfoque web en `WKWebView` queda **deprecado**: el target iOS ya NO carga `WebDist` ni usa la web; ahora arranca `RootView` (SwiftUI). El codigo web en `src/` permanece en el repo pero **no lo usa la app**. La documentacion de abajo (secciones 1-24) describe la app WEB original y se conserva como referencia funcional/de producto mientras se porta a Swift.
 >
 > **App nativa (Swift) — archivos clave en `ios/GymSwipeIOS/`:** `GymSwipeIOSApp.swift` (entry), `AppStore.swift` (estado + persistencia en UserDefaults + acciones), `Models.swift`, `GymScore.swift` (logica de score), `LocationManager.swift` (CoreLocation nativo), `RootView.swift` (TabView nativo + cabecera + sheets), `TrainView/PlanView/RankingView/PartnerView/ProfileView.swift`, `SocialViews.swift` (mensajes, chat, amigos, notificaciones, perfil de amigo, alta de cuenta), `Components.swift`, `Theme.swift`.
