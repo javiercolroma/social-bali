@@ -70,6 +70,17 @@ enum L10n {
         objc_setAssociatedObject(Bundle.main, &l10nBundleKey, target, .OBJC_ASSOCIATION_RETAIN_NONATOMIC)
     }
 
+    /// Traduce un literal de UI al idioma activo, para los casos en que NO se puede usar
+    /// `Text(LocalizedStringKey)`: texto que hay que manipular como String (recortarlo,
+    /// medirlo, concatenarlo). `Text(String)` no localiza, así que sin esto la cadena
+    /// sale siempre en el idioma del código. Respeta el override de Ajustes.
+    static func t(_ key: String) -> String {
+        let bundle = UserDefaults.standard.string(forKey: "forgeLangOverride")
+            .flatMap { Bundle.main.path(forResource: $0, ofType: "lproj") }
+            .flatMap(Bundle.init(path:)) ?? .main
+        return bundle.localizedString(forKey: key, value: key, table: nil)
+    }
+
     /// Llamar en el arranque: restaura el idioma forzado (si lo hay).
     static func bootstrap() {
         if let o = UserDefaults.standard.string(forKey: "forgeLangOverride") { apply(o) }

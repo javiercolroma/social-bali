@@ -34,7 +34,7 @@ struct OnboardingView: View {
     @State private var photoOffset: CGSize = .zero
     @State private var showFramer = false
     @State private var birthYear = 1997
-    @State private var sexSel = "Hombre"
+    @State private var sexSel: Gender? = nil
     @State private var aboutDone = false
     @State private var country = "España"
     @State private var city = ""
@@ -54,7 +54,6 @@ struct OnboardingView: View {
     @State private var drawCheck: CGFloat = 0
     @State private var avatarIn = false
 
-    private let sexes = ["Hombre", "Mujer", "Otro", "No especificar"]
     private var years: [Int] {
         let now = Calendar.current.component(.year, from: Date())
         return Array(1930...(now - 13))
@@ -68,8 +67,8 @@ struct OnboardingView: View {
     private var normalized: String { normalizeHandle(handle) }
     private var taken: [String] { store.people.map { $0.handle } }
     private var handleError: String? {
-        if normalized.count < 3 { return "Mínimo 3 caracteres" }
-        if taken.contains(normalized) { return "Ese usuario ya existe" }
+        if normalized.count < 3 { return "At least 3 characters" }
+        if taken.contains(normalized) { return "That username is taken" }
         return nil
     }
     private var nameOK: Bool { name.trimmingCharacters(in: .whitespaces).count >= 2 }
@@ -156,18 +155,18 @@ struct OnboardingView: View {
     private var welcomeStep: some View {
         layout {
             Mascot(size: 150, wave: true)
-            TypingBubble("¡Hola! Soy Forgey 💪 Vamos a montar tu plan en un momento.",
+            TypingBubble("Hi! I'm Forgey 💪 Let's set you up in a minute.",
                          typing: !shownBubbles.contains(Step.welcome.rawValue)) { shownBubbles.insert(Step.welcome.rawValue) }
         } actions: {
-            primary("Empezar") { advance() }
+            primary("Start") { advance() }
         }
     }
 
     private var nameStep: some View {
         layout {
             Mascot(size: 96)
-            Bubble("¿Cómo te llamas?")
-            TextField("Tu nombre", text: $name)
+            Bubble("What's your name?")
+            TextField("Your name", text: $name)
                 .multilineTextAlignment(.center).font(.system(size: 22, weight: .heavy))
                 .foregroundColor(Brand.ink).tint(Brand.ink)
                 .focused($focus, equals: .name).submitLabel(.next).onSubmit { if nameOK { advance() } }
@@ -175,18 +174,18 @@ struct OnboardingView: View {
                 .clipShape(RoundedRectangle(cornerRadius: 14))
                 .overlay(RoundedRectangle(cornerRadius: 14).stroke(focus == .name ? Brand.green : Brand.line, lineWidth: focus == .name ? 1.8 : 1))
         } actions: {
-            primary("Continuar", enabled: nameOK) { advance() }
+            primary("Continue", enabled: nameOK) { advance() }
         }
     }
 
     private var handleStep: some View {
         layout {
             Mascot(size: 96)
-            Bubble(firstName.isEmpty ? "Elige tu nombre de usuario" : "Encantado, \(firstName). Elige tu usuario")
+            Bubble(firstName.isEmpty ? "Pick your username" : "Nice to meet you, \(firstName). Pick your username")
             VStack(spacing: 8) {
                 HStack(spacing: 2) {
                     Text("@").font(.system(size: 22, weight: .heavy)).foregroundColor(Brand.soft)
-                    TextField("usuario", text: $handle).font(.system(size: 22, weight: .heavy)).foregroundColor(Brand.ink).tint(Brand.ink)
+                    TextField("username", text: $handle).font(.system(size: 22, weight: .heavy)).foregroundColor(Brand.ink).tint(Brand.ink)
                         .textInputAutocapitalization(.never).autocorrectionDisabled()
                         .focused($focus, equals: .handle).submitLabel(.next).onSubmit { if handleOK { advance() } }
                 }
@@ -200,7 +199,7 @@ struct OnboardingView: View {
                 }
             }
         } actions: {
-            primary("Continuar", enabled: handleOK) { advance() }
+            primary("Continue", enabled: handleOK) { advance() }
         }
     }
 
@@ -208,7 +207,7 @@ struct OnboardingView: View {
     /// la pregunta, aparecen tarjetas, eliges una (con reacción de Forgey) y continúas.
     private var photoStep: some View {
         layout {
-            TypingBubble(firstName.isEmpty ? "¡Ya te conozco mejor! 🙌 ¿Le ponemos cara?" : "¡Ya te conozco mejor, \(firstName)! 🙌 ¿Le ponemos cara?",
+            TypingBubble(firstName.isEmpty ? "Now let's put a face to the name 🙌" : "Now let's put a face to the name, \(firstName) 🙌",
                          typing: !shownBubbles.contains(Step.photo.rawValue)) { shownBubbles.insert(Step.photo.rawValue) }
             // Tocar el círculo: si hay foto, reencuadra; si no, abre el selector.
             Group {
@@ -237,15 +236,15 @@ struct OnboardingView: View {
         } actions: {
             if photoData == nil {
                 PhotoPickerLabel(item: $pickerItem, onPicked: { onPhotoPicked($0) }) {
-                    Text("Elegir foto")
+                    Text("Pick a photo")
                         .font(.system(size: 16, weight: .heavy)).foregroundColor(Color(hex: "10150a"))
                         .frame(maxWidth: .infinity).frame(minHeight: 50)
                         .background(Brand.green).clipShape(RoundedRectangle(cornerRadius: 12))
                 }
             } else {
-                primary("Usar esta foto") { advance() }
+                primary("Use this photo") { advance() }
                 PhotoPickerLabel(item: $pickerItem, onPicked: { onPhotoPicked($0) }) {
-                    Text("Elegir otra").font(.system(size: 14, weight: .bold)).foregroundColor(Brand.soft)
+                    Text("Pick another").font(.system(size: 14, weight: .bold)).foregroundColor(Brand.soft)
                         .frame(maxWidth: .infinity).frame(height: 36)
                 }
             }
@@ -274,7 +273,7 @@ struct OnboardingView: View {
     private var birthStep: some View {
         layout {
             Mascot(size: 88)
-            TypingBubble("¿Cuándo naciste?",
+            TypingBubble("When were you born?",
                          typing: !shownBubbles.contains(Step.birth.rawValue)) { shownBubbles.insert(Step.birth.rawValue) }
             wheelCard {
                 Picker("Año", selection: $birthYear) {
@@ -286,7 +285,7 @@ struct OnboardingView: View {
                 .frame(height: 170)
             }
         } actions: {
-            primary("Continuar") { aboutDone = true; advance() }
+            primary("Continue") { aboutDone = true; advance() }
             skip()
         }
     }
@@ -294,19 +293,22 @@ struct OnboardingView: View {
     private var sexStep: some View {
         layout {
             Mascot(size: 88)
-            TypingBubble("¿Cuál es tu sexo?",
+            TypingBubble("What's your gender?",
                          typing: !shownBubbles.contains(Step.sex.rawValue)) { shownBubbles.insert(Step.sex.rawValue) }
             wheelCard {
-                Picker("Sexo", selection: $sexSel) {
-                    ForEach(sexes, id: \.self) {
-                        Text($0).font(.system(size: 20, weight: .bold)).foregroundColor(Brand.ink).tag($0)
+                Picker("Gender", selection: $sexSel) {
+                    Text("Prefer not to say").font(.system(size: 20, weight: .bold))
+                        .foregroundColor(Brand.ink).tag(Gender?.none)
+                    ForEach(Gender.allCases) { g in
+                        Text(g.label).font(.system(size: 20, weight: .bold))
+                            .foregroundColor(Brand.ink).tag(Gender?.some(g))
                     }
                 }
                 .pickerStyle(.wheel)
                 .frame(height: 170)
             }
         } actions: {
-            primary("Continuar") { aboutDone = true; advance() }
+            primary("Continue") { aboutDone = true; advance() }
             skip()
         }
     }
@@ -494,15 +496,15 @@ struct OnboardingView: View {
     private var healthStep: some View {
         layout {
             Mascot(size: 96, holdsHeart: true)
-            TypingBubble(health.isAvailable ? "¿Conectamos con Salud para ver tu pulso en cada serie?"
-                                            : "Cuando tengas el iPhone a mano podrás conectar Salud desde tu perfil.",
+            TypingBubble(health.isAvailable ? "Shall we connect Health to track your heart rate?"
+                                            : "You can connect Health later from your profile.",
                          typing: !shownBubbles.contains(Step.health.rawValue)) { shownBubbles.insert(Step.health.rawValue) }
         } actions: {
             if health.isAvailable && !health.connected {
-                primary("Conectar con Salud") { Task { _ = await health.connect(); advance() } }
+                primary("Connect Health") { Task { _ = await health.connect(); advance() } }
                 skip()
             } else {
-                primary(health.connected ? "¡Conectado! Seguir" : "Seguir") { advance() }
+                primary(health.connected ? "Connected! Continue" : "Continue") { advance() }
             }
         }
     }
@@ -516,9 +518,9 @@ struct OnboardingView: View {
                 MeAvatar(account: previewAccount, size: 116)
                     .scaleEffect(avatarIn ? 1 : 0.4).opacity(avatarIn ? 1 : 0)
             }
-            Bubble(firstName.isEmpty ? "¡Todo listo! A darlo todo 🔥" : "¡Listo, \(firstName)! A darlo todo 🔥")
+            Bubble(firstName.isEmpty ? "You're all set! 🔥" : "You're all set, \(firstName)! 🔥")
         } actions: {
-            primary("Entrar a Forge Loop") { commit() }
+            primary("Enter Forge Loop") { commit() }
         }
     }
 
@@ -554,13 +556,14 @@ struct OnboardingView: View {
             .font(.system(size: 14, weight: .heavy)).foregroundColor(color)
     }
     private func primary(_ label: String, enabled: Bool = true, _ action: @escaping () -> Void) -> some View {
-        Button { action() } label: { Text(label) }
+        // LocalizedStringKey y no String: `Text(String)` NO localiza.
+        Button { action() } label: { Text(LocalizedStringKey(label)) }
             .buttonStyle(PrimaryButtonStyle(enabled: enabled)).disabled(!enabled)
     }
     /// Saltar discreto (pasos no obligatorios). Sin etiquetar nada como "opcional".
     private func skip() -> some View {
         Button { advance() } label: {
-            Text("Quizá más tarde").font(.system(size: 14, weight: .semibold)).foregroundColor(Brand.soft)
+            Text("Maybe later").font(.system(size: 14, weight: .semibold)).foregroundColor(Brand.soft)
                 .frame(maxWidth: .infinity).frame(height: 36)
         }.buttonStyle(.plain)
     }
@@ -599,7 +602,7 @@ struct OnboardingView: View {
         if aboutDone {
             var comp = DateComponents(); comp.year = birthYear; comp.month = 6; comp.day = 15
             if let d = Calendar.current.date(from: comp) { store.profile.birthdate = d }
-            if sexSel != "No especificar" { store.profile.sex = sexSel }
+            if let g = sexSel { store.profile.sex = g.rawValue }
         }
         // De dónde eres. Se escribe también en country/city (legado) porque son los que
         // alimentan la banderita que ya se pinta en el feed y los avatares.
@@ -794,7 +797,7 @@ private struct Bubble: View {
         VStack(spacing: 0) {
             Triangle().fill(Color.white).frame(width: 22, height: 11)
                 .overlay(Triangle().stroke(Brand.line, lineWidth: 1).clipShape(Rectangle().offset(y: 1)))
-            Text(text)
+            Text(LocalizedStringKey(text))
                 .font(.system(size: 19, weight: .heavy)).foregroundColor(Brand.ink)
                 .multilineTextAlignment(.center).fixedSize(horizontal: false, vertical: true)
                 .padding(.horizontal, 18).padding(.vertical, 14)
@@ -839,7 +842,12 @@ private struct TypingBubble: View {
     private let font = Font.system(size: 19, weight: .heavy)
 
     init(_ text: String, typing: Bool = true, onDone: (() -> Void)? = nil) {
-        self.full = text; self.typing = typing; self.onDone = onDone
+        // OJO: se localiza AQUÍ, a mano. El bocadillo se escribe letra a letra, así que
+        // necesita el String ya traducido para poder recortarlo; `Text(String)` NO
+        // localiza (solo lo hace `Text(LocalizedStringKey)`), y por eso los bocadillos
+        // salían siempre en el idioma del código aunque el catálogo tuviera la clave.
+        self.full = L10n.t(text)
+        self.typing = typing; self.onDone = onDone
     }
 
     var body: some View {
@@ -952,7 +960,7 @@ private struct SelectCard: View {
 private struct ReactionChip: View {
     let text: String
     var body: some View {
-        Text(text).font(.system(size: 14, weight: .heavy)).foregroundColor(Brand.ink)
+        Text(LocalizedStringKey(text)).font(.system(size: 14, weight: .heavy)).foregroundColor(Brand.ink)
             .padding(.horizontal, 12).padding(.vertical, 7)
             .background(Brand.greenSoft).clipShape(Capsule())
             .overlay(Capsule().stroke(Brand.green.opacity(0.45)))
@@ -975,7 +983,7 @@ private struct OnboardingPhotoFramer: View {
     var body: some View {
         NavigationStack {
             VStack(spacing: 18) {
-                Text("Arrastra y pellizca para encuadrar").font(.footnote).foregroundColor(Brand.muted)
+                Text("Drag and pinch to frame").font(.footnote).foregroundColor(Brand.muted)
                 if let ui = UIImage(data: data) {
                     Image(uiImage: ui).resizable().scaledToFill()
                         .scaleEffect(scale).offset(offset)
@@ -991,7 +999,7 @@ private struct OnboardingPhotoFramer: View {
                                                              height: lastOffset.height + $0.translation.height) }
                                 .onEnded { _ in lastOffset = offset }))
                 }
-                Button { onDone(); dismiss() } label: { Text("Listo") }.buttonStyle(PrimaryButtonStyle())
+                Button { onDone(); dismiss() } label: { Text("Done") }.buttonStyle(PrimaryButtonStyle())
                 Spacer()
             }
             .padding(20).background(Brand.bg)

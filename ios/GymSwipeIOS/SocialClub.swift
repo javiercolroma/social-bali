@@ -43,6 +43,37 @@ enum ConnectionIntent: String, Codable, CaseIterable, Identifiable {
     }
 }
 
+// MARK: - Género
+
+/// El valor que se GUARDA es un código estable (`man`), no el texto que se enseña.
+/// Antes se persistía la etiqueta visible («Hombre»), así que al pasar el producto a
+/// inglés el onboarding escribía «Man» y el selector del perfil seguía ofreciendo
+/// «Hombre»: dejaban de casar y el campo aparecía vacío. `from(_:)` es tolerante con
+/// lo ya guardado —español o inglés— para no perder el dato de nadie.
+enum Gender: String, Codable, CaseIterable, Identifiable {
+    case man, woman, other
+
+    var id: String { rawValue }
+
+    var label: String {
+        switch self {
+        case .man: return "Man"
+        case .woman: return "Woman"
+        case .other: return "Other"
+        }
+    }
+
+    static func from(_ raw: String?) -> Gender? {
+        guard let r = raw?.trimmingCharacters(in: .whitespaces).lowercased(), !r.isEmpty else { return nil }
+        switch r {
+        case "man", "hombre", "male", "homme", "homem":       return .man
+        case "woman", "mujer", "female", "femme", "mulher":   return .woman
+        case "other", "otro", "autre", "outro", "non-binary": return .other
+        default: return nil
+        }
+    }
+}
+
 // MARK: - Situación en Bali (§10)
 
 /// Cuánto tiempo se queda esa persona. Es **información crítica**, no un detalle

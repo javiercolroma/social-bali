@@ -163,8 +163,10 @@ rehecho alrededor de esto. Migración de `profiles`.
 - [ ] **Mostrar la identidad en el perfil** (bio, deportes, barrio, estancia, intenciones). Verificado: `profile.bio`, `sportList`, `stay`, `area` e `intentList` **no se leen en NINGUNA pantalla**. Se captura y se guarda, pero es invisible.
 - [ ] **Editar perfil**: `EditProfileView` solo toca `birthdate, city, country, gym, instagram, isPrivate, region, sex, tiktok, twitter`. Ninguno de los campos del club. Consecuencia: **quien ya tenga cuenta no puede rellenarlos nunca** — solo se piden en el alta.
 - [ ] **`SocialPerson` no lleva los campos del club** (0 de 5). Es el modelo con el que se pinta a *los demás*, así que sin esto no se puede mostrar la identidad de otra persona — ni en el perfil ajeno ni, más adelante, en Discover.
-- [ ] **Onboarding bilingüe**: al pasar la base a inglés quedó a medias. Bocadillos en español: bienvenida, nombre, nacimiento y sexo; en inglés los 6 del club. Además los botones («Continuar» vs «Continue») y el array `sexes` (`Hombre`/`Mujer`/`Otro`/`No especificar`), que encima se compara por texto en `commit()`.
-- [ ] **Traducir al español/francés/portugués** las cadenas nuevas (hoy solo existen en inglés en el código).
+- [x] **Onboarding 100% en inglés** + catálogo español completo (34 claves nuevas), verificado en simulador en ambos idiomas.
+- [x] **`Text(String)` NO localiza** (solo `Text(LocalizedStringKey)`): `TypingBubble`, `Bubble`, `ReactionChip` y el botón `primary` se saltaban el catálogo entero. Fallo preexistente, invisible mientras el código estaba en español. `TypingBubble` necesita `L10n.t(...)` porque escribe letra a letra y requiere el String ya traducido.
+- [x] **Género con código estable** (`Gender`: `man`/`woman`/`other`). Antes se guardaba la etiqueta visible, así que onboarding («Man») y perfil («Hombre») dejaban de casar. `Gender.from(_:)` es tolerante con lo ya guardado en es/en/fr/pt.
+- [ ] **Traducir al francés y portugués** las cadenas nuevas (hoy en inglés y español).
 - [ ] **Edad mínima 18** si `dating` está entre las intenciones (requisito de la App Store, ligado a la tensión #3).
 
 ### Fase 2 · Discover

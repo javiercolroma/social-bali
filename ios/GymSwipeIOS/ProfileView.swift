@@ -43,9 +43,10 @@ struct EditProfileView: View {
 
                 PanelCard {
                     Text("DATOS").font(.caption2).fontWeight(.heavy).foregroundColor(Brand.muted)
-                    MenuField(label: "Sexo", placeholder: "Elegir",
-                              selected: store.profile.sex,
-                              options: ["Hombre", "Mujer", "Otro"].map { ($0, $0) }) {
+                    // Guarda el CÓDIGO (`man`), no la etiqueta: ver Gender en SocialClub.swift.
+                    MenuField(label: "Gender", placeholder: "Choose",
+                              selected: Gender.from(store.profile.sex)?.rawValue ?? "",
+                              options: Gender.allCases.map { ($0.rawValue, $0.label) }) {
                         store.profile.sex = $0; store.persist()
                     }
                     VStack(alignment: .leading, spacing: 5) {
