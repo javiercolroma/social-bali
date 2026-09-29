@@ -98,6 +98,8 @@ struct Profile: Codable {
     var stayUntil: Date? = nil
     /// Qué tipo de conexiones busca (rawValue de `ConnectionIntent`), multi-selección.
     var intents: [String]? = nil
+    /// Hasta 4 fotos «haciendo lo que te gusta» (URLs públicas). Opcionales, sin presión.
+    var photos: [String]? = nil
 
     // ─── Accesos tipados (el almacenamiento es texto; la app trabaja con enums) ───
 
@@ -278,6 +280,8 @@ struct SocialPerson: Identifiable, Codable, Hashable {
     var avatarURL: String? = nil
     /// Identidad del club (bio, deportes, barrio, estancia…). nil = no cargada / demo.
     var club: ClubIdentity? = nil
+    /// Sus fotos de actividad + las de sus últimos entrenos públicos (Descubrir).
+    var photos: [String]? = nil
 }
 
 struct ChatMessage: Identifiable, Codable, Hashable {

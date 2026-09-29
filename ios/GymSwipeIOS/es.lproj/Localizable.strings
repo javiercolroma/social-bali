@@ -494,3 +494,14 @@
 "You connected to %@" = "Conectasteis para %@";
 "Connect first to send a message" = "Conecta primero para escribir";
 "Messages open once you've both agreed to connect." = "Los mensajes se abren cuando los dos aceptáis conectar.";
+
+/* Fotos de actividad (2026-09-29) */
+"Share a photo doing what you love" = "Comparte una foto haciendo lo que te gusta";
+"Surfing, on the mat, at the summit… No posing required. It helps people see who you are." = "Surfeando, en la esterilla, en la cima… Sin posar. Ayuda a que vean quién eres.";
+"Add photos" = "Añadir fotos";
+"PHOTOS" = "FOTOS";
+"Up to 4 photos doing what you love. Optional." = "Hasta 4 fotos haciendo lo que te gusta. Opcional.";
+"Couldn't upload the photo. Try again." = "No se pudo subir la foto. Inténtalo de nuevo.";
+"Remove this photo?" = "¿Quitar esta foto?";
+"Remove" = "Quitar";
+"Cancel" = "Cancelar";

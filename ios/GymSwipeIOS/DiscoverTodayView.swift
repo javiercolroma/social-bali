@@ -252,15 +252,13 @@ struct DiscoverPersonCard: View {
         .overlay(RoundedRectangle(cornerRadius: 20, style: .continuous).stroke(Brand.line))
     }
 
-    @ViewBuilder
+    /// Foto de perfil primero, luego sus fotos de actividad y las de sus entrenos.
     private func photo(_ club: ClubIdentity) -> some View {
-        if let a = row.avatar_url, let u = URL(string: a) {
-            Color.clear.overlay(
-                AsyncImage(url: u) { img in img.resizable().scaledToFill() } placeholder: { placeholder(club) }
-            )
-        } else {
-            placeholder(club)
+        var urls: [String] = []
+        for u in [row.avatar_url].compactMap({ $0 }) + (row.photos ?? []) + (row.moments ?? []) where !urls.contains(u) {
+            urls.append(u)
         }
+        return PhotoPager(urls: urls) { placeholder(club) }
     }
 
     /// Sin foto: degradado de marca + el emoji de su deporte principal, grande.

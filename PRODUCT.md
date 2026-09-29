@@ -223,7 +223,12 @@ actividad opcionales** con una invitación amable, más las fotos de sus entreno
   arriba de Descubrir; aceptar **abre el chat** con el motivo arriba («Conectasteis para surfear»).
 - [x] El perfil completo ya no enseña «Dating» a quien no lo busca (Descubrir ya venía filtrado).
 - [ ] Notificación push al recibir una solicitud.
-- [ ] Fotos de actividad (hasta 4) con invitación amable + fotos de entrenos en la tarjeta.
+- [x] **Fotos** (migración `0027`, aplicada): `profiles.photos` (máx. 4, lo impone la BD). La tarjeta
+  de Descubrir es un **carrusel**: foto de perfil → fotos de actividad → «momentos» (fotos de sus
+  3 últimos entrenos públicos; nunca de una cuenta privada). Editar perfil tiene 4 huecos; tu
+  perfil invita con amabilidad («Comparte una foto haciendo lo que te gusta») si no hay ninguna.
+- [x] **Fallo de la Fase 1 corregido**: al sincronizar, los campos vacíos se OMITÍAN del JSON, así que
+  borrar tu bio, tu barrio o tu última foto nunca llegaba al servidor. Ahora se envían como `null`.
 Intents (*train* · *surf* · *coffee* · *interested*) → el receptor ve **el motivo**.
 Mutuo = conexión y se abre el chat. Convive con el *follow* actual sin sustituirlo aún.
 

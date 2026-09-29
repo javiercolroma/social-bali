@@ -1000,6 +1000,7 @@ struct FriendProfileView: View {
     @State private var realName: String?
     @State private var realHandle: String?
     @State private var realClub: ClubIdentity?
+    @State private var realPhotos: [String]?
 
     /// Carga los datos REALES del usuario (perfil + sesiones + contadores + score) cuando hay backend.
     private func loadReal() async {
@@ -1008,6 +1009,7 @@ struct FriendProfileView: View {
             realName = p.name ?? p.handle
             realHandle = p.handle
             realClub = p.club
+            realPhotos = p.photos
         }
         let s = (try? await Backend.shared.fetchUserSessions(person.id)) ?? []
         realSessions = s.map { $0.asWorkoutSession }
@@ -1051,6 +1053,7 @@ struct FriendProfileView: View {
                     if let club = realClub ?? person.club {
                         ClubIdentityCard(club: club.visible(toViewerOpenToDating: store.iAmOpenToDating))
                     }
+                    PhotoStrip(urls: realPhotos ?? person.photos ?? [])
                     if locked {
                         privateNotice
                     } else {
@@ -1261,6 +1264,11 @@ struct MeProfileView: View {
                 VStack(spacing: 14) {
                     header(entrenos: sessionsList.count)
                     ClubIdentityCard(club: store.profile.club) { showEditProfile = true }
+                    if let photos = store.profile.photos, !photos.isEmpty {
+                        PhotoStrip(urls: photos)
+                    } else if !store.profile.club.isEmpty {
+                        PhotosInviteCard { showEditProfile = true }
+                    }
                     HStack(spacing: 10) {
                         statTile("GYM SCORE", "\(score.total)")
                         statTile("RACHA", "\(store.player.streak) 🔥")

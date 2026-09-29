@@ -1,0 +1,37 @@
+{
+  "/Users/javiercolas/Documents/gym-swipe-ios/ios/.build-dd/Build/Intermediates.noindex/GymSwipeIOS.build/Debug-iphonesimulator/GymSwipeIOS.build/DerivedSources/GeneratedAssetSymbols.swift" : {
+    "const-values" : "/Users/javiercolas/Documents/gym-swipe-ios/ios/.build-dd/Build/Intermediates.noindex/GymSwipeIOS.build/Debug-iphonesimulator/GymSwipeIOS.build/Objects-normal/arm64/GeneratedAssetSymbols.swiftconstvalues",
+    "dependencies" : "/Users/javiercolas/Documents/gym-swipe-ios/ios/.build-dd/Build/Intermediates.noindex/GymSwipeIOS.build/Debug-iphonesimulator/GymSwipeIOS.build/Objects-normal/arm64/GeneratedAssetSymbols.d",
+    "diagnostics" : "/Users/javiercolas/Documents/gym-swipe-ios/ios/.build-dd/Build/Intermediates.noindex/GymSwipeIOS.build/Debug-iphonesimulator/GymSwipeIOS.build/Objects-normal/arm64/GeneratedAssetSymbols.dia",
+    "object" : "/Users/javiercolas/Documents/gym-swipe-ios/ios/.build-dd/Build/Intermediates.noindex/GymSwipeIOS.build/Debug-iphonesimulator/GymSwipeIOS.build/Objects-normal/arm64/GeneratedAssetSymbols.o",
+    "swift-dependencies" : "/Users/javiercolas/Documents/gym-swipe-ios/ios/.build-dd/Build/Intermediates.noindex/GymSwipeIOS.build/Debug-iphonesimulator/GymSwipeIOS.build/Objects-normal/arm64/GeneratedAssetSymbols.swiftdeps"
+  },
+  "/Users/javiercolas/Documents/gym-swipe-ios/ios/GymSwipeIOS/TrainingCalendarView.swift" : {
+    "const-values" : "/Users/javiercolas/Documents/gym-swipe-ios/ios/.build-dd/Build/Intermediates.noindex/GymSwipeIOS.build/Debug-iphonesimulator/GymSwipeIOS.build/Objects-normal/arm64/TrainingCalendarView.swiftconstvalues",
+    "dependencies" : "/Users/javiercolas/Documents/gym-swipe-ios/ios/.build-dd/Build/Intermediates.noindex/GymSwipeIOS.build/Debug-iphonesimulator/GymSwipeIOS.build/Objects-normal/arm64/TrainingCalendarView.d",
+    "diagnostics" : "/Users/javiercolas/Documents/gym-swipe-ios/ios/.build-dd/Build/Intermediates.noindex/GymSwipeIOS.build/Debug-iphonesimulator/GymSwipeIOS.build/Objects-normal/arm64/TrainingCalendarView.dia",
+    "object" : "/Users/javiercolas/Documents/gym-swipe-ios/ios/.build-dd/Build/Intermediates.noindex/GymSwipeIOS.build/Debug-iphonesimulator/GymSwipeIOS.build/Objects-normal/arm64/TrainingCalendarView.o",
+    "swift-dependencies" : "/Users/javiercolas/Documents/gym-swipe-ios/ios/.build-dd/Build/Intermediates.noindex/GymSwipeIOS.build/Debug-iphonesimulator/GymSwipeIOS.build/Objects-normal/arm64/TrainingCalendarView.swiftdeps"
+  },
+  "/Users/javiercolas/Documents/gym-swipe-ios/ios/GymSwipeIOS/WorkoutActivityAttributes.swift" : {
+    "const-values" : "/Users/javiercolas/Documents/gym-swipe-ios/ios/.build-dd/Build/Intermediates.noindex/GymSwipeIOS.build/Debug-iphonesimulator/GymSwipeIOS.build/Objects-normal/arm64/WorkoutActivityAttributes.swiftconstvalues",
+    "dependencies" : "/Users/javiercolas/Documents/gym-swipe-ios/ios/.build-dd/Build/Intermediates.noindex/GymSwipeIOS.build/Debug-iphonesimulator/GymSwipeIOS.build/Objects-normal/arm64/WorkoutActivityAttributes.d",
+    "diagnostics" : "/Users/javiercolas/Documents/gym-swipe-ios/ios/.build-dd/Build/Intermediates.noindex/GymSwipeIOS.build/Debug-iphonesimulator/GymSwipeIOS.build/Objects-normal/arm64/WorkoutActivityAttributes.dia",
+    "object" : "/Users/javiercolas/Documents/gym-swipe-ios/ios/.build-dd/Build/Intermediates.noindex/GymSwipeIOS.build/Debug-iphonesimulator/GymSwipeIOS.build/Objects-normal/arm64/WorkoutActivityAttributes.o",
+    "swift-dependencies" : "/Users/javiercolas/Documents/gym-swipe-ios/ios/.build-dd/Build/Intermediates.noindex/GymSwipeIOS.build/Debug-iphonesimulator/GymSwipeIOS.build/Objects-normal/arm64/WorkoutActivityAttributes.swiftdeps"
+  },
+  "/Users/javiercolas/Documents/gym-swipe-ios/ios/GymSwipeIOS/WorkoutIntents.swift" : {
+    "const-values" : "/Users/javiercolas/Documents/gym-swipe-ios/ios/.build-dd/Build/Intermediates.noindex/GymSwipeIOS.build/Debug-iphonesimulator/GymSwipeIOS.build/Objects-normal/arm64/WorkoutIntents.swiftconstvalues",
+    "dependencies" : "/Users/javiercolas/Documents/gym-swipe-ios/ios/.build-dd/Build/Intermediates.noindex/GymSwipeIOS.build/Debug-iphonesimulator/GymSwipeIOS.build/Objects-normal/arm64/WorkoutIntents.d",
+    "diagnostics" : "/Users/javiercolas/Documents/gym-swipe-ios/ios/.build-dd/Build/Intermediates.noindex/GymSwipeIOS.build/Debug-iphonesimulator/GymSwipeIOS.build/Objects-normal/arm64/WorkoutIntents.dia",
+    "object" : "/Users/javiercolas/Documents/gym-swipe-ios/ios/.build-dd/Build/Intermediates.noindex/GymSwipeIOS.build/Debug-iphonesimulator/GymSwipeIOS.build/Objects-normal/arm64/WorkoutIntents.o",
+    "swift-dependencies" : "/Users/javiercolas/Documents/gym-swipe-ios/ios/.build-dd/Build/Intermediates.noindex/GymSwipeIOS.build/Debug-iphonesimulator/GymSwipeIOS.build/Objects-normal/arm64/WorkoutIntents.swiftdeps"
+  },
+  "/Users/javiercolas/Documents/gym-swipe-ios/ios/GymSwipeIOS/WorkoutRemote.swift" : {
+    "const-values" : "/Users/javiercolas/Documents/gym-swipe-ios/ios/.build-dd/Build/Intermediates.noindex/GymSwipeIOS.build/Debug-iphonesimulator/GymSwipeIOS.build/Objects-normal/arm64/WorkoutRemote.swiftconstvalues",
+    "dependencies" : "/Users/javiercolas/Documents/gym-swipe-ios/ios/.build-dd/Build/Intermediates.noindex/GymSwipeIOS.build/Debug-iphonesimulator/GymSwipeIOS.build/Objects-normal/arm64/WorkoutRemote.d",
+    "diagnostics" : "/Users/javiercolas/Documents/gym-swipe-ios/ios/.build-dd/Build/Intermediates.noindex/GymSwipeIOS.build/Debug-iphonesimulator/GymSwipeIOS.build/Objects-normal/arm64/WorkoutRemote.dia",
+    "object" : "/Users/javiercolas/Documents/gym-swipe-ios/ios/.build-dd/Build/Intermediates.noindex/GymSwipeIOS.build/Debug-iphonesimulator/GymSwipeIOS.build/Objects-normal/arm64/WorkoutRemote.o",
+    "swift-dependencies" : "/Users/javiercolas/Documents/gym-swipe-ios/ios/.build-dd/Build/Intermediates.noindex/GymSwipeIOS.build/Debug-iphonesimulator/GymSwipeIOS.build/Objects-normal/arm64/WorkoutRemote.swiftdeps"
+  }
+}

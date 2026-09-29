@@ -43,6 +43,7 @@
 		A6911B1E14CE1300F4DD0173 /* LiveActivityManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 51E3F8B26293A58B6A5DC2F4 /* LiveActivityManager.swift */; };
 		A6EA57786D3C06C98EFBF7E5 /* NotificationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 65AB2F19CF6DCC5B645AB356 /* NotificationManager.swift */; };
 		A89D564806DC6E75C368E3EB /* AuthView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 75B84C1241AA6578E1A438C3 /* AuthView.swift */; };
+		ABC05E1BF5F85BCB72A3094C /* ProfilePhotos.swift in Sources */ = {isa = PBXBuildFile; fileRef = A9D179BB3951BE1D2D1A2028 /* ProfilePhotos.swift */; };
 		AEC40F20A484762912222BA0 /* LocationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F46519F370ACB4CE695F4928 /* LocationManager.swift */; };
 		AF24880BEDF82C1B96C5A49E /* ExerciseProgress.swift in Sources */ = {isa = PBXBuildFile; fileRef = D00693AEEFD43298AF8CCCDF /* ExerciseProgress.swift */; };
 		B087CB2C4C5E2848E78E6BFE /* WorkoutRemote.swift in Sources */ = {isa = PBXBuildFile; fileRef = 896F243436BE8AEDD8406091 /* WorkoutRemote.swift */; };
@@ -135,6 +136,7 @@
 		A1B295ED7A599C8F0FDDE74F /* WorkoutLiveActivity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutLiveActivity.swift; sourceTree = "<group>"; };
 		A415A6402658DC75C3C37C3C /* Components.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Components.swift; sourceTree = "<group>"; };
 		A94209F7155C5A09DA6E950A /* SocialViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SocialViews.swift; sourceTree = "<group>"; };
+		A9D179BB3951BE1D2D1A2028 /* ProfilePhotos.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfilePhotos.swift; sourceTree = "<group>"; };
 		AC0D952E1A0BC084FD9FDB7C /* Exercises.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Exercises.swift; sourceTree = "<group>"; };
 		B0F06C40A8219BF0B99514B8 /* pt-PT */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "pt-PT"; path = "pt-PT.lproj/Localizable.strings"; sourceTree = "<group>"; };
 		B46E8A571424C3A565D16FC2 /* SessionMedals.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionMedals.swift; sourceTree = "<group>"; };
@@ -238,6 +240,7 @@
 				3A318726DFFA74FF768BA96D /* PhotoSupport.swift */,
 				EF5C837837CFA069C8F53AE4 /* PlanView.swift */,
 				5D321FCC3B325158C232F567 /* PrivacyInfo.xcprivacy */,
+				A9D179BB3951BE1D2D1A2028 /* ProfilePhotos.swift */,
 				E53E08D1A4CF0DE70074A344 /* ProfileView.swift */,
 				93103B207E8CE92D9C1E3D2F /* ProgressInsights.swift */,
 				351AF069FE04261E1DB0C543 /* RankingView.swift */,
@@ -412,6 +415,7 @@
 				C96DA3E9AC38A13BD8D381B1 /* PartnerView.swift in Sources */,
 				2A882A99A8CD48DE197DD5A5 /* PhotoSupport.swift in Sources */,
 				CF3EFCE5F7B166F143B9B408 /* PlanView.swift in Sources */,
+				ABC05E1BF5F85BCB72A3094C /* ProfilePhotos.swift in Sources */,
 				2A369E47736FA626323CEF25 /* ProfileView.swift in Sources */,
 				C858693C7D6E17A9E209653F /* ProgressInsights.swift in Sources */,
 				BEBB454C3035C16BFE9C0067 /* RankingView.swift in Sources */,

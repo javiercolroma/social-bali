@@ -126,6 +126,23 @@ final class Backend {
         catch { print("[Backend] posición de Discover falló:", error) }
     }
 
+    // MARK: - Fotos de actividad (0027)
+
+    /// Sube una foto «haciendo lo que te gusta» y devuelve su URL pública.
+    func uploadActivityPhoto(_ data: Data) async throws -> String {
+        guard let client, let uid = await currentUserIdAsync() else { throw BackendError.notConfigured }
+        let path = "\(uid.uuidString.lowercased())/activity-\(UUID().uuidString.lowercased()).jpg"
+        _ = try await client.storage.from("avatars")
+            .upload(path, data: compressedImageData(data), options: FileOptions(contentType: "image/jpeg", upsert: false))
+        return try client.storage.from("avatars").getPublicURL(path: path).absoluteString
+    }
+
+    /// Borra el fichero de una foto de actividad (best-effort).
+    func deleteActivityPhoto(_ url: String) async {
+        guard let client, let r = url.range(of: "/avatars/") else { return }
+        _ = try? await client.storage.from("avatars").remove(paths: [String(url[r.upperBound...])])
+    }
+
     // MARK: - Sesiones de entreno
 
     /// Sube (o actualiza) una sesión de entreno. Idempotente por `id`.
@@ -578,7 +595,7 @@ struct ProfileRow: Codable {
     /// Columnas que se LEEN. Incluye las del club: si falta una, `hydrateAccountFromBackend`
     /// la leería como nil y borraría la identidad local al reinstalar.
     static let columns = "id,handle,name,avatar_url,country,city,gym,is_private,"
-        + "bio,sports,neighborhood,home_city,home_country,stay_kind,stay_until,intents"
+        + "bio,sports,neighborhood,home_city,home_country,stay_kind,stay_until,intents,photos"
 
     let id: UUID
     var handle: String?
@@ -602,6 +619,37 @@ struct ProfileRow: Codable {
     /// codificador por defecto emite un timestamp ISO completo y la columna es `date`.
     var stay_until: String?
     var intents: [String]?
+    /// Hasta 4 fotos «haciendo lo que te gusta» (0027).
+    var photos: [String]?
+    /// Fotos de sus últimos entrenos públicos. Solo llega en Descubrir; NO es columna.
+    var moments: [String]?
+
+    /// Los campos del club y las fotos se mandan SIEMPRE, también como `null`: el
+    /// `Encodable` sintetizado omite los nil, y entonces borrar tu bio (o tu última foto)
+    /// no llegaba nunca al servidor, que conservaba el valor viejo. El resto se omite si
+    /// es nil, a propósito: `avatar_url` nil significa «sin cambios», no «borra la foto».
+    func encode(to encoder: Encoder) throws {
+        var c = encoder.container(keyedBy: CodingKeys.self)
+        try c.encode(id, forKey: .id)
+        try c.encodeIfPresent(handle, forKey: .handle)
+        try c.encodeIfPresent(name, forKey: .name)
+        try c.encodeIfPresent(avatar_url, forKey: .avatar_url)
+        try c.encodeIfPresent(country, forKey: .country)
+        try c.encodeIfPresent(city, forKey: .city)
+        try c.encodeIfPresent(gym, forKey: .gym)
+        try c.encodeIfPresent(is_private, forKey: .is_private)
+        try c.encodeIfPresent(gym_score, forKey: .gym_score)
+        try c.encode(bio, forKey: .bio)
+        try c.encode(sports, forKey: .sports)
+        try c.encode(neighborhood, forKey: .neighborhood)
+        try c.encode(home_city, forKey: .home_city)
+        try c.encode(home_country, forKey: .home_country)
+        try c.encode(stay_kind, forKey: .stay_kind)
+        try c.encode(stay_until, forKey: .stay_until)
+        try c.encode(intents, forKey: .intents)
+        try c.encode(photos, forKey: .photos)
+        // `moments` no se envía: no es una columna.
+    }
 
     var club: ClubIdentity {
         ClubIdentity(bio: bio, sports: sports, neighborhood: neighborhood, homeCity: home_city,

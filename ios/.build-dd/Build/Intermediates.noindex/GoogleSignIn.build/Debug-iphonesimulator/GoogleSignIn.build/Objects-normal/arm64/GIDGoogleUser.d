@@ -1,0 +1,22 @@
+dependencies: \
+  /Users/javiercolas/Documents/gym-swipe-ios/ios/.spm-cache/checkouts/GoogleSignIn-iOS/GoogleSignIn/Sources/GIDGoogleUser.m \
+  /Users/javiercolas/Documents/gym-swipe-ios/ios/.build-dd/Build/Intermediates.noindex/GoogleSignIn.build/Debug-iphonesimulator/GoogleSignIn.build/DerivedSources/resource_bundle_accessor.h \
+  /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator.sdk/System/Library/Frameworks/Foundation.framework/Modules/module.modulemap \
+  /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator.sdk/usr/include/DarwinFoundation1.modulemap \
+  /Users/javiercolas/Documents/gym-swipe-ios/ios/.spm-cache/checkouts/GoogleSignIn-iOS/GoogleSignIn/Sources/Public/GoogleSignIn/GIDGoogleUser.h \
+  /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator.sdk/System/Library/Frameworks/UIKit.framework/Modules/module.modulemap \
+  /Users/javiercolas/Documents/gym-swipe-ios/ios/.build-dd/Build/Intermediates.noindex/GeneratedModuleMaps-iphonesimulator/GTMSessionFetcherCore.modulemap \
+  /Users/javiercolas/Documents/gym-swipe-ios/ios/.spm-cache/checkouts/GoogleSignIn-iOS/GoogleSignIn/Sources/GIDGoogleUser_Private.h \
+  /Users/javiercolas/Documents/gym-swipe-ios/ios/.build-dd/Build/Intermediates.noindex/GeneratedModuleMaps-iphonesimulator/AppAuth.modulemap \
+  /Users/javiercolas/Documents/gym-swipe-ios/ios/.build-dd/Build/Intermediates.noindex/GeneratedModuleMaps-iphonesimulator/AppAuthCore.modulemap \
+  /Users/javiercolas/Documents/gym-swipe-ios/ios/.spm-cache/checkouts/GoogleSignIn-iOS/GoogleSignIn/Sources/Public/GoogleSignIn/GIDConfiguration.h \
+  /Users/javiercolas/Documents/gym-swipe-ios/ios/.spm-cache/checkouts/GoogleSignIn-iOS/GoogleSignIn/Sources/Public/GoogleSignIn/GIDSignIn.h \
+  /Users/javiercolas/Documents/gym-swipe-ios/ios/.spm-cache/checkouts/GoogleSignIn-iOS/GoogleSignIn/Sources/GIDAuthentication.h \
+  /Users/javiercolas/Documents/gym-swipe-ios/ios/.spm-cache/checkouts/GoogleSignIn-iOS/GoogleSignIn/Sources/GIDEMMSupport.h \
+  /Users/javiercolas/Documents/gym-swipe-ios/ios/.build-dd/Build/Intermediates.noindex/GeneratedModuleMaps-iphonesimulator/GTMAppAuth.modulemap \
+  /Users/javiercolas/Documents/gym-swipe-ios/ios/.spm-cache/checkouts/GoogleSignIn-iOS/GoogleSignIn/Sources/GIDProfileData_Private.h \
+  /Users/javiercolas/Documents/gym-swipe-ios/ios/.spm-cache/checkouts/GoogleSignIn-iOS/GoogleSignIn/Sources/Public/GoogleSignIn/GIDProfileData.h \
+  /Users/javiercolas/Documents/gym-swipe-ios/ios/.spm-cache/checkouts/GoogleSignIn-iOS/GoogleSignIn/Sources/GIDSignIn_Private.h \
+  /Users/javiercolas/Documents/gym-swipe-ios/ios/.spm-cache/checkouts/GoogleSignIn-iOS/GoogleSignIn/Sources/GIDSignInPreferences.h \
+  /Users/javiercolas/Documents/gym-swipe-ios/ios/.spm-cache/checkouts/GoogleSignIn-iOS/GoogleSignIn/Sources/GIDToken_Private.h \
+  /Users/javiercolas/Documents/gym-swipe-ios/ios/.spm-cache/checkouts/GoogleSignIn-iOS/GoogleSignIn/Sources/Public/GoogleSignIn/GIDToken.h

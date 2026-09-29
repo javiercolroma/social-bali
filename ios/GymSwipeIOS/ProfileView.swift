@@ -43,6 +43,8 @@ struct EditProfileView: View {
 
                 clubSection
 
+                PanelCard { ActivityPhotosEditor() }
+
                 PanelCard {
                     Text("DATOS").font(.caption2).fontWeight(.heavy).foregroundColor(Brand.muted)
                     // Guarda el CÓDIGO (`man`), no la etiqueta: ver Gender en SocialClub.swift.

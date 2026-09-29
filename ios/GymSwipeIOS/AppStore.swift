@@ -794,7 +794,8 @@ final class AppStore: ObservableObject {
                 home_country: profile.homeCountry?.isEmpty == false ? profile.homeCountry : nil,
                 stay_kind: profile.stayKind,
                 stay_until: profile.stayUntil.map(StayDate.string(from:)),
-                intents: (profile.intents?.isEmpty == false) ? profile.intents : nil)
+                intents: (profile.intents?.isEmpty == false) ? profile.intents : nil,
+                photos: (profile.photos?.isEmpty == false) ? profile.photos : nil)
             // (Los intents ya pasan por `enforceDatingAge` en cada `persist`.)
             do { try await Backend.shared.upsertProfile(row); print("[Backend] perfil sincronizado: @\(row.handle ?? "")") }
             catch { print("[Backend] upsert perfil falló:", error) }
@@ -833,6 +834,7 @@ final class AppStore: ObservableObject {
                 profile.stayKind = p.stay_kind
                 profile.stayUntil = p.stay_until.flatMap(StayDate.date(from:))
                 profile.intents = p.intents
+                profile.photos = p.photos
                 // La fecha vive aparte (privada). Sin ella, «Dating» quedaría bloqueado
                 // para alguien que ya demostró su edad antes de reinstalar.
                 if let b = (try? await Backend.shared.fetchMyBirthdate()) ?? nil { profile.birthdate = b }
@@ -1073,7 +1075,8 @@ final class AppStore: ObservableObject {
             SocialPerson(id: p.id.uuidString.lowercased(), name: p.name ?? p.handle ?? "Atleta",
                          handle: p.handle ?? "", avatar: "🙂", gym: p.gym ?? "",
                          city: p.city ?? "", country: p.country ?? "",
-                         isPrivate: p.is_private ?? false, avatarURL: p.avatar_url, club: p.club)
+                         isPrivate: p.is_private ?? false, avatarURL: p.avatar_url, club: p.club,
+                         photos: (p.photos ?? []) + (p.moments ?? []))
         }
     }
 
