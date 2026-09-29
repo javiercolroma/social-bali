@@ -116,6 +116,12 @@ struct Profile: Codable {
         set { neighborhood = newValue?.rawValue }
     }
 
+    /// Identidad del club lista para mostrar (misma forma que la de los demás).
+    var club: ClubIdentity {
+        ClubIdentity(bio: bio, sports: sports, neighborhood: neighborhood, homeCity: homeCity,
+                     homeCountry: homeCountry, stayKind: stayKind, stayUntil: stayUntil, intents: intents)
+    }
+
     /// Estancia resuelta para mostrar; nil si la persona aún no la ha indicado.
     var stay: Stay? {
         guard let k = stayKind.flatMap(StayKind.init(rawValue:)) else { return nil }
@@ -259,6 +265,8 @@ struct SocialPerson: Identifiable, Codable, Hashable {
     var isPrivate: Bool = false
     /// Foto real del avatar (Storage) para usuarios reales; el emoji queda de fallback.
     var avatarURL: String? = nil
+    /// Identidad del club (bio, deportes, barrio, estancia…). nil = no cargada / demo.
+    var club: ClubIdentity? = nil
 }
 
 struct ChatMessage: Identifiable, Codable, Hashable {

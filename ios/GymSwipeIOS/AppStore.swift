@@ -1055,7 +1055,7 @@ final class AppStore: ObservableObject {
             SocialPerson(id: p.id.uuidString.lowercased(), name: p.name ?? p.handle ?? "Atleta",
                          handle: p.handle ?? "", avatar: "🙂", gym: p.gym ?? "",
                          city: p.city ?? "", country: p.country ?? "",
-                         isPrivate: p.is_private ?? false, avatarURL: p.avatar_url)
+                         isPrivate: p.is_private ?? false, avatarURL: p.avatar_url, club: p.club)
         }
     }
 

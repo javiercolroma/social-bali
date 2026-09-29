@@ -354,3 +354,10 @@
 "¿En qué ejercicios progreso menos?" = "Where am I progressing the least?";
 "¿En qué crees que debo mejorar?" = "What do you think I should improve?";
 "¿Cómo va mi constancia este mes?" = "How's my consistency this month?";
+
+/* Editar perfil: etiquetas que aún nacían en español (2026-09-29) */
+"Nombre" = "Name";
+"País" = "Country";
+"Ciudad" = "City";
+"Gimnasio" = "Gym";
+"Zona / barrio (opcional)" = "Area (optional)";

@@ -41,12 +41,14 @@ struct EditProfileView: View {
                     handleField
                 }
 
+                clubSection
+
                 PanelCard {
                     Text("DATOS").font(.caption2).fontWeight(.heavy).foregroundColor(Brand.muted)
                     // Guarda el CÓDIGO (`man`), no la etiqueta: ver Gender en SocialClub.swift.
                     MenuField(label: "Gender", placeholder: "Choose",
                               selected: Gender.from(store.profile.sex)?.rawValue ?? "",
-                              options: Gender.allCases.map { ($0.rawValue, $0.label) }) {
+                              options: Gender.allCases.map { ($0.label, $0.rawValue) }) {
                         store.profile.sex = $0; store.persist()
                     }
                     VStack(alignment: .leading, spacing: 5) {
@@ -82,6 +84,7 @@ struct EditProfileView: View {
         }
         .background(Brand.bg)
         .navigationTitle("Editar perfil").navigationBarTitleDisplayMode(.inline)
+        .onDisappear { store.syncProfileToBackend() }
         .sheet(isPresented: $showEditor) {
             if let d = editingData { PhotoEditorView(data: d).environmentObject(store) }
         }
@@ -103,6 +106,122 @@ struct EditProfileView: View {
             }
             .presentationDetents([.height(360)])
         }
+    }
+
+    // MARK: Club (bio, deportes, barrio, estancia, de dónde eres, intenciones)
+
+    /// Lo mismo que pide el onboarding, editable después. Sin esto, quien ya tenía
+    /// cuenta antes de la Fase 1 no podía rellenar su identidad nunca.
+    private var clubSection: some View {
+        PanelCard {
+            Text("YOUR CLUB PROFILE").font(.caption2).fontWeight(.heavy).foregroundColor(Brand.muted)
+
+            VStack(alignment: .leading, spacing: 5) {
+                Text(L10n.t("Bio").uppercased()).font(.caption2).fontWeight(.heavy).foregroundColor(Brand.muted)
+                TextField("Sunrise surf → coffee → work.", text: bioBinding, axis: .vertical)
+                    .lineLimit(2...4)
+                    .padding(.horizontal, 12).padding(.vertical, 11)
+                    .background(Brand.surface).clipShape(RoundedRectangle(cornerRadius: 10))
+                Text("\((store.profile.bio ?? "").count)/140").font(.caption2).foregroundColor(Brand.soft)
+                    .frame(maxWidth: .infinity, alignment: .trailing)
+            }
+
+            VStack(alignment: .leading, spacing: 7) {
+                Text("SPORTS").font(.caption2).fontWeight(.heavy).foregroundColor(Brand.muted)
+                WrapLayout(spacing: 6) {
+                    ForEach(Sport.curated) { s in
+                        toggleChip("\(s.emoji) \(s.label)", on: store.profile.sportList.contains(s)) { toggleSport(s) }
+                    }
+                }
+            }
+
+            MenuField(label: "Where in Bali", placeholder: "Choose",
+                      selected: store.profile.neighborhood ?? "",
+                      options: Neighborhood.allCases.map { ($0.label, $0.rawValue) }) {
+                store.profile.neighborhood = $0; store.persist()
+            }
+
+            MenuField(label: "How long are you around?", placeholder: "Choose",
+                      selected: store.profile.stayKind ?? "",
+                      options: StayKind.allCases.map { ($0.label, $0.rawValue) }) { raw in
+                store.profile.stayKind = raw
+                if raw == StayKind.until.rawValue {
+                    // Fecha por defecto razonable: sin ella «Leaving on a date» no dice nada.
+                    if store.profile.stayUntil == nil { store.profile.stayUntil = Calendar.current.date(byAdding: .month, value: 1, to: Date()) }
+                } else {
+                    store.profile.stayUntil = nil
+                }
+                store.persist()
+            }
+            if store.profile.stayKind == StayKind.until.rawValue {
+                DatePicker("Leaving on", selection: stayUntilBinding, in: Date()..., displayedComponents: .date)
+                    .font(.system(size: 15, weight: .semibold)).foregroundColor(Brand.ink)
+                    .padding(.horizontal, 12).frame(height: 44)
+                    .background(Brand.surface).clipShape(RoundedRectangle(cornerRadius: 10))
+            }
+
+            CountryField(label: L10n.t("Where are you from?"), selected: store.profile.homeCountry ?? "") {
+                store.profile.homeCountry = $0; store.persist()
+            }
+            CitySearchField(label: L10n.t("Home city"), selected: store.profile.homeCity ?? "", country: store.profile.homeCountry ?? "") {
+                store.profile.homeCity = $0; store.persist()
+            }
+
+            VStack(alignment: .leading, spacing: 7) {
+                Text("OPEN TO").font(.caption2).fontWeight(.heavy).foregroundColor(Brand.muted)
+                WrapLayout(spacing: 6) {
+                    ForEach(ConnectionIntent.allCases) { i in
+                        toggleChip(i.label, icon: i.icon, on: store.profile.intentList.contains(i)) { toggleIntent(i) }
+                    }
+                }
+            }
+        }
+    }
+
+    private var bioBinding: Binding<String> {
+        Binding(get: { store.profile.bio ?? "" },
+                set: { v in
+                    let t = String(v.prefix(140))
+                    store.profile.bio = t.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? nil : t
+                    store.persist()
+                })
+    }
+
+    private var stayUntilBinding: Binding<Date> {
+        Binding(get: { store.profile.stayUntil ?? Date() },
+                set: { store.profile.stayUntil = $0; store.persist() })
+    }
+
+    /// Mantiene el orden curado (igual que el onboarding): la tarjeta se ve estable.
+    private func toggleSport(_ s: Sport) {
+        FX.selection()
+        var set = Set(store.profile.sportList)
+        if set.contains(s) { set.remove(s) } else { set.insert(s) }
+        store.profile.sportList = Sport.curated.filter(set.contains)
+        store.persist()
+    }
+
+    private func toggleIntent(_ i: ConnectionIntent) {
+        FX.selection()
+        var set = Set(store.profile.intentList)
+        if set.contains(i) { set.remove(i) } else { set.insert(i) }
+        store.profile.intentList = ConnectionIntent.allCases.filter(set.contains)
+        store.persist()
+    }
+
+    private func toggleChip(_ text: String, icon: String? = nil, on: Bool, _ action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            HStack(spacing: 5) {
+                if let icon { Image(systemName: icon) }
+                Text(text)
+            }
+            .font(.system(size: 13, weight: .heavy))
+            .foregroundColor(on ? Color(hex: "10150a") : Brand.ink)
+            .padding(.horizontal, 11).frame(height: 32)
+            .background(on ? Brand.green : Brand.surface)
+            .clipShape(Capsule())
+            .overlay(Capsule().stroke(on ? Color.clear : Brand.line))
+        }.buttonStyle(.plain)
     }
 
     private func clean(_ s: String) -> String? {
@@ -192,8 +311,8 @@ struct EditProfileView: View {
 
     private func field(_ label: String, binding: Binding<String>, keyboard: UIKeyboardType = .default) -> some View {
         VStack(alignment: .leading, spacing: 5) {
-            Text(label.uppercased()).font(.caption2).fontWeight(.heavy).foregroundColor(Brand.muted)
-            TextField(label, text: binding)
+            Text(L10n.t(label).uppercased()).font(.caption2).fontWeight(.heavy).foregroundColor(Brand.muted)
+            TextField(L10n.t(label), text: binding)
                 .keyboardType(keyboard)
                 .padding(.horizontal, 12).frame(height: 44)
                 .background(Brand.surface).clipShape(RoundedRectangle(cornerRadius: 10))
@@ -481,7 +600,7 @@ struct MenuField: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 5) {
-            Text(label.uppercased()).font(.caption2).fontWeight(.heavy).foregroundColor(Brand.muted)
+            Text(L10n.t(label).uppercased()).font(.caption2).fontWeight(.heavy).foregroundColor(Brand.muted)
             Menu {
                 ForEach(options, id: \.value) { opt in
                     Button { onSelect(opt.value) } label: {
@@ -490,7 +609,7 @@ struct MenuField: View {
                 }
             } label: {
                 HStack {
-                    Text(currentDisplay ?? placeholder)
+                    Text(currentDisplay ?? L10n.t(placeholder))
                         .foregroundColor(currentDisplay == nil ? Brand.soft : Brand.ink)
                     Spacer()
                     Image(systemName: "chevron.up.chevron.down").font(.caption).foregroundColor(Brand.soft)

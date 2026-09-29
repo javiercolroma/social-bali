@@ -16,8 +16,10 @@ enum ConnectionIntent: String, Codable, CaseIterable, Identifiable {
 
     var id: String { rawValue }
 
-    /// Etiqueta del perfil y del selector.
-    var label: String {
+    /// Etiqueta del perfil y del selector, ya traducida (ver `L10n.t`).
+    var label: String { L10n.t(labelKey) }
+
+    private var labelKey: String {
         switch self {
         case .training: return "Training"
         case .friends:  return "Friends"
@@ -34,7 +36,9 @@ enum ConnectionIntent: String, Codable, CaseIterable, Identifiable {
     }
 
     /// Frase corta que explica la intención sin sonar a formulario.
-    var blurb: String {
+    var blurb: String { L10n.t(blurbKey) }
+
+    private var blurbKey: String {
         switch self {
         case .training: return "Gym, surf, runs — people to move with"
         case .friends:  return "Expand my circle here"
@@ -55,7 +59,9 @@ enum Gender: String, Codable, CaseIterable, Identifiable {
 
     var id: String { rawValue }
 
-    var label: String {
+    var label: String { L10n.t(labelKey) }
+
+    private var labelKey: String {
         switch self {
         case .man: return "Man"
         case .woman: return "Woman"
@@ -85,7 +91,9 @@ enum StayKind: String, Codable, CaseIterable, Identifiable {
 
     var id: String { rawValue }
 
-    var label: String {
+    var label: String { L10n.t(labelKey) }
+
+    private var labelKey: String {
         switch self {
         case .livingHere: return "Living here"
         case .longTerm:   return "Here long term"
@@ -103,14 +111,14 @@ struct Stay: Equatable {
     /// Texto principal: "Living here", "In Bali until Nov 12", "Here long term".
     var headline: String {
         switch kind {
-        case .livingHere: return "Living here"
-        case .longTerm:   return "Here long term"
+        case .livingHere: return L10n.t("Living here")
+        case .longTerm:   return L10n.t("Here long term")
         case .until:
-            guard let until else { return "Here long term" }
+            guard let until else { return L10n.t("Here long term") }
             let f = DateFormatter()
-            f.locale = Locale(identifier: "en_US_POSIX")
-            f.dateFormat = "MMM d"
-            return "In Bali until \(f.string(from: until))"
+            f.locale = L10n.locale
+            f.setLocalizedDateFormatFromTemplate("MMMd")
+            return String(format: L10n.t("In Bali until %@"), f.string(from: until))
         }
     }
 
@@ -126,12 +134,12 @@ struct Stay: Equatable {
     var urgency: String? {
         guard let d = daysLeft else { return nil }
         switch d {
-        case 0:      return "Leaves today"
-        case 1:      return "1 day left"
-        case 2...13: return "\(d) days left"
-        case 14...20: return "2 weeks left"
-        case 21...27: return "3 weeks left"
-        default:     return nil
+        case 0:       return L10n.t("Leaves today")
+        case 1:       return L10n.t("1 day left")
+        case 2...13:  return String(format: L10n.t("%lld days left"), d)
+        case 14...20: return L10n.t("2 weeks left")
+        case 21...27: return L10n.t("3 weeks left")
+        default:      return nil
         }
     }
 
@@ -150,7 +158,9 @@ enum Sport: String, Codable, CaseIterable, Identifiable {
 
     var id: String { rawValue }
 
-    var label: String {
+    var label: String { L10n.t(labelKey) }
+
+    private var labelKey: String {
         switch self {
         case .surf: return "Surf"
         case .gym: return "Gym"
@@ -228,7 +238,10 @@ enum Neighborhood: String, Codable, CaseIterable, Identifiable {
 
     var id: String { rawValue }
 
-    var label: String {
+    /// Los nombres propios no se traducen; solo «Elsewhere in Bali».
+    var label: String { self == .other ? L10n.t("Elsewhere in Bali") : labelKey }
+
+    private var labelKey: String {
         switch self {
         case .canggu: return "Canggu"
         case .berawa: return "Berawa"
@@ -251,4 +264,50 @@ enum Neighborhood: String, Codable, CaseIterable, Identifiable {
     static let launchAreas: [Neighborhood] = [.canggu, .berawa, .pererenan, .uluwatu, .bingin, .pecatu]
 
     var isLaunchArea: Bool { Neighborhood.launchAreas.contains(self) }
+}
+
+// MARK: - Identidad del club (lo que se PINTA)
+
+/// La identidad de una persona tal y como se muestra: la propia (desde `Profile`) y la
+/// de los demás (desde `ProfileRow` → `SocialPerson`). Un solo tipo para que el perfil
+/// propio, el ajeno y —más adelante— Discover lean exactamente lo mismo.
+///
+/// Guarda TEXTO (`rawValue`), no enums: viaja dentro de `SocialPerson`, que se persiste
+/// en el dispositivo, y un deporte que añada una versión futura haría fallar el decode
+/// entero en una anterior. Los accesos tipados descartan lo que no reconocen.
+struct ClubIdentity: Codable, Hashable {
+    var bio: String? = nil
+    var sports: [String]? = nil
+    var neighborhood: String? = nil
+    var homeCity: String? = nil
+    var homeCountry: String? = nil
+    var stayKind: String? = nil
+    var stayUntil: Date? = nil
+    var intents: [String]? = nil
+
+    var sportList: [Sport] { (sports ?? []).compactMap(Sport.from) }
+    var intentList: [ConnectionIntent] { (intents ?? []).compactMap(ConnectionIntent.init(rawValue:)) }
+    var area: Neighborhood? { neighborhood.flatMap(Neighborhood.init(rawValue:)) }
+    var stay: Stay? { stayKind.flatMap(StayKind.init(rawValue:)).map { Stay(kind: $0, until: stayUntil) } }
+
+    var trimmedBio: String? {
+        let b = bio?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        return b.isEmpty ? nil : b
+    }
+
+    /// «Barcelona 🇪🇸». Solo la ciudad cuando la hay: los países se guardan con su nombre
+    /// en español (ver `allCountries`) y leerlos en inglés quedaría a medias.
+    var homeLine: String? {
+        let city = homeCity?.trimmingCharacters(in: .whitespaces) ?? ""
+        let country = homeCountry?.trimmingCharacters(in: .whitespaces) ?? ""
+        if city.isEmpty && country.isEmpty { return nil }
+        let flag = country.isEmpty ? "" : " " + countryFlag(country)
+        return (city.isEmpty ? country : city) + flag
+    }
+
+    /// Nada que enseñar: el perfil ajeno oculta la tarjeta; el propio invita a rellenarla.
+    var isEmpty: Bool {
+        trimmedBio == nil && sportList.isEmpty && area == nil && homeLine == nil
+            && stay == nil && intentList.isEmpty
+    }
 }

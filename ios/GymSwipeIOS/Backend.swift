@@ -323,7 +323,7 @@ final class Backend {
             .replacingOccurrences(of: "(", with: "").replacingOccurrences(of: ")", with: "")
         guard !q.isEmpty else { return [] }
         return try await client.from("profiles")
-            .select("id,handle,name,avatar_url,country,city,gym,is_private")
+            .select(ProfileRow.columns)
             .or("handle.ilike.%\(q)%,name.ilike.%\(q)%")
             .limit(limit)
             .execute().value
@@ -333,7 +333,7 @@ final class Backend {
     func fetchSuggestedProfiles(limit: Int = 30) async throws -> [ProfileRow] {
         guard let client else { return [] }
         return try await client.from("profiles")
-            .select("id,handle,name,avatar_url,country,city,gym,is_private")
+            .select(ProfileRow.columns)
             .order("created_at", ascending: false)
             .limit(limit)
             .execute().value
@@ -343,7 +343,7 @@ final class Backend {
     func fetchMyProfile() async throws -> ProfileRow? {
         guard let client, let uid = await currentUserIdAsync() else { return nil }
         let rows: [ProfileRow] = try await client.from("profiles")
-            .select("id,handle,name,avatar_url,country,city,gym,is_private")
+            .select(ProfileRow.columns)
             .eq("id", value: uid.uuidString).limit(1).execute().value
         return rows.first
     }
@@ -351,7 +351,7 @@ final class Backend {
     func fetchProfiles(ids: [UUID]) async throws -> [ProfileRow] {
         guard let client, !ids.isEmpty else { return [] }
         return try await client.from("profiles")
-            .select("id,handle,name,avatar_url,country,city,gym,is_private")
+            .select(ProfileRow.columns)
             .in("id", values: ids.map { $0.uuidString })
             .execute().value
     }
@@ -537,6 +537,11 @@ enum AuthNonce {
 
 /// Fila de `public.profiles`. `id` debe ser el `auth.uid()` del usuario.
 struct ProfileRow: Codable {
+    /// Columnas que se LEEN. Incluye las del club: si falta una, `hydrateAccountFromBackend`
+    /// la leería como nil y borraría la identidad local al reinstalar.
+    static let columns = "id,handle,name,avatar_url,country,city,gym,is_private,"
+        + "bio,sports,neighborhood,home_city,home_country,stay_kind,stay_until,intents"
+
     let id: UUID
     var handle: String?
     var name: String?
@@ -559,6 +564,12 @@ struct ProfileRow: Codable {
     /// codificador por defecto emite un timestamp ISO completo y la columna es `date`.
     var stay_until: String?
     var intents: [String]?
+
+    var club: ClubIdentity {
+        ClubIdentity(bio: bio, sports: sports, neighborhood: neighborhood, homeCity: home_city,
+                     homeCountry: home_country, stayKind: stay_kind,
+                     stayUntil: stay_until.flatMap(StayDate.date(from:)), intents: intents)
+    }
 }
 
 /// Formato de `profiles.stay_until` (columna `date` de Postgres).

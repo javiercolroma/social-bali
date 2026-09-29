@@ -38,7 +38,7 @@ struct CountryField: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 5) {
-            Text(label.uppercased()).font(.caption2).fontWeight(.heavy).foregroundColor(Brand.muted)
+            Text(L10n.t(label).uppercased()).font(.caption2).fontWeight(.heavy).foregroundColor(Brand.muted)
             VStack(spacing: 0) {
                 fieldBox(focused) {
                     Text(countryFlag(query.isEmpty ? selected : query))
@@ -115,7 +115,7 @@ struct CitySearchField: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 5) {
-            Text(label.uppercased()).font(.caption2).fontWeight(.heavy).foregroundColor(Brand.muted)
+            Text(L10n.t(label).uppercased()).font(.caption2).fontWeight(.heavy).foregroundColor(Brand.muted)
             VStack(spacing: 0) {
                 fieldBox(focused) {
                     Image(systemName: "magnifyingglass").font(.caption).foregroundColor(Brand.soft)

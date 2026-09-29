@@ -160,13 +160,15 @@ rehecho alrededor de esto. Migración de `profiles`.
 
 - [x] Dominio (`SocialClub.swift`), `Profile` extendido, migración `0023`, backend en ambos sentidos.
 - [x] **Onboarding rehecho**: 6 pasos nuevos (deportes, zona + gimnasio, estancia, origen, bio, intenciones), en inglés y verificados en simulador. Salen los 4 pasos de encuesta fitness (`goal`, `level`, `days`, `motivation`): se escribían y **no se leían en ninguna parte**.
-- [ ] **Mostrar la identidad en el perfil** (bio, deportes, barrio, estancia, intenciones). Verificado: `profile.bio`, `sportList`, `stay`, `area` e `intentList` **no se leen en NINGUNA pantalla**. Se captura y se guarda, pero es invisible.
-- [ ] **Editar perfil**: `EditProfileView` solo toca `birthdate, city, country, gym, instagram, isPrivate, region, sex, tiktok, twitter`. Ninguno de los campos del club. Consecuencia: **quien ya tenga cuenta no puede rellenarlos nunca** — solo se piden en el alta.
-- [ ] **`SocialPerson` no lleva los campos del club** (0 de 5). Es el modelo con el que se pinta a *los demás*, así que sin esto no se puede mostrar la identidad de otra persona — ni en el perfil ajeno ni, más adelante, en Discover.
+- [x] **Mostrar la identidad en el perfil**: `ClubIdentityCard` (bio, estancia con aviso «10 days left», barrio, de dónde eres, deportes, «Open to»). Misma tarjeta en el perfil propio y el ajeno; en el ajeno se ve **aunque la cuenta sea privada** (lo privado son entrenos y Gym Score). En el propio, si está vacía, invita a completarla.
+- [x] **Editar perfil**: sección «Your club profile» en `EditProfileView` con los 8 campos del club. Además sincroniza con el servidor **al salir**: antes solo subía si cambiabas nombre/foto, así que ciudad, gimnasio o privacidad se quedaban en local.
+- [x] **`SocialPerson` lleva `club: ClubIdentity`** (tipo único para perfil propio, ajeno y futuro Discover; guarda `rawValue` para que un deporte nuevo no rompa el decode en versiones viejas). Los `select` de `profiles` usan `ProfileRow.columns`: antes **no pedían las columnas del club**, así que al reinstalar la identidad nunca se recuperaba.
+- [x] **Etiquetas del club traducidas** desde el enum (`L10n.t`): `ChipGrid`/`SelectCard` pintaban `Text(String)` y los 6 pasos del club salían en inglés también en español. Catálogo `es` completo (pasos, deportes, estancia, tarjeta, edición).
+- [x] **Selector de género del perfil arreglado**: `MenuField` recibía `(valor, etiqueta)` al revés — pintaba «man» y guardaba «Man».
 - [x] **Onboarding 100% en inglés** + catálogo español completo (34 claves nuevas), verificado en simulador en ambos idiomas.
 - [x] **`Text(String)` NO localiza** (solo `Text(LocalizedStringKey)`): `TypingBubble`, `Bubble`, `ReactionChip` y el botón `primary` se saltaban el catálogo entero. Fallo preexistente, invisible mientras el código estaba en español. `TypingBubble` necesita `L10n.t(...)` porque escribe letra a letra y requiere el String ya traducido.
 - [x] **Género con código estable** (`Gender`: `man`/`woman`/`other`). Antes se guardaba la etiqueta visible, así que onboarding («Man») y perfil («Hombre») dejaban de casar. `Gender.from(_:)` es tolerante con lo ya guardado en es/en/fr/pt.
-- [ ] **Traducir al francés y portugués** las cadenas nuevas (hoy en inglés y español).
+- [ ] **Traducir al francés y portugués** las cadenas nuevas del club (hoy en inglés y español).
 - [ ] **Edad mínima 18** si `dating` está entre las intenciones (requisito de la App Store, ligado a la tensión #3).
 
 ### Fase 2 · Discover

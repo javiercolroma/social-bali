@@ -974,6 +974,7 @@ struct FriendProfileView: View {
     @State private var realFollowing: Int?
     @State private var realName: String?
     @State private var realHandle: String?
+    @State private var realClub: ClubIdentity?
 
     /// Carga los datos REALES del usuario (perfil + sesiones + contadores + score) cuando hay backend.
     private func loadReal() async {
@@ -981,6 +982,7 @@ struct FriendProfileView: View {
         if let profs = try? await Backend.shared.fetchProfiles(ids: [uid]), let p = profs.first {
             realName = p.name ?? p.handle
             realHandle = p.handle
+            realClub = p.club
         }
         let s = (try? await Backend.shared.fetchUserSessions(person.id)) ?? []
         realSessions = s.map { $0.asWorkoutSession }
@@ -1019,6 +1021,9 @@ struct FriendProfileView: View {
             ScrollView {
                 VStack(spacing: 14) {
                     header(entrenos: sessionsList.count, locked: locked)
+                    // Visible aunque la cuenta sea privada: la identidad es la cara pública
+                    // dentro del club (lo privado son los entrenos y el Gym Score).
+                    if let club = realClub ?? person.club { ClubIdentityCard(club: club) }
                     if locked {
                         privateNotice
                     } else {
@@ -1213,6 +1218,7 @@ struct MeProfileView: View {
     @State private var showSettings = false
     @State private var followList: FollowListData?
     @State private var showLogros = false
+    @State private var showEditProfile = false
 
     var body: some View {
         let score = store.gymScore
@@ -1221,6 +1227,7 @@ struct MeProfileView: View {
             ScrollView {
                 VStack(spacing: 14) {
                     header(entrenos: sessionsList.count)
+                    ClubIdentityCard(club: store.profile.club) { showEditProfile = true }
                     HStack(spacing: 10) {
                         statTile("GYM SCORE", "\(score.total)")
                         statTile("RACHA", "\(store.player.streak) 🔥")
@@ -1259,6 +1266,12 @@ struct MeProfileView: View {
             .sheet(item: $followList) { FollowListSheet(title: $0.title, people: $0.people).environmentObject(store) }
             .sheet(isPresented: $showSettings) { SettingsView().environmentObject(store) }
             .sheet(isPresented: $showLogros) { LogrosView().environmentObject(store) }
+            .sheet(isPresented: $showEditProfile) {
+                NavigationStack {
+                    EditProfileView().environmentObject(store)
+                        .toolbar { ToolbarItem(placement: .topBarTrailing) { Button("Listo") { showEditProfile = false }.fontWeight(.heavy) } }
+                }
+            }
             .onChange(of: store.account?.handle) { _ in if store.account == nil { dismiss() } }
         }
     }
@@ -1481,5 +1494,155 @@ struct AccountSetupView: View {
                 .padding(.horizontal, 12).frame(height: 46).background(Color.white).clipShape(RoundedRectangle(cornerRadius: 10))
                 .overlay(RoundedRectangle(cornerRadius: 10).stroke(Brand.line))
         }
+    }
+}
+
+// MARK: - Identidad del club en el perfil
+
+/// Tarjeta «quién es esta persona»: bio, estancia en Bali, barrio, de dónde es,
+/// deportes y qué busca. La MISMA para el perfil propio y el ajeno (fuente única).
+/// Con `onEdit` es el perfil propio: lápiz para editar y, si está vacía, invitación a
+/// rellenarla en vez de desaparecer (sin identidad no hay nada que enseñar en Discover).
+struct ClubIdentityCard: View {
+    let club: ClubIdentity
+    var onEdit: (() -> Void)? = nil
+
+    var body: some View {
+        if club.isEmpty {
+            if let onEdit { emptyInvite(onEdit) }
+        } else {
+            PanelCard {
+                HStack(alignment: .top) {
+                    if let bio = club.trimmedBio {
+                        Text(bio).font(.system(size: 16, weight: .semibold)).foregroundColor(Brand.ink)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    Spacer(minLength: 0)
+                    if let onEdit {
+                        Button { FX.tap(); onEdit() } label: {
+                            Image(systemName: "pencil").font(.system(size: 13, weight: .bold)).foregroundColor(Brand.soft)
+                                .frame(width: 30, height: 30).background(Brand.chip).clipShape(Circle())
+                        }.buttonStyle(.plain)
+                    }
+                }
+                facts
+                if !club.sportList.isEmpty {
+                    WrapLayout(spacing: 6) {
+                        ForEach(club.sportList) { s in chip("\(s.emoji) \(s.label)") }
+                    }
+                }
+                if !club.intentList.isEmpty {
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text("OPEN TO").font(.caption2).fontWeight(.heavy).foregroundColor(Brand.muted)
+                        WrapLayout(spacing: 6) {
+                            ForEach(club.intentList) { i in
+                                Label(i.label, systemImage: i.icon)
+                                    .font(.system(size: 13, weight: .heavy)).foregroundColor(Color(hex: "10150a"))
+                                    .padding(.horizontal, 11).frame(height: 30)
+                                    .background(Brand.greenSoft).clipShape(Capsule())
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    /// Estancia primero: es lo que más cambia la utilidad de conectar con alguien.
+    @ViewBuilder
+    private var facts: some View {
+        let stay = club.stay
+        let home = club.homeLine
+        if stay != nil || club.area != nil || home != nil {
+            VStack(alignment: .leading, spacing: 7) {
+                if let stay {
+                    HStack(spacing: 8) {
+                        fact(stayIcon(stay.kind), stay.headline)
+                        if let u = stay.urgency {
+                            Text(u).font(.system(size: 11, weight: .heavy)).foregroundColor(Color(hex: "a73232"))
+                                .padding(.horizontal, 8).frame(height: 22).background(Brand.redSoft).clipShape(Capsule())
+                        }
+                    }
+                }
+                if let a = club.area { fact("mappin.and.ellipse", a.label) }
+                if let home { fact("globe.europe.africa.fill", String(format: L10n.t("From %@"), home)) }
+            }
+        }
+    }
+
+    private func stayIcon(_ k: StayKind) -> String {
+        switch k {
+        case .livingHere: return "house.fill"
+        case .longTerm:   return "calendar"
+        case .until:      return "airplane.departure"
+        }
+    }
+
+    private func fact(_ icon: String, _ text: String) -> some View {
+        HStack(spacing: 7) {
+            Image(systemName: icon).font(.system(size: 13, weight: .semibold)).foregroundColor(Color(hex: "6ea300")).frame(width: 18)
+            Text(text).font(.system(size: 14, weight: .semibold)).foregroundColor(Brand.ink)
+        }
+    }
+
+    private func chip(_ text: String) -> some View {
+        Text(text).font(.system(size: 13, weight: .heavy)).foregroundColor(Brand.ink)
+            .padding(.horizontal, 11).frame(height: 30).background(Brand.chip).clipShape(Capsule())
+    }
+
+    private func emptyInvite(_ onEdit: @escaping () -> Void) -> some View {
+        PanelCard {
+            Text("Tell the club who you are").font(.system(size: 16, weight: .heavy)).foregroundColor(Brand.ink)
+            Text("Add a bio, your sports, where you're based and how long you're around. It's what people see before they connect.")
+                .font(.footnote).foregroundColor(Brand.muted).fixedSize(horizontal: false, vertical: true)
+            Button { FX.tap(); onEdit() } label: {
+                Text("Complete your profile")
+            }.buttonStyle(PrimaryButtonStyle())
+        }
+    }
+}
+
+/// Fila que salta de línea cuando no cabe (chips de longitud variable). `LazyVGrid`
+/// obliga a columnas de ancho fijo y deja «Beach volleyball» cortado junto a «BJJ».
+struct WrapLayout: Layout {
+    var spacing: CGFloat = 6
+
+    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
+        let rows = arrange(width: proposal.width ?? .infinity, subviews: subviews)
+        let width = rows.map(\.width).max() ?? 0
+        let height = rows.reduce(0) { $0 + $1.height } + spacing * CGFloat(max(0, rows.count - 1))
+        return CGSize(width: proposal.width ?? width, height: height)
+    }
+
+    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
+        var y = bounds.minY
+        for row in arrange(width: bounds.width, subviews: subviews) {
+            var x = bounds.minX
+            for i in row.indices {
+                let size = subviews[i].sizeThatFits(.unspecified)
+                subviews[i].place(at: CGPoint(x: x, y: y), proposal: ProposedViewSize(size))
+                x += size.width + spacing
+            }
+            y += row.height + spacing
+        }
+    }
+
+    private struct Row { var indices: [Int] = []; var width: CGFloat = 0; var height: CGFloat = 0 }
+
+    private func arrange(width: CGFloat, subviews: Subviews) -> [Row] {
+        var rows: [Row] = []
+        var cur = Row()
+        for i in subviews.indices {
+            let size = subviews[i].sizeThatFits(.unspecified)
+            let needed = cur.indices.isEmpty ? size.width : cur.width + spacing + size.width
+            if needed > width, !cur.indices.isEmpty {
+                rows.append(cur); cur = Row()
+            }
+            cur.width = cur.indices.isEmpty ? size.width : cur.width + spacing + size.width
+            cur.height = max(cur.height, size.height)
+            cur.indices.append(i)
+        }
+        if !cur.indices.isEmpty { rows.append(cur) }
+        return rows
     }
 }
