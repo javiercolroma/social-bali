@@ -447,3 +447,8 @@
 "Where in Bali" = "Zona de Bali";
 "Where are you from?" = "¿De dónde eres?";
 "Home city" = "Ciudad de origen";
+
+/* Edad mínima para «Dating» (2026-09-29) */
+"Dating is for members 18 and over." = "Las citas son solo para mayores de 18.";
+"Dating is for members 18 and over. Add your birth year to turn it on." = "Las citas son solo para mayores de 18. Añade tu año de nacimiento para activarlo.";
+"Dating is for members 18 and over. Add your date of birth to turn it on." = "Las citas son solo para mayores de 18. Añade tu fecha de nacimiento para activarlo.";

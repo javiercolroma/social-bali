@@ -35,7 +35,10 @@ struct OnboardingView: View {
     @State private var showFramer = false
     @State private var birthYear = 1997
     @State private var sexSel: Gender? = nil
-    @State private var aboutDone = false
+    /// Separados a propósito: antes un solo `aboutDone` hacía que saltarse el año y
+    /// pulsar Continuar en el sexo guardase 1997 (el valor por defecto de la rueda).
+    /// Con la regla de 18 años eso daba acceso a «Dating» con una edad inventada.
+    @State private var birthDone = false
     @State private var country = "España"
     @State private var city = ""
     @State private var gym = ""
@@ -285,7 +288,7 @@ struct OnboardingView: View {
                 .frame(height: 170)
             }
         } actions: {
-            primary("Continue") { aboutDone = true; advance() }
+            primary("Continue") { birthDone = true; advance() }
             skip()
         }
     }
@@ -308,7 +311,7 @@ struct OnboardingView: View {
                 .frame(height: 170)
             }
         } actions: {
-            primary("Continue") { aboutDone = true; advance() }
+            primary("Continue") { advance() }
             skip()
         }
     }
@@ -474,12 +477,19 @@ struct OnboardingView: View {
                          typing: !done) { shownBubbles.insert(Step.intents.rawValue) }
             VStack(spacing: 10) {
                 ForEach(ConnectionIntent.allCases) { i in
+                    let locked = i == .dating && !canDate
                     SelectCard(emoji: i == .training ? "🏋️" : (i == .friends ? "🤝" : "✨"),
-                               label: i.label, selected: intentsSel.contains(i.rawValue)) {
+                               label: i.label, selected: intentsSel.contains(i.rawValue) && !locked) {
                         FX.selection()
                         if intentsSel.contains(i.rawValue) { intentsSel.remove(i.rawValue) }
                         else { intentsSel.insert(i.rawValue); bounceTrigger += 1 }
                     }
+                    .disabled(locked).opacity(locked ? 0.45 : 1)
+                }
+                if !canDate {
+                    Text(birthDone ? "Dating is for members 18 and over."
+                                   : "Dating is for members 18 and over. Add your birth year to turn it on.")
+                        .font(.footnote).foregroundColor(Brand.muted).multilineTextAlignment(.center)
                 }
                 Text("You can pick more than one — and change it later.")
                     .font(.footnote).foregroundColor(Brand.muted)
@@ -489,7 +499,7 @@ struct OnboardingView: View {
             .animation(.spring(response: 0.4, dampingFraction: 0.85), value: done)
             .allowsHitTesting(done)
         } actions: {
-            primary("Continue", enabled: !intentsSel.isEmpty) { FX.success(); advance() }
+            primary("Continue", enabled: !intentsSel.subtracting(canDate ? [] : [ConnectionIntent.dating.rawValue]).isEmpty) { FX.success(); advance() }
         }
     }
 
@@ -592,18 +602,23 @@ struct OnboardingView: View {
         withAnimation(.spring(response: 0.5, dampingFraction: 0.7).delay(0.15)) { avatarIn = true }
     }
 
+    /// Solo el año (la rueda no pide más): se guarda a mitad de año, como siempre.
+    private var chosenBirthdate: Date? {
+        guard birthDone else { return nil }
+        var comp = DateComponents(); comp.year = birthYear; comp.month = 6; comp.day = 15
+        return Calendar.current.date(from: comp)
+    }
+
+    private var canDate: Bool { AgeGate.isAdult(chosenBirthdate) }
+
     private func commit() {
         var acc = Account(name: name.trimmingCharacters(in: .whitespaces), handle: normalized)
         acc.photoData = photoData
         acc.photoScale = Double(photoScale)
         acc.photoOffsetX = Double(photoOffset.width)
         acc.photoOffsetY = Double(photoOffset.height)
-        store.saveAccount(acc)
-        if aboutDone {
-            var comp = DateComponents(); comp.year = birthYear; comp.month = 6; comp.day = 15
-            if let d = Calendar.current.date(from: comp) { store.profile.birthdate = d }
-            if let g = sexSel { store.profile.sex = g.rawValue }
-        }
+        if let d = chosenBirthdate { store.profile.birthdate = d }
+        if let g = sexSel { store.profile.sex = g.rawValue }
         // De dónde eres. Se escribe también en country/city (legado) porque son los que
         // alimentan la banderita que ya se pinta en el feed y los avatares.
         if !country.isEmpty { store.profile.country = country; store.profile.homeCountry = country }
@@ -619,8 +634,11 @@ struct OnboardingView: View {
         let bio = bioText.trimmingCharacters(in: .whitespacesAndNewlines)
         store.profile.bio = bio.isEmpty ? nil : bio
         store.profile.intents = ConnectionIntent.allCases.map(\.rawValue).filter(intentsSel.contains)
+            .filter { $0 != ConnectionIntent.dating.rawValue || canDate }
 
-        store.persist()
+        // La cuenta se guarda AL FINAL: `saveAccount` sincroniza con el servidor, y
+        // antes se llamaba al principio, con el perfil del club aún sin rellenar.
+        store.saveAccount(acc)
         FX.success(sound: true)
     }
 }

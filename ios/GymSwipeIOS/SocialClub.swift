@@ -311,3 +311,18 @@ struct ClubIdentity: Codable, Hashable {
             && stay == nil && intentList.isEmpty
     }
 }
+
+// MARK: - Edad mínima para «Dating»
+
+/// Requisito de la App Store para una app con intención de citas. Sin fecha de
+/// nacimiento la edad NO se presupone. El servidor aplica la misma regla
+/// (migración 0024), así que un cliente viejo tampoco puede saltársela.
+enum AgeGate {
+    static let datingMinAge = 18
+
+    static func isAdult(_ birthdate: Date?, now: Date = Date()) -> Bool {
+        guard let birthdate else { return false }
+        let years = Calendar.current.dateComponents([.year], from: birthdate, to: now).year ?? 0
+        return years >= datingMinAge
+    }
+}

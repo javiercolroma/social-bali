@@ -193,6 +193,7 @@ final class AppStore: ObservableObject {
 
     func persist() {
         guard loaded else { return }
+        profile.enforceDatingAge()
         let snap = Persisted(
             exercises: exercises, player: player, history: history, profile: profile,
             savedWorkouts: savedWorkouts, auth: auth, account: account, relationships: relationships,
@@ -764,6 +765,11 @@ final class AppStore: ObservableObject {
             // Sube el avatar a Storage (si hay) y usa su URL pública en el perfil.
             var avatarURL: String? = nil
             if let photo = acc.photoData { avatarURL = try? await Backend.shared.uploadAvatar(photo) }
+            // La fecha va PRIMERO: el servidor rechaza «dating» si aún no la tiene.
+            if let b = profile.birthdate {
+                do { try await Backend.shared.upsertMyBirthdate(b) }
+                catch { print("[Backend] fecha de nacimiento falló:", error) }
+            }
             let row = ProfileRow(
                 id: uid,
                 handle: acc.handle,
@@ -782,6 +788,7 @@ final class AppStore: ObservableObject {
                 stay_kind: profile.stayKind,
                 stay_until: profile.stayUntil.map(StayDate.string(from:)),
                 intents: (profile.intents?.isEmpty == false) ? profile.intents : nil)
+            // (Los intents ya pasan por `enforceDatingAge` en cada `persist`.)
             do { try await Backend.shared.upsertProfile(row); print("[Backend] perfil sincronizado: @\(row.handle ?? "")") }
             catch { print("[Backend] upsert perfil falló:", error) }
         }
@@ -819,6 +826,9 @@ final class AppStore: ObservableObject {
                 profile.stayKind = p.stay_kind
                 profile.stayUntil = p.stay_until.flatMap(StayDate.date(from:))
                 profile.intents = p.intents
+                // La fecha vive aparte (privada). Sin ella, «Dating» quedaría bloqueado
+                // para alguien que ya demostró su edad antes de reinstalar.
+                if let b = (try? await Backend.shared.fetchMyBirthdate()) ?? nil { profile.birthdate = b }
                 // Usuario que YA existía: no le repitas el tutorial guiado del menú.
                 seenTours.formUnion((0..<5).map { "tour-\($0)" })
                 persist()

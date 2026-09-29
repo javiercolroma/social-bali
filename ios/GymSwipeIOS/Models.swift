@@ -116,6 +116,17 @@ struct Profile: Codable {
         set { neighborhood = newValue?.rawValue }
     }
 
+    /// ¿Puede activar «Dating»? Ver `AgeGate`.
+    var canDate: Bool { AgeGate.isAdult(birthdate) }
+
+    /// Quita «dating» si la edad no lo permite (fecha borrada, cambiada a menor o
+    /// datos de antes de la regla). Se aplica en cada guardado: así el servidor nunca
+    /// recibe un perfil que rechazaría — y con él se perdería la subida ENTERA.
+    mutating func enforceDatingAge() {
+        guard !canDate, intentList.contains(.dating) else { return }
+        intentList = intentList.filter { $0 != .dating }
+    }
+
     /// Identidad del club lista para mostrar (misma forma que la de los demás).
     var club: ClubIdentity {
         ClubIdentity(bio: bio, sports: sports, neighborhood: neighborhood, homeCity: homeCity,

@@ -88,6 +88,24 @@ final class Backend {
         try await client.from("profiles").upsert(profile).execute()
     }
 
+    /// Fecha de nacimiento: va en `profile_private` (solo la lee su dueño), NO en
+    /// `profiles`, que es pública dentro del club. Ver migración 0024.
+    func upsertMyBirthdate(_ date: Date) async throws {
+        guard let client, let uid = await currentUserIdAsync() else { throw BackendError.notConfigured }
+        struct Row: Encodable { let id: String; let birthdate: String }
+        try await client.from("profile_private")
+            .upsert(Row(id: uid.uuidString.lowercased(), birthdate: StayDate.string(from: date)), returning: .minimal)
+            .execute()
+    }
+
+    func fetchMyBirthdate() async throws -> Date? {
+        guard let client, let uid = await currentUserIdAsync() else { return nil }
+        struct Row: Decodable { let birthdate: String? }
+        let rows: [Row] = try await client.from("profile_private").select("birthdate")
+            .eq("id", value: uid.uuidString.lowercased()).limit(1).execute().value
+        return rows.first?.birthdate.flatMap(StayDate.date(from:))
+    }
+
     // MARK: - Sesiones de entreno
 
     /// Sube (o actualiza) una sesión de entreno. Idempotente por `id`.

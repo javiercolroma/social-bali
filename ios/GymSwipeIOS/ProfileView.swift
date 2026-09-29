@@ -171,7 +171,19 @@ struct EditProfileView: View {
                 Text("OPEN TO").font(.caption2).fontWeight(.heavy).foregroundColor(Brand.muted)
                 WrapLayout(spacing: 6) {
                     ForEach(ConnectionIntent.allCases) { i in
-                        toggleChip(i.label, icon: i.icon, on: store.profile.intentList.contains(i)) { toggleIntent(i) }
+                        let locked = i == .dating && !store.profile.canDate
+                        toggleChip(i.label, icon: locked ? "lock.fill" : i.icon, on: store.profile.intentList.contains(i)) { toggleIntent(i) }
+                            .disabled(locked).opacity(locked ? 0.5 : 1)
+                    }
+                }
+                if !store.profile.canDate {
+                    if store.profile.birthdate == nil {
+                        Button { birthSelection = store.profile.birthdate ?? birthSelection; showBirthPicker = true } label: {
+                            Text("Dating is for members 18 and over. Add your date of birth to turn it on.")
+                                .font(.caption).foregroundColor(Color(hex: "4b6211")).multilineTextAlignment(.leading)
+                        }.buttonStyle(.plain)
+                    } else {
+                        Text("Dating is for members 18 and over.").font(.caption).foregroundColor(Brand.soft)
                     }
                 }
             }
