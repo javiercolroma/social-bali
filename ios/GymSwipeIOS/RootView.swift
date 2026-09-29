@@ -4,7 +4,11 @@ struct IdString: Identifiable { let id: String }
 
 struct RootView: View {
     @EnvironmentObject var store: AppStore
-    @State private var tab = 0
+    /// Discover es la pestaña 5 (se añadió la última) pero se MUESTRA la primera y es la
+    /// de arranque. Los índices 0-4 no se renumeran: los tutoriales (`tour-N`,
+    /// `CoachTour.content`) y varias navegaciones (`tab = 2`…) dependen de ellos.
+    static let discoverTab = 5
+    @State private var tab = RootView.discoverTab
     @State private var showMessages = false
     @State private var messagesTab = 0
     @State private var showNotifications = false
@@ -27,6 +31,12 @@ struct RootView: View {
                 screen(2) { TrainView(onGoToPlan: { tab = 1 }) }
                 screen(3) { CommunityView(onOpenChat: { chatPerson = IdString(id: $0) }) }
                 screen(4) { ActivityView() }
+                screen(RootView.discoverTab) {
+                    DiscoverTodayView(onOpenPlans: {
+                        store.communitySection = 1   // Partner (lo que será Actividades)
+                        tab = 3
+                    })
+                }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             // Forgey se ASOMA por el lateral, esperando a ayudar (toca → chat IA;
@@ -210,7 +220,7 @@ struct RootView: View {
     /// La primera vez que entras en una sección, Forgey te da un tour (una sola vez por sección).
     /// Espera a que la pantalla asiente y no interrumpe si ya hay un tour o una hoja abierta.
     private func maybeShowTour(_ t: Int) {
-        guard store.account != nil, activeTour == nil else { return }
+        guard store.account != nil, activeTour == nil, t != RootView.discoverTab else { return }
         let key = "tour-\(t)"
         guard !store.tourSeen(key) else { return }
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.18) {
@@ -276,19 +286,22 @@ struct CustomTabBar: View {
     // resaltado se quedaba pegado en Social.
     let tab: Int
     var onSelect: (Int) -> Void
-    private let items: [(title: String, icon: String)] = [
-        ("Social", "newspaper.fill"),
-        ("Plan", "list.bullet.clipboard"),
-        ("Entreno", "dumbbell.fill"),
-        ("Comunidad", "person.3.fill"),
-        ("Actividad", "chart.bar.fill"),
+    /// (índice de pestaña, título, icono) en el ORDEN en que se muestran.
+    private let items: [(idx: Int, title: String, icon: String)] = [
+        (RootView.discoverTab, "Discover", "sparkles"),
+        (0, "Social", "newspaper.fill"),
+        (1, "Plan", "list.bullet.clipboard"),
+        (2, "Entreno", "dumbbell.fill"),
+        (3, "Comunidad", "person.3.fill"),
+        (4, "Actividad", "chart.bar.fill"),
     ]
 
     var body: some View {
         HStack(alignment: .bottom, spacing: 0) {
-            ForEach(Array(items.enumerated()), id: \.offset) { idx, item in
-                // Entreno (centro) mantiene su botón destacado; el resto son elementos suaves.
-                if idx == 2 { centerItem(idx, item) } else { tabItem(idx, item) }
+            ForEach(items, id: \.idx) { item in
+                // Entreno mantiene su botón destacado; el resto son elementos suaves.
+                if item.idx == 2 { centerItem(item.idx, (item.title, item.icon)) }
+                else { tabItem(item.idx, (item.title, item.icon)) }
             }
         }
         .padding(.horizontal, 8)

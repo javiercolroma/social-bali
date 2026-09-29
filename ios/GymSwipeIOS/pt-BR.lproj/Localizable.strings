@@ -450,3 +450,20 @@
 "Tell the club who you are" = "Conte ao clube quem você é";
 "Swimming" = "Natação";
 "Boxing" = "Boxe";
+
+/* Discover · Today's People (2026-09-29) */
+"Discover" = "Descobrir";
+"TODAY'S PEOPLE" = "PESSOAS DE HOJE";
+"%lld of %lld" = "%1$lld de %2$lld";
+"View profile" = "Ver perfil";
+"Next" = "Próximo";
+"That's everyone for today" = "Isso é tudo por hoje";
+"New people in %@" = "Gente nova em %@";
+"The best way to meet them is to do something together." = "O melhor jeito de conhecer alguém é fazer algo juntos.";
+"See plans nearby" = "Ver planos por perto";
+"Look through today's people again" = "Ver de novo as pessoas de hoje";
+"Couldn't load today's people" = "Não foi possível carregar as pessoas de hoje";
+"Check your connection and try again." = "Verifique sua conexão e tente de novo.";
+"Try again" = "Tentar de novo";
+"No one new today" = "Nenhuma pessoa nova hoje";
+"The club is still growing. New people show up here every day." = "O clube ainda está crescendo. Todo dia aparece gente nova aqui.";

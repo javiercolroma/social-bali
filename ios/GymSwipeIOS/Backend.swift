@@ -106,6 +106,22 @@ final class Backend {
         return rows.first?.birthdate.flatMap(StayDate.date(from:))
     }
 
+    // MARK: - Discover («Today's People», migración 0025)
+
+    /// El mazo de hoy (día de Bali). Lo calcula y guarda el servidor: siempre el mismo.
+    func todaysPeople() async throws -> DiscoverDeck {
+        guard let client else { throw BackendError.notConfigured }
+        return try await client.rpc("todays_people").execute().value
+    }
+
+    /// Cuántos perfiles del mazo de hoy has visto (el servidor solo lo deja avanzar).
+    func setDiscoverPosition(_ pos: Int) async {
+        guard let client else { return }
+        struct P: Encodable { let pos: Int }
+        do { try await client.rpc("discover_set_position", params: P(pos: pos)).execute() }
+        catch { print("[Backend] posición de Discover falló:", error) }
+    }
+
     // MARK: - Sesiones de entreno
 
     /// Sube (o actualiza) una sesión de entreno. Idempotente por `id`.
@@ -588,6 +604,13 @@ struct ProfileRow: Codable {
                      homeCountry: home_country, stayKind: stay_kind,
                      stayUntil: stay_until.flatMap(StayDate.date(from:)), intents: intents)
     }
+}
+
+/// Respuesta de `todays_people()`: tarjetas en el orden del mazo + por dónde vas.
+struct DiscoverDeck: Decodable {
+    let day: String
+    let position: Int
+    let profiles: [ProfileRow]
 }
 
 /// Formato de `profiles.stay_until` (columna `date` de Postgres).

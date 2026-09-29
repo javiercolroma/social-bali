@@ -452,3 +452,20 @@
 "Dating is for members 18 and over." = "Las citas son solo para mayores de 18.";
 "Dating is for members 18 and over. Add your birth year to turn it on." = "Las citas son solo para mayores de 18. Añade tu año de nacimiento para activarlo.";
 "Dating is for members 18 and over. Add your date of birth to turn it on." = "Las citas son solo para mayores de 18. Añade tu fecha de nacimiento para activarlo.";
+
+/* Discover · Today's People (2026-09-29) */
+"Discover" = "Descubrir";
+"TODAY'S PEOPLE" = "GENTE DE HOY";
+"%lld of %lld" = "%1$lld de %2$lld";
+"View profile" = "Ver perfil";
+"Next" = "Siguiente";
+"That's everyone for today" = "Eso es todo por hoy";
+"New people in %@" = "Gente nueva en %@";
+"The best way to meet them is to do something together." = "La mejor forma de conocer a alguien es hacer algo juntos.";
+"See plans nearby" = "Ver planes cerca";
+"Look through today's people again" = "Volver a ver la gente de hoy";
+"Couldn't load today's people" = "No se pudo cargar la gente de hoy";
+"Check your connection and try again." = "Comprueba tu conexión e inténtalo de nuevo.";
+"Try again" = "Reintentar";
+"No one new today" = "Hoy no hay nadie nuevo";
+"The club is still growing. New people show up here every day." = "El club todavía está creciendo. Cada día aparece gente nueva aquí.";

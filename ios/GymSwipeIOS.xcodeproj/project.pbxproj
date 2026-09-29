@@ -64,6 +64,7 @@
 		E16DCF8706F165D2CD3C5A8C /* Gamification.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3ED686425803AD9C87827576 /* Gamification.swift */; };
 		E35C82D5E1A78190A0815909 /* LiveActivityManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 51E3F8B26293A58B6A5DC2F4 /* LiveActivityManager.swift */; };
 		EF71FBCBDF30D20460C49750 /* TrainView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1DF8FC23C0BF2E64342C5D7 /* TrainView.swift */; };
+		F6BEB264E9C9B5177E3097F5 /* DiscoverTodayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 680A3742493A65804E3ABF60 /* DiscoverTodayView.swift */; };
 		F76E1D63AB375BD1BF06411F /* ForgeyPrompts.swift in Sources */ = {isa = PBXBuildFile; fileRef = 38A97EC1D8DFDFC712E3799C /* ForgeyPrompts.swift */; };
 		FBCDEE4F608FFD8E2591F44A /* GymSwipeIOSApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9CAC012CB53EB545C20ED468 /* GymSwipeIOSApp.swift */; };
 		FF1D8080F80F010C04EB3609 /* Countries.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1D19B1F26226F79DC0669B52 /* Countries.swift */; };
@@ -119,6 +120,7 @@
 		627A3AB04978CE24F42D32E8 /* SocialFeedView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SocialFeedView.swift; sourceTree = "<group>"; };
 		6323375755B5CE9680137707 /* SessionFX.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionFX.swift; sourceTree = "<group>"; };
 		65AB2F19CF6DCC5B645AB356 /* NotificationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationManager.swift; sourceTree = "<group>"; };
+		680A3742493A65804E3ABF60 /* DiscoverTodayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiscoverTodayView.swift; sourceTree = "<group>"; };
 		69A7DF84D73E712AC8C265F7 /* ForgeyChatView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ForgeyChatView.swift; sourceTree = "<group>"; };
 		6D844158ED27007A7D1CBEDB /* GymSwipeIOS.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = GymSwipeIOS.entitlements; sourceTree = "<group>"; };
 		706D917063A09C4DDB833556 /* ForgeWidget.appex */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = "wrapper.app-extension"; path = ForgeWidget.appex; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -225,6 +227,7 @@
 				A415A6402658DC75C3C37C3C /* Components.swift */,
 				1D19B1F26226F79DC0669B52 /* Countries.swift */,
 				470412DEE02D5F1B63B07DF7 /* DiscoverPeopleView.swift */,
+				680A3742493A65804E3ABF60 /* DiscoverTodayView.swift */,
 				D00693AEEFD43298AF8CCCDF /* ExerciseProgress.swift */,
 				AC0D952E1A0BC084FD9FDB7C /* Exercises.swift */,
 				794A239A7BBA8D929DC18AB0 /* ForgeyAI.swift */,
@@ -401,6 +404,7 @@
 				2A71043ED4BBAF7A09523AFF /* Components.swift in Sources */,
 				FF1D8080F80F010C04EB3609 /* Countries.swift in Sources */,
 				1844C711EF657BFC211693C5 /* DiscoverPeopleView.swift in Sources */,
+				F6BEB264E9C9B5177E3097F5 /* DiscoverTodayView.swift in Sources */,
 				AF24880BEDF82C1B96C5A49E /* ExerciseProgress.swift in Sources */,
 				942CEB3E1BDC0BABD1CB038F /* Exercises.swift in Sources */,
 				458BEC9F5810FC7661380077 /* ForgeyAI.swift in Sources */,

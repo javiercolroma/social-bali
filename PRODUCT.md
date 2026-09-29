@@ -172,9 +172,30 @@ rehecho alrededor de esto. Migración de `profiles`.
 - [x] **Edad mínima 18 para `dating`** (requisito de la App Store, tensión #3). Sin fecha de nacimiento **no se presupone la edad**: «Dating» sale bloqueado con un aviso que lleva a ponerla. Regla única `AgeGate` en onboarding y edición; `Profile.enforceDatingAge()` en cada `persist` para que el servidor nunca reciba un perfil que rechazaría (se perdería la subida entera). De paso: saltarse el año y pulsar Continuar en el sexo guardaba **1997** (valor por defecto de la rueda), y el onboarding sincronizaba **antes** de escribir el perfil del club.
 - [x] **Migración `0024_dating_age_gate` aplicada** (la garantía del servidor; verificado en vivo: 2 triggers, RLS activo, `anon` no lee fechas). La fecha va en `profile_private` (solo la lee su dueño), NO en `profiles`: esa tabla es pública, y ocultar la columna con permisos por columna **rompía todos los upsert de la app** (PostgREST pide la fila de vuelta). Probada en una transacción con rollback contra la BD real: 11/11 casos. La app ya funciona con ella o sin ella.
 
-### Fase 2 · Discover
+### Fase 2 · Discover — 🟡 EN CURSO (primera versión en TestFlight)
 «Today's People»: 10-15 perfiles al día, curados, con final explícito. Tarjeta de perfil
 que mezcle fotos, personalidad, deportes, barrio, situación en Bali y actividad real.
+
+Decisiones (2026-09-29): pestaña propia y **la primera**; en cada perfil **Ver perfil** o
+**Siguiente** (conectar con motivo es la Fase 3); al acabar, **«Eso es todo por hoy»** con
+cuenta atrás y empujón a los planes cercanos; para probar, **perfiles de prueba marcados**.
+
+- [x] **Selección en el SERVIDOR** (`todays_people()`, migración `0025`): el mazo se calcula
+  una vez al día (día de **Bali**, UTC+8) y se guarda → igual en cualquier dispositivo, no se
+  regenera reinstalando, no se manipula desde el cliente. La posición también se guarda.
+- [x] **Filtros**: ni tú, ni bloqueos (en ambos sentidos), ni gente ya conectada, ni quien ya
+  se fue de Bali, ni perfiles sin bio ni deportes. Lo visto en 14 días va al final.
+- [x] **Orden**: barrio (mismo 30 / zona de arranque 12) + deportes en común (10 c/u, tope 30)
+  + intenciones compatibles (15) + actividad real reciente (≤10) + Gym Score (≤10) +
+  variación estable por día. **Nunca atractivo físico** (principio 8).
+- [x] **«Dating» solo lo ve quien también lo busca** (y tiene 18+): se quita de la tarjeta.
+- [x] Pantalla `DiscoverTodayView`: barra «4 de 15», tarjeta de identidad, final del día.
+  En 5 idiomas. Verificada con un mazo REAL generado por la función del servidor.
+- [x] **20 perfiles de prueba** (`backend/supabase/seed/`, `is_seed = true`). **Borrarlos antes
+  de abrir a gente real**: `delete from auth.users where id in (select id from public.profiles where is_seed);`
+- [ ] **Fotos en la tarjeta** (hoy: foto de perfil si la hay; si no, el emoji de su primer deporte).
+- [ ] **Señales de actividad legibles** («entrena 4×/semana», «activo 8 semanas») en vez del
+  número del Gym Score. Requiere agregar sesiones en el servidor.
 
 ### Fase 3 · Connect con contexto
 Intents (*train* · *surf* · *coffee* · *interested*) → el receptor ve **el motivo**.
