@@ -47,6 +47,7 @@
 		AF24880BEDF82C1B96C5A49E /* ExerciseProgress.swift in Sources */ = {isa = PBXBuildFile; fileRef = D00693AEEFD43298AF8CCCDF /* ExerciseProgress.swift */; };
 		B087CB2C4C5E2848E78E6BFE /* WorkoutRemote.swift in Sources */ = {isa = PBXBuildFile; fileRef = 896F243436BE8AEDD8406091 /* WorkoutRemote.swift */; };
 		B2BA2EDCA173DDEDD61FF8BD /* SocialViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = A94209F7155C5A09DA6E950A /* SocialViews.swift */; };
+		B4C61EC392493D8C74EF5E39 /* Connections.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0B199B340DE39BAD8B333E2E /* Connections.swift */; };
 		BA42448E61D8F741BC01820C /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD5D6AB5B854D33B50CA68B /* OnboardingView.swift */; };
 		BAD7EE358BFA5FB317D4B4BE /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = 576D24DF9F2FA5F465491620 /* Localizable.strings */; };
 		BEBB454C3035C16BFE9C0067 /* RankingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 351AF069FE04261E1DB0C543 /* RankingView.swift */; };
@@ -94,6 +95,7 @@
 
 /* Begin PBXFileReference section */
 		00CC401644E3732F65E33662 /* L10n.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = L10n.swift; sourceTree = "<group>"; };
+		0B199B340DE39BAD8B333E2E /* Connections.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Connections.swift; sourceTree = "<group>"; };
 		1250C29A42354C7EA62ADC58 /* GymScore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GymScore.swift; sourceTree = "<group>"; };
 		1D19B1F26226F79DC0669B52 /* Countries.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Countries.swift; sourceTree = "<group>"; };
 		1F53B2A5BC994A07563AE966 /* es */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = es; path = es.lproj/Localizable.strings; sourceTree = "<group>"; };
@@ -211,6 +213,7 @@
 				F01F3A6BA9BE74390787A187 /* CloudAI.swift */,
 				4B553BE8FEA6DE363E4659DB /* CommunityView.swift */,
 				A415A6402658DC75C3C37C3C /* Components.swift */,
+				0B199B340DE39BAD8B333E2E /* Connections.swift */,
 				1D19B1F26226F79DC0669B52 /* Countries.swift */,
 				470412DEE02D5F1B63B07DF7 /* DiscoverPeopleView.swift */,
 				680A3742493A65804E3ABF60 /* DiscoverTodayView.swift */,
@@ -387,6 +390,7 @@
 				66942C5A1FB587F87FB98CCC /* CloudAI.swift in Sources */,
 				27B6D8D9F090BE9793602AA9 /* CommunityView.swift in Sources */,
 				2A71043ED4BBAF7A09523AFF /* Components.swift in Sources */,
+				B4C61EC392493D8C74EF5E39 /* Connections.swift in Sources */,
 				FF1D8080F80F010C04EB3609 /* Countries.swift in Sources */,
 				1844C711EF657BFC211693C5 /* DiscoverPeopleView.swift in Sources */,
 				F6BEB264E9C9B5177E3097F5 /* DiscoverTodayView.swift in Sources */,

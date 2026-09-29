@@ -64,6 +64,13 @@ final class AppStore: ObservableObject {
     @Published var pendingFollowingIds: Set<String> = []
     /// Personas con las que tienes conversación real (para resolver nombre/avatar en Mensajes).
     @Published var messagedPeople: [SocialPerson] = []
+    /// Conectar con motivo (Fase 3, ver Connections.swift): solicitudes visibles para mí
+    /// (enviadas, recibidas y aceptadas) y los perfiles de quienes me las enviaron.
+    @Published var connections: [ConnectionRow] = []
+    @Published var connectionPeople: [SocialPerson] = []
+    /// Abre el chat con esta persona desde cualquier pantalla (RootView lo observa).
+    @Published var openChatWith: String? = nil
+    var myUserId: String? = nil
     /// Perfil a abrir por deep link de invitación (forgeloop://user/<usuario>). Efímero.
     @Published var deepLinkPersonId: String? = nil
     /// Mi celda (~5 km) del servidor, para distancias aproximadas en Partner.
@@ -294,7 +301,7 @@ final class AppStore: ObservableObject {
     func person(_ id: String) -> SocialPerson? {
         // Insensible a mayúsculas (Postgres da el UUID en minúscula; Swift en mayúscula).
         let key = id.lowercased()
-        let all = people + followingPeople + followerPeople + messagedPeople
+        let all = people + followingPeople + followerPeople + messagedPeople + connectionPeople
         if let p = all.first(where: { $0.id.lowercased() == key }) { return p }
         // Usuario real no cacheado: placeholder para que SIEMPRE se abra el perfil;
         // FriendProfileView carga sus datos reales (nombre, sesiones, contadores).
@@ -878,6 +885,7 @@ final class AppStore: ObservableObject {
         equippedForgey = nil
         equippedTitle = nil
         realLeaderboard = []
+        connections = []; connectionPeople = []; myUserId = nil
         followingPeople = []
         followerPeople = []
         messagedPeople = []

@@ -380,7 +380,9 @@ struct FriendsContent: View {
                 Button { FX.warning(); store.rejectFriendRequest(person.id) } label: { Image(systemName: "xmark").foregroundColor(Color(hex: "a73232")) }
                     .frame(width: 36, height: 36).background(Brand.redSoft).clipShape(RoundedRectangle(cornerRadius: 10))
             case .friends:
-                Button { FX.tap(); onOpenChat(person.id) } label: { Label("Mensaje", systemImage: "message.fill").font(.system(size: 12, weight: .heavy)) }
+                if !BackendConfig.isConfigured || store.isConnected(person.id) {
+                    Button { FX.tap(); onOpenChat(person.id) } label: { Label("Mensaje", systemImage: "message.fill").font(.system(size: 12, weight: .heavy)) }
+                }
             case .outgoing:
                 Button { FX.tap(); store.followOrRequest(person.id) } label: {
                     Label("Pendiente", systemImage: "clock").font(.system(size: 12, weight: .heavy)).foregroundColor(Brand.ink)
@@ -436,6 +438,10 @@ struct ChatView: View {
     }
 
     private var person: SocialPerson? { store.person(personId) }
+    /// Usuario real sin conexión aceptada: el servidor rechazaría el mensaje (0026).
+    private var mustConnectFirst: Bool {
+        BackendConfig.isConfigured && UUID(uuidString: personId) != nil && !store.isConnected(personId)
+    }
     private var conversation: Conversation? { store.conversations.first { $0.personId == personId } }
     private var messages: [ChatMessage] { realMode ? realMessages : (conversation?.messages ?? []) }
 
@@ -469,6 +475,15 @@ struct ChatView: View {
             .padding(.horizontal, 16).padding(.vertical, 12)
             .background(Brand.bg).overlay(Divider(), alignment: .bottom)
 
+            // La conversación nace con un motivo (PRODUCT.md, principio 4).
+            if case .connected(let r) = store.connectionState(personId) {
+                Text("\(r.emoji) \(String(format: L10n.t("You connected to %@"), r.label.lowercased()))")
+                    .font(.caption).fontWeight(.semibold).foregroundColor(Color(hex: "4b6211"))
+                    .padding(.horizontal, 12).padding(.vertical, 6)
+                    .background(Brand.greenSoft.opacity(0.6)).clipShape(Capsule())
+                    .padding(.top, 8)
+            }
+
             ScrollViewReader { proxy in
                 ScrollView {
                     VStack(spacing: 8) {
@@ -485,6 +500,15 @@ struct ChatView: View {
                 }
             }
 
+            if mustConnectFirst {
+                VStack(spacing: 6) {
+                    Text("Connect first to send a message").font(.system(size: 15, weight: .heavy)).foregroundColor(Brand.ink)
+                    Text("Messages open once you've both agreed to connect.")
+                        .font(.caption).foregroundColor(Brand.muted).multilineTextAlignment(.center)
+                }
+                .frame(maxWidth: .infinity).padding(.horizontal, 14).padding(.vertical, 14)
+                .background(Brand.bg).overlay(Divider(), alignment: .top)
+            } else {
             VStack(spacing: 8) {
                 // Adjunto pendiente: el entreno elegido se coloca aquí (no se envía hasta pulsar enviar).
                 if let w = pendingWorkout {
@@ -519,6 +543,7 @@ struct ChatView: View {
             }
             .padding(.horizontal, 14).padding(.vertical, 10)
             .background(Brand.bg).overlay(Divider(), alignment: .top)
+            }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Brand.bg.ignoresSafeArea())
@@ -1023,7 +1048,9 @@ struct FriendProfileView: View {
                     header(entrenos: sessionsList.count, locked: locked)
                     // Visible aunque la cuenta sea privada: la identidad es la cara pública
                     // dentro del club (lo privado son los entrenos y el Gym Score).
-                    if let club = realClub ?? person.club { ClubIdentityCard(club: club) }
+                    if let club = realClub ?? person.club {
+                        ClubIdentityCard(club: club.visible(toViewerOpenToDating: store.iAmOpenToDating))
+                    }
                     if locked {
                         privateNotice
                     } else {
@@ -1070,6 +1097,8 @@ struct FriendProfileView: View {
             .sheet(item: $followList) { FollowListSheet(title: $0.title, people: $0.people).environmentObject(store) }
         }
         .task { await loadReal() }
+        // Al abrir el chat (aceptar, «Message») el perfil se cierra para que se vea.
+        .onChange(of: store.openChatWith) { v in if v != nil { dismiss() } }
     }
 
     private func reportUser() {
@@ -1138,6 +1167,10 @@ struct FriendProfileView: View {
                     if person.isPrivate { Image(systemName: "lock.fill").font(.system(size: 13)).foregroundColor(Brand.soft) }
                 }
                 Text("@\(realHandle ?? person.handle)").font(.subheadline).foregroundColor(Brand.muted)
+            }
+            if BackendConfig.isConfigured, UUID(uuidString: person.id) != nil {
+                ConnectControl(personId: person.id,
+                               theyAreOpenToDating: (realClub ?? person.club)?.intentList.contains(.dating) ?? false)
             }
             profileCountsRow(entrenos: entrenos,
                              seguidores: realFollowers ?? (deterministicCount(person.id, salt: 7, lo: 40, hi: 1500) + (store.relationship(person.id) == .friends ? 1 : 0)),

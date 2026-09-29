@@ -211,6 +211,19 @@ Decidido (2026-09-29): **solicitud con motivo, visible** (Entrenar · Surf · Ca
 quién y por qué; si acepta, se abre el chat. **«Me interesa» (citas) solo se revela si es mutuo.**
 Sin conexión aceptada no se puede escribir. Fotos: la de perfil manda + **hasta 4 fotos de
 actividad opcionales** con una invitación amable, más las fotos de sus entrenos.
+
+- [x] **Servidor** (migración `0026`, aplicada): `connection_requests` + `send_connection()` /
+  `respond_connection()`. Probado con rollback, 18 casos: «interested» invisible hasta ser mutuo
+  y solo entre 18+ que buscan citas; si los dos lo piden se conecta solo; **rechazo silencioso**
+  (quien envía sigue viendo «enviada» y no puede insistir); con bloqueo no hay solicitud.
+- [x] **Mensajes cerrados sin conexión**: `messages_insert` exige `can_message_to()` (conexión
+  aceptada y sin bloqueos). En la app, el chat sin conexión enseña «Conecta primero».
+- [x] **App**: botón **Conectar** (Entrenar juntos · Surfear · Café, y «Me interesa» solo si ambos
+  buscan citas) en la tarjeta de Descubrir y en el perfil; aviso «N personas quieren conectar»
+  arriba de Descubrir; aceptar **abre el chat** con el motivo arriba («Conectasteis para surfear»).
+- [x] El perfil completo ya no enseña «Dating» a quien no lo busca (Descubrir ya venía filtrado).
+- [ ] Notificación push al recibir una solicitud.
+- [ ] Fotos de actividad (hasta 4) con invitación amable + fotos de entrenos en la tarjeta.
 Intents (*train* · *surf* · *coffee* · *interested*) → el receptor ve **el motivo**.
 Mutuo = conexión y se abre el chat. Convive con el *follow* actual sin sustituirlo aún.
 

@@ -47,7 +47,7 @@ struct GymSwipeIOSApp: App {
                 if store.auth != nil && store.account == nil { store.hydrateAccountFromBackend() }
                 store.syncSessionsFromBackend(); store.syncWorkoutsFromBackend(); store.loadLeaderboard()
                 Task { await Backend.shared.touchPresence() }   // cuenta como "activo" (30 días)
-                store.loadFollowing(); store.loadConversations()
+                store.loadFollowing(); store.loadConversations(); store.loadConnections()
             }
             // Al volver a primer plano: re-sincroniza (SUBE cualquier entreno que no subiera en su
             // momento) y refresca no leídos. Así el muro del otro ve TODOS los entrenos.

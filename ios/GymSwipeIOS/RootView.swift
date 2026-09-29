@@ -59,6 +59,17 @@ struct RootView: View {
             profilePerson = IdString(id: pid)
             store.deepLinkPersonId = nil
         }
+        // «Message» / aceptar una conexión: cierra lo que haya encima y abre el chat.
+        .onReceive(store.$openChatWith.compactMap { $0 }) { pid in
+            profilePerson = nil; showProfile = false; showMessages = false; showNotifications = false
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.45) {
+                chatPerson = IdString(id: pid)
+                // Se limpia DESPUÉS: las hojas que no son de RootView (perfil y solicitudes
+                // abiertos desde Descubrir) se cierran al VER el valor; si se limpiara en el
+                // mismo instante, SwiftUI podría fundir los dos cambios y no verían ninguno.
+                store.openChatWith = nil
+            }
+        }
         // Tras el onboarding (la cuenta pasa a existir), muestra el tour de Social.
         .onChange(of: store.account == nil) { isNil in if !isNil { maybeShowTour(tab) } }
         .sheet(isPresented: $showMessages) {

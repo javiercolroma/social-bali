@@ -13,6 +13,7 @@ struct DiscoverTodayView: View {
     @State private var loading = true
     @State private var failed = false
     @State private var openProfile: SocialPerson?
+    @State private var showRequests = false
 
     var body: some View {
         Group {
@@ -40,6 +41,24 @@ struct DiscoverTodayView: View {
             Task { try? await Task.sleep(nanoseconds: 2_500_000_000); await load() }
         }
         .sheet(item: $openProfile) { FriendProfileView(person: $0).environmentObject(store) }
+        .sheet(isPresented: $showRequests) { ConnectionRequestsSheet().environmentObject(store) }
+        // Al abrir un chat (aceptar, «Message») se cierra el perfil para que se vea.
+        .onChange(of: store.openChatWith) { v in if v != nil { openProfile = nil } }
+    }
+
+    /// «2 people want to connect»: lo primero que ves si alguien te ha escrito.
+    private var requestsBanner: some View {
+        Button { FX.tap(); showRequests = true } label: {
+            HStack(spacing: 10) {
+                Image(systemName: "hand.wave.fill").font(.system(size: 18)).foregroundColor(Color(hex: "10150a"))
+                Text(String(format: L10n.t("%lld people want to connect"), store.incomingRequests.count))
+                    .font(.system(size: 15, weight: .heavy)).foregroundColor(Color(hex: "10150a"))
+                Spacer()
+                Image(systemName: "chevron.right").font(.system(size: 13, weight: .bold)).foregroundColor(Color(hex: "10150a"))
+            }
+            .padding(.horizontal, 14).frame(height: 52)
+            .background(Brand.green).clipShape(RoundedRectangle(cornerRadius: 14))
+        }.buttonStyle(.plain)
     }
 
     // MARK: Feed
@@ -47,6 +66,7 @@ struct DiscoverTodayView: View {
     private var feed: some View {
         ScrollView {
             LazyVStack(spacing: 18) {
+                if !store.incomingRequests.isEmpty { requestsBanner }
                 header
                 ForEach(Array(people.enumerated()), id: \.element.id) { i, row in
                     DiscoverPersonCard(row: row) { FX.tap(); openProfile = AppStore.asPeople([row])[0] }
@@ -115,6 +135,7 @@ struct DiscoverTodayView: View {
         for attempt in 0..<3 {
             do {
                 let deck = try await Backend.shared.todaysPeople()
+                store.loadConnections()
                 people = deck.profiles
                 seen = deck.position
                 day = deck.day
@@ -214,11 +235,15 @@ struct DiscoverPersonCard: View {
                         }
                     }
                 }
-                Button(action: onOpen) {
-                    Text("View profile").font(.system(size: 15, weight: .heavy)).foregroundColor(Brand.ink)
-                        .frame(maxWidth: .infinity).frame(height: 44)
-                        .background(Brand.chip).clipShape(RoundedRectangle(cornerRadius: 12))
-                }.buttonStyle(.plain)
+                HStack(spacing: 8) {
+                    ConnectControl(personId: row.id.uuidString,
+                                   theyAreOpenToDating: club.intentList.contains(.dating))
+                    Button(action: onOpen) {
+                        Text("Profile").font(.system(size: 15, weight: .heavy)).foregroundColor(Brand.ink)
+                            .padding(.horizontal, 16).frame(height: 44)
+                            .background(Brand.chip).clipShape(RoundedRectangle(cornerRadius: 12))
+                    }.buttonStyle(.plain)
+                }
             }
             .padding(14)
         }

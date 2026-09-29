@@ -468,3 +468,27 @@
 "No one new today" = "Personne de nouveau aujourd'hui";
 "The club is still growing. New people show up here every day." = "Le club grandit encore. De nouvelles personnes arrivent ici chaque jour.";
 "%lld people in Bali you might click with" = "%lld personnes à Bali avec qui ça pourrait coller";
+
+/* Conectar con motivo (Fase 3, 2026-09-29) */
+"Train together" = "S'entraîner ensemble";
+"Surf sometime" = "Surfer un de ces jours";
+"Grab a coffee" = "Prendre un café";
+"I'm interested" = "Ça m'intéresse";
+"wants to train together" = "veut s'entraîner avec toi";
+"wants to surf sometime" = "veut surfer avec toi";
+"wants to grab a coffee" = "veut prendre un café avec toi";
+"is interested in you" = "s'intéresse à toi";
+"Connect" = "Se connecter";
+"Interested · private" = "Intéressé·e · privé";
+"Request sent" = "Demande envoyée";
+"They'll only know if they're interested too." = "Cette personne ne le saura que si c'est réciproque.";
+"Accept" = "Accepter";
+"Message" = "Message";
+"No pending requests" = "Aucune demande en attente";
+"Connection requests" = "Demandes";
+"You're connected!" = "Vous êtes connectés !";
+"%lld people want to connect" = "%lld personnes veulent se connecter";
+"Profile" = "Profil";
+"You connected to %@" = "Vous vous êtes connectés pour %@";
+"Connect first to send a message" = "Connecte-toi d'abord pour écrire";
+"Messages open once you've both agreed to connect." = "Les messages s'ouvrent quand vous avez tous les deux accepté.";

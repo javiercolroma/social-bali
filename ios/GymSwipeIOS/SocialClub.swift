@@ -305,6 +305,15 @@ struct ClubIdentity: Codable, Hashable {
         return (city.isEmpty ? country : city) + flag
     }
 
+    /// Como la ve otra persona: «dating» solo aparece a quien también lo busca (y puede).
+    /// Descubrir ya lo recibe filtrado del servidor; el perfil completo lo filtra aquí.
+    func visible(toViewerOpenToDating viewerDates: Bool) -> ClubIdentity {
+        guard !viewerDates else { return self }
+        var c = self
+        c.intents = intents?.filter { $0 != ConnectionIntent.dating.rawValue }
+        return c
+    }
+
     /// Nada que enseñar: el perfil ajeno oculta la tarjeta; el propio invita a rellenarla.
     var isEmpty: Bool {
         trimmedBio == nil && sportList.isEmpty && area == nil && homeLine == nil
