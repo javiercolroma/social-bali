@@ -26,3 +26,10 @@ dist-ssr
 xcuserdata/
 *.xcuserstate
 ios/.spm-cache/
+
+# Artefactos de la subida a TestFlight (ios/resign.sh)
+ios/ForgeLoop.xcarchive/
+ios/export/
+ios/ipa/
+ios/ent-app.plist
+ios/ent-ext.plist
