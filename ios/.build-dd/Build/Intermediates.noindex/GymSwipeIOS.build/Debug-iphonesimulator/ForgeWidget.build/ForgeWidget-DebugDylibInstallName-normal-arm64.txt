@@ -1,1 +1,0 @@
-@rpath/ForgeWidget.debug.dylib
