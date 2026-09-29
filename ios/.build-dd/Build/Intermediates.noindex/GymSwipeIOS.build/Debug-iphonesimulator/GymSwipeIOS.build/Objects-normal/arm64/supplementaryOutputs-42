@@ -1,0 +1,37 @@
+{
+  "/Users/javiercolas/Documents/gym-swipe-ios/ios/GymSwipeIOS/Models.swift" : {
+    "const-values" : "/Users/javiercolas/Documents/gym-swipe-ios/ios/.build-dd/Build/Intermediates.noindex/GymSwipeIOS.build/Debug-iphonesimulator/GymSwipeIOS.build/Objects-normal/arm64/Models.swiftconstvalues",
+    "dependencies" : "/Users/javiercolas/Documents/gym-swipe-ios/ios/.build-dd/Build/Intermediates.noindex/GymSwipeIOS.build/Debug-iphonesimulator/GymSwipeIOS.build/Objects-normal/arm64/Models.d",
+    "diagnostics" : "/Users/javiercolas/Documents/gym-swipe-ios/ios/.build-dd/Build/Intermediates.noindex/GymSwipeIOS.build/Debug-iphonesimulator/GymSwipeIOS.build/Objects-normal/arm64/Models.dia",
+    "object" : "/Users/javiercolas/Documents/gym-swipe-ios/ios/.build-dd/Build/Intermediates.noindex/GymSwipeIOS.build/Debug-iphonesimulator/GymSwipeIOS.build/Objects-normal/arm64/Models.o",
+    "swift-dependencies" : "/Users/javiercolas/Documents/gym-swipe-ios/ios/.build-dd/Build/Intermediates.noindex/GymSwipeIOS.build/Debug-iphonesimulator/GymSwipeIOS.build/Objects-normal/arm64/Models.swiftdeps"
+  },
+  "/Users/javiercolas/Documents/gym-swipe-ios/ios/GymSwipeIOS/NotificationManager.swift" : {
+    "const-values" : "/Users/javiercolas/Documents/gym-swipe-ios/ios/.build-dd/Build/Intermediates.noindex/GymSwipeIOS.build/Debug-iphonesimulator/GymSwipeIOS.build/Objects-normal/arm64/NotificationManager.swiftconstvalues",
+    "dependencies" : "/Users/javiercolas/Documents/gym-swipe-ios/ios/.build-dd/Build/Intermediates.noindex/GymSwipeIOS.build/Debug-iphonesimulator/GymSwipeIOS.build/Objects-normal/arm64/NotificationManager.d",
+    "diagnostics" : "/Users/javiercolas/Documents/gym-swipe-ios/ios/.build-dd/Build/Intermediates.noindex/GymSwipeIOS.build/Debug-iphonesimulator/GymSwipeIOS.build/Objects-normal/arm64/NotificationManager.dia",
+    "object" : "/Users/javiercolas/Documents/gym-swipe-ios/ios/.build-dd/Build/Intermediates.noindex/GymSwipeIOS.build/Debug-iphonesimulator/GymSwipeIOS.build/Objects-normal/arm64/NotificationManager.o",
+    "swift-dependencies" : "/Users/javiercolas/Documents/gym-swipe-ios/ios/.build-dd/Build/Intermediates.noindex/GymSwipeIOS.build/Debug-iphonesimulator/GymSwipeIOS.build/Objects-normal/arm64/NotificationManager.swiftdeps"
+  },
+  "/Users/javiercolas/Documents/gym-swipe-ios/ios/GymSwipeIOS/OnboardingView.swift" : {
+    "const-values" : "/Users/javiercolas/Documents/gym-swipe-ios/ios/.build-dd/Build/Intermediates.noindex/GymSwipeIOS.build/Debug-iphonesimulator/GymSwipeIOS.build/Objects-normal/arm64/OnboardingView.swiftconstvalues",
+    "dependencies" : "/Users/javiercolas/Documents/gym-swipe-ios/ios/.build-dd/Build/Intermediates.noindex/GymSwipeIOS.build/Debug-iphonesimulator/GymSwipeIOS.build/Objects-normal/arm64/OnboardingView.d",
+    "diagnostics" : "/Users/javiercolas/Documents/gym-swipe-ios/ios/.build-dd/Build/Intermediates.noindex/GymSwipeIOS.build/Debug-iphonesimulator/GymSwipeIOS.build/Objects-normal/arm64/OnboardingView.dia",
+    "object" : "/Users/javiercolas/Documents/gym-swipe-ios/ios/.build-dd/Build/Intermediates.noindex/GymSwipeIOS.build/Debug-iphonesimulator/GymSwipeIOS.build/Objects-normal/arm64/OnboardingView.o",
+    "swift-dependencies" : "/Users/javiercolas/Documents/gym-swipe-ios/ios/.build-dd/Build/Intermediates.noindex/GymSwipeIOS.build/Debug-iphonesimulator/GymSwipeIOS.build/Objects-normal/arm64/OnboardingView.swiftdeps"
+  },
+  "/Users/javiercolas/Documents/gym-swipe-ios/ios/GymSwipeIOS/PartnerView.swift" : {
+    "const-values" : "/Users/javiercolas/Documents/gym-swipe-ios/ios/.build-dd/Build/Intermediates.noindex/GymSwipeIOS.build/Debug-iphonesimulator/GymSwipeIOS.build/Objects-normal/arm64/PartnerView.swiftconstvalues",
+    "dependencies" : "/Users/javiercolas/Documents/gym-swipe-ios/ios/.build-dd/Build/Intermediates.noindex/GymSwipeIOS.build/Debug-iphonesimulator/GymSwipeIOS.build/Objects-normal/arm64/PartnerView.d",
+    "diagnostics" : "/Users/javiercolas/Documents/gym-swipe-ios/ios/.build-dd/Build/Intermediates.noindex/GymSwipeIOS.build/Debug-iphonesimulator/GymSwipeIOS.build/Objects-normal/arm64/PartnerView.dia",
+    "object" : "/Users/javiercolas/Documents/gym-swipe-ios/ios/.build-dd/Build/Intermediates.noindex/GymSwipeIOS.build/Debug-iphonesimulator/GymSwipeIOS.build/Objects-normal/arm64/PartnerView.o",
+    "swift-dependencies" : "/Users/javiercolas/Documents/gym-swipe-ios/ios/.build-dd/Build/Intermediates.noindex/GymSwipeIOS.build/Debug-iphonesimulator/GymSwipeIOS.build/Objects-normal/arm64/PartnerView.swiftdeps"
+  },
+  "/Users/javiercolas/Documents/gym-swipe-ios/ios/GymSwipeIOS/PhotoSupport.swift" : {
+    "const-values" : "/Users/javiercolas/Documents/gym-swipe-ios/ios/.build-dd/Build/Intermediates.noindex/GymSwipeIOS.build/Debug-iphonesimulator/GymSwipeIOS.build/Objects-normal/arm64/PhotoSupport.swiftconstvalues",
+    "dependencies" : "/Users/javiercolas/Documents/gym-swipe-ios/ios/.build-dd/Build/Intermediates.noindex/GymSwipeIOS.build/Debug-iphonesimulator/GymSwipeIOS.build/Objects-normal/arm64/PhotoSupport.d",
+    "diagnostics" : "/Users/javiercolas/Documents/gym-swipe-ios/ios/.build-dd/Build/Intermediates.noindex/GymSwipeIOS.build/Debug-iphonesimulator/GymSwipeIOS.build/Objects-normal/arm64/PhotoSupport.dia",
+    "object" : "/Users/javiercolas/Documents/gym-swipe-ios/ios/.build-dd/Build/Intermediates.noindex/GymSwipeIOS.build/Debug-iphonesimulator/GymSwipeIOS.build/Objects-normal/arm64/PhotoSupport.o",
+    "swift-dependencies" : "/Users/javiercolas/Documents/gym-swipe-ios/ios/.build-dd/Build/Intermediates.noindex/GymSwipeIOS.build/Debug-iphonesimulator/GymSwipeIOS.build/Objects-normal/arm64/PhotoSupport.swiftdeps"
+  }
+}

@@ -32,8 +32,6 @@ cat > "$SP/ent-app.plist" <<'EOF'
   <key>application-identifier</key><string>5JHD53WQ67.com.javiercolroma.gymswipeios</string>
   <key>com.apple.developer.team-identifier</key><string>5JHD53WQ67</string>
   <key>com.apple.developer.applesignin</key><array><string>Default</string></array>
-  <key>com.apple.developer.healthkit</key><true/>
-  <key>com.apple.developer.healthkit.access</key><array/>
   <key>beta-reports-active</key><true/>
   <key>get-task-allow</key><false/>
 </dict></plist>

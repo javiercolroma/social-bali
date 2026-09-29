@@ -1,0 +1,23 @@
+{
+  "/Users/javiercolas/Documents/gym-swipe-ios/ios/.spm-cache/checkouts/supabase-swift/Sources/Realtime/Types.swift" : {
+    "const-values" : "/Users/javiercolas/Documents/gym-swipe-ios/ios/.build-dd/Build/Intermediates.noindex/Supabase.build/Debug-iphonesimulator/Realtime.build/Objects-normal/arm64/Types.swiftconstvalues",
+    "dependencies" : "/Users/javiercolas/Documents/gym-swipe-ios/ios/.build-dd/Build/Intermediates.noindex/Supabase.build/Debug-iphonesimulator/Realtime.build/Objects-normal/arm64/Types.d",
+    "diagnostics" : "/Users/javiercolas/Documents/gym-swipe-ios/ios/.build-dd/Build/Intermediates.noindex/Supabase.build/Debug-iphonesimulator/Realtime.build/Objects-normal/arm64/Types.dia",
+    "object" : "/Users/javiercolas/Documents/gym-swipe-ios/ios/.build-dd/Build/Intermediates.noindex/Supabase.build/Debug-iphonesimulator/Realtime.build/Objects-normal/arm64/Types.o",
+    "swift-dependencies" : "/Users/javiercolas/Documents/gym-swipe-ios/ios/.build-dd/Build/Intermediates.noindex/Supabase.build/Debug-iphonesimulator/Realtime.build/Objects-normal/arm64/Types.swiftdeps"
+  },
+  "/Users/javiercolas/Documents/gym-swipe-ios/ios/.spm-cache/checkouts/supabase-swift/Sources/Realtime/WebSocket/URLSessionWebSocket.swift" : {
+    "const-values" : "/Users/javiercolas/Documents/gym-swipe-ios/ios/.build-dd/Build/Intermediates.noindex/Supabase.build/Debug-iphonesimulator/Realtime.build/Objects-normal/arm64/URLSessionWebSocket.swiftconstvalues",
+    "dependencies" : "/Users/javiercolas/Documents/gym-swipe-ios/ios/.build-dd/Build/Intermediates.noindex/Supabase.build/Debug-iphonesimulator/Realtime.build/Objects-normal/arm64/URLSessionWebSocket.d",
+    "diagnostics" : "/Users/javiercolas/Documents/gym-swipe-ios/ios/.build-dd/Build/Intermediates.noindex/Supabase.build/Debug-iphonesimulator/Realtime.build/Objects-normal/arm64/URLSessionWebSocket.dia",
+    "object" : "/Users/javiercolas/Documents/gym-swipe-ios/ios/.build-dd/Build/Intermediates.noindex/Supabase.build/Debug-iphonesimulator/Realtime.build/Objects-normal/arm64/URLSessionWebSocket.o",
+    "swift-dependencies" : "/Users/javiercolas/Documents/gym-swipe-ios/ios/.build-dd/Build/Intermediates.noindex/Supabase.build/Debug-iphonesimulator/Realtime.build/Objects-normal/arm64/URLSessionWebSocket.swiftdeps"
+  },
+  "/Users/javiercolas/Documents/gym-swipe-ios/ios/.spm-cache/checkouts/supabase-swift/Sources/Realtime/WebSocket/WebSocket.swift" : {
+    "const-values" : "/Users/javiercolas/Documents/gym-swipe-ios/ios/.build-dd/Build/Intermediates.noindex/Supabase.build/Debug-iphonesimulator/Realtime.build/Objects-normal/arm64/WebSocket.swiftconstvalues",
+    "dependencies" : "/Users/javiercolas/Documents/gym-swipe-ios/ios/.build-dd/Build/Intermediates.noindex/Supabase.build/Debug-iphonesimulator/Realtime.build/Objects-normal/arm64/WebSocket.d",
+    "diagnostics" : "/Users/javiercolas/Documents/gym-swipe-ios/ios/.build-dd/Build/Intermediates.noindex/Supabase.build/Debug-iphonesimulator/Realtime.build/Objects-normal/arm64/WebSocket.dia",
+    "object" : "/Users/javiercolas/Documents/gym-swipe-ios/ios/.build-dd/Build/Intermediates.noindex/Supabase.build/Debug-iphonesimulator/Realtime.build/Objects-normal/arm64/WebSocket.o",
+    "swift-dependencies" : "/Users/javiercolas/Documents/gym-swipe-ios/ios/.build-dd/Build/Intermediates.noindex/Supabase.build/Debug-iphonesimulator/Realtime.build/Objects-normal/arm64/WebSocket.swiftdeps"
+  }
+}

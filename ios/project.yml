@@ -32,7 +32,6 @@ targets:
     sources:
       - path: GymSwipeIOS
     dependencies:
-      - sdk: HealthKit.framework
       - target: ForgeWidget
       - package: GoogleSignIn
         product: GoogleSignIn
@@ -41,8 +40,6 @@ targets:
     entitlements:
       path: GymSwipeIOS/GymSwipeIOS.entitlements
       properties:
-        com.apple.developer.healthkit: true
-        com.apple.developer.healthkit.access: []
         # Restaurado al pasar a la cuenta de developer DE PAGO (2026-07-27).
         com.apple.developer.applesignin:
           - Default
@@ -66,10 +63,6 @@ targets:
         ITSAppUsesNonExemptEncryption: false
         NSSupportsLiveActivities: true
         LSApplicationCategoryType: public.app-category.healthcare-fitness
-        NSHealthShareUsageDescription: Forge Loop lee tu frecuencia cardíaca de la app Salud para registrarla en tus entrenamientos.
-        # Obligatoria por tener el entitlement de HealthKit, aunque la app NO escriba
-        # en Salud (HealthManager pide `toShare: []`). Sin ella: rechazo ITMS-90683.
-        NSHealthUpdateUsageDescription: Forge Loop no guarda datos en la app Salud; solo lee tu frecuencia cardíaca durante los entrenamientos.
         NSLocationWhenInUseUsageDescription: Forge Loop usa tu ubicación para mostrarte el ranking y los compañeros de entreno cercanos.
         NSCameraUsageDescription: Forge Loop usa la cámara para hacer la foto de tu entreno.
         UILaunchScreen:

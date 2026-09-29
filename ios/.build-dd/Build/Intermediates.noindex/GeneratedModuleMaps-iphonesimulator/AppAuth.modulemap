@@ -1,0 +1,4 @@
+module AppAuth {
+umbrella "/Users/javiercolas/Documents/gym-swipe-ios/ios/.spm-cache/checkouts/AppAuth-iOS/Sources/AppAuth"
+export *
+}

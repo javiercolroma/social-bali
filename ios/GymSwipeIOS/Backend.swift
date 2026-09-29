@@ -111,6 +111,10 @@ final class Backend {
     /// El mazo de hoy (día de Bali). Lo calcula y guarda el servidor: siempre el mismo.
     func todaysPeople() async throws -> DiscoverDeck {
         guard let client else { throw BackendError.notConfigured }
+        // En frío, `currentSession` puede traer un token CADUCADO: la RPC salía con él, el
+        // servidor la rechazaba y Descubrir enseñaba «sin conexión» hasta refrescar a mano.
+        // `auth.session` espera a la sesión restaurada y renueva el token si hace falta.
+        _ = try await client.auth.session
         return try await client.rpc("todays_people").execute().value
     }
 

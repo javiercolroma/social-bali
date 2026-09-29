@@ -363,7 +363,6 @@ struct SettingsView: View {
     @Environment(\.dismiss) private var dismiss
     @AppStorage("fxSound") private var soundOn = true
     @AppStorage("fxHaptics") private var hapticsOn = true
-    @ObservedObject private var health = HealthManager.shared
     @State private var confirmLogout = false
     @State private var confirmDelete = false
     @State private var deleting = false
@@ -410,26 +409,6 @@ struct SettingsView: View {
                             }
                         }
                             .font(.system(size: 15, weight: .semibold)).foregroundColor(Brand.ink)
-                    }
-
-                    if health.isAvailable {
-                        PanelCard {
-                            Text("SALUD").font(.caption2).fontWeight(.heavy).foregroundColor(Brand.muted)
-                            if health.connected {
-                                HStack(spacing: 8) {
-                                    Image(systemName: "heart.fill").foregroundColor(Brand.red)
-                                    Text("Conectado con Salud").font(.system(size: 15, weight: .heavy)).foregroundColor(Brand.ink)
-                                    Spacer()
-                                    Image(systemName: "checkmark.seal.fill").foregroundColor(Color(hex: "4b8a1f"))
-                                }
-                            } else {
-                                Text("Conecta la app Salud para registrar tu frecuencia cardíaca en los entrenos.")
-                                    .font(.footnote).foregroundColor(Brand.muted)
-                                Button { FX.tap(); Task { await health.connect() } } label: {
-                                    Label("Conectar con Salud", systemImage: "heart.fill")
-                                }.buttonStyle(PrimaryButtonStyle())
-                            }
-                        }
                     }
 
                     PanelCard {

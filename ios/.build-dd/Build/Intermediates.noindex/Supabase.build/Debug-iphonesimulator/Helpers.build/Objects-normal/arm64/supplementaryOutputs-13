@@ -1,0 +1,23 @@
+{
+  "/Users/javiercolas/Documents/gym-swipe-ios/ios/.spm-cache/checkouts/supabase-swift/Sources/Helpers/AnyJSON/AnyJSON+Codable.swift" : {
+    "const-values" : "/Users/javiercolas/Documents/gym-swipe-ios/ios/.build-dd/Build/Intermediates.noindex/Supabase.build/Debug-iphonesimulator/Helpers.build/Objects-normal/arm64/AnyJSON+Codable.swiftconstvalues",
+    "dependencies" : "/Users/javiercolas/Documents/gym-swipe-ios/ios/.build-dd/Build/Intermediates.noindex/Supabase.build/Debug-iphonesimulator/Helpers.build/Objects-normal/arm64/AnyJSON+Codable.d",
+    "diagnostics" : "/Users/javiercolas/Documents/gym-swipe-ios/ios/.build-dd/Build/Intermediates.noindex/Supabase.build/Debug-iphonesimulator/Helpers.build/Objects-normal/arm64/AnyJSON+Codable.dia",
+    "object" : "/Users/javiercolas/Documents/gym-swipe-ios/ios/.build-dd/Build/Intermediates.noindex/Supabase.build/Debug-iphonesimulator/Helpers.build/Objects-normal/arm64/AnyJSON+Codable.o",
+    "swift-dependencies" : "/Users/javiercolas/Documents/gym-swipe-ios/ios/.build-dd/Build/Intermediates.noindex/Supabase.build/Debug-iphonesimulator/Helpers.build/Objects-normal/arm64/AnyJSON+Codable.swiftdeps"
+  },
+  "/Users/javiercolas/Documents/gym-swipe-ios/ios/.spm-cache/checkouts/supabase-swift/Sources/Helpers/AnyJSON/AnyJSON.swift" : {
+    "const-values" : "/Users/javiercolas/Documents/gym-swipe-ios/ios/.build-dd/Build/Intermediates.noindex/Supabase.build/Debug-iphonesimulator/Helpers.build/Objects-normal/arm64/AnyJSON.swiftconstvalues",
+    "dependencies" : "/Users/javiercolas/Documents/gym-swipe-ios/ios/.build-dd/Build/Intermediates.noindex/Supabase.build/Debug-iphonesimulator/Helpers.build/Objects-normal/arm64/AnyJSON.d",
+    "diagnostics" : "/Users/javiercolas/Documents/gym-swipe-ios/ios/.build-dd/Build/Intermediates.noindex/Supabase.build/Debug-iphonesimulator/Helpers.build/Objects-normal/arm64/AnyJSON.dia",
+    "object" : "/Users/javiercolas/Documents/gym-swipe-ios/ios/.build-dd/Build/Intermediates.noindex/Supabase.build/Debug-iphonesimulator/Helpers.build/Objects-normal/arm64/AnyJSON.o",
+    "swift-dependencies" : "/Users/javiercolas/Documents/gym-swipe-ios/ios/.build-dd/Build/Intermediates.noindex/Supabase.build/Debug-iphonesimulator/Helpers.build/Objects-normal/arm64/AnyJSON.swiftdeps"
+  },
+  "/Users/javiercolas/Documents/gym-swipe-ios/ios/.spm-cache/checkouts/supabase-swift/Sources/Helpers/AsyncValueSubject.swift" : {
+    "const-values" : "/Users/javiercolas/Documents/gym-swipe-ios/ios/.build-dd/Build/Intermediates.noindex/Supabase.build/Debug-iphonesimulator/Helpers.build/Objects-normal/arm64/AsyncValueSubject.swiftconstvalues",
+    "dependencies" : "/Users/javiercolas/Documents/gym-swipe-ios/ios/.build-dd/Build/Intermediates.noindex/Supabase.build/Debug-iphonesimulator/Helpers.build/Objects-normal/arm64/AsyncValueSubject.d",
+    "diagnostics" : "/Users/javiercolas/Documents/gym-swipe-ios/ios/.build-dd/Build/Intermediates.noindex/Supabase.build/Debug-iphonesimulator/Helpers.build/Objects-normal/arm64/AsyncValueSubject.dia",
+    "object" : "/Users/javiercolas/Documents/gym-swipe-ios/ios/.build-dd/Build/Intermediates.noindex/Supabase.build/Debug-iphonesimulator/Helpers.build/Objects-normal/arm64/AsyncValueSubject.o",
+    "swift-dependencies" : "/Users/javiercolas/Documents/gym-swipe-ios/ios/.build-dd/Build/Intermediates.noindex/Supabase.build/Debug-iphonesimulator/Helpers.build/Objects-normal/arm64/AsyncValueSubject.swiftdeps"
+  }
+}

@@ -41,10 +41,6 @@
 	<string>public.app-category.healthcare-fitness</string>
 	<key>NSCameraUsageDescription</key>
 	<string>Forge Loop usa la cámara para hacer la foto de tu entreno.</string>
-	<key>NSHealthShareUsageDescription</key>
-	<string>Forge Loop lee tu frecuencia cardíaca de la app Salud para registrarla en tus entrenamientos.</string>
-	<key>NSHealthUpdateUsageDescription</key>
-	<string>Forge Loop no guarda datos en la app Salud; solo lee tu frecuencia cardíaca durante los entrenamientos.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>Forge Loop usa tu ubicación para mostrarte el ranking y los compañeros de entreno cercanos.</string>
 	<key>NSSupportsLiveActivities</key>

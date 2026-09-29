@@ -29,13 +29,12 @@ struct RootView: View {
                                            onOpenMyProfile: { showProfile = true }) }
                 screen(1) { PlanView(onLoaded: { tab = 2 }) }
                 screen(2) { TrainView(onGoToPlan: { tab = 1 }) }
-                screen(3) { CommunityView(onOpenChat: { chatPerson = IdString(id: $0) }) }
+                // Comunidad (Ranking + Partner) fuera de la barra desde 2026-09-29: el ranking es
+                // lenguaje de app de fitness, no de club. Partner vuelve como «Actividades»
+                // (PRODUCT.md, Fase 4), por eso el código se conserva.
                 screen(4) { ActivityView() }
                 screen(RootView.discoverTab) {
-                    DiscoverTodayView(onOpenPlans: {
-                        store.communitySection = 1   // Partner (lo que será Actividades)
-                        tab = 3
-                    })
+                    DiscoverTodayView()
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -292,7 +291,6 @@ struct CustomTabBar: View {
         (0, "Social", "newspaper.fill"),
         (1, "Plan", "list.bullet.clipboard"),
         (2, "Entreno", "dumbbell.fill"),
-        (3, "Comunidad", "person.3.fill"),
         (4, "Actividad", "chart.bar.fill"),
     ]
 

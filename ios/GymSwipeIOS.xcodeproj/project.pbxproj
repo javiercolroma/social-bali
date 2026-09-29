@@ -21,7 +21,6 @@
 		2D4EF03878DFDEE90C1B0C79 /* ForgeWidgetBundle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8FFEDBE2AD1B3F5FF2FD48A0 /* ForgeWidgetBundle.swift */; };
 		388862FD824CE56B55EE672A /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4FDBAEC8202622CA34A302EA /* Theme.swift */; };
 		3A5B6F7B13E0E9563CFBD52F /* ForgeWidget.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 706D917063A09C4DDB833556 /* ForgeWidget.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
-		421F6C2695009D7F54A7128C /* HealthManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 48EC08BA00B1509F5F295C62 /* HealthManager.swift */; };
 		44168B322E9C8DF64A6B35D2 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 5D321FCC3B325158C232F567 /* PrivacyInfo.xcprivacy */; };
 		458BEC9F5810FC7661380077 /* ForgeyAI.swift in Sources */ = {isa = PBXBuildFile; fileRef = 794A239A7BBA8D929DC18AB0 /* ForgeyAI.swift */; };
 		46248B5DA3F8CE7CF349D01C /* GymScore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1250C29A42354C7EA62ADC58 /* GymScore.swift */; };
@@ -44,7 +43,6 @@
 		A6911B1E14CE1300F4DD0173 /* LiveActivityManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 51E3F8B26293A58B6A5DC2F4 /* LiveActivityManager.swift */; };
 		A6EA57786D3C06C98EFBF7E5 /* NotificationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 65AB2F19CF6DCC5B645AB356 /* NotificationManager.swift */; };
 		A89D564806DC6E75C368E3EB /* AuthView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 75B84C1241AA6578E1A438C3 /* AuthView.swift */; };
-		AB141212796D0B82E3E7400D /* HealthKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 776E83FB86616C628EE591C8 /* HealthKit.framework */; };
 		AEC40F20A484762912222BA0 /* LocationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F46519F370ACB4CE695F4928 /* LocationManager.swift */; };
 		AF24880BEDF82C1B96C5A49E /* ExerciseProgress.swift in Sources */ = {isa = PBXBuildFile; fileRef = D00693AEEFD43298AF8CCCDF /* ExerciseProgress.swift */; };
 		B087CB2C4C5E2848E78E6BFE /* WorkoutRemote.swift in Sources */ = {isa = PBXBuildFile; fileRef = 896F243436BE8AEDD8406091 /* WorkoutRemote.swift */; };
@@ -108,7 +106,6 @@
 		43FB86BA08732C17FD45EDF6 /* GymSwipeIOS.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = GymSwipeIOS.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		45AAAB98E146869DA2747469 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		470412DEE02D5F1B63B07DF7 /* DiscoverPeopleView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiscoverPeopleView.swift; sourceTree = "<group>"; };
-		48EC08BA00B1509F5F295C62 /* HealthManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HealthManager.swift; sourceTree = "<group>"; };
 		49AFF7AA78F4C4E8A92223C7 /* WorkoutIntents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutIntents.swift; sourceTree = "<group>"; };
 		4B553BE8FEA6DE363E4659DB /* CommunityView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommunityView.swift; sourceTree = "<group>"; };
 		4FDBAEC8202622CA34A302EA /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
@@ -125,7 +122,6 @@
 		6D844158ED27007A7D1CBEDB /* GymSwipeIOS.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = GymSwipeIOS.entitlements; sourceTree = "<group>"; };
 		706D917063A09C4DDB833556 /* ForgeWidget.appex */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = "wrapper.app-extension"; path = ForgeWidget.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		75B84C1241AA6578E1A438C3 /* AuthView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthView.swift; sourceTree = "<group>"; };
-		776E83FB86616C628EE591C8 /* HealthKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = HealthKit.framework; path = System/Library/Frameworks/HealthKit.framework; sourceTree = SDKROOT; };
 		794A239A7BBA8D929DC18AB0 /* ForgeyAI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ForgeyAI.swift; sourceTree = "<group>"; };
 		7E6B792B4F4EA9197E1B827D /* BackendConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackendConfig.swift; sourceTree = "<group>"; };
 		896F243436BE8AEDD8406091 /* WorkoutRemote.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutRemote.swift; sourceTree = "<group>"; };
@@ -165,7 +161,6 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				AB141212796D0B82E3E7400D /* HealthKit.framework in Frameworks */,
 				0C13CF2C45615798373A8B62 /* GoogleSignIn in Frameworks */,
 				D2CE3175CC59ED497DD03168 /* Supabase in Frameworks */,
 			);
@@ -193,20 +188,11 @@
 			path = ForgeWidget;
 			sourceTree = "<group>";
 		};
-		90AEB775DEFB66C5AB6F036E /* Frameworks */ = {
-			isa = PBXGroup;
-			children = (
-				776E83FB86616C628EE591C8 /* HealthKit.framework */,
-			);
-			name = Frameworks;
-			sourceTree = "<group>";
-		};
 		9C4D981609085AAFB38BE24C = {
 			isa = PBXGroup;
 			children = (
 				42A7CAFFD05E4AB26FB63AC8 /* ForgeWidget */,
 				DF4F6CA473D782953BF29753 /* GymSwipeIOS */,
-				90AEB775DEFB66C5AB6F036E /* Frameworks */,
 				38A6DA15457604A9A5986D64 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -238,7 +224,6 @@
 				1250C29A42354C7EA62ADC58 /* GymScore.swift */,
 				6D844158ED27007A7D1CBEDB /* GymSwipeIOS.entitlements */,
 				9CAC012CB53EB545C20ED468 /* GymSwipeIOSApp.swift */,
-				48EC08BA00B1509F5F295C62 /* HealthManager.swift */,
 				45AAAB98E146869DA2747469 /* Info.plist */,
 				00CC401644E3732F65E33662 /* L10n.swift */,
 				51E3F8B26293A58B6A5DC2F4 /* LiveActivityManager.swift */,
@@ -414,7 +399,6 @@
 				E16DCF8706F165D2CD3C5A8C /* Gamification.swift in Sources */,
 				46248B5DA3F8CE7CF349D01C /* GymScore.swift in Sources */,
 				FBCDEE4F608FFD8E2591F44A /* GymSwipeIOSApp.swift in Sources */,
-				421F6C2695009D7F54A7128C /* HealthManager.swift in Sources */,
 				0897EB10B993D37439BAEE79 /* L10n.swift in Sources */,
 				A6911B1E14CE1300F4DD0173 /* LiveActivityManager.swift in Sources */,
 				AEC40F20A484762912222BA0 /* LocationManager.swift in Sources */,

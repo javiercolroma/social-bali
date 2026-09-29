@@ -1,0 +1,69 @@
+{
+  "" : {
+    "diagnostics" : "/Users/javiercolas/Documents/gym-swipe-ios/ios/.build-dd/Build/Intermediates.noindex/GymSwipeIOS.build/Debug-iphonesimulator/ForgeWidget.build/Objects-normal/arm64/ForgeWidget-primary.dia",
+    "emit-module-dependencies" : "/Users/javiercolas/Documents/gym-swipe-ios/ios/.build-dd/Build/Intermediates.noindex/GymSwipeIOS.build/Debug-iphonesimulator/ForgeWidget.build/Objects-normal/arm64/ForgeWidget-primary-emit-module.d",
+    "emit-module-diagnostics" : "/Users/javiercolas/Documents/gym-swipe-ios/ios/.build-dd/Build/Intermediates.noindex/GymSwipeIOS.build/Debug-iphonesimulator/ForgeWidget.build/Objects-normal/arm64/ForgeWidget-primary-emit-module.dia",
+    "pch" : "/Users/javiercolas/Documents/gym-swipe-ios/ios/.build-dd/Build/Intermediates.noindex/GymSwipeIOS.build/Debug-iphonesimulator/ForgeWidget.build/Objects-normal/arm64/ForgeWidget-primary-Bridging-header.pch",
+    "swift-dependencies" : "/Users/javiercolas/Documents/gym-swipe-ios/ios/.build-dd/Build/Intermediates.noindex/GymSwipeIOS.build/Debug-iphonesimulator/ForgeWidget.build/Objects-normal/arm64/ForgeWidget-primary.swiftdeps"
+  },
+  "/Users/javiercolas/Documents/gym-swipe-ios/ios/ForgeWidget/ForgeWidgetBundle.swift" : {
+    "const-values" : "/Users/javiercolas/Documents/gym-swipe-ios/ios/.build-dd/Build/Intermediates.noindex/GymSwipeIOS.build/Debug-iphonesimulator/ForgeWidget.build/Objects-normal/arm64/ForgeWidgetBundle.swiftconstvalues",
+    "dependencies" : "/Users/javiercolas/Documents/gym-swipe-ios/ios/.build-dd/Build/Intermediates.noindex/GymSwipeIOS.build/Debug-iphonesimulator/ForgeWidget.build/Objects-normal/arm64/ForgeWidgetBundle.d",
+    "diagnostics" : "/Users/javiercolas/Documents/gym-swipe-ios/ios/.build-dd/Build/Intermediates.noindex/GymSwipeIOS.build/Debug-iphonesimulator/ForgeWidget.build/Objects-normal/arm64/ForgeWidgetBundle.dia",
+    "index-unit-output-path" : "/GymSwipeIOS.build/Debug-iphonesimulator/ForgeWidget.build/Objects-normal/arm64/ForgeWidgetBundle.o",
+    "llvm-bc" : "/Users/javiercolas/Documents/gym-swipe-ios/ios/.build-dd/Build/Intermediates.noindex/GymSwipeIOS.build/Debug-iphonesimulator/ForgeWidget.build/Objects-normal/arm64/ForgeWidgetBundle.bc",
+    "object" : "/Users/javiercolas/Documents/gym-swipe-ios/ios/.build-dd/Build/Intermediates.noindex/GymSwipeIOS.build/Debug-iphonesimulator/ForgeWidget.build/Objects-normal/arm64/ForgeWidgetBundle.o",
+    "swift-dependencies" : "/Users/javiercolas/Documents/gym-swipe-ios/ios/.build-dd/Build/Intermediates.noindex/GymSwipeIOS.build/Debug-iphonesimulator/ForgeWidget.build/Objects-normal/arm64/ForgeWidgetBundle.swiftdeps",
+    "swiftmodule" : "/Users/javiercolas/Documents/gym-swipe-ios/ios/.build-dd/Build/Intermediates.noindex/GymSwipeIOS.build/Debug-iphonesimulator/ForgeWidget.build/Objects-normal/arm64/ForgeWidgetBundle~partial.swiftmodule"
+  },
+  "/Users/javiercolas/Documents/gym-swipe-ios/ios/ForgeWidget/WorkoutLiveActivity.swift" : {
+    "const-values" : "/Users/javiercolas/Documents/gym-swipe-ios/ios/.build-dd/Build/Intermediates.noindex/GymSwipeIOS.build/Debug-iphonesimulator/ForgeWidget.build/Objects-normal/arm64/WorkoutLiveActivity.swiftconstvalues",
+    "dependencies" : "/Users/javiercolas/Documents/gym-swipe-ios/ios/.build-dd/Build/Intermediates.noindex/GymSwipeIOS.build/Debug-iphonesimulator/ForgeWidget.build/Objects-normal/arm64/WorkoutLiveActivity.d",
+    "diagnostics" : "/Users/javiercolas/Documents/gym-swipe-ios/ios/.build-dd/Build/Intermediates.noindex/GymSwipeIOS.build/Debug-iphonesimulator/ForgeWidget.build/Objects-normal/arm64/WorkoutLiveActivity.dia",
+    "index-unit-output-path" : "/GymSwipeIOS.build/Debug-iphonesimulator/ForgeWidget.build/Objects-normal/arm64/WorkoutLiveActivity.o",
+    "llvm-bc" : "/Users/javiercolas/Documents/gym-swipe-ios/ios/.build-dd/Build/Intermediates.noindex/GymSwipeIOS.build/Debug-iphonesimulator/ForgeWidget.build/Objects-normal/arm64/WorkoutLiveActivity.bc",
+    "object" : "/Users/javiercolas/Documents/gym-swipe-ios/ios/.build-dd/Build/Intermediates.noindex/GymSwipeIOS.build/Debug-iphonesimulator/ForgeWidget.build/Objects-normal/arm64/WorkoutLiveActivity.o",
+    "swift-dependencies" : "/Users/javiercolas/Documents/gym-swipe-ios/ios/.build-dd/Build/Intermediates.noindex/GymSwipeIOS.build/Debug-iphonesimulator/ForgeWidget.build/Objects-normal/arm64/WorkoutLiveActivity.swiftdeps",
+    "swiftmodule" : "/Users/javiercolas/Documents/gym-swipe-ios/ios/.build-dd/Build/Intermediates.noindex/GymSwipeIOS.build/Debug-iphonesimulator/ForgeWidget.build/Objects-normal/arm64/WorkoutLiveActivity~partial.swiftmodule"
+  },
+  "/Users/javiercolas/Documents/gym-swipe-ios/ios/GymSwipeIOS/LiveActivityManager.swift" : {
+    "const-values" : "/Users/javiercolas/Documents/gym-swipe-ios/ios/.build-dd/Build/Intermediates.noindex/GymSwipeIOS.build/Debug-iphonesimulator/ForgeWidget.build/Objects-normal/arm64/LiveActivityManager.swiftconstvalues",
+    "dependencies" : "/Users/javiercolas/Documents/gym-swipe-ios/ios/.build-dd/Build/Intermediates.noindex/GymSwipeIOS.build/Debug-iphonesimulator/ForgeWidget.build/Objects-normal/arm64/LiveActivityManager.d",
+    "diagnostics" : "/Users/javiercolas/Documents/gym-swipe-ios/ios/.build-dd/Build/Intermediates.noindex/GymSwipeIOS.build/Debug-iphonesimulator/ForgeWidget.build/Objects-normal/arm64/LiveActivityManager.dia",
+    "index-unit-output-path" : "/GymSwipeIOS.build/Debug-iphonesimulator/ForgeWidget.build/Objects-normal/arm64/LiveActivityManager.o",
+    "llvm-bc" : "/Users/javiercolas/Documents/gym-swipe-ios/ios/.build-dd/Build/Intermediates.noindex/GymSwipeIOS.build/Debug-iphonesimulator/ForgeWidget.build/Objects-normal/arm64/LiveActivityManager.bc",
+    "object" : "/Users/javiercolas/Documents/gym-swipe-ios/ios/.build-dd/Build/Intermediates.noindex/GymSwipeIOS.build/Debug-iphonesimulator/ForgeWidget.build/Objects-normal/arm64/LiveActivityManager.o",
+    "swift-dependencies" : "/Users/javiercolas/Documents/gym-swipe-ios/ios/.build-dd/Build/Intermediates.noindex/GymSwipeIOS.build/Debug-iphonesimulator/ForgeWidget.build/Objects-normal/arm64/LiveActivityManager.swiftdeps",
+    "swiftmodule" : "/Users/javiercolas/Documents/gym-swipe-ios/ios/.build-dd/Build/Intermediates.noindex/GymSwipeIOS.build/Debug-iphonesimulator/ForgeWidget.build/Objects-normal/arm64/LiveActivityManager~partial.swiftmodule"
+  },
+  "/Users/javiercolas/Documents/gym-swipe-ios/ios/GymSwipeIOS/WorkoutActivityAttributes.swift" : {
+    "const-values" : "/Users/javiercolas/Documents/gym-swipe-ios/ios/.build-dd/Build/Intermediates.noindex/GymSwipeIOS.build/Debug-iphonesimulator/ForgeWidget.build/Objects-normal/arm64/WorkoutActivityAttributes.swiftconstvalues",
+    "dependencies" : "/Users/javiercolas/Documents/gym-swipe-ios/ios/.build-dd/Build/Intermediates.noindex/GymSwipeIOS.build/Debug-iphonesimulator/ForgeWidget.build/Objects-normal/arm64/WorkoutActivityAttributes.d",
+    "diagnostics" : "/Users/javiercolas/Documents/gym-swipe-ios/ios/.build-dd/Build/Intermediates.noindex/GymSwipeIOS.build/Debug-iphonesimulator/ForgeWidget.build/Objects-normal/arm64/WorkoutActivityAttributes.dia",
+    "index-unit-output-path" : "/GymSwipeIOS.build/Debug-iphonesimulator/ForgeWidget.build/Objects-normal/arm64/WorkoutActivityAttributes.o",
+    "llvm-bc" : "/Users/javiercolas/Documents/gym-swipe-ios/ios/.build-dd/Build/Intermediates.noindex/GymSwipeIOS.build/Debug-iphonesimulator/ForgeWidget.build/Objects-normal/arm64/WorkoutActivityAttributes.bc",
+    "object" : "/Users/javiercolas/Documents/gym-swipe-ios/ios/.build-dd/Build/Intermediates.noindex/GymSwipeIOS.build/Debug-iphonesimulator/ForgeWidget.build/Objects-normal/arm64/WorkoutActivityAttributes.o",
+    "swift-dependencies" : "/Users/javiercolas/Documents/gym-swipe-ios/ios/.build-dd/Build/Intermediates.noindex/GymSwipeIOS.build/Debug-iphonesimulator/ForgeWidget.build/Objects-normal/arm64/WorkoutActivityAttributes.swiftdeps",
+    "swiftmodule" : "/Users/javiercolas/Documents/gym-swipe-ios/ios/.build-dd/Build/Intermediates.noindex/GymSwipeIOS.build/Debug-iphonesimulator/ForgeWidget.build/Objects-normal/arm64/WorkoutActivityAttributes~partial.swiftmodule"
+  },
+  "/Users/javiercolas/Documents/gym-swipe-ios/ios/GymSwipeIOS/WorkoutIntents.swift" : {
+    "const-values" : "/Users/javiercolas/Documents/gym-swipe-ios/ios/.build-dd/Build/Intermediates.noindex/GymSwipeIOS.build/Debug-iphonesimulator/ForgeWidget.build/Objects-normal/arm64/WorkoutIntents.swiftconstvalues",
+    "dependencies" : "/Users/javiercolas/Documents/gym-swipe-ios/ios/.build-dd/Build/Intermediates.noindex/GymSwipeIOS.build/Debug-iphonesimulator/ForgeWidget.build/Objects-normal/arm64/WorkoutIntents.d",
+    "diagnostics" : "/Users/javiercolas/Documents/gym-swipe-ios/ios/.build-dd/Build/Intermediates.noindex/GymSwipeIOS.build/Debug-iphonesimulator/ForgeWidget.build/Objects-normal/arm64/WorkoutIntents.dia",
+    "index-unit-output-path" : "/GymSwipeIOS.build/Debug-iphonesimulator/ForgeWidget.build/Objects-normal/arm64/WorkoutIntents.o",
+    "llvm-bc" : "/Users/javiercolas/Documents/gym-swipe-ios/ios/.build-dd/Build/Intermediates.noindex/GymSwipeIOS.build/Debug-iphonesimulator/ForgeWidget.build/Objects-normal/arm64/WorkoutIntents.bc",
+    "object" : "/Users/javiercolas/Documents/gym-swipe-ios/ios/.build-dd/Build/Intermediates.noindex/GymSwipeIOS.build/Debug-iphonesimulator/ForgeWidget.build/Objects-normal/arm64/WorkoutIntents.o",
+    "swift-dependencies" : "/Users/javiercolas/Documents/gym-swipe-ios/ios/.build-dd/Build/Intermediates.noindex/GymSwipeIOS.build/Debug-iphonesimulator/ForgeWidget.build/Objects-normal/arm64/WorkoutIntents.swiftdeps",
+    "swiftmodule" : "/Users/javiercolas/Documents/gym-swipe-ios/ios/.build-dd/Build/Intermediates.noindex/GymSwipeIOS.build/Debug-iphonesimulator/ForgeWidget.build/Objects-normal/arm64/WorkoutIntents~partial.swiftmodule"
+  },
+  "/Users/javiercolas/Documents/gym-swipe-ios/ios/GymSwipeIOS/WorkoutRemote.swift" : {
+    "const-values" : "/Users/javiercolas/Documents/gym-swipe-ios/ios/.build-dd/Build/Intermediates.noindex/GymSwipeIOS.build/Debug-iphonesimulator/ForgeWidget.build/Objects-normal/arm64/WorkoutRemote.swiftconstvalues",
+    "dependencies" : "/Users/javiercolas/Documents/gym-swipe-ios/ios/.build-dd/Build/Intermediates.noindex/GymSwipeIOS.build/Debug-iphonesimulator/ForgeWidget.build/Objects-normal/arm64/WorkoutRemote.d",
+    "diagnostics" : "/Users/javiercolas/Documents/gym-swipe-ios/ios/.build-dd/Build/Intermediates.noindex/GymSwipeIOS.build/Debug-iphonesimulator/ForgeWidget.build/Objects-normal/arm64/WorkoutRemote.dia",
+    "index-unit-output-path" : "/GymSwipeIOS.build/Debug-iphonesimulator/ForgeWidget.build/Objects-normal/arm64/WorkoutRemote.o",
+    "llvm-bc" : "/Users/javiercolas/Documents/gym-swipe-ios/ios/.build-dd/Build/Intermediates.noindex/GymSwipeIOS.build/Debug-iphonesimulator/ForgeWidget.build/Objects-normal/arm64/WorkoutRemote.bc",
+    "object" : "/Users/javiercolas/Documents/gym-swipe-ios/ios/.build-dd/Build/Intermediates.noindex/GymSwipeIOS.build/Debug-iphonesimulator/ForgeWidget.build/Objects-normal/arm64/WorkoutRemote.o",
+    "swift-dependencies" : "/Users/javiercolas/Documents/gym-swipe-ios/ios/.build-dd/Build/Intermediates.noindex/GymSwipeIOS.build/Debug-iphonesimulator/ForgeWidget.build/Objects-normal/arm64/WorkoutRemote.swiftdeps",
+    "swiftmodule" : "/Users/javiercolas/Documents/gym-swipe-ios/ios/.build-dd/Build/Intermediates.noindex/GymSwipeIOS.build/Debug-iphonesimulator/ForgeWidget.build/Objects-normal/arm64/WorkoutRemote~partial.swiftmodule"
+  }
+}

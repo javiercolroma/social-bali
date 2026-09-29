@@ -1,0 +1,217 @@
+[
+  {
+    "typeName": "ForgeWidget.WorkoutControlIntent",
+    "mangledTypeName": "11ForgeWidget20WorkoutControlIntentV",
+    "kind": "struct",
+    "file": "/Users/javiercolas/Documents/gym-swipe-ios/ios/GymSwipeIOS/WorkoutIntents.swift",
+    "line": 7,
+    "conformances": [
+      "AppIntents.LiveActivityIntent",
+      "AppIntents.SystemIntent",
+      "AppIntents.AppIntent",
+      "AppIntents.PersistentlyIdentifiable",
+      "AppIntents._SupportsAppDependencies",
+      "Swift.Sendable",
+      "Swift.SendableMetatype"
+    ],
+    "allConformances": [
+      {
+        "protocolName": "AppIntents.LiveActivityIntent",
+        "conformanceDefiningModule": "ForgeWidget"
+      },
+      {
+        "protocolName": "AppIntents.SystemIntent",
+        "conformanceDefiningModule": "ForgeWidget"
+      },
+      {
+        "protocolName": "AppIntents.AppIntent",
+        "conformanceDefiningModule": "ForgeWidget"
+      },
+      {
+        "protocolName": "AppIntents.PersistentlyIdentifiable",
+        "conformanceDefiningModule": "ForgeWidget"
+      },
+      {
+        "protocolName": "AppIntents._SupportsAppDependencies",
+        "conformanceDefiningModule": "ForgeWidget"
+      },
+      {
+        "protocolName": "Swift.Sendable",
+        "conformanceDefiningModule": "ForgeWidget"
+      },
+      {
+        "protocolName": "Swift.SendableMetatype",
+        "conformanceDefiningModule": "ForgeWidget"
+      }
+    ],
+    "associatedTypeAliases": [
+      {
+        "typeAliasName": "PerformResult",
+        "substitutedTypeName": "some AppIntents.IntentResult",
+        "substitutedMangledTypeName": "11ForgeWidget20WorkoutControlIntentV7performQryYaKFQOy_Qo_",
+        "opaqueTypeProtocolRequirements": [
+          "AppIntents.IntentResult"
+        ],
+        "opaqueTypeSameTypeRequirements": []
+      },
+      {
+        "typeAliasName": "SummaryContent",
+        "substitutedTypeName": "some AppIntents.ParameterSummary",
+        "substitutedMangledTypeName": "10AppIntents0A6IntentPAAE16parameterSummaryQrvpZQOy11ForgeWidget014WorkoutControlC0V_Qo_",
+        "opaqueTypeProtocolRequirements": [
+          "AppIntents.ParameterSummary"
+        ],
+        "opaqueTypeSameTypeRequirements": []
+      }
+    ],
+    "properties": [
+      {
+        "label": "_action",
+        "type": "AppIntents.IntentParameter<Swift.String>",
+        "mangledTypeName": "n/a - deprecated",
+        "isStatic": "false",
+        "isComputed": "false",
+        "file": "/Users/javiercolas/Documents/gym-swipe-ios/ios/GymSwipeIOS/WorkoutIntents.swift",
+        "line": 12,
+        "valueKind": "InitCall",
+        "value": {
+          "type": "AppIntents.IntentParameter<Swift.String>",
+          "arguments": [
+            {
+              "label": "title",
+              "type": "Foundation.LocalizedStringResource",
+              "valueKind": "RawLiteral",
+              "value": "Acción"
+            },
+            {
+              "label": "description",
+              "type": "Swift.Optional<Foundation.LocalizedStringResource>",
+              "valueKind": "NilLiteral"
+            },
+            {
+              "label": "default",
+              "type": "Swift.Optional<Swift.String>",
+              "valueKind": "NilLiteral"
+            },
+            {
+              "label": "inputOptions",
+              "type": "Swift.Optional<Swift.String.IntentInputOptions>",
+              "valueKind": "NilLiteral"
+            },
+            {
+              "label": "requestValueDialog",
+              "type": "Swift.Optional<AppIntents.IntentDialog>",
+              "valueKind": "NilLiteral"
+            },
+            {
+              "label": "inputConnectionBehavior",
+              "type": "AppIntents.InputConnectionBehavior",
+              "valueKind": "Runtime"
+            }
+          ]
+        }
+      },
+      {
+        "label": "title",
+        "type": "Foundation.LocalizedStringResource",
+        "mangledTypeName": "n/a - deprecated",
+        "isStatic": "true",
+        "isComputed": "false",
+        "file": "/Users/javiercolas/Documents/gym-swipe-ios/ios/GymSwipeIOS/WorkoutIntents.swift",
+        "line": 8,
+        "valueKind": "RawLiteral",
+        "value": "Controlar entreno"
+      },
+      {
+        "label": "isDiscoverable",
+        "type": "Swift.Bool",
+        "mangledTypeName": "n/a - deprecated",
+        "isStatic": "true",
+        "isComputed": "false",
+        "file": "/Users/javiercolas/Documents/gym-swipe-ios/ios/GymSwipeIOS/WorkoutIntents.swift",
+        "line": 9,
+        "valueKind": "RawLiteral",
+        "value": "false"
+      },
+      {
+        "label": "action",
+        "type": "Swift.String",
+        "mangledTypeName": "n/a - deprecated",
+        "isStatic": "false",
+        "isComputed": "true",
+        "file": "/Users/javiercolas/Documents/gym-swipe-ios/ios/GymSwipeIOS/WorkoutIntents.swift",
+        "line": 12,
+        "valueKind": "InitCall",
+        "value": {
+          "type": "AppIntents.IntentParameter<Swift.String>",
+          "arguments": [
+            {
+              "label": "title",
+              "type": "Foundation.LocalizedStringResource",
+              "valueKind": "RawLiteral",
+              "value": "Acción"
+            },
+            {
+              "label": "description",
+              "type": "Swift.Optional<Foundation.LocalizedStringResource>",
+              "valueKind": "NilLiteral"
+            },
+            {
+              "label": "default",
+              "type": "Swift.Optional<Swift.String>",
+              "valueKind": "NilLiteral"
+            },
+            {
+              "label": "inputOptions",
+              "type": "Swift.Optional<Swift.String.IntentInputOptions>",
+              "valueKind": "NilLiteral"
+            },
+            {
+              "label": "requestValueDialog",
+              "type": "Swift.Optional<AppIntents.IntentDialog>",
+              "valueKind": "NilLiteral"
+            },
+            {
+              "label": "inputConnectionBehavior",
+              "type": "AppIntents.InputConnectionBehavior",
+              "valueKind": "Runtime"
+            }
+          ]
+        },
+        "propertyWrappers": [
+          {
+            "type": "AppIntents.IntentParameter",
+            "file": "/Users/javiercolas/Documents/gym-swipe-ios/ios/GymSwipeIOS/WorkoutIntents.swift",
+            "line": 11,
+            "arguments": [
+              {
+                "label": "title",
+                "type": "Foundation.LocalizedStringResource",
+                "valueKind": "RawLiteral",
+                "value": "Acción"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "label": "$action",
+        "type": "AppIntents.IntentParameter<Swift.String>",
+        "mangledTypeName": "n/a - deprecated",
+        "isStatic": "false",
+        "isComputed": "true",
+        "file": "/Users/javiercolas/Documents/gym-swipe-ios/ios/GymSwipeIOS/WorkoutIntents.swift",
+        "line": 12,
+        "valueKind": "Runtime"
+      }
+    ],
+    "availabilityAttributes": [
+      {
+        "platform": "iOS",
+        "introducedVersion": "17.0",
+        "isUnavailable": false,
+        "isDeprecated": false
+      }
+    ]
+  }
+]

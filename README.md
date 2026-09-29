@@ -306,7 +306,7 @@ Ultima actualizacion: 2026-07-08
 > ```bash
 > codesign -d --entitlements :- "Payload/Forge Loop.app" | tr -d '\0' \
 >   | grep -oE "com\.apple\.developer\.[a-z.-]+|beta-reports-active"
-> # DEBE aparecer: applesignin, healthkit, healthkit.access, beta-reports-active
+> # DEBE aparecer: applesignin, beta-reports-active   (HealthKit se quitó el 2026-09-29)
 > ```
 >
 > **Por qué hay que firmar a mano** (callejón sin salida de `xcodebuild`): (a) firma **automática** en `archive` → siempre elige perfil de **desarrollo** → exige dispositivos registrados, y el equipo tiene cero; (b) automática + `CODE_SIGN_IDENTITY: Apple Distribution` → `conflicting provisioning settings`; (c) firma **manual** con los perfiles que creó Xcode → `is Xcode managed, but signing settings require a manually managed profile`. Sin perfiles creados a mano en el portal (la API key tampoco puede: 403 en `certificates`, `bundleIds` y `profiles`), la única salida es **archivar sin firmar y firmar con `codesign`**: ver `resign.sh` — localiza los perfiles por `application-identifier`, los incrusta como `embedded.mobileprovision` y firma **de dentro hacia fuera** (frameworks → `.appex` → `.app`) con entitlements explícitos, incluido `beta-reports-active` (el que habilita TestFlight). Después se empaqueta el `.ipa` a mano (`Payload/` + zip). Único efecto secundario: sin carpeta `Symbols/`, así que los fallos no salen simbolizados.

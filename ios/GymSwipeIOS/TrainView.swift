@@ -23,7 +23,6 @@ struct TrainView: View {
     @State private var finalElapsed = 0   // tiempo congelado al terminar (el resumen no debe seguir corriendo)
     @AppStorage("fxSound") private var soundOn = true
     @AppStorage("fxHaptics") private var hapticsOn = true
-    @ObservedObject private var health = HealthManager.shared
     @ObservedObject private var remote = WorkoutRemote.shared
     @StateObject private var location = LocationManager()  // zona aproximada del entreno
 
@@ -82,7 +81,7 @@ struct TrainView: View {
         }
         .background(Brand.bg)
         .sheet(item: $previewWorkout) { WorkoutPreview(workoutId: $0.id).environmentObject(store) }
-        .onAppear { if !store.exercises.isEmpty && sessionStart == nil { sessionStart = Date(); health.startSession(); startLive(); location.request() } }
+        .onAppear { if !store.exercises.isEmpty && sessionStart == nil { sessionStart = Date(); startLive(); location.request() } }
         // Reaccionar a la IDENTIDAD del entreno cargado: así cargar un entreno nuevo
         // (incluso encima de uno terminado-sin-guardar) reinicia tiempo + captura de FC.
         .onChange(of: store.exercises.first?.id) { id in
@@ -90,16 +89,10 @@ struct TrainView: View {
             else {
                 sessionStart = Date(); restActive = false; restElapsed = 0; showSummary = false
                 lineSeed = 0; lastEvent = .go; hitMilestones = []
-                health.startSession()
                 location.request()
                 LiveActivityManager.shared.end(); startLive()
             }
         }
-        // Si conectas Salud a mitad de sesión (p. ej. desde Perfil), empieza a captar ya.
-        .onChange(of: health.connected) { isOn in
-            if isOn && !store.exercises.isEmpty && !showSummary && !finished { health.startSession() }
-        }
-        .onChange(of: health.liveBPM) { _ in syncLive() }
         // Comandos desde el widget de la pantalla de bloqueo / Isla Dinámica.
         .onReceive(remote.$pending.compactMap { $0 }) { item in apply(item.command) }
         .onReceive(ticker) { _ in
@@ -136,7 +129,6 @@ struct TrainView: View {
                             .background(Brand.surface).clipShape(Capsule())
                         }
                     }
-                    heartChip
                 }
             }
             GeometryReader { geo in
@@ -154,37 +146,6 @@ struct TrainView: View {
                 }
             }.frame(height: 10)
         }
-    }
-
-    @ViewBuilder
-    private var heartChip: some View {
-        if health.isAvailable {
-            if health.connected {
-                HStack(spacing: 5) {
-                    Image(systemName: "heart.fill").font(.system(size: 12))
-                        .foregroundColor(Brand.red)
-                    Text(health.liveBPM.map { "\($0)" } ?? "—").font(.system(size: 15, weight: .heavy)).monospacedDigit().foregroundColor(Brand.ink)
-                    Text("ppm").font(.caption2).fontWeight(.bold).foregroundColor(Brand.muted)
-                }
-                .padding(.horizontal, 10).padding(.vertical, 5)
-                .background(Brand.surface).clipShape(Capsule())
-            } else {
-                Button { connectHealth() } label: {
-                    HStack(spacing: 5) {
-                        Image(systemName: "heart.fill").font(.system(size: 11))
-                        Text("Conectar Salud").font(.system(size: 12, weight: .heavy))
-                    }
-                    .foregroundColor(Color(hex: "a73232"))
-                    .padding(.horizontal, 10).padding(.vertical, 5)
-                    .background(Brand.redSoft).clipShape(Capsule())
-                }
-            }
-        }
-    }
-
-    private func connectHealth() {
-        FX.tap()
-        Task { if await health.connect() { health.startSession() } }
     }
 
     /// Descanso en curso (cuenta atrás activa). Si no, se muestra "¡Haz tu serie!".
@@ -432,7 +393,7 @@ struct TrainView: View {
                                           currentExercise: ex.name,
                                           reps: ex.reps, weight: ex.weight,
                                           setIndex: currentSetIndex(ex), exerciseSets: ex.sets,
-                                          bpm: health.liveBPM, resting: resting,
+                                          bpm: nil, resting: resting,
                                           restStartedAt: resting ? Date().addingTimeInterval(-Double(restElapsed)) : nil,
                                           restEndsAt: resting ? Date().addingTimeInterval(Double(restRemaining)) : nil,
                                           supersetPartner: supersetPartner(ex))
@@ -469,10 +430,6 @@ struct TrainView: View {
                 HStack(spacing: 10) {
                     summaryStat(timeString(finalElapsed), "Duración", "clock")
                     summaryStat("\(completedSets)", "Series", "checkmark.circle")
-                }
-                HStack(spacing: 10) {
-                    summaryStat(health.sessionAvg.map { "\($0)" } ?? "—", "FC media", "heart.fill")
-                    summaryStat(health.sessionMax.map { "\($0)" } ?? "—", "FC máx", "heart.fill")
                 }
                 if skippedSets > 0 {
                     Text("\(skippedSets) series saltadas · \(exercisesDone) ejercicios").font(.caption).foregroundColor(Brand.soft)
@@ -575,9 +532,8 @@ struct TrainView: View {
 
                 Button {
                     fxFinish()
-                    let hr = health.endSession()
                     store.saveSession(name: sessionName, note: sessionNote, photoData: sessionPhoto, visibility: visibility,
-                                      elapsed: finalElapsed, avgHeartRate: hr.avg, maxHeartRate: hr.max,
+                                      elapsed: finalElapsed, avgHeartRate: nil, maxHeartRate: nil,
                                       location: location.placeName)
                     resetLocal()
                 } label: { Label("Guardar entrenamiento", systemImage: "checkmark") }
@@ -621,7 +577,6 @@ struct TrainView: View {
         return "\(labels[top] ?? "Entreno") \(time)"
     }
     private func resetLocal() {
-        health.endSession()
         LiveActivityManager.shared.end()
         sessionStart = nil; restActive = false; restElapsed = 0; restTotal = 0; finalElapsed = 0; showSummary = false
         sessionName = ""; sessionNote = ""; sessionPhoto = nil; sessionPickerItem = nil; visibility = .all

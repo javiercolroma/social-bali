@@ -1383,7 +1383,6 @@ struct AccountSetupView: View {
     @State private var handle = ""
     @State private var pickerItem: PhotosPickerItem?
     @State private var photoData: Data?
-    @ObservedObject private var health = HealthManager.shared
 
     private var normalized: String { normalizeHandle(handle) }
     @State private var handleAvailability: Bool? = nil   // nil = sin comprobar/da igual
@@ -1467,7 +1466,6 @@ struct AccountSetupView: View {
                     if let photoData { acc.photoData = photoData }
                     FX.success(sound: true)
                     store.saveAccount(acc)
-                    if isNew && health.isAvailable && !health.connected { Task { await health.connect() } }
                     onCancel()
                 } label: { Text(store.account == nil ? "Empezar" : "Guardar") }
                     .buttonStyle(PrimaryButtonStyle(enabled: canSubmit)).disabled(!canSubmit)

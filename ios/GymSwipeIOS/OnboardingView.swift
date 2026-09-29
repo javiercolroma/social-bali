@@ -5,7 +5,6 @@ import PhotosUI
 /// pregunta amable por pantalla. Solo para cuentas nuevas (editar usa `AccountSetupView`).
 struct OnboardingView: View {
     @EnvironmentObject var store: AppStore
-    @ObservedObject private var health = HealthManager.shared
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     // `birth` y `sex` estaban juntos en un solo paso `about` con DOS ruedas apiladas:
@@ -17,7 +16,7 @@ struct OnboardingView: View {
     // parte, o sea 4 pantallas para generar datos muertos. En su lugar entran los que
     // alimentan Discover: deportes, zona, estancia, origen, bio e intenciones.
     enum Step: Int, CaseIterable {
-        case welcome, name, handle, sports, area, stay, home, photo, birth, sex, bio, intents, health, done
+        case welcome, name, handle, sports, area, stay, home, photo, birth, sex, bio, intents, done
     }
     private enum Field { case name, handle }
 
@@ -150,7 +149,6 @@ struct OnboardingView: View {
         case .sex: sexStep
         case .bio: bioStep
         case .intents: intentsStep
-        case .health: healthStep
         case .done: doneStep
         }
     }
@@ -500,22 +498,6 @@ struct OnboardingView: View {
             .allowsHitTesting(done)
         } actions: {
             primary("Continue", enabled: !intentsSel.subtracting(canDate ? [] : [ConnectionIntent.dating.rawValue]).isEmpty) { FX.success(); advance() }
-        }
-    }
-
-    private var healthStep: some View {
-        layout {
-            Mascot(size: 96, holdsHeart: true)
-            TypingBubble(health.isAvailable ? "Shall we connect Health to track your heart rate?"
-                                            : "You can connect Health later from your profile.",
-                         typing: !shownBubbles.contains(Step.health.rawValue)) { shownBubbles.insert(Step.health.rawValue) }
-        } actions: {
-            if health.isAvailable && !health.connected {
-                primary("Connect Health") { Task { _ = await health.connect(); advance() } }
-                skip()
-            } else {
-                primary(health.connected ? "Connected! Continue" : "Continue") { advance() }
-            }
         }
     }
 

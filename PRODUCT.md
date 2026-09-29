@@ -193,11 +193,24 @@ cuenta atrás y empujón a los planes cercanos; para probar, **perfiles de prueb
   En 5 idiomas. Verificada con un mazo REAL generado por la función del servidor.
 - [x] **20 perfiles de prueba** (`backend/supabase/seed/`, `is_seed = true`). **Borrarlos antes
   de abrir a gente real**: `delete from auth.users where id in (select id from public.profiles where is_seed);`
+- [x] **Feedback de la primera prueba en TestFlight (build 7, 2026-09-29):**
+  - **Descubrir fallaba en la primera carga** («sin conexión», se arreglaba al refrescar): en frío la
+    sesión guardada traía el token caducado. Ahora se espera a la sesión renovada y se reintenta
+    en silencio; también se recarga al terminar el onboarding.
+  - **Formato: feed de tarjetas grandes** en vez de uno a uno. El «Siguiente» confundía (parecía un
+    match y no hacía nada). La escasez la pone el límite diario, no la navegación.
+  - **Fuera Comunidad** (Ranking + Partner) de la barra: el código de Partner se conserva para la Fase 4.
+  - **Fuera Salud por completo**: onboarding, Ajustes, pulso en entrenos, `HealthManager`, entitlement
+    y permisos. Los entrenos antiguos con pulso lo siguen mostrando.
 - [ ] **Fotos en la tarjeta** (hoy: foto de perfil si la hay; si no, el emoji de su primer deporte).
 - [ ] **Señales de actividad legibles** («entrena 4×/semana», «activo 8 semanas») en vez del
   número del Gym Score. Requiere agregar sesiones en el servidor.
 
 ### Fase 3 · Connect con contexto
+Decidido (2026-09-29): **solicitud con motivo, visible** (Entrenar · Surf · Café): el receptor ve
+quién y por qué; si acepta, se abre el chat. **«Me interesa» (citas) solo se revela si es mutuo.**
+Sin conexión aceptada no se puede escribir. Fotos: la de perfil manda + **hasta 4 fotos de
+actividad opcionales** con una invitación amable, más las fotos de sus entrenos.
 Intents (*train* · *surf* · *coffee* · *interested*) → el receptor ve **el motivo**.
 Mutuo = conexión y se abre el chat. Convive con el *follow* actual sin sustituirlo aún.
 
