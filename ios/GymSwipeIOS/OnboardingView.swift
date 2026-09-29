@@ -932,7 +932,7 @@ private struct ChipGrid: View {
                     Text(label)
                         .font(.system(size: 14, weight: .heavy))
                         .foregroundColor(on ? Color(hex: "10150a") : Brand.ink)
-                        .lineLimit(1).minimumScaleFactor(0.8)
+                        .lineLimit(1).minimumScaleFactor(0.7)
                         .padding(.horizontal, 12).frame(height: 42).frame(maxWidth: .infinity)
                         .background(on ? Brand.green : Color.white)
                         .clipShape(Capsule())

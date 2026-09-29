@@ -152,7 +152,7 @@ puede quedarse (es interno), pero el nombre de cara al público probablemente de
 El orden no es negociable en lo esencial: **sin identidad no hay Discover**, y sin
 Discover no hay conexión que medir.
 
-### Fase 1 · Identidad (el cimiento) — 🟡 EN CURSO
+### Fase 1 · Identidad (el cimiento) — ✅ COMPLETADA (2026-09-29)
 Perfil nuevo: bio de una línea, deportes/intereses, barrio, país de origen, **in Bali
 until** e intenciones (Dating / Friends / Training, multi-selección). Onboarding
 rehecho alrededor de esto. Migración de `profiles`.
@@ -168,9 +168,9 @@ rehecho alrededor de esto. Migración de `profiles`.
 - [x] **Onboarding 100% en inglés** + catálogo español completo (34 claves nuevas), verificado en simulador en ambos idiomas.
 - [x] **`Text(String)` NO localiza** (solo `Text(LocalizedStringKey)`): `TypingBubble`, `Bubble`, `ReactionChip` y el botón `primary` se saltaban el catálogo entero. Fallo preexistente, invisible mientras el código estaba en español. `TypingBubble` necesita `L10n.t(...)` porque escribe letra a letra y requiere el String ya traducido.
 - [x] **Género con código estable** (`Gender`: `man`/`woman`/`other`). Antes se guardaba la etiqueta visible, así que onboarding («Man») y perfil («Hombre») dejaban de casar. `Gender.from(_:)` es tolerante con lo ya guardado en es/en/fr/pt.
-- [ ] **Traducir al francés y portugués** las cadenas nuevas del club (hoy en inglés y español).
+- [x] **Francés, portugués (PT) y portugués (BR)**: las 96 cadenas del onboarding y del club, verificado en simulador. En la rejilla de deportes, «Vôlei de praia» se cortaba → el chip reduce un poco más la letra antes de truncar.
 - [x] **Edad mínima 18 para `dating`** (requisito de la App Store, tensión #3). Sin fecha de nacimiento **no se presupone la edad**: «Dating» sale bloqueado con un aviso que lleva a ponerla. Regla única `AgeGate` en onboarding y edición; `Profile.enforceDatingAge()` en cada `persist` para que el servidor nunca reciba un perfil que rechazaría (se perdería la subida entera). De paso: saltarse el año y pulsar Continuar en el sexo guardaba **1997** (valor por defecto de la rueda), y el onboarding sincronizaba **antes** de escribir el perfil del club.
-- [ ] **Aplicar la migración `0024_dating_age_gate`** (la garantía del servidor). La fecha va en `profile_private` (solo la lee su dueño), NO en `profiles`: esa tabla es pública, y ocultar la columna con permisos por columna **rompía todos los upsert de la app** (PostgREST pide la fila de vuelta). Probada en una transacción con rollback contra la BD real: 11/11 casos. La app ya funciona con ella o sin ella.
+- [x] **Migración `0024_dating_age_gate` aplicada** (la garantía del servidor; verificado en vivo: 2 triggers, RLS activo, `anon` no lee fechas). La fecha va en `profile_private` (solo la lee su dueño), NO en `profiles`: esa tabla es pública, y ocultar la columna con permisos por columna **rompía todos los upsert de la app** (PostgREST pide la fila de vuelta). Probada en una transacción con rollback contra la BD real: 11/11 casos. La app ya funciona con ella o sin ella.
 
 ### Fase 2 · Discover
 «Today's People»: 10-15 perfiles al día, curados, con final explícito. Tarjeta de perfil
