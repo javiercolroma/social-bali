@@ -2,7 +2,7 @@
 # Aplica las migraciones de backend/supabase/migrations en orden contra el proyecto.
 # Uso: migrate.sh <project_ref> [directorio]
 set -uo pipefail
-TOKEN=$(cat ~/.supabase/access-token)
+TOKEN=$(cat "${SUPABASE_TOKEN_FILE:-$HOME/.supabase/access-token}")
 REF="${1:?falta project ref}"
 DIR="${2:-$(cd "$(dirname "$0")" && pwd)/supabase/migrations}"
 API="https://api.supabase.com/v1/projects/$REF/database/query"

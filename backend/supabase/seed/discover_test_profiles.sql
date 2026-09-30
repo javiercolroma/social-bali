@@ -282,3 +282,32 @@ insert into public.profiles(id, handle, name, bio, sports, neighborhood, home_ci
     sports = excluded.sports, neighborhood = excluded.neighborhood, home_city = excluded.home_city,
     home_country = excluded.home_country, stay_kind = excluded.stay_kind, stay_until = excluded.stay_until,
     intents = excluded.intents, active_at = excluded.active_at, gym_score = excluded.gym_score, is_seed = true;
+
+-- Presencia de prueba para Your Circle (0028): posiciones repartidas por Canggu,
+-- Pererenan, Berawa y Uluwatu, y unos cuantos «online». La distancia caduca a las
+-- 24 h y el online a los 5 min: volver a ejecutar este archivo para refrescarlas.
+insert into public.presence (user_id, lat, lon, located_at, last_seen_at)
+select p.id,
+       round((base.lat + ((('x' || substr(md5(p.id::text), 1, 4))::bit(16)::int % 100) - 50) * 0.0002) / 0.001) * 0.001,
+       round((base.lon + ((('x' || substr(md5(p.id::text), 5, 4))::bit(16)::int % 100) - 50) * 0.0002) / 0.001) * 0.001,
+       now(),
+       case when (('x' || substr(md5(p.id::text), 9, 2))::bit(8)::int % 3) = 0 then now() else now() - interval '2 hours' end
+  from public.profiles p
+  join (values ('canggu', -8.6478, 115.1385), ('pererenan', -8.6440, 115.1220), ('berawa', -8.6620, 115.1470),
+               ('uluwatu', -8.8150, 115.0880), ('bingin', -8.8050, 115.1130), ('pecatu', -8.8200, 115.1200),
+               ('seminyak', -8.6900, 115.1600), ('umalas', -8.6600, 115.1600)) as base(area, lat, lon)
+    on base.area = p.neighborhood
+ where p.is_seed
+on conflict (user_id) do update set lat = excluded.lat, lon = excluded.lon,
+  located_at = excluded.located_at, last_seen_at = excluded.last_seen_at;
+
+-- Para que la rejilla se parezca a la realidad: todos con edad (24-38) y fechas de
+-- alta repartidas; solo 3 son «nuevos» (NEW) y 2 acaban de llegar a su zona.
+insert into public.profile_private(id, birthdate)
+select p.id, (current_date - ((24 + (('x' || substr(md5(p.id::text), 11, 2))::bit(8)::int % 15)) * 365 + 100))
+  from public.profiles p where p.is_seed
+on conflict (id) do nothing;
+update public.profiles p
+   set created_at = now() - make_interval(days => case when p.id::text like '%0001' or p.id::text like '%0007' or p.id::text like '%0012' then 2 else 40 end),
+       area_since = now() - make_interval(days => case when p.id::text like '%0003' or p.id::text like '%0010' then 1 else 40 end)
+ where p.is_seed and p.handle <> 'test.viewer';
