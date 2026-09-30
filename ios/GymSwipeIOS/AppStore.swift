@@ -71,7 +71,7 @@ final class AppStore: ObservableObject {
     /// Abre el chat con esta persona desde cualquier pantalla (RootView lo observa).
     @Published var openChatWith: String? = nil
     var myUserId: String? = nil
-    /// Perfil a abrir por deep link de invitación (forgeloop://user/<usuario>). Efímero.
+    /// Perfil a abrir por deep link de invitación (balicircle://user/<usuario>). Efímero.
     @Published var deepLinkPersonId: String? = nil
     /// Mi celda (~5 km) del servidor, para distancias aproximadas en Partner.
     @Published var myCell: (Double, Double)? = nil

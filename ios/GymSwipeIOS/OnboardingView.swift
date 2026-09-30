@@ -512,7 +512,7 @@ struct OnboardingView: View {
             }
             Bubble(firstName.isEmpty ? "You're all set! 🔥" : "You're all set, \(firstName)! 🔥")
         } actions: {
-            primary("Enter Forge Loop") { commit() }
+            primary("Enter Bali Circle") { commit() }
         }
     }
 
@@ -627,7 +627,7 @@ struct OnboardingView: View {
 
 // MARK: - Forgey (mascota original)
 
-/// Mascota amistosa de Forge Loop: cuerpo "blob" con degradado, brillo, ojos con
+/// Mascota amistosa de Bali Circle: cuerpo "blob" con degradado, brillo, ojos con
 /// destello y mejillas suaves. Acompaña en cada paso del onboarding.
 struct Mascot: View {
     var size: CGFloat = 110

@@ -496,7 +496,7 @@ struct LegalView: View {
         switch kind {
         case .privacy:
             return """
-            At Forge Loop we take your privacy seriously.
+            At Bali Circle we take your privacy seriously.
 
             Data we process
             • Your account (name, @username and photo), your profile details (sex, age, country, city, gym) and your workouts.
@@ -516,10 +516,10 @@ struct LegalView: View {
             """
         case .terms:
             return """
-            Forge Loop Terms of Use.
+            Bali Circle Terms of Use.
 
             Using the app
-            • Forge Loop helps you log your workouts and connect with other people. You are responsible for the information you post.
+            • Bali Circle helps you log your workouts and connect with other people. You are responsible for the information you post.
 
             Health and safety
             • The content in the app is for information only and does not replace advice from a professional. Train safely and see a doctor before starting a programme.
@@ -538,7 +538,7 @@ struct LegalView: View {
             """
         case .community:
             return """
-            Forge Loop Community Guidelines.
+            Bali Circle Community Guidelines.
 
             We want a safe, motivating community. By using the app you accept these guidelines. We apply ZERO TOLERANCE to objectionable content and abusive users.
 

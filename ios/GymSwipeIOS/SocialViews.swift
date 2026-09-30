@@ -327,11 +327,11 @@ struct FriendsContent: View {
 
     /// Invita a tus amigos (share sheet). El mensaje lleva tu @usuario y un enlace a la
     /// página de invitación: si tu amigo YA tiene la app, el botón «Abrir» salta directo a
-    /// tu perfil (deep link forgeloop://user/...); si no, le guía a descargarla.
+    /// tu perfil (deep link balicircle://user/...); si no, le guía a descargarla.
     private var inviteCard: some View {
         let handle = store.account?.handle ?? ""
         let url = "https://javiercolroma.github.io/gym-swipe-ios/invite.html" + (handle.isEmpty ? "" : "?u=\(handle)")
-        return ShareLink(item: "I train with Forge Loop 💪 Follow me, I'm @\(handle.isEmpty ? "forgeloop" : handle). Join here: \(url)") {
+        return ShareLink(item: "I'm on Bali Circle 🌴 Find me, I'm @\(handle.isEmpty ? "balicircle" : handle). Join here: \(url)") {
             HStack(spacing: 11) {
                 ZStack {
                     Circle().fill(Brand.greenSoft).frame(width: 40, height: 40)
@@ -1457,7 +1457,7 @@ struct AccountSetupView: View {
             Spacer()
             VStack(alignment: .leading, spacing: 14) {
                 VStack(alignment: .leading, spacing: 5) {
-                    Text("FORGE LOOP").font(.caption2).fontWeight(.heavy).foregroundColor(Color(hex: "4b6211"))
+                    Text("BALI CIRCLE").font(.caption2).fontWeight(.heavy).foregroundColor(Color(hex: "4b6211"))
                     Text(store.account == nil ? "Create your account" : "Edit account").font(.system(size: 26, weight: .heavy)).foregroundColor(Brand.ink)
                     Text("Elige tu nombre y un @usuario único para que tus amigos te encuentren.").font(.footnote).foregroundColor(Brand.muted)
                 }

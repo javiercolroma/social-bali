@@ -10,7 +10,7 @@ options:
   xcodeVersion: "16.0"
 settings:
   MARKETING_VERSION: "1.0"
-  CURRENT_PROJECT_VERSION: "10"
+  CURRENT_PROJECT_VERSION: "1"
   # Firma para iPhone físico (Personal Team del Apple ID añadido en Xcode).
   # Al vivir aquí, sobrevive a las regeneraciones de xcodegen.
   DEVELOPMENT_TEAM: 5JHD53WQ67
@@ -44,7 +44,7 @@ targets:
     info:
       path: GymSwipeIOS/Info.plist
       properties:
-        CFBundleDisplayName: Forge Loop
+        CFBundleDisplayName: Bali Circle
         # Cableadas a los ajustes de arriba: si no, xcodegen las deja literales a "1"
         # y subir CURRENT_PROJECT_VERSION no cambia nada (Apple rechaza build duplicada).
         CFBundleVersion: $(CURRENT_PROJECT_VERSION)
@@ -53,16 +53,14 @@ targets:
         # (el client ID al revés, empieza por com.googleusercontent.apps.…) y ejecuta
         # `npm run ios:generate`. El client ID va en AuthConfig.swift. Ver README.
         CFBundleURLTypes:
+          # Deep link de invitaciones: balicircle://user/<usuario> abre ese perfil en la app.
           - CFBundleURLSchemes:
-              - com.googleusercontent.apps.610266617536-rs1havs16kj8hmfcananppassb7v6ads
-          # Deep link de invitaciones: forgeloop://user/<usuario> abre ese perfil en la app.
-          - CFBundleURLSchemes:
-              - forgeloop
+              - balicircle
         ITSAppUsesNonExemptEncryption: false
         NSSupportsLiveActivities: true
         LSApplicationCategoryType: public.app-category.healthcare-fitness
-        NSLocationWhenInUseUsageDescription: Forge Loop uses your location to show how far away people in your circle are. Others only see the distance, never where you are.
-        NSCameraUsageDescription: Forge Loop uses the camera to take your workout photo.
+        NSLocationWhenInUseUsageDescription: Bali Circle uses your location to show how far away people in your circle are. Others only see the distance, never where you are.
+        NSCameraUsageDescription: Bali Circle uses the camera to take your workout photo.
         UILaunchScreen:
           UIColorName: LaunchBackground
         UISupportedInterfaceOrientations:
@@ -75,8 +73,8 @@ targets:
         UIViewControllerBasedStatusBarAppearance: true
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.javiercolroma.gymswipeios
-        PRODUCT_NAME: Forge Loop
+        PRODUCT_BUNDLE_IDENTIFIER: com.javiercolroma.balicircle
+        PRODUCT_NAME: Bali Circle
         INFOPLIST_FILE: GymSwipeIOS/Info.plist
         SDKROOT: iphoneos
         SUPPORTED_PLATFORMS: "iphoneos iphonesimulator"
@@ -97,7 +95,7 @@ targets:
     info:
       path: ForgeWidget/Info.plist
       properties:
-        CFBundleDisplayName: Forge Loop
+        CFBundleDisplayName: Bali Circle
         # La extensión DEBE llevar la misma versión que la app o falla la subida.
         CFBundleVersion: $(CURRENT_PROJECT_VERSION)
         CFBundleShortVersionString: $(MARKETING_VERSION)
@@ -105,8 +103,8 @@ targets:
           NSExtensionPointIdentifier: com.apple.widgetkit-extension
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.javiercolroma.gymswipeios.widget
-        PRODUCT_NAME: ForgeWidget
+        PRODUCT_BUNDLE_IDENTIFIER: com.javiercolroma.balicircle.widget
+        PRODUCT_NAME: BaliCircleWidget
         SDKROOT: iphoneos
         SUPPORTED_PLATFORMS: "iphoneos iphonesimulator"
         SUPPORTS_MACCATALYST: false

@@ -7,8 +7,8 @@ set -euo pipefail
 SP="$(cd "$(dirname "$0")" && pwd)"
 IDENTITY="Apple Distribution: JAVIER COLAS ROMANOS (5JHD53WQ67)"
 PROF_DIR="$HOME/Library/Developer/Xcode/UserData/Provisioning Profiles"
-APP="$SP/ForgeLoop.xcarchive/Products/Applications/Forge Loop.app"
-APPEX="$APP/PlugIns/ForgeWidget.appex"
+APP="$SP/BaliCircle.xcarchive/Products/Applications/Bali Circle.app"
+APPEX="$APP/PlugIns/BaliCircleWidget.appex"
 
 # Localiza cada perfil por el application-identifier que declara.
 find_profile() {
@@ -19,8 +19,8 @@ find_profile() {
   done
   echo "NO ENCONTRADO: $want" >&2; return 1
 }
-P_APP="$(find_profile "5JHD53WQ67.com.javiercolroma.gymswipeios")"
-P_EXT="$(find_profile "5JHD53WQ67.com.javiercolroma.gymswipeios.widget")"
+P_APP="$(find_profile "5JHD53WQ67.com.javiercolroma.balicircle")"
+P_EXT="$(find_profile "5JHD53WQ67.com.javiercolroma.balicircle.widget")"
 echo "perfil app:    $(basename "$P_APP")"
 echo "perfil widget: $(basename "$P_EXT")"
 
@@ -29,7 +29,7 @@ cat > "$SP/ent-app.plist" <<'EOF'
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0"><dict>
-  <key>application-identifier</key><string>5JHD53WQ67.com.javiercolroma.gymswipeios</string>
+  <key>application-identifier</key><string>5JHD53WQ67.com.javiercolroma.balicircle</string>
   <key>com.apple.developer.team-identifier</key><string>5JHD53WQ67</string>
   <key>com.apple.developer.applesignin</key><array><string>Default</string></array>
   <key>beta-reports-active</key><true/>
@@ -40,7 +40,7 @@ cat > "$SP/ent-ext.plist" <<'EOF'
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0"><dict>
-  <key>application-identifier</key><string>5JHD53WQ67.com.javiercolroma.gymswipeios.widget</string>
+  <key>application-identifier</key><string>5JHD53WQ67.com.javiercolroma.balicircle.widget</string>
   <key>com.apple.developer.team-identifier</key><string>5JHD53WQ67</string>
   <key>beta-reports-active</key><true/>
   <key>get-task-allow</key><false/>
@@ -75,5 +75,5 @@ codesign -d --entitlements :- "$APPEX" 2>/dev/null | tr -d '\0' \
 # Empaqueta el .ipa
 rm -rf "$SP/ipa" "$SP/export"; mkdir -p "$SP/ipa/Payload" "$SP/export"
 cp -R "$APP" "$SP/ipa/Payload/"
-(cd "$SP/ipa" && zip -qry "$SP/export/Forge Loop.ipa" Payload)
+(cd "$SP/ipa" && zip -qry "$SP/export/Bali Circle.ipa" Payload)
 echo "=== ipa ==="; ls -la "$SP/export/"

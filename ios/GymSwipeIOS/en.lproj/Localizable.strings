@@ -1,4 +1,4 @@
-/* Forge Loop — English catalog (the app's ONLY language). Historical UI literals in code
+/* Bali Circle — English catalog (the app's ONLY language). Historical UI literals in code
    are Spanish and act as keys; new code uses English literals directly. */
 
 /* Progress insights (per-exercise, vs. own history) */
@@ -123,12 +123,12 @@
 "Esta cuenta es privada" = "This account is private";
 "Este entreno no se guardará" = "This workout won't be saved";
 "FECHA DE NACIMIENTO" = "DATE OF BIRTH";
-"FORGE LOOP" = "FORGE LOOP";
+"BALI CIRCLE" = "BALI CIRCLE";
 "FOTO DEL ENTRENO (OPCIONAL)" = "WORKOUT PHOTO (OPTIONAL)";
 "Falta configurar Google" = "Google isn't set up yet";
 "Fecha de nacimiento" = "Date of birth";
 "Finalizar entrenamiento" = "Finish workout";
-"Forge Loop" = "Forge Loop";
+"Bali Circle" = "Bali Circle";
 "Forgey" = "Forgey";
 "Forgey IA no está disponible" = "Forgey AI isn't available";
 "Forgey está pensando…" = "Forgey is thinking…";
@@ -179,7 +179,7 @@
 "Para activar Google hay que crear un OAuth Client ID de iOS en Google Cloud y pegarlo en AuthConfig.swift (instrucciones dentro). Mientras, entra con Apple o email." = "To enable Google, create an iOS OAuth Client ID in Google Cloud and paste it into AuthConfig.swift (instructions inside). Meanwhile, sign in with Apple or email.";
 "Pendiente" = "Pending";
 "Pierna, Pecho, Pull…" = "Legs, Chest, Pull…";
-"Pon en marcha tu Forge Loop" = "Get your Forge Loop going";
+"Pon en marcha tu Bali Circle" = "Get your Bali Circle going";
 "Pregúntale a Forgey…" = "Ask Forgey…";
 "Publica tu plan y recibe compañeros con tu nivel cerca de ti." = "Post your plan and get partners at your level near you.";
 "Publicar y buscar" = "Post and search";

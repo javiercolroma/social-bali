@@ -27,11 +27,11 @@ struct GymSwipeIOSApp: App {
             // tema oscuro de verdad, la app se declara clara y se ve igual en ambos modos.
             .preferredColorScheme(.light)
             .tint(Color(hex: "5e910e"))
-            // Deep links: invitaciones forgeloop://user/<usuario> + callback OAuth de Google.
+            // Deep links: invitaciones balicircle://user/<usuario> + callback OAuth de Google.
             .onOpenURL { url in
-                if url.scheme == "forgeloop" {
-                    // forgeloop://user/<handle> → abre ese perfil (la "solicitud de amistad" de la invitación)
-                    let parts = url.absoluteString.replacingOccurrences(of: "forgeloop://", with: "").split(separator: "/")
+                if url.scheme == "balicircle" {
+                    // balicircle://user/<handle> → abre ese perfil (la "solicitud de amistad" de la invitación)
+                    let parts = url.absoluteString.replacingOccurrences(of: "balicircle://", with: "").split(separator: "/")
                     if parts.first == "user", parts.count > 1 {
                         store.openProfileByHandle(String(parts[1]).removingPercentEncoding ?? String(parts[1]))
                     }

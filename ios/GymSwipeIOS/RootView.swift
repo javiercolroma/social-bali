@@ -254,7 +254,7 @@ struct RootView: View {
             // Solo la marca: el título de la sección (Social, Plan…) se quitó porque ya lo
             // dice la barra de abajo, que además va resaltada. Repetirlo en 30pt comía una
             // franja de pantalla en cada vista para no aportar nada.
-            Text("FORGE LOOP")
+            Text("BALI CIRCLE")
                 .font(.system(size: 17, weight: .heavy)).kerning(1.6)
                 .foregroundColor(Color(hex: "4b6211"))
                 .lineLimit(1)

@@ -5,7 +5,7 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
-	<string>Forge Loop</string>
+	<string>Bali Circle</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -23,13 +23,7 @@
 		<dict>
 			<key>CFBundleURLSchemes</key>
 			<array>
-				<string>com.googleusercontent.apps.610266617536-rs1havs16kj8hmfcananppassb7v6ads</string>
-			</array>
-		</dict>
-		<dict>
-			<key>CFBundleURLSchemes</key>
-			<array>
-				<string>forgeloop</string>
+				<string>balicircle</string>
 			</array>
 		</dict>
 	</array>
@@ -40,9 +34,9 @@
 	<key>LSApplicationCategoryType</key>
 	<string>public.app-category.healthcare-fitness</string>
 	<key>NSCameraUsageDescription</key>
-	<string>Forge Loop uses the camera to take your workout photo.</string>
+	<string>Bali Circle uses the camera to take your workout photo.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>Forge Loop uses your location to show how far away people in your circle are. Others only see the distance, never where you are.</string>
+	<string>Bali Circle uses your location to show how far away people in your circle are. Others only see the distance, never where you are.</string>
 	<key>NSSupportsLiveActivities</key>
 	<true/>
 	<key>UILaunchScreen</key>

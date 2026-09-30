@@ -675,7 +675,7 @@ struct SocialFeedView: View {
     }
 
     private func shareText(_ item: FeedItem) -> String {
-        "\(item.authorName) trained \(L10n.x(item.title)): \(item.sets) sets · \(durationText(item.elapsed)). 💪 via Forge Loop"
+        "\(item.authorName) trained \(L10n.x(item.title)): \(item.sets) sets · \(durationText(item.elapsed)). 💪 via Bali Circle"
     }
 
     @ViewBuilder

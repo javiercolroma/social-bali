@@ -19,7 +19,7 @@ struct AuthView: View {
                     Circle().fill(Brand.greenSoft).frame(width: 108, height: 108)
                     Image(systemName: "dumbbell.fill").font(.system(size: 46, weight: .heavy)).foregroundColor(Color(hex: "10150a"))
                 }
-                Text("Forge Loop").font(.system(size: 34, weight: .heavy)).foregroundColor(Brand.ink).padding(.top, 16)
+                Text("Bali Circle").font(.system(size: 34, weight: .heavy)).foregroundColor(Brand.ink).padding(.top, 16)
                 Text("Train, track your progress and compete with your crew.")
                     .font(.system(size: 16)).foregroundColor(Brand.muted).multilineTextAlignment(.center)
                     .fixedSize(horizontal: false, vertical: true).padding(.top, 6).padding(.horizontal, 20)
@@ -60,7 +60,7 @@ struct AuthProviderSheet: View {
         NavigationStack {
             VStack(spacing: 14) {
                 VStack(spacing: 4) {
-                    Text(creating ? "Join Forge Loop" : "Welcome back")
+                    Text(creating ? "Join Bali Circle" : "Welcome back")
                         .font(.system(size: 24, weight: .heavy)).foregroundColor(Brand.ink)
                     Text(creating ? "Create your account in seconds." : "Sign in to keep up your progress.")
                         .font(.footnote).foregroundColor(Brand.muted)

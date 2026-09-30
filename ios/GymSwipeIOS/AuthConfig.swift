@@ -5,7 +5,7 @@ import UIKit
 /// ─── CÓMO ACTIVARLO (≈5 min) ────────────────────────────────────────────────
 /// 1. Entra en https://console.cloud.google.com/apis/credentials (crea un proyecto si no tienes).
 /// 2. "Crear credenciales" → "ID de cliente de OAuth" → tipo de aplicación **iOS**.
-///      • ID del paquete (Bundle ID): com.javiercolroma.gymswipeios
+///      • ID del paquete (Bundle ID): com.javiercolroma.balicircle
 /// 3. Copia el **ID de cliente** (termina en `.apps.googleusercontent.com`) y pégalo en
 ///    `clientID` aquí abajo.
 /// 4. Copia el **Esquema de URL de iOS** (es el client ID al revés, empieza por
@@ -16,7 +16,7 @@ import UIKit
 /// (El login con Apple y con email funcionan sin nada de esto.)
 enum GoogleAuth {
     /// Pega aquí tu iOS OAuth client ID de Google Cloud.
-    static let clientID = "610266617536-rs1havs16kj8hmfcananppassb7v6ads.apps.googleusercontent.com"
+    static let clientID = ""   // pendiente: cliente OAuth nuevo para com.javiercolroma.balicircle
 
     /// ¿Están puestas las credenciales? Si no, el botón de Google queda desactivado con ayuda.
     static var isConfigured: Bool { !clientID.isEmpty }

@@ -2,7 +2,7 @@ import Foundation
 import UserNotifications
 import UIKit
 
-/// Notificaciones de Forge Loop.
+/// Notificaciones de Bali Circle.
 /// - LOCAL (funciona ya, sin servidor): recordatorio de "racha en peligro" — la racha se rompe
 ///   al pasar más de 3 días sin entrenar, así que se programa un aviso 3 días después del
 ///   último entreno; cada entreno nuevo lo re-programa (y así nunca suena si sigues activo).

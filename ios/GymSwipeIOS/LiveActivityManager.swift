@@ -15,7 +15,7 @@ final class LiveActivityManager {
                supersetPartner: String? = nil) {
         guard #available(iOS 16.2, *) else { return }
         guard ActivityAuthorizationInfo().areActivitiesEnabled, current == nil else { return }
-        let attrs = WorkoutActivityAttributes(title: "Forge Loop")
+        let attrs = WorkoutActivityAttributes(title: "Bali Circle")
         let state = WorkoutActivityAttributes.ContentState(
             workoutName: name, startedAt: startedAt, closedSets: closedSets, totalSets: totalSets,
             currentExercise: currentExercise, reps: reps, weight: weight, setIndex: setIndex,
