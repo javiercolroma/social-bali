@@ -318,3 +318,81 @@ grant execute on function public.update_presence(double precision, double precis
 grant execute on function public.heartbeat() to authenticated;
 grant execute on function public.go_offline() to authenticated;
 grant execute on function public.your_circle() to authenticated;
+
+-- ─── Perfil social ───────────────────────────────────────────────────────────
+-- Señales de actividad legibles («Trains 4× / week», «Active this week», «7 week
+-- streak») en vez de números del Gym Score: ayudan a entender el lifestyle, no
+-- son una hoja de estadísticas. Solo sesiones verificadas y que no sean «solo
+-- yo»; nada si la cuenta es privada (sus entrenos solo los ven sus seguidores).
+create or replace function public.activity_signals(uid uuid)
+returns jsonb
+language plpgsql
+stable
+security definer
+set search_path = public
+as $$
+declare
+  per_week    numeric;
+  this_week   boolean;
+  streak      int := 0;
+  wk          date := date_trunc('week', (now() at time zone 'Asia/Makassar'))::date;
+begin
+  if exists (select 1 from public.profiles where id = uid and is_private) then return null; end if;
+
+  select count(*) / 4.0 into per_week
+    from public.workout_sessions
+   where user_id = uid and verified and visibility <> 'onlyMe' and date > now() - interval '28 days';
+
+  select exists (select 1 from public.workout_sessions
+                  where user_id = uid and verified and visibility <> 'onlyMe' and date > now() - interval '7 days')
+    into this_week;
+
+  -- Semanas seguidas con al menos un entreno, contando desde esta (o la anterior,
+  -- si esta aún no ha entrenado: la racha no se rompe hasta que acaba la semana).
+  if not exists (select 1 from public.workout_sessions
+                  where user_id = uid and verified and visibility <> 'onlyMe'
+                    and date_trunc('week', date at time zone 'Asia/Makassar')::date = wk) then
+    wk := wk - 7;
+  end if;
+  while exists (select 1 from public.workout_sessions
+                 where user_id = uid and verified and visibility <> 'onlyMe'
+                   and date_trunc('week', date at time zone 'Asia/Makassar')::date = wk) loop
+    streak := streak + 1;
+    wk := wk - 7;
+    exit when streak >= 104;
+  end loop;
+
+  return jsonb_build_object(
+    'per_week', round(per_week)::int,
+    'active_this_week', this_week,
+    'week_streak', streak
+  );
+end;
+$$;
+revoke all on function public.activity_signals(uuid) from public, anon, authenticated;
+
+-- El perfil de una persona tal y como lo ve quien lo abre: la celda del Circle
+-- (edad, distancia, online) + señales de actividad.
+create or replace function public.club_profile(target uuid)
+returns jsonb
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  uid          uuid := auth.uid();
+  p            public.profiles;
+  viewer_dates boolean;
+begin
+  if uid is null then raise exception 'not authenticated'; end if;
+  if public.is_blocked_pair(uid, target) then return null; end if;
+  select * into p from public.profiles where id = target;
+  if not found then return null; end if;
+  viewer_dates := public.is_adult(uid)
+    and exists (select 1 from public.profiles where id = uid and 'dating' = any(coalesce(intents, '{}')));
+  return public.circle_card(p, uid, viewer_dates, false)
+         || jsonb_build_object('activity', public.activity_signals(target));
+end;
+$$;
+revoke all on function public.club_profile(uuid) from public, anon;
+grant execute on function public.club_profile(uuid) to authenticated;

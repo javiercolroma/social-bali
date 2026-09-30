@@ -15,7 +15,7 @@ struct YourCircleView: View {
     @State private var day: String?
     @State private var loading = true
     @State private var failed = false
-    @State private var openProfile: SocialPerson?
+    @State private var openProfile: ProfileRow?
     @State private var showRequests = false
 
     private let columns = [GridItem(.flexible(), spacing: 10), GridItem(.flexible(), spacing: 10)]
@@ -48,7 +48,7 @@ struct YourCircleView: View {
         .onChange(of: presence.canUseLocation) { ok in
             if ok { Task { try? await Task.sleep(nanoseconds: 3_000_000_000); await load() } }
         }
-        .sheet(item: $openProfile) { FriendProfileView(person: $0).environmentObject(store) }
+        .sheet(item: $openProfile) { ClubProfileView(personId: $0.id.uuidString.lowercased(), initial: $0).environmentObject(store) }
         .sheet(isPresented: $showRequests) { ConnectionRequestsSheet().environmentObject(store) }
         .onChange(of: store.openChatWith) { v in if v != nil { openProfile = nil } }
     }
@@ -63,7 +63,7 @@ struct YourCircleView: View {
                 if !presence.canUseLocation { locationBanner }
                 LazyVGrid(columns: columns, spacing: 10) {
                     ForEach(Array(people.enumerated()), id: \.element.id) { i, row in
-                        CircleCell(row: row, myArea: area) { FX.tap(); openProfile = AppStore.asPeople([row])[0] }
+                        CircleCell(row: row, myArea: area) { FX.tap(); openProfile = row }
                             .onAppear { markSeen(i + 1) }
                     }
                 }
@@ -288,3 +288,6 @@ struct CircleCell: View {
         }
     }
 }
+
+/// Para abrir un perfil del Circle con `.sheet(item:)`.
+extension ProfileRow: Identifiable {}

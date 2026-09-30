@@ -135,15 +135,20 @@ extension AppStore {
     /// ¿Busco citas (y puedo)? Condición para ofrecer «I'm interested».
     var iAmOpenToDating: Bool { profile.canDate && profile.intentList.contains(.dating) }
 
-    func connect(_ personId: String, reason: ConnectReason) async {
+    /// 'connected', 'pending' o nil si falló.
+    @discardableResult
+    func connect(_ personId: String, reason: ConnectReason) async -> String? {
         do {
             let result = try await Backend.shared.sendConnection(to: personId, reason: reason)
             FX.success()
             loadConnections()
-            if result == "connected" { flashMessage = L10n.t("You're connected!") }
+            // El match de «interested» lo celebra `ConnectSheet`; el resto, un aviso.
+            if result == "connected" && reason != .interested { flashMessage = L10n.t("You're connected!") }
+            return result
         } catch {
             print("[Connect] envío falló:", error)
             FX.warning()
+            return nil
         }
     }
 
@@ -169,23 +174,27 @@ struct ConnectControl: View {
     let personId: String
     /// ¿Ofrecer «I'm interested»? Solo si ambos buscan citas (ver `ClubIdentity.visible`).
     let theyAreOpenToDating: Bool
+    /// Para la hoja de motivos; si faltan, se buscan en las personas ya cargadas.
+    var name: String? = nil
+    var photoURL: String? = nil
     @State private var busy = false
+    @State private var choosing = false
 
     var body: some View {
         switch store.connectionState(personId) {
         case .none:
-            Menu {
-                ForEach(ConnectReason.social) { r in
-                    Button { send(r) } label: { Text("\(r.emoji) \(r.label)") }
-                }
-                if store.iAmOpenToDating && theyAreOpenToDating {
-                    Divider()
-                    Button { send(.interested) } label: { Text("\(ConnectReason.interested.emoji) \(ConnectReason.interested.label)") }
-                }
-            } label: {
+            Button { FX.tap(); choosing = true } label: {
                 pill(icon: "hand.wave.fill", text: L10n.t("Connect"), filled: true)
             }
+            .buttonStyle(.plain)
             .disabled(busy)
+            .sheet(isPresented: $choosing) {
+                ConnectSheet(personId: personId,
+                             name: name ?? store.person(personId)?.name ?? "",
+                             photoURL: photoURL ?? store.person(personId)?.avatarURL,
+                             offerInterested: store.iAmOpenToDating && theyAreOpenToDating)
+                    .environmentObject(store)
+            }
         case .sent(let r):
             VStack(alignment: .leading, spacing: 4) {
                 pill(icon: r == .interested ? "lock.fill" : "clock", text: r == .interested ? L10n.t("Interested · private") : "\(r.emoji) \(L10n.t("Request sent"))", filled: false)
@@ -209,10 +218,6 @@ struct ConnectControl: View {
                 pill(icon: "message.fill", text: L10n.t("Message"), filled: true)
             }.buttonStyle(.plain)
         }
-    }
-
-    private func send(_ r: ConnectReason) {
-        Task { busy = true; await store.connect(personId, reason: r); busy = false }
     }
 
     private func pill(icon: String, text: String, filled: Bool) -> some View {
@@ -268,7 +273,7 @@ struct ConnectionRequestsSheet: View {
             .background(Brand.bg)
             .navigationTitle(L10n.t("Connection requests")).navigationBarTitleDisplayMode(.inline)
             .toolbar { ToolbarItem(placement: .topBarTrailing) { Button(L10n.t("Done")) { dismiss() }.fontWeight(.heavy) } }
-            .sheet(item: $openProfile) { FriendProfileView(person: $0).environmentObject(store) }
+            .sheet(item: $openProfile) { ClubProfileView(personId: $0.id).environmentObject(store) }
             // Al aceptar se abre el chat: esta hoja se cierra para que se vea.
             .onChange(of: store.openChatWith) { v in if v != nil { dismiss() } }
         }

@@ -125,6 +125,15 @@ final class Backend {
         return try await client.rpc("your_circle").execute().value
     }
 
+    /// El perfil social de una persona: celda del Circle + señales de actividad.
+    /// nil si no existe o hay un bloqueo entre las dos.
+    func clubProfile(_ id: String) async throws -> ProfileRow? {
+        guard let client else { throw BackendError.notConfigured }
+        _ = try await client.auth.session
+        struct P: Encodable { let target: String }
+        return try await client.rpc("club_profile", params: P(target: id.lowercased())).execute().value
+    }
+
     // MARK: - Presencia de Your Circle (0028)
 
     /// El servidor ajusta la posición a ~110 m antes de guardarla y nadie la puede leer.
@@ -679,6 +688,8 @@ struct ProfileRow: Codable {
     var days_left: Int?
     /// Primera vez que aparece en MI Circle (para «4 new»).
     var first_time: Bool?
+    /// Solo en el perfil social (`club_profile`); nil si la cuenta es privada.
+    var activity: ActivitySignals?
 
     /// Los campos del club y las fotos se mandan SIEMPRE, también como `null`: el
     /// `Encodable` sintetizado omite los nil, y entonces borrar tu bio (o tu última foto)
@@ -719,6 +730,13 @@ struct DiscoverDeck: Decodable {
     let day: String
     let position: Int
     let profiles: [ProfileRow]
+}
+
+/// «Trains 4× / week», «Active this week», «7 week streak» (0028, `activity_signals`).
+struct ActivitySignals: Codable, Hashable {
+    let per_week: Int?
+    let active_this_week: Bool?
+    let week_streak: Int?
 }
 
 struct CircleDeck: Decodable {

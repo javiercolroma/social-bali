@@ -19,6 +19,7 @@ struct RootView: View {
     @State private var activeTour: Int?   // sección cuyo tutorial se está mostrando
     @State private var tourTarget: String?   // componente resaltado en el paso actual del tour
     @State private var showForgey = false    // chat con Forgey (IA on-device)
+    @ObservedObject private var match = MatchCenter.shared
 
 
     var body: some View {
@@ -53,6 +54,8 @@ struct RootView: View {
         }
         .background(Brand.bg.ignoresSafeArea())
         .sheet(isPresented: $showForgey) { ForgeyChatView().environmentObject(store) }
+        // «It's a match» (los dos dijeron «interested»): a pantalla completa, sobre todo.
+        .fullScreenCover(item: $match.match) { MatchView(info: $0).environmentObject(store) }
         .onAppear { maybeShowTour(tab) }
         // Invitación por deep link: abre el perfil del que te invitó, listo para seguirle.
         .onReceive(store.$deepLinkPersonId.compactMap { $0 }) { pid in

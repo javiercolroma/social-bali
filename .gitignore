@@ -33,3 +33,4 @@ ios/export/
 ios/ipa/
 ios/ent-app.plist
 ios/ent-ext.plist
+.claude/worktrees/
