@@ -76,10 +76,7 @@ struct RootView: View {
         // Tras el onboarding (la cuenta pasa a existir), muestra el tour de Social.
         .onChange(of: store.account == nil) { isNil in if !isNil { maybeShowTour(tab) } }
         .sheet(isPresented: $showMessages) {
-            MessagesSheet(initialTab: messagesTab,
-                          onOpenChat: { showMessages = false; chatPerson = IdString(id: $0) },
-                          onOpenProfile: { profilePerson = IdString(id: $0) },
-                          onEditAccount: { editingAccount = true })
+            ChatsView(onOpenChat: { showMessages = false; chatPerson = IdString(id: $0) })
                 .environmentObject(store)
         }
         .sheet(isPresented: $showNotifications) {
@@ -262,7 +259,7 @@ struct RootView: View {
                 .foregroundColor(Color(hex: "4b6211"))
                 .lineLimit(1)
             Spacer()
-            headerButton(system: "envelope.fill", badge: store.unreadMessages) { FX.tap(); messagesTab = 1; showMessages = true }
+            headerButton(system: "envelope.fill", badge: store.unreadMessages + store.incomingRequests.count) { FX.tap(); messagesTab = 1; showMessages = true }
             headerButton(system: "bell.fill", badge: store.unreadNotifications) { FX.tap(); showNotifications = true }
 }
         .padding(.horizontal, 18)
