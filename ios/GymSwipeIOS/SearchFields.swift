@@ -61,7 +61,7 @@ struct CountryField: View {
                 }
             }
         }
-        .onAppear { if query.isEmpty { query = selected } }
+        .onAppear { if query.isEmpty { query = countryName(selected) } }
     }
 }
 

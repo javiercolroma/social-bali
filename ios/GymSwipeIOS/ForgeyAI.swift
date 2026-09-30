@@ -33,17 +33,17 @@ final class ForgeyAI: ObservableObject {
             case .available:
                 return nil
             case .unavailable(.deviceNotEligible):
-                return "Este dispositivo no soporta Apple Intelligence (hace falta un iPhone 15 Pro o posterior)."
+                return "This device doesn't support Apple Intelligence (you need an iPhone 15 Pro or later)."
             case .unavailable(.appleIntelligenceNotEnabled):
-                return "Activa Apple Intelligence en Ajustes → Apple Intelligence y Siri para hablar con Forgey."
+                return "Turn on Apple Intelligence in Settings → Apple Intelligence & Siri to chat with Forgey."
             case .unavailable(.modelNotReady):
-                return "El modelo de Apple Intelligence se está descargando. Inténtalo en unos minutos."
+                return "The Apple Intelligence model is downloading. Try again in a few minutes."
             case .unavailable:
-                return "Apple Intelligence no está disponible ahora mismo en este dispositivo."
+                return "Apple Intelligence isn't available on this device right now."
             }
         }
         #endif
-        return "Forgey IA necesita iOS 26 o posterior con Apple Intelligence."
+        return "Forgey AI needs iOS 26 or later with Apple Intelligence."
     }
 
     // MARK: - Contexto: resumen COMPACTO de tus entrenos (el modelo on-device tiene contexto corto)
@@ -66,11 +66,11 @@ final class ForgeyAI: ObservableObject {
             for it in (s.items ?? []) {
                 let sets = it.logs ?? [SetLog(reps: it.reps, weight: it.weight)]
                 guard let best = sets.max(by: { e1($0) < e1($1) }), e1(best) > 0 else { continue }
-                var st = stats[it.name] ?? Stat()
+                var st = stats[L10n.x(it.name)] ?? Stat()
                 if e1(best) > st.bestE { st.bestE = e1(best); st.bestW = best.weight; st.bestR = best.reps }
                 if st.n == 0 { st.first = e1(best) }
                 st.last = e1(best); st.n += 1
-                stats[it.name] = st
+                stats[L10n.x(it.name)] = st
             }
         }
 
@@ -93,10 +93,10 @@ final class ForgeyAI: ObservableObject {
                 out.append("MAYOR PROGRESO: \(sortedTrend.first!.key). MENOR PROGRESO: \(sortedTrend.last!.key).")
             }
 
-            let f = DateFormatter(); f.dateFormat = "d MMM"; f.locale = Locale(identifier: "es_ES")
+            let f = DateFormatter(); f.dateFormat = "d MMM"; f.locale = L10n.locale
             let recent = reliable.sorted { $0.date > $1.date }.prefix(6)
             out.append("ÚLTIMOS ENTRENOS: " + recent.map { s in
-                "\(f.string(from: s.date)) «\(s.name)» (\(s.sets) series)"
+                "\(f.string(from: s.date)) «\(L10n.x(s.name))» (\(s.sets) series)"
             }.joined(separator: "; ") + ".")
         }
         return out.joined(separator: "\n")
@@ -116,7 +116,7 @@ final class ForgeyAI: ObservableObject {
         }
         #endif
         throw NSError(domain: "ForgeyAI", code: 1,
-                      userInfo: [NSLocalizedDescriptionKey: ForgeyAI.unavailableReason() ?? "No disponible"])
+                      userInfo: [NSLocalizedDescriptionKey: ForgeyAI.unavailableReason() ?? "Not available"])
     }
 
     // MARK: - Reparto de entreno (contexto para el análisis del físico por foto)
@@ -159,16 +159,16 @@ final class ForgeyAI: ObservableObject {
                 generating: AIWorkout.self).content
 
             let exercises = res.exercises.map {
-                AppStore.makeExercise(res.name, $0.name, min(6, max(1, $0.sets)), min(30, max(1, $0.reps)),
+                AppStore.makeExercise(res.name, catalogName(forDisplay: $0.name), min(6, max(1, $0.sets)), min(30, max(1, $0.reps)),
                                       min(300, max(0, $0.weightKg)))
             }
             return WorkoutTemplate(id: "ai-\(Int(Date().timeIntervalSince1970))", name: res.name,
                                    description: AppStore.summary(of: exercises),
-                                   block: res.block.isEmpty ? "Otros" : res.block, exercises: exercises)
+                                   block: res.block.isEmpty ? "Others" : res.block, exercises: exercises)
         }
         #endif
         throw NSError(domain: "ForgeyAI", code: 1,
-                      userInfo: [NSLocalizedDescriptionKey: ForgeyAI.unavailableReason() ?? "No disponible"])
+                      userInfo: [NSLocalizedDescriptionKey: ForgeyAI.unavailableReason() ?? "Not available"])
     }
 }
 
@@ -178,9 +178,9 @@ final class ForgeyAI: ObservableObject {
 @available(iOS 26.0, *)
 @Generable
 struct AIWorkout {
-    @Guide(description: "Nombre corto y motivador del entreno, en español")
+    @Guide(description: "Short, motivating workout name, in English")
     var name: String
-    @Guide(description: "Grupo principal: Pecho, Espalda, Pierna, Hombro, Brazo, Empuje, Pull, Full body…")
+    @Guide(description: "Main group, in English: Chest, Back, Legs, Shoulders, Arms, Push, Pull, Full body…")
     var block: String
     @Guide(description: "Entre 3 y 8 ejercicios")
     var exercises: [AIExercise]
@@ -189,7 +189,7 @@ struct AIWorkout {
 @available(iOS 26.0, *)
 @Generable
 struct AIExercise {
-    @Guide(description: "Nombre del ejercicio en español")
+    @Guide(description: "Exercise name in English (use the catalog name when it is in the catalog)")
     var name: String
     @Guide(description: "Número de series, de 2 a 5")
     var sets: Int

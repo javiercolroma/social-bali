@@ -60,12 +60,11 @@ struct SocialFeedView: View {
     @State private var suggestionsSnapshot: [SocialPerson] = []
     @State private var paraTiFeed: [FeedItem] = []
     @State private var paraTiLoaded = false
-    @State private var showDiscover = false
     @State private var realFeed: [FeedItem] = []      // posts reales: TUYOS + de a quien sigues
     @State private var realDiscover: [FeedItem] = []  // posts reales de gente que NO sigues (→ Para ti)
     @State private var realFollowedEmpty = true       // ¿aún no sigues a nadie? (modo usuario nuevo)
 
-    private let tabs: [(title: String, icon: String)] = [("Seguidos", "person.2.fill"), ("Para ti", "sparkles")]
+    private let tabs: [(title: String, icon: String)] = [("Following", "person.2.fill"), ("For you", "sparkles")]
 
     var body: some View {
         VStack(spacing: 0) {
@@ -82,7 +81,6 @@ struct SocialFeedView: View {
                 .environmentObject(store)
         }
         .sheet(item: $likesOfPost) { postLikesSheet($0) }
-        .sheet(isPresented: $showDiscover) { DiscoverPeopleView().environmentObject(store) }
     }
 
     // MARK: - Me gusta de una publicación
@@ -96,7 +94,7 @@ struct SocialFeedView: View {
                 VStack(spacing: 0) {
                     if liked {
                         likeRow(ScoredAvatar(account: store.account, score: store.gymScore.total, size: 42),
-                                name: store.account?.name ?? "Tú", handle: store.account?.handle ?? "tu_usuario") {
+                                name: store.account?.name ?? "You", handle: store.account?.handle ?? "your_handle") {
                             likesOfPost = nil
                             DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) { onOpenMyProfile() }
                         }
@@ -158,14 +156,7 @@ struct SocialFeedView: View {
                     .clipShape(RoundedRectangle(cornerRadius: 12)).contentShape(Rectangle())
                 }.buttonStyle(.plain)
             }
-            // Buscar usuarios reales (solo con backend): abre el grafo social real.
-            if Backend.shared.isConfigured {
-                Button { FX.tap(); showDiscover = true } label: {
-                    Image(systemName: "person.badge.plus").font(.system(size: 15, weight: .heavy))
-                        .foregroundColor(Brand.ink).frame(width: 46, height: 40)
-                        .background(Brand.chip).clipShape(RoundedRectangle(cornerRadius: 12))
-                }.buttonStyle(.plain)
-            }
+            // La búsqueda por @usuario salió: en el club se descubre gente en Your Circle.
         }
         .padding(.horizontal, 14).padding(.top, 2).padding(.bottom, 8)
         .tourAnchor("social.switch")
@@ -182,7 +173,7 @@ struct SocialFeedView: View {
                     // reorganiza el muro al instante (las sugerencias solo se bajan al refrescar).
                     if hasSuggestions { suggestionsStrip }
                     if seguidosFeed.isEmpty {
-                        emptyFeed("Sigue a atletas o registra un entreno para llenar tu muro.")
+                        emptyFeed("Follow athletes or log a workout to fill your feed.")
                     } else {
                         ForEach(seguidosFeed) { item in
                             feedCard(item).tourAnchor("social.card", if: item.id == seguidosFeed.first?.id)
@@ -190,7 +181,7 @@ struct SocialFeedView: View {
                     }
                 } else if seguidosFeed.isEmpty {
                     if hasSuggestions { suggestionsStrip }
-                    emptyFeed("Registra un entreno o desliza para refrescar tu muro.")
+                    emptyFeed("Log a workout or pull to refresh your feed.")
                 } else {
                     // Con seguidos: las sugerencias se INTERCALAN entre posts, pero solo tras refrescar (no automático).
                     let insertAt = min(2, seguidosFeed.count - 1)
@@ -266,7 +257,7 @@ struct SocialFeedView: View {
         return FeedItem(
             id: r.id,
             personId: isMe ? nil : r.user_id,
-            authorName: isMe ? (store.account?.name ?? "Tú") : (r.author?.name ?? r.author?.handle ?? "Atleta"),
+            authorName: isMe ? (store.account?.name ?? "You") : (r.author?.name ?? r.author?.handle ?? "Athlete"),
             avatarPhoto: isMe ? store.account?.photoData : nil,
             avatarEmoji: "🙂",
             flag: "", location: r.location ?? "",
@@ -316,7 +307,7 @@ struct SocialFeedView: View {
         ScrollView {
             LazyVStack(spacing: 12) {
                 if paraTiFeed.isEmpty {
-                    emptyFeed("No hay entrenos por descubrir ahora mismo. ¡Vuelve pronto!")
+                    emptyFeed("No workouts to discover right now. Check back soon!")
                 } else {
                     ForEach(paraTiFeed) { item in
                         card(item, showFollow: item.personId != nil && store.relationship(item.personId ?? "") == .none)
@@ -357,7 +348,7 @@ struct SocialFeedView: View {
 
     private var suggestionsStrip: some View {
         VStack(alignment: .leading, spacing: 8) {
-            sectionHeader("A QUIÉN SEGUIR")
+            sectionHeader("WHO TO FOLLOW")
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 12) {
                     ForEach(suggestionsSnapshot) { p in suggestionCard(p) }
@@ -377,7 +368,7 @@ struct SocialFeedView: View {
                 Text("@\(p.handle)").font(.caption2).foregroundColor(Brand.soft).lineLimit(1)
             }
             let rel = store.relationship(p.id)
-            let label = rel == .friends ? "Siguiendo" : (rel == .outgoing ? "Pendiente" : "Seguir")
+            let label = rel == .friends ? "Following" : (rel == .outgoing ? "Pending" : "Follow")
             Button { if rel == .none { followPerson(p) } } label: {
                 Text(label).font(.system(size: 13, weight: .heavy)).foregroundColor(rel == .none ? Color(hex: "10150a") : Brand.ink)
                     .frame(maxWidth: .infinity).frame(height: 32).background(rel == .none ? Brand.green : Brand.chip).clipShape(Capsule())
@@ -395,10 +386,10 @@ struct SocialFeedView: View {
     private func followPerson(_ p: SocialPerson) {
         FX.success()
         if store.relationship(p.id) == .incoming {
-            store.acceptFriendRequest(p.id); showToast("Ahora sigues a \(p.name)")
+            store.acceptFriendRequest(p.id); showToast("You're now following \(p.name)")
         } else {
             store.followOrRequest(p.id)
-            showToast(p.isPrivate ? "Solicitud enviada a \(p.name)" : "Ahora sigues a \(p.name)")
+            showToast(p.isPrivate ? "Request sent to \(p.name)" : "You're now following \(p.name)")
         }
     }
 
@@ -483,7 +474,7 @@ struct SocialFeedView: View {
         if let pid = item.personId {
             Task { try? await Backend.shared.report(targetType: "session", targetId: item.id, reportedUserId: pid, reason: "reported from feed") }
         }
-        showToast("Gracias. Revisaremos esta publicación en 24 h.")
+        showToast("Thanks. We'll review this post within 24 h.")
     }
 
     private func blockAuthor(_ item: FeedItem, pid: String) {
@@ -493,7 +484,7 @@ struct SocialFeedView: View {
             await loadRealFeed()   // desaparece el contenido del bloqueado
             store.loadFollowing()
         }
-        showToast("Has bloqueado a \(item.authorName). No verás su contenido.")
+        showToast("You blocked \(item.authorName). You won't see their content.")
     }
 
     private func card(_ item: FeedItem, showFollow: Bool = false) -> some View {
@@ -522,7 +513,7 @@ struct SocialFeedView: View {
                     HStack(spacing: 8) {
                         if showFollow {
                             // Persona construida desde el propio post (nombre real del autor).
-                            let p = store.person(pid).map { $0.name == "Atleta" ? withName($0, item.authorName) : $0 }
+                            let p = store.person(pid).map { ($0.name == "Atleta" || $0.name == "Athlete") ? withName($0, item.authorName) : $0 }
                                 ?? SocialPerson(id: pid, name: item.authorName, handle: "", avatar: item.avatarEmoji, gym: "")
                             Button { followPerson(p) } label: {
                                 Text("Seguir").font(.system(size: 12, weight: .heavy)).foregroundColor(Color(hex: "10150a"))
@@ -553,7 +544,7 @@ struct SocialFeedView: View {
                 VStack(alignment: .leading, spacing: 12) {
                     HStack(spacing: 10) {
                         WorkoutTypeBadge(size: .full)
-                        Text(item.title).font(.system(size: 18, weight: .heavy)).foregroundColor(Brand.ink).lineLimit(1)
+                        Text(L10n.x(item.title)).font(.system(size: 18, weight: .heavy)).foregroundColor(Brand.ink).lineLimit(1)
                     }
                     if !item.note.isEmpty {
                         Text(item.note).font(.system(size: 14)).foregroundColor(Color(hex: "2c3127")).lineLimit(2).fixedSize(horizontal: false, vertical: true)
@@ -658,8 +649,8 @@ struct SocialFeedView: View {
         guard !store.people.isEmpty else { return [] }
         var seed: UInt64 = 0
         for ch in item.id.unicodeScalars { seed = seed &* 31 &+ UInt64(ch.value) }
-        let texts = ["¡Bestia! 🔥", "Qué máquina 💪", "Buen volumen", "Vaya progreso 👏", "Crack", "Esto es constancia", "Menudo PR 😳", "A tope!"]
-        let replyTexts = ["¡Gracias! 🙌", "Aquí seguimos 💪", "jaja gracias crack", "¡Vamos!"]
+        let texts = ["Beast! 🔥", "What a machine 💪", "Solid volume", "Look at that progress 👏", "Legend", "That's consistency", "Huge PR 😳", "Let's go!"]
+        let replyTexts = ["Thanks! 🙌", "Keep grinding 💪", "haha thanks legend", "Let's go!"]
         let n = Int(seed % 4)   // 0..3 comentarios
         var out: [PostComment] = []
         for i in 0..<n {
@@ -684,7 +675,7 @@ struct SocialFeedView: View {
     }
 
     private func shareText(_ item: FeedItem) -> String {
-        "\(item.authorName) entrenó \(item.title): \(item.sets) series · \(durationText(item.elapsed)). 💪 vía Forge Loop"
+        "\(item.authorName) trained \(L10n.x(item.title)): \(item.sets) sets · \(durationText(item.elapsed)). 💪 via Forge Loop"
     }
 
     @ViewBuilder
@@ -716,12 +707,12 @@ struct SocialFeedView: View {
     // MARK: - Feed sources
 
     private var myItems: [FeedItem] {
-        let profileLoc = [store.profile.city, store.profile.country].filter { !$0.isEmpty }.joined(separator: ", ")
+        let profileLoc = [store.profile.city, countryName(store.profile.country)].filter { !$0.isEmpty }.joined(separator: ", ")
         return store.sessions.map { s in
             // Zona aproximada del entreno (GPS); fallback a la ciudad del perfil si no se capturó.
             let loc = (s.location?.isEmpty == false) ? s.location! : profileLoc
             return FeedItem(
-                id: s.id, personId: nil, authorName: store.account?.name ?? "Tú",
+                id: s.id, personId: nil, authorName: store.account?.name ?? "You",
                 avatarPhoto: store.account?.photoData, avatarEmoji: "🙂",
                 flag: countryFlag(store.profile.country), location: loc,
                 date: s.date, title: s.name, note: s.note, photo: s.photoData, photoURL: s.photoURL,
@@ -741,7 +732,7 @@ struct SocialFeedView: View {
         return Array(posts(for: strangers).prefix(12))
     }
 
-    private let friendNotes = ["", "Buenas sensaciones hoy 💪", "", "PR en el último ejercicio 🔥", "", "Día duro pero hecho ✅"]
+    private let friendNotes = ["", "Felt strong today 💪", "", "PR on the last exercise 🔥", "", "Tough day but done ✅"]
 
     private func posts(for people: [SocialPerson]) -> [FeedItem] {
         var items: [FeedItem] = []
@@ -783,9 +774,9 @@ struct SocialFeedView: View {
         var counts: [String: Int] = [:]
         for e in entries { counts[GymScoreEngine.pattern(for: e.exerciseName).group, default: 0] += 1 }
         let top = counts.max { $0.value < $1.value }?.key ?? "accesorio"
-        let names = ["pierna": "Pierna", "bisagra": "Cadena posterior", "empuje": "Empuje",
-                     "tiron": "Tirón", "condicion": "Cardio & core", "accesorio": "Full body"]
-        return names[top] ?? "Entreno"
+        let names = ["pierna": "Legs", "bisagra": "Posterior chain", "empuje": "Push",
+                     "tiron": "Pull", "condicion": "Cardio & core", "accesorio": "Full body"]
+        return names[top] ?? "Workout"
     }
 }
 
@@ -840,7 +831,7 @@ private struct CommentsSheet: View {
         func make(_ r: CommentAuthorRow) -> PostComment {
             let isMe = r.user_id.lowercased() == me
             return PostComment(id: r.id,
-                authorName: isMe ? (store.account?.name ?? "Tú") : (r.author?.name ?? r.author?.handle ?? "Atleta"),
+                authorName: isMe ? (store.account?.name ?? "You") : (r.author?.name ?? r.author?.handle ?? "Athlete"),
                 authorEmoji: isMe ? "" : "🙂", isMe: isMe, text: r.text,
                 date: BackendDate.parse(r.created_at) ?? Date(), likes: 0, liked: false,
                 replies: [], personId: isMe ? nil : r.user_id)
@@ -862,7 +853,7 @@ private struct CommentsSheet: View {
                 VStack(spacing: 0) {
                     if c.liked {
                         likeRow(ScoredAvatar(account: store.account, score: store.gymScore.total, size: 42),
-                                name: store.account?.name ?? "Tú", handle: store.account?.handle ?? "tu_usuario", action: nil)
+                                name: store.account?.name ?? "You", handle: store.account?.handle ?? "your_handle", action: nil)
                     }
                     ForEach(people) { p in
                         likeRow(ScoredAvatar(emoji: p.avatar, score: store.personScore(p.id), size: 42),
@@ -959,7 +950,7 @@ private struct CommentsSheet: View {
             }
             Divider()
             HStack(spacing: 10) {
-                TextField(replyToName == nil ? "Añade un comentario…" : "Añade una respuesta…", text: $draft, axis: .vertical)
+                TextField(replyToName == nil ? "Add a comment…" : "Add a reply…", text: $draft, axis: .vertical)
                     .font(.system(size: 15)).focused($focused)
                     .padding(.horizontal, 12).padding(.vertical, 9)
                     .background(Brand.chip).clipShape(RoundedRectangle(cornerRadius: 18))
@@ -1011,14 +1002,14 @@ private struct CommentsSheet: View {
     /// Antigüedad estilo Instagram: "34 min" → "6 h" → "2 d" → "d MMM yyyy".
     private func commentTime(_ date: Date) -> String {
         let mins = Int(max(0, -date.timeIntervalSinceNow) / 60)
-        if mins < 1 { return "ahora" }
+        if mins < 1 { return "now" }
         if mins < 60 { return "\(mins) min" }
         let hours = mins / 60
         if hours < 24 { return "\(hours) h" }
         let days = hours / 24
         if days < 7 { return "\(days) d" }
         let f = DateFormatter()
-        f.locale = Locale(identifier: "es_ES")
+        f.locale = L10n.locale
         f.dateFormat = "d MMM yyyy"
         return f.string(from: date)
     }
@@ -1037,7 +1028,7 @@ private struct CommentsSheet: View {
         let t = draft.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !t.isEmpty else { return }
         FX.tap()
-        let new = PostComment(id: UUID().uuidString, authorName: store.account?.name ?? "Tú",
+        let new = PostComment(id: UUID().uuidString, authorName: store.account?.name ?? "You",
                               authorEmoji: "", isMe: true, text: t, date: Date(), likes: 0, liked: false, replies: [])
         if let pid = replyTo, let i = comments.firstIndex(where: { $0.id == pid }) {
             comments[i].replies.append(new)

@@ -17,7 +17,7 @@ struct ScoreBarView: View {
     let value: Int
     var body: some View {
         HStack(spacing: 10) {
-            Text(label).font(.system(size: 13, weight: .bold)).foregroundColor(Brand.muted)
+            Text(L10n.t(label)).font(.system(size: 13, weight: .bold)).foregroundColor(Brand.muted)
                 .frame(width: 78, alignment: .leading)
             GeometryReader { geo in
                 ZStack(alignment: .leading) {
@@ -64,9 +64,9 @@ enum ScoreTier: Int, CaseIterable {
 
     var name: String {
         switch self {
-        case .hierro: return "Hierro"; case .bronce: return "Bronce"; case .plata: return "Plata"
-        case .oro: return "Oro"; case .platino: return "Platino"; case .diamante: return "Diamante"
-        case .maestro: return "Maestro"
+        case .hierro: return "Iron"; case .bronce: return "Bronze"; case .plata: return "Silver"
+        case .oro: return "Gold"; case .platino: return "Platinum"; case .diamante: return "Diamond"
+        case .maestro: return "Master"
         }
     }
 
@@ -234,9 +234,9 @@ struct WorkoutStat: Identifiable {
     let icon: String
     var tint: Color = Brand.ink
 
-    static func time(_ s: String) -> WorkoutStat { .init(value: s, label: "Tiempo", icon: "clock") }
-    static func sets(_ n: Int) -> WorkoutStat { .init(value: "\(n)", label: "Series", icon: "square.stack.3d.up") }
-    static func exercises(_ n: Int) -> WorkoutStat { .init(value: "\(n)", label: "Ejerc.", icon: "list.bullet") }
+    static func time(_ s: String) -> WorkoutStat { .init(value: s, label: "Time", icon: "clock") }
+    static func sets(_ n: Int) -> WorkoutStat { .init(value: "\(n)", label: "Sets", icon: "square.stack.3d.up") }
+    static func exercises(_ n: Int) -> WorkoutStat { .init(value: "\(n)", label: "Exer.", icon: "list.bullet") }
     static func ppm(_ n: Int) -> WorkoutStat { .init(value: "\(n)", label: "ppm", icon: "heart.fill", tint: Brand.red) }
 }
 
@@ -351,13 +351,13 @@ struct WorkoutCover: View {
         var h: UInt64 = 1469598103934665603
         for c in seed.unicodeScalars { h = (h ^ UInt64(c.value)) &* 1099511628211 }
         var options: [(String, String, String)] = []
-        if elapsed >= 60 { options.append(("\(max(1, elapsed / 60)) min", "De entreno",
-            "\(sets) series" + (exercises > 0 ? " · \(exercises) ejercicios" : ""))) }
-        if sets > 0 { options.append(("\(sets)", sets == 1 ? "Serie completada" : "Series completadas",
-            "\(max(1, elapsed / 60)) min" + (exercises > 0 ? " · \(exercises) ejercicios" : ""))) }
-        if exercises > 0 { options.append(("\(exercises)", exercises == 1 ? "Ejercicio" : "Ejercicios",
-            "\(max(1, elapsed / 60)) min · \(sets) series")) }
-        guard !options.isEmpty else { return ("💪", "Entreno completado", "") }
+        if elapsed >= 60 { options.append(("\(max(1, elapsed / 60)) min", "Of training",
+            "\(sets) sets" + (exercises > 0 ? " · \(exercises) exercises" : ""))) }
+        if sets > 0 { options.append(("\(sets)", sets == 1 ? "Set completed" : "Sets completed",
+            "\(max(1, elapsed / 60)) min" + (exercises > 0 ? " · \(exercises) exercises" : ""))) }
+        if exercises > 0 { options.append(("\(exercises)", exercises == 1 ? "Exercise" : "Exercises",
+            "\(max(1, elapsed / 60)) min · \(sets) sets")) }
+        guard !options.isEmpty else { return ("💪", "Workout completed", "") }
         return options[Int(h % UInt64(options.count))]
     }
 
@@ -737,21 +737,21 @@ struct SheetBackButton: View {
 
 func shortTime(_ date: Date) -> String {
     let cal = Calendar.current
-    let f = DateFormatter()
+    let f = DateFormatter(); f.locale = L10n.locale
     if cal.isDateInToday(date) { f.dateFormat = "HH:mm"; return f.string(from: date) }
-    if cal.isDateInYesterday(date) { return "Ayer" }
+    if cal.isDateInYesterday(date) { return "Yesterday" }
     f.dateFormat = "d MMM"; return f.string(from: date)
 }
 
 func relativeTime(_ date: Date) -> String {
     if Calendar.current.isDateInToday(date) {
         let mins = max(0, Int(-date.timeIntervalSinceNow / 60))
-        if mins < 1 { return "Ahora" }
-        if mins < 60 { return "Hace \(mins) min" }
-        return "Hace \(mins / 60) h"
+        if mins < 1 { return "Now" }
+        if mins < 60 { return "\(mins) min ago" }
+        return "\(mins / 60) h ago"
     }
     let f = DateFormatter()
-    f.locale = Locale(identifier: "es_ES")
+    f.locale = L10n.locale
     f.dateFormat = "d MMM, HH:mm"
     return f.string(from: date)
 }

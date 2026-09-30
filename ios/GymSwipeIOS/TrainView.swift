@@ -191,7 +191,7 @@ struct TrainView: View {
         let peers = store.supersetPeers(of: ex)
         return PanelCard {
             HStack {
-                Text(ex.day.uppercased()).font(.caption2).fontWeight(.heavy).foregroundColor(Brand.muted)
+                Text(L10n.x(ex.day).uppercased()).font(.caption2).fontWeight(.heavy).foregroundColor(Brand.muted)
                 Spacer()
                 Text("SERIE \(current) DE \(ex.sets)").font(.caption2).fontWeight(.heavy).foregroundColor(Color(hex: "4b6211"))
             }
@@ -268,7 +268,7 @@ struct TrainView: View {
                             .foregroundColor(isActive ? Color(hex: "10150a") : Brand.soft)
                             .frame(width: 16, height: 16)
                             .background(isActive ? Brand.green : Brand.chip).clipShape(Circle())
-                        Text(p.name).font(.system(size: 12, weight: .heavy)).lineLimit(1)
+                        Text(L10n.x(p.name)).font(.system(size: 12, weight: .heavy)).lineLimit(1)
                             .foregroundColor(isActive ? Brand.ink : (isDone ? Brand.soft : Brand.muted))
                             .strikethrough(isDone && !isActive, color: Brand.soft)
                     }
@@ -348,16 +348,16 @@ struct TrainView: View {
 
     // MARK: - Coach (microcopia reactiva del descanso)
 
-    private let restLines = ["Recupera para la próxima serie", "Respira. Vuelves más fuerte.",
-                             "Suelta tensión y prepárate.", "Aprovecha, la siguiente es tuya."]
-    private let skipLines = ["Sin drama. La próxima es tuya.", "Tranqui, sigue el plan.",
-                             "Apunta a por la siguiente."]
-    private let goLines = ["Cuando estés listo, a por ello", "Técnica limpia, fuerza total.",
-                           "Una serie más. Tú puedes.", "Concéntrate y empuja."]
+    private let restLines = ["Recover for the next set", "Breathe. You'll come back stronger.",
+                             "Shake it out and get ready.", "Make it count, the next one's yours."]
+    private let skipLines = ["No drama. The next one's yours.", "Easy, stick to the plan.",
+                             "Line up the next one."]
+    private let goLines = ["When you're ready, go for it", "Clean technique, full power.",
+                           "One more set. You've got this.", "Focus and push."]
 
     private var coachTitle: String {
-        if !resting { return lastEvent == .go ? "¡Vamos!" : "¡Haz tu serie!" }
-        return "Descanso"
+        if !resting { return lastEvent == .go ? "Let's go!" : "Do your set!" }
+        return "Rest"
     }
     private var coachSub: String {
         if !resting { return goLines[lineSeed % goLines.count] }
@@ -372,7 +372,7 @@ struct TrainView: View {
     private func supersetPartner(_ ex: Exercise) -> String? {
         let peers = store.supersetPeers(of: ex)
         guard peers.count > 1, let i = peers.firstIndex(where: { $0.id == ex.id }) else { return nil }
-        return peers[(i + 1) % peers.count].name
+        return L10n.x(peers[(i + 1) % peers.count].name)
     }
 
     private func startLive() {
@@ -380,7 +380,7 @@ struct TrainView: View {
         let ex = store.activeExercise
         LiveActivityManager.shared.start(name: workoutName, startedAt: start,
                                          closedSets: closedSets, totalSets: totalSets,
-                                         currentExercise: ex?.name ?? "",
+                                         currentExercise: L10n.x(ex?.name ?? ""),
                                          reps: ex?.reps ?? 0, weight: ex?.weight ?? 0,
                                          setIndex: ex.map(currentSetIndex) ?? 0, exerciseSets: ex?.sets ?? 0,
                                          supersetPartner: ex.flatMap(supersetPartner))
@@ -390,7 +390,7 @@ struct TrainView: View {
         guard let start = sessionStart, let ex = store.activeExercise else { return }
         LiveActivityManager.shared.update(name: workoutName, startedAt: start,
                                           closedSets: closedSets, totalSets: totalSets,
-                                          currentExercise: ex.name,
+                                          currentExercise: L10n.x(ex.name),
                                           reps: ex.reps, weight: ex.weight,
                                           setIndex: currentSetIndex(ex), exerciseSets: ex.sets,
                                           bpm: nil, resting: resting,
@@ -428,8 +428,8 @@ struct TrainView: View {
                 Text("¡Buen trabajo!").font(.system(size: 22, weight: .heavy)).foregroundColor(Brand.ink)
                     .frame(maxWidth: .infinity, alignment: .center)
                 HStack(spacing: 10) {
-                    summaryStat(timeString(finalElapsed), "Duración", "clock")
-                    summaryStat("\(completedSets)", "Series", "checkmark.circle")
+                    summaryStat(timeString(finalElapsed), "Duration", "clock")
+                    summaryStat("\(completedSets)", "Sets", "checkmark.circle")
                 }
                 if skippedSets > 0 {
                     Text("\(skippedSets) series saltadas · \(exercisesDone) ejercicios").font(.caption).foregroundColor(Brand.soft)
@@ -494,14 +494,14 @@ struct TrainView: View {
                                 .overlay(alignment: .bottomTrailing) {
                                     HStack(spacing: 5) {
                                         Image(systemName: "pencil.circle.fill").font(.system(size: 15, weight: .bold))
-                                        Text("Cambiar").font(.system(size: 13, weight: .heavy))
+                                        Text("Change").font(.system(size: 13, weight: .heavy))
                                     }
                                     .foregroundColor(.white)
                                     .padding(.horizontal, 10).padding(.vertical, 6)
                                     .background(.black.opacity(0.45)).clipShape(Capsule())
                                     .padding(10)
                                 }
-                            Text("Así se verá en tu muro").font(.caption2).foregroundColor(Brand.soft)
+                            Text("This is how it'll look on your feed").font(.caption2).foregroundColor(Brand.soft)
                         }
                     } else {
                         HStack(spacing: 8) { Image(systemName: "camera.fill"); Text("Añadir foto") }
@@ -563,18 +563,18 @@ struct TrainView: View {
         .background(Brand.surface).clipShape(RoundedRectangle(cornerRadius: 12))
     }
 
-    private var workoutName: String { store.exercises.first?.day ?? "Entreno" }
+    private var workoutName: String { L10n.x(store.exercises.first?.day ?? "Workout") }
 
     /// Strava-style default with a gym twist: "<grupo> de <franja>" (e.g. "Pierna de tarde").
     private var defaultSessionName: String {
         let hour = Calendar.current.component(.hour, from: Date())
-        let time = hour < 12 ? "de mañana" : (hour < 21 ? "de tarde" : "de noche")
+        let time = hour < 12 ? "morning" : (hour < 21 ? "afternoon" : "evening")
         var counts: [String: Int] = [:]
         for e in store.exercises { counts[GymScoreEngine.pattern(for: e.name).group, default: 0] += 1 }
         let top = counts.max { $0.value < $1.value }?.key ?? ""
-        let labels = ["pierna": "Pierna", "bisagra": "Posterior", "empuje": "Empuje",
-                      "tiron": "Tirón", "condicion": "Cardio", "accesorio": "Full body"]
-        return "\(labels[top] ?? "Entreno") \(time)"
+        let labels = ["pierna": "Leg", "bisagra": "Posterior chain", "empuje": "Push",
+                      "tiron": "Pull", "condicion": "Cardio", "accesorio": "Full body"]
+        return "\(time.prefix(1).uppercased() + time.dropFirst()) \((labels[top] ?? "workout").lowercased()) session"
     }
     private func resetLocal() {
         LiveActivityManager.shared.end()

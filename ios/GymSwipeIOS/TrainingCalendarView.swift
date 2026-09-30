@@ -10,9 +10,9 @@ struct DayPayload: Identifiable {
 /// Construye el ActivityData de una sesión propia (autor = cuenta del usuario).
 @MainActor
 func meActivityData(_ s: WorkoutSession, _ store: AppStore) -> ActivityData {
-    let loc = [store.profile.city, store.profile.country].filter { !$0.isEmpty }.joined(separator: ", ")
+    let loc = [store.profile.city, countryName(store.profile.country)].filter { !$0.isEmpty }.joined(separator: ", ")
     return ActivityData(
-        authorName: store.account?.name ?? "Tú",
+        authorName: store.account?.name ?? "You",
         avatarPhoto: store.account?.photoData, avatarEmoji: "🙂",
         flag: countryFlag(store.profile.country), location: loc,
         date: s.date, title: s.name, note: s.note, photo: s.photoData, photoURL: s.photoURL,
@@ -45,18 +45,18 @@ struct TrainingCalendarView: View {
 
     private var cal: Calendar {
         var c = Calendar(identifier: .gregorian)
-        c.locale = Locale(identifier: "es_ES")
+        c.locale = L10n.locale
         c.firstWeekday = 2 // lunes
         return c
     }
 
-    private let weekdays = ["L", "M", "X", "J", "V", "S", "D"]
+    private let weekdays = ["M", "T", "W", "T", "F", "S", "S"]
 
     var body: some View {
         PanelCard {
             header
             HStack(spacing: 0) {
-                ForEach(weekdays, id: \.self) { d in
+                ForEach(Array(weekdays.enumerated()), id: \.offset) { _, d in
                     Text(d).font(.system(size: 11, weight: .heavy)).foregroundColor(Brand.muted)
                         .frame(maxWidth: .infinity)
                 }
@@ -157,7 +157,7 @@ struct TrainingCalendarView: View {
 
     private var monthTitle: String {
         let f = DateFormatter()
-        f.locale = Locale(identifier: "es_ES")
+        f.locale = L10n.locale
         f.dateFormat = "LLLL yyyy"
         return f.string(from: monthStart).capitalized
     }
@@ -201,7 +201,7 @@ struct DaySessionsSheet: View {
             PanelCard {
                 HStack(spacing: 10) {
                     WorkoutTypeBadge(size: .compact)
-                    Text(s.name).font(.system(size: 16, weight: .heavy)).foregroundColor(Brand.ink).lineLimit(1)
+                    Text(L10n.x(s.name)).font(.system(size: 16, weight: .heavy)).foregroundColor(Brand.ink).lineLimit(1)
                     Spacer()
                     Image(systemName: "chevron.right").font(.system(size: 12, weight: .bold)).foregroundColor(Brand.soft)
                 }
@@ -218,8 +218,8 @@ struct DaySessionsSheet: View {
 
     private var title: String {
         let f = DateFormatter()
-        f.locale = Locale(identifier: "es_ES")
-        f.dateFormat = "EEEE d 'de' MMMM"
+        f.locale = L10n.locale
+        f.dateFormat = "EEEE, MMMM d"
         return f.string(from: date).capitalized
     }
 

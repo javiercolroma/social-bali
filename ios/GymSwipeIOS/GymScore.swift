@@ -33,12 +33,12 @@ enum GymScoreEngine {
     }
 
     static let tiers: [(min: Int, label: String)] = [
-        (85, "Legendario"), (70, "Élite"), (55, "Avanzado"),
-        (40, "Competente"), (20, "Constante"), (0, "Iniciado"),
+        (85, "Legendary"), (70, "Elite"), (55, "Advanced"),
+        (40, "Competent"), (20, "Consistent"), (0, "Beginner"),
     ]
 
     static func tier(_ total: Int) -> String {
-        tiers.first(where: { total >= $0.min })?.label ?? "Iniciado"
+        tiers.first(where: { total >= $0.min })?.label ?? "Beginner"
     }
 
     private static func clampScore(_ v: Double) -> Int { max(0, min(100, Int(v.rounded()))) }

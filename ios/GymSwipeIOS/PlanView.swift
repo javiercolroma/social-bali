@@ -9,8 +9,9 @@ struct PlanView: View {
     @State private var pendingDelete: WorkoutTemplate?
 
     private var grouped: [(group: String, workouts: [WorkoutTemplate])] {
-        let dict = Dictionary(grouping: store.allWorkouts, by: { $0.block })
-        let order = AppStore.groupOrder
+        // Agrupado por nombre MOSTRADO: «Pecho» (antiguo) y «Chest» (nuevo) caen juntos.
+        let dict = Dictionary(grouping: store.allWorkouts, by: { L10n.x($0.block) })
+        let order = AppStore.groupOrder.map(L10n.x)
         func rank(_ g: String) -> Int { order.firstIndex(of: g) ?? order.count }
         return dict.map { (group: $0.key, workouts: $0.value) }
             .sorted { a, b in
@@ -36,7 +37,7 @@ struct PlanView: View {
                 ForEach(grouped, id: \.group) { section in
                     VStack(alignment: .leading, spacing: 8) {
                         HStack {
-                            Text(L10n.x(section.group).uppercased()).font(.caption2).fontWeight(.heavy).foregroundColor(Brand.muted)
+                            Text(section.group.uppercased()).font(.caption2).fontWeight(.heavy).foregroundColor(Brand.muted)
                             Spacer()
                             Text("\(section.workouts.count)").font(.caption2).fontWeight(.heavy).foregroundColor(Brand.soft)
                         }
@@ -62,7 +63,7 @@ struct PlanView: View {
             Button("Eliminar", role: .destructive) { FX.warning(); store.deleteWorkout(w.id); pendingDelete = nil }
             Button("Cancelar", role: .cancel) { pendingDelete = nil }
         } message: { w in
-            Text("Se quitará “\(w.name)” de tu lista de entrenos.")
+            Text("Se quitará “\(L10n.x(w.name))” de tu lista de entrenos.")
         }
     }
 
@@ -134,7 +135,7 @@ struct WorkoutPreview: View {
                             }
                         }.padding(16)
                     }
-                    .navigationTitle(workout.name)
+                    .navigationTitle(L10n.x(workout.name))
                 } else {
                     Color.clear.onAppear { dismiss() }
                 }
@@ -149,7 +150,7 @@ struct WorkoutPreview: View {
                 Button("Eliminar", role: .destructive) { FX.warning(); store.deleteWorkout(workoutId); dismiss() }
                 Button("Cancelar", role: .cancel) {}
             } message: {
-                Text("Se quitará “\(workout?.name ?? "")” de tu lista de entrenos.")
+                Text("Se quitará “\(L10n.x(workout?.name ?? ""))” de tu lista de entrenos.")
             }
         }
     }
@@ -239,10 +240,10 @@ struct CreateWorkoutView: View {
     @FocusState private var groupFocused: Bool
     @FocusState private var focusedExercise: UUID?
 
-    private let suggestedGroups = ["Pecho", "Espalda", "Pierna", "Hombro", "Brazo", "Abdomen", "Full body", "Push", "Pull"]
+    private let suggestedGroups = ["Chest", "Back", "Legs", "Shoulders", "Arms", "Abs", "Full body", "Push", "Pull"]
     private var groupOptions: [String] {
         var seen = Set<String>(); var out: [String] = []
-        for g in store.customGroups + suggestedGroups where seen.insert(g).inserted { out.append(g) }
+        for g in (store.customGroups + suggestedGroups).map(L10n.x) where seen.insert(g).inserted { out.append(g) }
         return out
     }
     private var groupSuggestions: [String] {
@@ -259,7 +260,7 @@ struct CreateWorkoutView: View {
         VStack(alignment: .leading, spacing: 0) {
             HStack(spacing: 8) {
                 Image(systemName: "folder.fill").font(.system(size: 13)).foregroundColor(Brand.soft)
-                TextField("Pierna, Pecho, Pull…", text: $group).focused($groupFocused)
+                TextField("Legs, Chest, Pull…", text: $group).focused($groupFocused)
                 if !group.isEmpty {
                     Button { group = "" } label: { Image(systemName: "xmark.circle.fill").foregroundColor(Brand.soft) }
                 }
@@ -271,7 +272,7 @@ struct CreateWorkoutView: View {
             if groupFocused {
                 VStack(spacing: 0) {
                     if canCreateGroup {
-                        groupRow(icon: "plus.circle.fill", color: Color(hex: "4b6211"), title: "Crear “\(groupQuery)”", badge: "nuevo") { commitGroup(groupQuery) }
+                        groupRow(icon: "plus.circle.fill", color: Color(hex: "4b6211"), title: "Create “\(groupQuery)”", badge: "new") { commitGroup(groupQuery) }
                         if !groupSuggestions.isEmpty { Divider() }
                     }
                     ForEach(Array(groupSuggestions.prefix(6).enumerated()), id: \.element) { idx, opt in
@@ -349,7 +350,7 @@ struct CreateWorkoutView: View {
             .scrollDismissesKeyboard(.interactively)
             }
             .background(Brand.bg)
-            .navigationTitle(editing == nil ? "Crear entreno" : "Editar entreno").navigationBarTitleDisplayMode(.inline)
+            .navigationTitle(editing == nil ? "Create workout" : "Edit workout").navigationBarTitleDisplayMode(.inline)
             .toolbar { ToolbarItem(placement: .cancellationAction) { SheetBackButton { dismiss() } } }
             .onAppear {
                 prefill()
@@ -363,9 +364,9 @@ struct CreateWorkoutView: View {
 
     private func prefill() {
         guard !didLoad, let e = editing else { didLoad = true; return }
-        name = e.name
-        group = (e.block == "Por defecto" || e.block == "Mis entrenos") ? "" : e.block
-        drafts = e.exercises.map { DraftExercise(name: $0.name, sets: $0.sets, reps: $0.reps, weight: $0.weight) }
+        name = L10n.x(e.name)
+        group = (e.block == "Por defecto" || e.block == "Mis entrenos") ? "" : L10n.x(e.block)
+        drafts = e.exercises.map { DraftExercise(name: L10n.x($0.name), sets: $0.sets, reps: $0.reps, weight: $0.weight) }
         // Reconstruye los enlaces de superserie: dos ejercicios consecutivos con el mismo grupo.
         for i in 0..<max(0, e.exercises.count - 1) where e.exercises[i].supersetGroup != nil
             && e.exercises[i].supersetGroup == e.exercises[i + 1].supersetGroup {
@@ -388,7 +389,7 @@ struct CreateWorkoutView: View {
         let trimmed = draft.wrappedValue.name.trimmingCharacters(in: .whitespaces)
         // Si escribes un ejercicio que no está en el catálogo, ofrecemos usarlo como personalizado.
         let isCustom = focusedExercise == id && !trimmed.isEmpty
-            && !exerciseCatalog.contains { $0.caseInsensitiveCompare(trimmed) == .orderedSame }
+            && !exerciseCatalog.contains { L10n.x($0).caseInsensitiveCompare(trimmed) == .orderedSame || $0.caseInsensitiveCompare(trimmed) == .orderedSame }
         return VStack(spacing: 12) {
             HStack(spacing: 8) {
                 // Número del ejercicio: burbuja verde (color y orden de un vistazo).
@@ -422,10 +423,10 @@ struct CreateWorkoutView: View {
                         if !suggestions.isEmpty { Divider() }
                     }
                     ForEach(Array(suggestions.prefix(6).enumerated()), id: \.element) { idx, name in
-                        Button { draft.wrappedValue.name = name; focusedExercise = nil } label: {
+                        Button { draft.wrappedValue.name = L10n.x(name); focusedExercise = nil } label: {
                             HStack(spacing: 10) {
                                 Image(systemName: "dumbbell.fill").font(.system(size: 12)).foregroundColor(Brand.soft).frame(width: 18)
-                                Text(name).font(.system(size: 14, weight: .semibold)).foregroundColor(Brand.ink)
+                                Text(L10n.x(name)).font(.system(size: 14, weight: .semibold)).foregroundColor(Brand.ink)
                                 Spacer()
                             }.padding(.horizontal, 12).frame(height: 44)
                         }
@@ -437,7 +438,7 @@ struct CreateWorkoutView: View {
                 .shadow(color: .black.opacity(0.06), radius: 8, y: 4)
             }
             HStack(spacing: 8) {
-                stepperBox("SERIES", icon: "square.stack.3d.up.fill", tint: Color(hex: "4b6211"), bg: Brand.greenSoft.opacity(0.35),
+                stepperBox("SETS", icon: "square.stack.3d.up.fill", tint: Color(hex: "4b6211"), bg: Brand.greenSoft.opacity(0.35),
                            text: "\(draft.wrappedValue.sets)",
                            dec: { if draft.wrappedValue.sets > 1 { draft.wrappedValue.sets -= 1 } },
                            inc: { if draft.wrappedValue.sets < 10 { draft.wrappedValue.sets += 1 } })
@@ -488,7 +489,7 @@ struct CreateWorkoutView: View {
         } label: {
             HStack(spacing: 5) {
                 Image(systemName: linked ? "link" : "link.badge.plus").font(.system(size: 11, weight: .heavy))
-                Text(linked ? "Superserie" : "Enlazar en superserie").font(.system(size: 11, weight: .heavy))
+                Text(linked ? "Superset" : "Link as superset").font(.system(size: 11, weight: .heavy))
             }
             .foregroundColor(linked ? Color(hex: "10150a") : Brand.soft)
             .padding(.horizontal, 12).padding(.vertical, 6)
@@ -523,7 +524,7 @@ struct CreateWorkoutView: View {
 
     private func save() {
         FX.success()
-        let day = name.isEmpty ? "Mi entreno" : name
+        let day = name.isEmpty ? "My workout" : name
         // Asigna un id de grupo de superserie a cada tramo de ejercicios unidos por `linkNext`.
         var groupOf: [UUID: String] = [:]
         var i = 0
@@ -538,7 +539,7 @@ struct CreateWorkoutView: View {
         }
         let exercises = drafts
             .filter { !$0.name.trimmingCharacters(in: .whitespaces).isEmpty }
-            .map { d in AppStore.makeExercise(day, d.name, d.sets, d.reps, d.weight, supersetGroup: groupOf[d.id]) }
+            .map { d in AppStore.makeExercise(day, catalogName(forDisplay: d.name), d.sets, d.reps, d.weight, supersetGroup: groupOf[d.id]) }
         if let e = editing {
             store.updateWorkout(id: e.id, name: name, group: group, exercises: exercises)
         } else {

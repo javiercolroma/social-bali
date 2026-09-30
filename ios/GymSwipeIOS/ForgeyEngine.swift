@@ -53,7 +53,7 @@ enum ForgeyEngine {
                 system: ForgeyPrompts.chatInstructions(context: ForgeyAI.context(from: store)),
                 prompt: question)
         case .none:
-            throw err(ForgeyAI.unavailableReason() ?? "IA no disponible")
+            throw err(ForgeyAI.unavailableReason() ?? "AI not available")
         }
         let (text, suggestion) = ForgeyPrompts.extractSuggestion(raw)
         // Si el modelo se saltó el marcador pero la pregunta pedía ejercicios de un grupo,
@@ -67,10 +67,10 @@ enum ForgeyEngine {
         // Seguridad de adjuntos: solo imágenes de verdad (los pickers ya filtran, esto
         // es el cinturón: un archivo no-imagen no pasa de aquí).
         guard UIImage(data: photo) != nil else {
-            return Reply(text: "Solo puedo analizar imágenes 📷. Prueba con una foto de cuerpo entero.", suggestion: nil)
+            return Reply(text: "I can only analyse images 📷. Try a full-body photo.", suggestion: nil)
         }
         guard cloudVisionAvailable else {
-            throw err("El análisis del físico con IA no está disponible todavía.")
+            throw err("AI physique analysis isn't available yet.")
         }
         let raw = try await CloudAI.analyzeBody(photo: photo, store: store)
         let (text, suggestion) = ForgeyPrompts.extractSuggestion(raw)
@@ -88,7 +88,7 @@ enum ForgeyEngine {
         case .cloud:
             return try await CloudAI.generateWorkout(from: description, store: store)
         case .none:
-            throw err(ForgeyAI.unavailableReason() ?? "IA no disponible")
+            throw err(ForgeyAI.unavailableReason() ?? "AI not available")
         }
     }
 

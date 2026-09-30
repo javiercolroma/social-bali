@@ -1,10 +1,8 @@
 name: GymSwipeIOS
 options:
-  # Idioma BASE del producto = inglés (club social internacional en Bali, 2026-09-28).
-  # Las cadenas NUEVAS se escriben en inglés en el código y se traducen en es/fr/pt.
-  # Las cadenas HISTÓRICAS siguen teniendo la clave en español: por eso existe
-  # `es.lproj` con mapeo identidad — sin él, un usuario en español caería en en.lproj
-  # (el nuevo idioma base) y vería la app en inglés. Ver PRODUCT.md.
+  # La app tiene UN solo idioma: inglés (club social internacional en Bali).
+  # Las cadenas HISTÓRICAS siguen teniendo la clave en español: `en.lproj` (la única
+  # localización) las mapea a inglés. Las cadenas nuevas se escriben en inglés.
   developmentLanguage: en
   bundleIdPrefix: com.javiercolroma
   deploymentTarget:
@@ -64,7 +62,7 @@ targets:
         NSSupportsLiveActivities: true
         LSApplicationCategoryType: public.app-category.healthcare-fitness
         NSLocationWhenInUseUsageDescription: Forge Loop uses your location to show how far away people in your circle are. Others only see the distance, never where you are.
-        NSCameraUsageDescription: Forge Loop usa la cámara para hacer la foto de tu entreno.
+        NSCameraUsageDescription: Forge Loop uses the camera to take your workout photo.
         UILaunchScreen:
           UIColorName: LaunchBackground
         UISupportedInterfaceOrientations:

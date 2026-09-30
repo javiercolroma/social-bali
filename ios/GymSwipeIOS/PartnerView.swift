@@ -39,15 +39,15 @@ struct PartnerView: View {
             VStack(spacing: 12) {
                 PanelCard {
                     Button { FX.tap(); showCreator = true } label: {
-                        Label("Buscar compañero", systemImage: "person.2.fill")
+                        Label("Find a partner", systemImage: "person.2.fill")
                     }.buttonStyle(PrimaryButtonStyle())
                     .tourAnchor("partner.create")
 
                     VStack(spacing: 8) {
                         HStack {
-                            Label("Cerca de mí", systemImage: "location.fill").font(.system(size: 13, weight: .heavy)).foregroundColor(Brand.muted)
+                            Label("Near me", systemImage: "location.fill").font(.system(size: 13, weight: .heavy)).foregroundColor(Brand.muted)
                             Spacer()
-                            Text(maxKm >= 99.5 ? "Sin límite" : "Hasta \(Int(maxKm.rounded())) km").font(.system(size: 13, weight: .heavy)).foregroundColor(Color(hex: "4b6211"))
+                            Text(maxKm >= 99.5 ? "No limit" : "Up to \(Int(maxKm.rounded())) km").font(.system(size: 13, weight: .heavy)).foregroundColor(Color(hex: "4b6211"))
                         }
                         DistanceSlider(value: $maxKm, range: 1...100)   // mín 1 km, pulgar circular pequeño, continuo
                     }
@@ -57,8 +57,8 @@ struct PartnerView: View {
 
                 if visiblePlans.isEmpty {
                     Text(BackendConfig.isConfigured
-                         ? "Aún no hay planes publicados. ¡Publica el tuyo y encuentra compañero!"
-                         : "No hay compañeros a menos de \(Int(maxKm.rounded())) km. Amplía la distancia o publica tu plan.")
+                         ? "No plans posted yet. Post yours and find a partner!"
+                         : "No partners within \(Int(maxKm.rounded())) km. Widen the distance or post your plan.")
                         .font(.footnote).foregroundColor(Brand.muted).multilineTextAlignment(.center)
                         .frame(maxWidth: .infinity).padding(.top, 30)
                 } else {
@@ -75,11 +75,11 @@ struct PartnerView: View {
             if let p = store.person(item.id) { FriendProfileView(person: p).environmentObject(store) }
         }
         .sheet(isPresented: $showMe) { MeProfileView().environmentObject(store) }
-        .alert("¿Eliminar tu plan?", isPresented: Binding(get: { pendingDelete != nil }, set: { if !$0 { pendingDelete = nil } }), presenting: pendingDelete) { plan in
-            Button("Eliminar", role: .destructive) { FX.warning(); store.deletePlan(plan.id); pendingDelete = nil }
-            Button("Cancelar", role: .cancel) { pendingDelete = nil }
+        .alert("Delete your plan?", isPresented: Binding(get: { pendingDelete != nil }, set: { if !$0 { pendingDelete = nil } }), presenting: pendingDelete) { plan in
+            Button("Delete", role: .destructive) { FX.warning(); store.deletePlan(plan.id); pendingDelete = nil }
+            Button("Cancel", role: .cancel) { pendingDelete = nil }
         } message: { plan in
-            Text("Dejarás de buscar compañero para “\(plan.title)”. Esta acción no se puede deshacer.")
+            Text("You'll stop looking for a partner for “\(plan.title)”. This can't be undone.")
         }
     }
 
@@ -107,14 +107,14 @@ struct PartnerView: View {
                     } else {
                         Avatar(emoji: isMine ? "🙂" : (owner?.avatar ?? "👤"), size: 28)
                     }
-                    Text(isMine ? "Tu plan" : (plan.authorName ?? owner?.name ?? "Compañero"))
+                    Text(isMine ? "Your plan" : (plan.authorName ?? owner?.name ?? "Partner"))
                         .font(.system(size: 14, weight: .heavy)).foregroundColor(Brand.ink)
                     Spacer()
                     if !isMine {
                         if real, let km = realKm(plan) {
-                            Text("a ~\(max(1, Int(km.rounded()))) km").font(.system(size: 12, weight: .heavy)).foregroundColor(Brand.soft)
+                            Text("~\(max(1, Int(km.rounded()))) km away").font(.system(size: 12, weight: .heavy)).foregroundColor(Brand.soft)
                         } else if !real {
-                            Text("a \(Int(planKm(plan))) km").font(.system(size: 12, weight: .heavy)).foregroundColor(Brand.soft)
+                            Text("\(Int(planKm(plan))) km away").font(.system(size: 12, weight: .heavy)).foregroundColor(Brand.soft)
                         }
                     }
                     if plan.score > 0 { ScorePill(score: plan.score) }
@@ -142,18 +142,18 @@ struct PartnerView: View {
 
             if isMine {
                 HStack {
-                    Text("Esperando compañero…").font(.system(size: 13, weight: .bold)).foregroundColor(Brand.muted)
+                    Text("Waiting for a partner…").font(.system(size: 13, weight: .bold)).foregroundColor(Brand.muted)
                     Spacer()
-                    Button(role: .destructive) { pendingDelete = plan } label: { Label("Eliminar", systemImage: "trash") }
+                    Button(role: .destructive) { pendingDelete = plan } label: { Label("Delete", systemImage: "trash") }
                         .font(.system(size: 13, weight: .heavy))
                 }
             } else {
                 HStack(spacing: 10) {
                     Button {
                         FX.success(sound: true)
-                        store.acceptTrainingPlan(plan.ownerId, "He aceptado tu entrenamiento. ¿Cuándo te viene bien quedar?")
+                        store.acceptTrainingPlan(plan.ownerId, "I've accepted your workout. When suits you to meet?")
                         onOpenChat(plan.ownerId)
-                    } label: { Text("Aceptar entrenamiento").font(.system(size: 14, weight: .heavy)).frame(maxWidth: .infinity) }
+                    } label: { Text("Accept workout").font(.system(size: 14, weight: .heavy)).frame(maxWidth: .infinity) }
                         .buttonStyle(PrimaryButtonStyle())
                         .tourAnchor("partner.accept", if: plan.id == firstOtherPlanId)
                     Button { FX.warning(); store.deletePlan(plan.id) } label: {
@@ -203,16 +203,16 @@ private struct DistanceSlider: View {
 struct CreatePlanView: View {
     @EnvironmentObject var store: AppStore
     @Environment(\.dismiss) private var dismiss
-    @State private var draftWhen = "Mañana"
-    @State private var draftWhere = "Mi gimnasio"
-    @State private var draftWorkout = "Pecho"
-    @State private var draftSpots = "1 persona"
+    @State private var draftWhen = "Tomorrow"
+    @State private var draftWhere = "My gym"
+    @State private var draftWorkout = "Chest"
+    @State private var draftSpots = "1 person"
     @State private var draftNote = ""
 
-    private let whenOptions = ["Hoy", "Mañana", "Esta semana", "Me adapto"]
-    private let whereOptions = ["Mi gimnasio", "Cerca de mí", "Parque / calistenia", "Me adapto"]
-    private let workouts = ["Pecho", "Espalda", "Pierna", "Push", "Pull", "Full body", "Cardio", "Me adapto"]
-    private let spotsOptions = ["1 persona", "2 personas", "Grupo pequeño", "Me adapto"]
+    private let whenOptions = ["Today", "Tomorrow", "This week", "Flexible"]
+    private let whereOptions = ["My gym", "Near me", "Park / calisthenics", "Flexible"]
+    private let workouts = ["Chest", "Back", "Legs", "Push", "Pull", "Full body", "Cardio", "Flexible"]
+    private let spotsOptions = ["1 person", "2 people", "Small group", "Flexible"]
 
     var body: some View {
         NavigationStack {
@@ -223,27 +223,27 @@ struct CreatePlanView: View {
                             Circle().fill(Brand.greenSoft).frame(width: 52, height: 52)
                             Image(systemName: "person.2.fill").font(.system(size: 22, weight: .bold)).foregroundColor(Color(hex: "10150a"))
                         }
-                        Text("Encuentra con quién entrenar").font(.system(size: 22, weight: .heavy)).foregroundColor(Brand.ink)
-                        Text("Publica tu plan y recibe compañeros con tu nivel cerca de ti.")
+                        Text("Find someone to train with").font(.system(size: 22, weight: .heavy)).foregroundColor(Brand.ink)
+                        Text("Post your plan and get partners at your level near you.")
                             .font(.footnote).foregroundColor(Brand.muted)
                     }
 
                     PanelCard {
-                        choice("Cuándo", "calendar", options: whenOptions, selection: $draftWhen)
+                        choice("When", "calendar", options: whenOptions, selection: $draftWhen)
                         Divider().background(Brand.line)
-                        choice("Dónde", "mappin.and.ellipse", options: whereOptions, selection: $draftWhere)
+                        choice("Where", "mappin.and.ellipse", options: whereOptions, selection: $draftWhere)
                         Divider().background(Brand.line)
-                        choice("Qué", "dumbbell.fill", options: workouts, selection: $draftWorkout)
+                        choice("What", "dumbbell.fill", options: workouts, selection: $draftWorkout)
                         Divider().background(Brand.line)
-                        choice("Plazas", "person.3.fill", options: spotsOptions, selection: $draftSpots)
+                        choice("Spots", "person.3.fill", options: spotsOptions, selection: $draftSpots)
                     }
 
                     PanelCard {
                         HStack(spacing: 6) {
                             Image(systemName: "text.alignleft").font(.system(size: 12, weight: .bold)).foregroundColor(Color(hex: "6ea300"))
-                            Text("DESCRIPCIÓN (OPCIONAL)").font(.caption2).fontWeight(.heavy).foregroundColor(Brand.muted)
+                            Text("DESCRIPTION (OPTIONAL)").font(.caption2).fontWeight(.heavy).foregroundColor(Brand.muted)
                         }
-                        TextField("Cuéntales qué buscas, tu nivel, horario…", text: $draftNote, axis: .vertical)
+                        TextField("Tell them what you're after, your level, schedule…", text: $draftNote, axis: .vertical)
                             .font(.system(size: 15)).lineLimit(2...5)
                             .padding(.horizontal, 12).padding(.vertical, 10)
                             .background(Brand.surface).clipShape(RoundedRectangle(cornerRadius: 10))
@@ -254,13 +254,13 @@ struct CreatePlanView: View {
                         let note = draftNote.trimmingCharacters(in: .whitespacesAndNewlines)
                         store.addPlan(title: planTitle, when: planWhen, place: planPlace, spots: planSpots, score: store.gymScore.total, note: note.isEmpty ? nil : note)
                         dismiss()
-                    } label: { Label("Publicar y buscar", systemImage: "magnifyingglass") }
+                    } label: { Label("Post and search", systemImage: "magnifyingglass") }
                         .buttonStyle(PrimaryButtonStyle())
                 }
                 .padding(16)
             }
             .background(Brand.bg)
-            .navigationTitle("Buscar compañero").navigationBarTitleDisplayMode(.inline)
+            .navigationTitle("Find a partner").navigationBarTitleDisplayMode(.inline)
         }
     }
 
@@ -276,22 +276,22 @@ struct CreatePlanView: View {
 
     private var planTitle: String {
         switch draftWorkout {
-        case "Pecho": return "Pecho + tríceps"
-        case "Espalda": return "Espalda + bíceps"
-        case "Me adapto": return "Entreno libre"
+        case "Chest": return "Chest + triceps"
+        case "Back": return "Back + biceps"
+        case "Flexible": return "Open workout"
         default: return draftWorkout
         }
     }
 
-    private var planWhen: String { draftWhen == "Me adapto" ? "Cualquier día" : draftWhen }
-    private var planSpots: String { draftSpots == "Me adapto" ? "Plazas flexibles" : draftSpots }
+    private var planWhen: String { draftWhen == "Flexible" ? "Any day" : draftWhen }
+    private var planSpots: String { draftSpots == "Flexible" ? "Flexible spots" : draftSpots }
 
     private var planPlace: String {
         switch draftWhere {
-        case "Mi gimnasio": return store.profile.gym.isEmpty ? "Mi gimnasio" : store.profile.gym
-        case "Parque / calistenia": return "Parque cercano"
-        case "Me adapto": return "Donde te venga bien"
-        default: return "Zona cercana"
+        case "My gym": return store.profile.gym.isEmpty ? "My gym" : store.profile.gym
+        case "Park / calisthenics": return "Nearby park"
+        case "Flexible": return "Wherever suits you"
+        default: return "Nearby area"
         }
     }
 }

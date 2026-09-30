@@ -46,45 +46,45 @@ struct Achievement: Identifiable, Equatable {
 
 enum Achievements {
     static let all: [Achievement] = [
-        Achievement(id: "first", title: "Primer paso", detail: "Guarda tu primer entreno",
+        Achievement(id: "first", title: "First step", detail: "Save your first workout",
                     icon: "figure.strengthtraining.traditional", tier: .bronze, coins: 30, goal: 1,
                     value: { min(1, $0.sessions.count) }),
-        Achievement(id: "w10", title: "Constante", detail: "Guarda 10 entrenos",
+        Achievement(id: "w10", title: "Consistent", detail: "Save 10 workouts",
                     icon: "checkmark.seal.fill", tier: .bronze, coins: 40, goal: 10, value: { $0.sessions.count }),
-        Achievement(id: "w50", title: "Veterano", detail: "Guarda 50 entrenos",
+        Achievement(id: "w50", title: "Veteran", detail: "Save 50 workouts",
                     icon: "shield.lefthalf.filled", tier: .silver, coins: 90, goal: 50, value: { $0.sessions.count }),
-        Achievement(id: "w100", title: "Centurión", detail: "Guarda 100 entrenos",
+        Achievement(id: "w100", title: "Centurion", detail: "Save 100 workouts",
                     icon: "medal.fill", tier: .gold, coins: 160, goal: 100, value: { $0.sessions.count }),
-        Achievement(id: "streak7", title: "Semana de fuego", detail: "Consigue una racha de 7",
+        Achievement(id: "streak7", title: "Week on fire", detail: "Hit a 7-day streak",
                     icon: "flame.fill", tier: .silver, coins: 60, goal: 7, value: { $0.player.streak }),
-        Achievement(id: "streak30", title: "Imparable", detail: "Consigue una racha de 30",
+        Achievement(id: "streak30", title: "Unstoppable", detail: "Hit a 30-day streak",
                     icon: "bolt.fill", tier: .gold, coins: 220, goal: 30, value: { $0.player.streak }),
-        Achievement(id: "oro", title: "Liga de Oro", detail: "Llega a la división Oro",
+        Achievement(id: "oro", title: "Gold League", detail: "Reach the Gold division",
                     icon: "rosette", tier: .gold, coins: 110, goal: 45, value: { $0.gymScore.total }),
-        Achievement(id: "diamante", title: "Diamante", detail: "Llega a la división Diamante",
+        Achievement(id: "diamante", title: "Diamond", detail: "Reach the Diamond division",
                     icon: "diamond.fill", tier: .diamond, coins: 200, goal: 75, value: { $0.gymScore.total }),
-        Achievement(id: "maestro", title: "Maestro", detail: "Llega a la división Maestro",
+        Achievement(id: "maestro", title: "Master", detail: "Reach the Master division",
                     icon: "crown.fill", tier: .diamond, coins: 320, goal: 90, value: { $0.gymScore.total }),
-        Achievement(id: "vol10k", title: "Tonelaje", detail: "Levanta 10.000 kg en total",
+        Achievement(id: "vol10k", title: "Tonnage", detail: "Lift 10,000 kg in total",
                     icon: "scalemass.fill", tier: .silver, coins: 70, goal: 10_000,
                     value: { Int($0.sessions.reduce(0.0) { $0 + $1.volume }) }),
-        Achievement(id: "vol100k", title: "Grúa", detail: "Levanta 100.000 kg en total",
+        Achievement(id: "vol100k", title: "Crane", detail: "Lift 100,000 kg in total",
                     icon: "scalemass.fill", tier: .gold, coins: 190, goal: 100_000,
                     value: { Int($0.sessions.reduce(0.0) { $0 + $1.volume }) }),
-        Achievement(id: "photo", title: "Postureo", detail: "Comparte una foto de entreno",
+        Achievement(id: "photo", title: "Show-off", detail: "Share a workout photo",
                     icon: "camera.fill", tier: .bronze, coins: 30, goal: 1,
                     value: { $0.sessions.contains { $0.photoData != nil || $0.photoURL != nil } ? 1 : 0 }),
-        Achievement(id: "early", title: "Madrugador", detail: "Entrena antes de las 7:00",
+        Achievement(id: "early", title: "Early bird", detail: "Train before 7:00",
                     icon: "sunrise.fill", tier: .silver, coins: 50, goal: 1,
                     value: { $0.sessions.contains { Calendar.current.component(.hour, from: $0.date) < 7 } ? 1 : 0 }),
-        Achievement(id: "night", title: "Búho", detail: "Entrena después de las 22:00",
+        Achievement(id: "night", title: "Night owl", detail: "Train after 22:00",
                     icon: "moon.stars.fill", tier: .silver, coins: 50, goal: 1,
                     value: { $0.sessions.contains { Calendar.current.component(.hour, from: $0.date) >= 22 } ? 1 : 0 }),
-        Achievement(id: "social", title: "Sociable", detail: "Sigue a alguien",
+        Achievement(id: "social", title: "Social", detail: "Follow someone",
                     icon: "person.2.fill", tier: .bronze, coins: 30, goal: 1, value: { min(1, $0.following.count) }),
-        Achievement(id: "pr1", title: "Rompe-récords", detail: "Bate tu primer récord",
+        Achievement(id: "pr1", title: "Record breaker", detail: "Set your first record",
                     icon: "trophy.fill", tier: .silver, coins: 60, goal: 1, value: { max($0.prCount, $0.personalBests.count) }),
-        Achievement(id: "pr10", title: "Máquina de récords", detail: "Bate 10 récords",
+        Achievement(id: "pr10", title: "Record machine", detail: "Set 10 records",
                     icon: "trophy.fill", tier: .gold, coins: 170, goal: 10, value: { max($0.prCount, $0.personalBests.count) }),
     ]
     static func by(_ id: String) -> Achievement? { all.first { $0.id == id } }
@@ -129,11 +129,11 @@ struct WeeklyQuest: Identifiable {
 
 enum Quests {
     static let weekly: [WeeklyQuest] = [
-        WeeklyQuest(id: "days3", title: "Entrena 3 días", icon: "calendar", goal: 3, unit: "días", reward: 50, xpReward: 30,
+        WeeklyQuest(id: "days3", title: "Train 3 days", icon: "calendar", goal: 3, unit: "days", reward: 50, xpReward: 30,
                     progress: { $0.weekTrainingDays() }),
-        WeeklyQuest(id: "sets40", title: "Completa 40 series", icon: "square.stack.3d.up.fill", goal: 40, unit: "series", reward: 80, xpReward: 50,
+        WeeklyQuest(id: "sets40", title: "Complete 40 sets", icon: "square.stack.3d.up.fill", goal: 40, unit: "sets", reward: 80, xpReward: 50,
                     progress: { $0.weekSessions().reduce(0) { $0 + $1.sets } }),
-        WeeklyQuest(id: "min90", title: "Acumula 90 minutos", icon: "clock.fill", goal: 90, unit: "min", reward: 100, xpReward: 60,
+        WeeklyQuest(id: "min90", title: "Log 90 minutes", icon: "clock.fill", goal: 90, unit: "min", reward: 100, xpReward: 60,
                     progress: { Int($0.weekSessions().reduce(0) { $0 + $1.elapsed } / 60) }),
     ]
 }
@@ -174,9 +174,9 @@ struct WeeklyQuestsCard: View {
         PanelCard {
             HStack(spacing: 7) {
                 Image(systemName: "target").font(.system(size: 13)).foregroundColor(Brand.green)
-                Text("MISIONES DE LA SEMANA").font(.caption2).fontWeight(.heavy).foregroundColor(Brand.muted)
+                Text("WEEKLY QUESTS").font(.caption2).fontWeight(.heavy).foregroundColor(Brand.muted)
                 Spacer()
-                Text("Nuevas el lunes · \(store.leagueDaysLeft)d").font(.system(size: 11, weight: .heavy)).foregroundColor(Brand.soft)
+                Text("New on Monday · \(store.leagueDaysLeft)d").font(.system(size: 11, weight: .heavy)).foregroundColor(Brand.soft)
             }
             ForEach(Quests.weekly) { q in
                 questRow(q)
@@ -203,7 +203,7 @@ struct WeeklyQuestsCard: View {
                             .frame(width: max(6, geo.size.width * min(1, Double(value) / Double(q.goal))))
                     }
                 }.frame(height: 6)
-                .accessibilityValue("\(value) de \(q.goal) \(q.unit)")
+                .accessibilityValue("\(value) of \(q.goal) \(q.unit)")
                 Text("\(value)/\(q.goal) \(q.unit)").font(.system(size: 11, weight: .bold)).foregroundColor(Brand.soft)
             }
             if claimed {
@@ -218,7 +218,7 @@ struct WeeklyQuestsCard: View {
                     Text("+\(q.xpReward) XP").font(.system(size: 13, weight: .heavy)).foregroundColor(Color(hex: "10150a"))
                         .padding(.horizontal, 11).frame(height: 34).background(Brand.green).clipShape(Capsule())
                 }.buttonStyle(.plain)
-                .accessibilityLabel("Reclamar \(q.xpReward) XP")
+                .accessibilityLabel("Claim \(q.xpReward) XP")
                 .overlay(alignment: .top) {
                     if flash == q.id {
                         Text("+\(q.xpReward) XP").font(.system(size: 12, weight: .heavy)).foregroundColor(Color(hex: "6ea300"))
@@ -245,7 +245,7 @@ struct QuestCompleteCelebration: View {
             Color.black.opacity(0.55).ignoresSafeArea().onTapGesture { onDismiss() }
             ConfettiView().frame(maxWidth: .infinity, maxHeight: .infinity).allowsHitTesting(false)
             VStack(spacing: 14) {
-                Text("¡MISIÓN COMPLETA!").font(.system(size: 13, weight: .heavy)).kerning(1).foregroundColor(Color(hex: "6ea300"))
+                Text("QUEST COMPLETE!").font(.system(size: 13, weight: .heavy)).kerning(1).foregroundColor(Color(hex: "6ea300"))
                 ZStack {
                     Circle().fill(LinearGradient(colors: [Color(hex: "b4ec51"), Color(hex: "8ed11d")], startPoint: .top, endPoint: .bottom))
                         .frame(width: 112, height: 112).overlay(Circle().stroke(.white.opacity(0.7), lineWidth: 3))
@@ -255,9 +255,9 @@ struct QuestCompleteCelebration: View {
                 Text(quest.title).font(.system(size: 21, weight: .heavy)).foregroundColor(Brand.ink).multilineTextAlignment(.center)
                 Text("+\(quest.xpReward) XP").font(.system(size: 14, weight: .heavy)).foregroundColor(Color(hex: "6ea300"))
                 .padding(.horizontal, 14).padding(.vertical, 8).background(Brand.chip).clipShape(Capsule())
-                Button { onClaim() } label: { Text("Reclamar recompensa").frame(maxWidth: .infinity) }
+                Button { onClaim() } label: { Text("Claim reward").frame(maxWidth: .infinity) }
                     .buttonStyle(PrimaryButtonStyle()).padding(.top, 4)
-                Button { onDismiss() } label: { Text("Ahora no").font(.system(size: 14, weight: .heavy)).foregroundColor(Brand.soft) }
+                Button { onDismiss() } label: { Text("Not now").font(.system(size: 14, weight: .heavy)).foregroundColor(Brand.soft) }
             }
             .padding(24).background(Color.white).clipShape(RoundedRectangle(cornerRadius: 26, style: .continuous))
             .shadow(color: .black.opacity(0.25), radius: 30, y: 12).padding(.horizontal, 34)
@@ -277,7 +277,7 @@ struct LeagueMember: Identifiable {
 }
 
 enum League {
-    static let names = ["Bronce", "Plata", "Oro", "Platino", "Diamante", "Maestro", "Leyenda"]
+    static let names = ["Bronze", "Silver", "Gold", "Platinum", "Diamond", "Master", "Legend"]
     static let colors = ["b0824a", "9aa3ad", "e2a915", "8fb7c9", "2fb8c6", "9b6cf2", "f2760c"]
     static let maxTier = names.count - 1
     static let promoteTop = 3       // los 3 primeros ascienden
@@ -324,12 +324,12 @@ extension AppStore {
         if Backend.shared.isConfigured {
             let meId = Backend.shared.currentUserId
             return realLeaderboard.map { r in
-                LeagueMember(id: r.user_id.uuidString, name: r.name ?? r.handle ?? "Atleta",
+                LeagueMember(id: r.user_id.uuidString, name: r.name ?? r.handle ?? "Athlete",
                              emoji: "🙂", xp: r.weekly_xp, isMe: r.user_id == meId)
             }
         }
         var m = League.bots(weekId: weekId, tier: leagueTier)
-        m.append(LeagueMember(id: "me", name: account?.name ?? "Tú", emoji: "🙂", xp: weekXP(), isMe: true))
+        m.append(LeagueMember(id: "me", name: account?.name ?? "You", emoji: "🙂", xp: weekXP(), isMe: true))
         return m.sorted { $0.xp > $1.xp }
     }
 
@@ -354,7 +354,7 @@ extension AppStore {
         let prevDate = Calendar.current.date(byAdding: .day, value: -7, to: Date()) ?? Date()
         let prevWeek = weekIdFor(prevDate)
         var members = League.bots(weekId: prevWeek, tier: leagueTier)
-        members.append(LeagueMember(id: "me", name: account?.name ?? "Tú", emoji: "🙂", xp: weekXP(for: prevDate), isMe: true))
+        members.append(LeagueMember(id: "me", name: account?.name ?? "You", emoji: "🙂", xp: weekXP(for: prevDate), isMe: true))
         members.sort { $0.xp > $1.xp }
         let rank = (members.firstIndex { $0.isMe } ?? members.count - 1) + 1
         if rank <= League.promoteTop, leagueTier < League.maxTier {
@@ -378,16 +378,16 @@ struct LeaguePromotionCelebration: View {
             Color.black.opacity(0.55).ignoresSafeArea().onTapGesture { onDismiss() }
             ConfettiView().frame(maxWidth: .infinity, maxHeight: .infinity).allowsHitTesting(false)
             VStack(spacing: 14) {
-                Text("¡HAS ASCENDIDO!").font(.system(size: 13, weight: .heavy)).kerning(1).foregroundColor(Color(hex: League.colors[idx]))
+                Text("PROMOTED!").font(.system(size: 13, weight: .heavy)).kerning(1).foregroundColor(Color(hex: League.colors[idx]))
                 ZStack {
                     Circle().fill(LinearGradient(colors: [Color(hex: League.colors[idx]).opacity(0.95), Color(hex: League.colors[idx]).opacity(0.6)], startPoint: .top, endPoint: .bottom))
                         .frame(width: 118, height: 118).overlay(Circle().stroke(.white.opacity(0.7), lineWidth: 3))
                         .shadow(color: Color(hex: League.colors[idx]).opacity(0.75), radius: 18)
                     Image(systemName: "shield.fill").font(.system(size: 48, weight: .heavy)).foregroundColor(.white)
                 }.scaleEffect(pop)
-                Text("Liga \(League.names[idx])").font(.system(size: 22, weight: .heavy)).foregroundColor(Brand.ink)
-                Text("Terminaste arriba y subes de liga. ¡A por la siguiente!").font(.system(size: 14, weight: .semibold)).foregroundColor(Brand.muted).multilineTextAlignment(.center)
-                Button { onDismiss() } label: { Text("¡Vamos!").frame(maxWidth: .infinity) }
+                Text("\(League.names[idx]) League").font(.system(size: 22, weight: .heavy)).foregroundColor(Brand.ink)
+                Text("You finished near the top and moved up a league. On to the next one!").font(.system(size: 14, weight: .semibold)).foregroundColor(Brand.muted).multilineTextAlignment(.center)
+                Button { onDismiss() } label: { Text("Let's go!").frame(maxWidth: .infinity) }
                     .buttonStyle(PrimaryButtonStyle()).padding(.top, 4)
             }
             .padding(24).background(Color.white).clipShape(RoundedRectangle(cornerRadius: 26, style: .continuous))
@@ -411,8 +411,8 @@ struct LeagueCard: View {
                         Image(systemName: "shield.fill").font(.system(size: 20, weight: .heavy)).foregroundColor(.white)
                     }
                     VStack(alignment: .leading, spacing: 3) {
-                        Text("Liga \(store.leagueName)").font(.system(size: 15, weight: .heavy)).foregroundColor(Brand.ink)
-                        Text("Vas #\(store.myLeagueRank) · quedan \(store.leagueDaysLeft) días").font(.system(size: 12, weight: .bold)).foregroundColor(Brand.soft)
+                        Text("\(store.leagueName) League").font(.system(size: 15, weight: .heavy)).foregroundColor(Brand.ink)
+                        Text("You're #\(store.myLeagueRank) · \(store.leagueDaysLeft) days left").font(.system(size: 12, weight: .bold)).foregroundColor(Brand.soft)
                     }
                     Spacer()
                     Image(systemName: "chevron.right").font(.system(size: 13, weight: .bold)).foregroundColor(Brand.soft)
@@ -438,8 +438,8 @@ struct LeagueView: View {
                                 .shadow(color: Color(hex: League.colors[idx]).opacity(0.6), radius: 10)
                             Image(systemName: "shield.fill").font(.system(size: 30, weight: .heavy)).foregroundColor(.white)
                         }
-                        Text("Liga \(store.leagueName)").font(.system(size: 20, weight: .heavy)).foregroundColor(Brand.ink)
-                        Text("Los \(League.promoteTop) primeros ascienden · quedan \(store.leagueDaysLeft) días").font(.footnote).foregroundColor(Brand.muted)
+                        Text("\(store.leagueName) League").font(.system(size: 20, weight: .heavy)).foregroundColor(Brand.ink)
+                        Text("Top \(League.promoteTop) move up · \(store.leagueDaysLeft) days left").font(.footnote).foregroundColor(Brand.muted)
                     }.padding(.vertical, 6)
 
                     PanelCard {
@@ -448,12 +448,12 @@ struct LeagueView: View {
                             if m.id != standings.last?.id { Divider() }
                         }
                     }
-                    Text("La liga se reinicia cada lunes. Gana XP entrenando para subir de liga.")
+                    Text("The league resets every Monday. Earn XP by training to move up.")
                         .font(.caption).foregroundColor(Brand.muted).multilineTextAlignment(.center).padding(.top, 2)
                 }.padding(16)
             }
             .background(Brand.bg)
-            .navigationTitle("Liga semanal").navigationBarTitleDisplayMode(.inline)
+            .navigationTitle("Weekly league").navigationBarTitleDisplayMode(.inline)
         }
         .task { store.loadLeaderboard() }
     }
@@ -464,7 +464,7 @@ struct LeagueView: View {
         return HStack(spacing: 11) {
             Text("\(rank)").font(.system(size: 14, weight: .heavy)).foregroundColor(promote ? Brand.green : (relegate ? Color(hex: "d9534f") : Brand.muted)).frame(width: 22)
             Avatar(emoji: m.isMe ? "🙂" : m.emoji, size: 32)
-            Text(m.isMe ? "Tú" : m.name).font(.system(size: 14, weight: m.isMe ? .heavy : .semibold)).foregroundColor(Brand.ink)
+            Text(m.isMe ? "You" : m.name).font(.system(size: 14, weight: m.isMe ? .heavy : .semibold)).foregroundColor(Brand.ink)
             Spacer()
             Text("\(m.xp) XP").font(.system(size: 13, weight: .heavy)).foregroundColor(Brand.soft).monospacedDigit()
             if promote { Image(systemName: "arrow.up").font(.system(size: 11, weight: .heavy)).foregroundColor(Brand.green) }
@@ -493,7 +493,7 @@ struct GamificationCard: View {
                     Text("\(lv.level)").font(.system(size: 20, weight: .heavy)).foregroundColor(Color(hex: "10150a"))
                 }
                 VStack(alignment: .leading, spacing: 5) {
-                    Text("Nivel \(lv.level)").font(.system(size: 15, weight: .heavy)).foregroundColor(Brand.ink)
+                    Text("Level \(lv.level)").font(.system(size: 15, weight: .heavy)).foregroundColor(Brand.ink)
                     GeometryReader { geo in
                         ZStack(alignment: .leading) {
                             Capsule().fill(Brand.chip)
@@ -505,7 +505,7 @@ struct GamificationCard: View {
                 Spacer(minLength: 8)
             }
             Divider()
-            gamRow("Logros", "trophy.fill", Color(hex: "e2a915"), trailing: "\(store.unlockedCount)/\(store.totalAchievements)", action: onOpenLogros)
+            gamRow("Achievements", "trophy.fill", Color(hex: "e2a915"), trailing: "\(store.unlockedCount)/\(store.totalAchievements)", action: onOpenLogros)
         }
     }
 
@@ -534,8 +534,8 @@ struct LogrosView: View {
                 VStack(spacing: 14) {
                     HStack {
                         VStack(alignment: .leading, spacing: 2) {
-                            Text("\(store.unlockedCount) de \(store.totalAchievements)").font(.system(size: 20, weight: .heavy)).foregroundColor(Brand.ink)
-                            Text("logros conseguidos").font(.footnote).foregroundColor(Brand.muted)
+                            Text("\(store.unlockedCount) of \(store.totalAchievements)").font(.system(size: 20, weight: .heavy)).foregroundColor(Brand.ink)
+                            Text("achievements unlocked").font(.footnote).foregroundColor(Brand.muted)
                         }
                         Spacer()
                     }
@@ -545,7 +545,7 @@ struct LogrosView: View {
                 }.padding(16)
             }
             .background(Brand.bg)
-            .navigationTitle("Logros").navigationBarTitleDisplayMode(.inline)
+            .navigationTitle("Achievements").navigationBarTitleDisplayMode(.inline)
         }
     }
 }
@@ -606,7 +606,7 @@ struct AchievementCelebration: View {
             Color.black.opacity(0.55).ignoresSafeArea().onTapGesture { onDismiss() }
             ConfettiView().frame(maxWidth: .infinity, maxHeight: .infinity).allowsHitTesting(false)
             VStack(spacing: 16) {
-                Text("¡LOGRO DESBLOQUEADO!").font(.system(size: 13, weight: .heavy)).kerning(1).foregroundColor(Color(hex: "e2a915"))
+                Text("ACHIEVEMENT UNLOCKED!").font(.system(size: 13, weight: .heavy)).kerning(1).foregroundColor(Color(hex: "e2a915"))
                 ZStack {
                     Circle().fill(achievement.tier.fill).frame(width: 118, height: 118)
                         .overlay(Circle().stroke(.white.opacity(0.7), lineWidth: 3))
@@ -619,7 +619,7 @@ struct AchievementCelebration: View {
                     Text(achievement.title).font(.system(size: 22, weight: .heavy)).foregroundColor(Brand.ink)
                     Text(achievement.detail).font(.system(size: 14, weight: .semibold)).foregroundColor(Brand.muted).multilineTextAlignment(.center)
                 }
-                Button { onDismiss() } label: { Text("¡Genial!").frame(maxWidth: .infinity) }
+                Button { onDismiss() } label: { Text("Awesome!").frame(maxWidth: .infinity) }
                     .buttonStyle(PrimaryButtonStyle()).padding(.top, 4)
             }
             .padding(24)
@@ -647,7 +647,7 @@ struct PRCelebration: View {
             Color.black.opacity(0.55).ignoresSafeArea().onTapGesture { onDismiss() }
             ConfettiView().frame(maxWidth: .infinity, maxHeight: .infinity).allowsHitTesting(false)
             VStack(spacing: 14) {
-                Text("¡NUEVO RÉCORD!").font(.system(size: 13, weight: .heavy)).kerning(1).foregroundColor(Color(hex: "6ea300"))
+                Text("NEW RECORD!").font(.system(size: 13, weight: .heavy)).kerning(1).foregroundColor(Color(hex: "6ea300"))
                 ZStack {
                     Circle().fill(LinearGradient(colors: [Color(hex: "b4ec51"), Color(hex: "8ed11d")], startPoint: .top, endPoint: .bottom))
                         .frame(width: 112, height: 112)
@@ -657,8 +657,8 @@ struct PRCelebration: View {
                 }.scaleEffect(pop)
                 Text(L10n.x(pr.exercise)).font(.system(size: 21, weight: .heavy)).foregroundColor(Brand.ink).multilineTextAlignment(.center)
                 Text("\(fmt(pr.weight)) kg × \(pr.reps)").font(.system(size: 26, weight: .heavy)).foregroundColor(Brand.ink)
-                Text("1RM estimado ~\(Int(pr.e1rm.rounded())) kg").font(.system(size: 13, weight: .bold)).foregroundColor(Brand.soft)
-                Button { onDismiss() } label: { Text("¡Vamos!").frame(maxWidth: .infinity) }
+                Text("Estimated 1RM ~\(Int(pr.e1rm.rounded())) kg").font(.system(size: 13, weight: .bold)).foregroundColor(Brand.soft)
+                Button { onDismiss() } label: { Text("Let's go!").frame(maxWidth: .infinity) }
                     .buttonStyle(PrimaryButtonStyle()).padding(.top, 4)
             }
             .padding(24)
@@ -687,7 +687,7 @@ struct StreakCelebration: View {
             Color.black.opacity(0.55).ignoresSafeArea().onTapGesture { onDismiss() }
             ConfettiView().frame(maxWidth: .infinity, maxHeight: .infinity).allowsHitTesting(false)
             VStack(spacing: 14) {
-                Text("¡RACHA EN LLAMAS!").font(.system(size: 13, weight: .heavy)).kerning(1).foregroundColor(Color(hex: "f2760c"))
+                Text("STREAK ON FIRE!").font(.system(size: 13, weight: .heavy)).kerning(1).foregroundColor(Color(hex: "f2760c"))
                 ZStack {
                     Circle().fill(LinearGradient(colors: [Color(hex: "ffb03a"), Color(hex: "f2600c")], startPoint: .top, endPoint: .bottom))
                         .frame(width: 118, height: 118)
@@ -695,13 +695,13 @@ struct StreakCelebration: View {
                         .shadow(color: Color(hex: "f2600c").opacity(0.7), radius: 18)
                     Image(systemName: "flame.fill").font(.system(size: 52, weight: .heavy)).foregroundColor(.white)
                 }.scaleEffect(pop)
-                Text("\(days) días de racha").font(.system(size: 22, weight: .heavy)).foregroundColor(Brand.ink)
-                Text("¡Sigue así, no la pierdas!").font(.system(size: 14, weight: .semibold)).foregroundColor(Brand.muted)
+                Text("\(days)-day streak").font(.system(size: 22, weight: .heavy)).foregroundColor(Brand.ink)
+                Text("Keep it up, don't lose it!").font(.system(size: 14, weight: .semibold)).foregroundColor(Brand.muted)
                 if gotFreeze {
-                    Text("🧊 +1 congelador").font(.system(size: 14, weight: .heavy)).foregroundColor(Color(hex: "2b8fd6"))
+                    Text("🧊 +1 streak freeze").font(.system(size: 14, weight: .heavy)).foregroundColor(Color(hex: "2b8fd6"))
                         .padding(.horizontal, 14).padding(.vertical, 8).background(Brand.chip).clipShape(Capsule())
                 }
-                Button { onDismiss() } label: { Text("¡A por más!").frame(maxWidth: .infinity) }
+                Button { onDismiss() } label: { Text("Bring on more!").frame(maxWidth: .infinity) }
                     .buttonStyle(PrimaryButtonStyle()).padding(.top, 4)
             }
             .padding(24)
@@ -725,11 +725,11 @@ struct RecordsCard: View {
         PanelCard {
             HStack(spacing: 7) {
                 Image(systemName: "trophy.fill").font(.system(size: 13)).foregroundColor(Color(hex: "e2a915"))
-                Text("TUS RÉCORDS").font(.caption2).fontWeight(.heavy).foregroundColor(Brand.muted)
+                Text("YOUR RECORDS").font(.caption2).fontWeight(.heavy).foregroundColor(Brand.muted)
                 Spacer()
             }
             if records.isEmpty {
-                Text("Registra entrenos para batir tus primeros récords 💪")
+                Text("Log workouts to set your first records 💪")
                     .font(.footnote).foregroundColor(Brand.muted).frame(maxWidth: .infinity, alignment: .leading).padding(.vertical, 4)
             } else {
                 ForEach(Array(records.prefix(shown))) { r in
@@ -743,7 +743,7 @@ struct RecordsCard: View {
                 }
                 if compact && records.count > shown {
                     Button { FX.tap(); onSeeAll() } label: {
-                        Text("Ver los \(records.count) récords")
+                        Text("See all \(records.count) records")
                             .font(.system(size: 13, weight: .heavy)).foregroundColor(Color(hex: "4b6211"))
                             .frame(maxWidth: .infinity).padding(.vertical, 8)
                             .background(Brand.greenSoft.opacity(0.28)).clipShape(RoundedRectangle(cornerRadius: 10))
@@ -784,7 +784,7 @@ struct AllRecordsSheet: View {
                 .padding(14)
             }
             .background(Brand.bg)
-            .navigationTitle("Tus récords").navigationBarTitleDisplayMode(.inline)
+            .navigationTitle("Your records").navigationBarTitleDisplayMode(.inline)
             .toolbar { ToolbarItem(placement: .cancellationAction) { SheetBackButton { dismissRecords() } } }
         }
         .presentationDetents([.large]).presentationDragIndicator(.visible)

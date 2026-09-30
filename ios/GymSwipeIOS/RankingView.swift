@@ -105,7 +105,7 @@ struct RankingView: View {
         PanelCard {
             HStack {
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(BackendConfig.isConfigured ? "Mapa de actividad" : "Mapa").font(.system(size: 16, weight: .heavy)).foregroundColor(Brand.ink)
+                    Text(BackendConfig.isConfigured ? "Activity map" : "Map").font(.system(size: 16, weight: .heavy)).foregroundColor(Brand.ink)
                     Text(location.status).font(.caption).foregroundColor(Brand.muted)
                 }
                 Spacer()
@@ -164,8 +164,8 @@ struct RankingView: View {
                         Image(systemName: "map.fill").font(.system(size: 30)).foregroundColor(Color(hex: "6ea300"))
                         Text("Ver mapa de la comunidad").font(.system(size: 15, weight: .heavy)).foregroundColor(Brand.ink)
                         Text(BackendConfig.isConfigured && activeCount > 0
-                             ? "🟢 \(activeCount) atletas activos estos 30 días"
-                             : "Descubre atletas cerca de ti").font(.caption).foregroundColor(Brand.muted)
+                             ? "🟢 \(activeCount) active athletes in the last 30 days"
+                             : "Discover athletes near you").font(.caption).foregroundColor(Brand.muted)
                     }
                     .frame(maxWidth: .infinity).frame(height: 160)
                     .background(Brand.surface).clipShape(RoundedRectangle(cornerRadius: 12))
@@ -222,7 +222,7 @@ struct RankingView: View {
     }
 
     private var meRow: RankRow {
-        RankRow(name: "Tú", score: store.gymScore.total, isMe: true, emoji: "🙂", flag: countryFlag(store.profile.country))
+        RankRow(name: "You", score: store.gymScore.total, isMe: true, emoji: "🙂", flag: countryFlag(store.profile.country))
     }
 
     private var friendsRanking: [RankRow] {

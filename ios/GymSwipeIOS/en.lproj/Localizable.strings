@@ -1,5 +1,5 @@
-/* Forge Loop — English catalog. Development language is Spanish: the Spanish
-   literals in code ARE the keys; anything missing here falls back to Spanish. */
+/* Forge Loop — English catalog (the app's ONLY language). Historical UI literals in code
+   are Spanish and act as keys; new code uses English literals directly. */
 
 /* Progress insights (per-exercise, vs. own history) */
 "Progreso" = "Progress";
