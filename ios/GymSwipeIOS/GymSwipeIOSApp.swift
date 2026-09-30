@@ -47,6 +47,7 @@ struct GymSwipeIOSApp: App {
                 if store.auth != nil && store.account == nil { store.hydrateAccountFromBackend() }
                 store.syncSessionsFromBackend(); store.syncWorkoutsFromBackend(); store.loadLeaderboard()
                 Task { await Backend.shared.touchPresence() }   // cuenta como "activo" (30 días)
+                PresenceService.shared.start()   // online + distancia de Your Circle (solo con la app abierta)
                 store.loadFollowing(); store.loadConversations(); store.loadConnections()
             }
             // Al volver a primer plano: re-sincroniza (SUBE cualquier entreno que no subiera en su
@@ -54,6 +55,9 @@ struct GymSwipeIOSApp: App {
             .onChange(of: scenePhase) { phase in
                 if phase == .active {
                     store.syncSessionsFromBackend(); store.loadConversations()
+                    if store.auth != nil { PresenceService.shared.start() }
+                } else if phase == .background {
+                    PresenceService.shared.stop()   // deja de salir online al momento
                 }
             }
         }

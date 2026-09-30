@@ -118,6 +118,51 @@ final class Backend {
         return try await client.rpc("todays_people").execute().value
     }
 
+    /// Your Circle (0028): el mazo de hoy + distancia, online e indicador de cada persona.
+    func yourCircle() async throws -> CircleDeck {
+        guard let client else { throw BackendError.notConfigured }
+        _ = try await client.auth.session   // token renovado (ver todaysPeople)
+        return try await client.rpc("your_circle").execute().value
+    }
+
+    // MARK: - Presencia de Your Circle (0028)
+
+    /// El servidor ajusta la posición a ~110 m antes de guardarla y nadie la puede leer.
+    func updatePresenceExact(lat: Double, lon: Double) async {
+        guard let client else { return }
+        struct P: Encodable { let lat: Double; let lon: Double }
+        do { try await client.rpc("update_presence", params: P(lat: lat, lon: lon)).execute() }
+        catch { print("[Backend] presencia falló:", error) }
+    }
+
+    func heartbeat() async {
+        guard let client, client.auth.currentSession != nil else { return }
+        _ = try? await client.rpc("heartbeat").execute()
+    }
+
+    func goOffline() async {
+        guard let client, client.auth.currentSession != nil else { return }
+        _ = try? await client.rpc("go_offline").execute()
+    }
+
+    /// Mostrar mi distancia / mi online a los demás.
+    func setPresenceVisibility(showDistance: Bool, showOnline: Bool) async {
+        guard let client, let me = await currentUserIdAsync() else { return }
+        struct V: Encodable { let show_distance: Bool; let show_online: Bool }
+        do {
+            try await client.from("profiles").update(V(show_distance: showDistance, show_online: showOnline))
+                .eq("id", value: me.uuidString).execute()
+        } catch { print("[Backend] privacidad de presencia falló:", error) }
+    }
+
+    func fetchPresenceVisibility() async -> (showDistance: Bool, showOnline: Bool)? {
+        guard let client, let me = await currentUserIdAsync() else { return nil }
+        struct V: Decodable { let show_distance: Bool?; let show_online: Bool? }
+        guard let v: V = try? await client.from("profiles").select("show_distance,show_online")
+            .eq("id", value: me.uuidString).single().execute().value else { return nil }
+        return (v.show_distance ?? true, v.show_online ?? true)
+    }
+
     /// Cuántos perfiles del mazo de hoy has visto (el servidor solo lo deja avanzar).
     func setDiscoverPosition(_ pos: Int) async {
         guard let client else { return }
@@ -624,6 +669,17 @@ struct ProfileRow: Codable {
     /// Fotos de sus últimos entrenos públicos. Solo llega en Descubrir; NO es columna.
     var moments: [String]?
 
+    // ─── Solo en Your Circle (0028); NO son columnas y no se envían ───────────
+    var age: Int?
+    /// Metros ya redondeados por el servidor; nil si esa persona la oculta o no hay ubicación.
+    var distance_m: Int?
+    var online: Bool?
+    /// new · new_in_area · leaving · nearby
+    var badge: String?
+    var days_left: Int?
+    /// Primera vez que aparece en MI Circle (para «4 new»).
+    var first_time: Bool?
+
     /// Los campos del club y las fotos se mandan SIEMPRE, también como `null`: el
     /// `Encodable` sintetizado omite los nil, y entonces borrar tu bio (o tu última foto)
     /// no llegaba nunca al servidor, que conservaba el valor viejo. El resto se omite si
@@ -662,6 +718,14 @@ struct ProfileRow: Codable {
 struct DiscoverDeck: Decodable {
     let day: String
     let position: Int
+    let profiles: [ProfileRow]
+}
+
+struct CircleDeck: Decodable {
+    let day: String
+    let position: Int
+    /// Mi barrio declarado (cabecera «YOUR CIRCLE · Canggu»).
+    let area: String?
     let profiles: [ProfileRow]
 }
 

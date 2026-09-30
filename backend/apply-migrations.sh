@@ -4,7 +4,7 @@
 set -uo pipefail
 TOKEN=$(cat ~/.supabase/access-token)
 REF="${1:?falta project ref}"
-DIR="${2:-/Users/javiercolas/Documents/gym-swipe-ios/backend/supabase/migrations}"
+DIR="${2:-$(cd "$(dirname "$0")" && pwd)/supabase/migrations}"
 API="https://api.supabase.com/v1/projects/$REF/database/query"
 
 fail=0

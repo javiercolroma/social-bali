@@ -34,7 +34,7 @@ struct RootView: View {
                 // (PRODUCT.md, Fase 4), por eso el código se conserva.
                 screen(4) { ActivityView() }
                 screen(RootView.discoverTab) {
-                    DiscoverTodayView()
+                    YourCircleView()
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -298,7 +298,7 @@ struct CustomTabBar: View {
     var onSelect: (Int) -> Void
     /// (índice de pestaña, título, icono) en el ORDEN en que se muestran.
     private let items: [(idx: Int, title: String, icon: String)] = [
-        (RootView.discoverTab, "Discover", "sparkles"),
+        (RootView.discoverTab, "Circle", "circle.grid.2x2.fill"),
         (0, "Social", "newspaper.fill"),
         (1, "Plan", "list.bullet.clipboard"),
         (2, "Entreno", "dumbbell.fill"),

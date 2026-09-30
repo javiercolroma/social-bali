@@ -63,7 +63,7 @@ targets:
         ITSAppUsesNonExemptEncryption: false
         NSSupportsLiveActivities: true
         LSApplicationCategoryType: public.app-category.healthcare-fitness
-        NSLocationWhenInUseUsageDescription: Forge Loop usa tu ubicación para mostrarte el ranking y los compañeros de entreno cercanos.
+        NSLocationWhenInUseUsageDescription: Forge Loop uses your location to show how far away people in your circle are. Others only see the distance, never where you are.
         NSCameraUsageDescription: Forge Loop usa la cámara para hacer la foto de tu entreno.
         UILaunchScreen:
           UIColorName: LaunchBackground

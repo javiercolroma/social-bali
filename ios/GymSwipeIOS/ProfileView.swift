@@ -370,6 +370,14 @@ struct SettingsView: View {
     @State private var deleting = false
     @State private var deleteFailed = false
     @State private var toursReset = false
+    @State private var showDistance = true
+    @State private var showOnline = true
+
+    private func savePresenceVisibility() {
+        FX.tap()
+        let d = showDistance, o = showOnline
+        Task { await Backend.shared.setPresenceVisibility(showDistance: d, showOnline: o) }
+    }
 
     var body: some View {
         NavigationStack {
@@ -386,6 +394,24 @@ struct SettingsView: View {
                         }.tint(Brand.green)
                         Text("Si tu cuenta es privada, quien quiera seguirte tendrá que enviarte una solicitud.")
                             .font(.caption2).foregroundColor(Brand.soft)
+                    }
+
+                    // Your Circle (0028): cada persona decide si enseña su distancia y su online.
+                    PanelCard {
+                        Text("YOUR CIRCLE").font(.caption2).fontWeight(.heavy).foregroundColor(Brand.muted)
+                        Toggle(isOn: Binding(get: { showDistance }, set: { showDistance = $0; savePresenceVisibility() })) {
+                            Label("Show my distance", systemImage: "location.fill")
+                        }.tint(Brand.green)
+                        Toggle(isOn: Binding(get: { showOnline }, set: { showOnline = $0; savePresenceVisibility() })) {
+                            Label("Show when I'm online", systemImage: "circle.fill")
+                        }.tint(Brand.green)
+                        Text("Others only see how far away you are, never where you are.")
+                            .font(.caption2).foregroundColor(Brand.soft)
+                    }
+                    .task {
+                        if let v = await Backend.shared.fetchPresenceVisibility() {
+                            showDistance = v.showDistance; showOnline = v.showOnline
+                        }
                     }
 
                     PanelCard {
