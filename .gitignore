@@ -28,7 +28,8 @@ xcuserdata/
 ios/.spm-cache/
 
 # Artefactos de la subida a TestFlight (ios/resign.sh)
-ios/ForgeLoop.xcarchive/
+ios/*.xcarchive/
+ios/ent-*.plist
 ios/export/
 ios/ipa/
 ios/ent-app.plist
