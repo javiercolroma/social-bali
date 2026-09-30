@@ -311,3 +311,9 @@ update public.profiles p
    set created_at = now() - make_interval(days => case when p.id::text like '%0001' or p.id::text like '%0007' or p.id::text like '%0012' then 2 else 40 end),
        area_since = now() - make_interval(days => case when p.id::text like '%0003' or p.id::text like '%0010' then 1 else 40 end)
  where p.is_seed and p.handle <> 'test.viewer';
+
+-- 0029: los perfiles de prueba ya están en Bali (dos de ellos acaban de llegar).
+update public.profiles p
+   set last_in_bali_at = now(),
+       arrived_at = now() - make_interval(days => case when p.id::text like '%0005' or p.id::text like '%0014' then 1 else 60 end)
+ where p.is_seed;
