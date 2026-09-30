@@ -171,7 +171,7 @@ struct HistoryEntry: Identifiable, Codable {
 enum WorkoutVisibility: String, Codable, CaseIterable {
     case all, followers, onlyMe
     var label: String {
-        switch self { case .all: return "Todos"; case .followers: return "Seguidores"; case .onlyMe: return "Solo yo" }
+        switch self { case .all: return "Everyone"; case .followers: return "Followers"; case .onlyMe: return "Only me" }
     }
     var icon: String {
         switch self { case .all: return "globe"; case .followers: return "person.2.fill"; case .onlyMe: return "lock.fill" }
@@ -274,7 +274,7 @@ struct SocialPerson: Identifiable, Codable, Hashable {
     var gym: String
     var flag: String = "🇪🇸"
     var city: String = "Madrid"
-    var country: String = "España"
+    var country: String = "Spain"
     var isPrivate: Bool = false
     /// Foto real del avatar (Storage) para usuarios reales; el emoji queda de fallback.
     var avatarURL: String? = nil
@@ -294,7 +294,7 @@ struct ChatMessage: Identifiable, Codable, Hashable {
     var sharedWorkout: WorkoutTemplate? { WorkoutShare.decode(text) }
     /// Texto legible para la lista de conversaciones (nunca el JSON codificado del entreno).
     var preview: String {
-        if let w = sharedWorkout { return "📋 Entreno: \(w.name)" }
+        if let w = sharedWorkout { return "📋 Workout: \(L10n.x(w.name))" }
         return text
     }
 }
@@ -306,7 +306,7 @@ struct ChatMessage: Identifiable, Codable, Hashable {
 enum WorkoutShare {
     static let marker = "\u{1FAAF}FORGE-WKT1::"
     static func encode(_ t: WorkoutTemplate) -> String {
-        guard let data = try? JSONEncoder().encode(t) else { return "Entreno: \(t.name)" }
+        guard let data = try? JSONEncoder().encode(t) else { return "Workout: \(t.name)" }
         return marker + data.base64EncodedString()
     }
     static func decode(_ text: String) -> WorkoutTemplate? {

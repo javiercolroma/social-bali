@@ -12,10 +12,10 @@ enum CloudAI {
         case notConfigured, dailyLimit, noSession, server(String)
         var errorDescription: String? {
             switch self {
-            case .notConfigured: return "La IA en la nube aún no está activada. ¡Muy pronto!"
-            case .dailyLimit: return "Has llegado al límite diario de IA. Vuelve mañana 💪"
-            case .noSession: return "Inicia sesión para hablar con Forgey."
-            case .server(let m): return "Forgey no responde ahora mismo (\(m)). Inténtalo de nuevo."
+            case .notConfigured: return "Cloud AI isn't switched on yet. Coming soon!"
+            case .dailyLimit: return "You've hit today's AI limit. Come back tomorrow 💪"
+            case .noSession: return "Sign in to chat with Forgey."
+            case .server(let m): return "Forgey isn't responding right now (\(m)). Please try again."
             }
         }
     }
@@ -46,7 +46,7 @@ enum CloudAI {
         case 401: throw CloudError.noSession
         case 429: throw CloudError.dailyLimit
         case 503: throw CloudError.notConfigured
-        default: throw CloudError.server("código \(status)")
+        default: throw CloudError.server("code \(status)")
         }
     }
 
@@ -71,7 +71,7 @@ enum CloudAI {
             catalog: ForgeyPrompts.catalog(for: description))
             + "\n\nSALIDA (estricto): SOLO un objeto JSON válido, sin markdown ni texto extra: "
             + #"{"name":"…","block":"…","exercises":[{"name":"…","sets":4,"reps":10,"weightKg":40}]}"#
-            + " Entre 3 y 8 ejercicios."
+            + " Entre 3 y 8 ejercicios. \"name\", \"block\" y los nombres de ejercicio, en inglés (English)."
 
         func request(_ prompt: String) async throws -> CloudWorkout {
             let raw = try await complete(system: system, prompt: prompt, maxTokens: 800)
@@ -81,20 +81,20 @@ enum CloudAI {
         let res = try await request("Crea un entreno para: \(description). Recuerda: TODOS los ejercicios deben corresponder a esa descripción.")
 
         let exercises = res.exercises.map {
-            AppStore.makeExercise(res.name, $0.name, min(6, max(1, $0.sets)), min(30, max(1, $0.reps)),
+            AppStore.makeExercise(res.name, catalogName(forDisplay: $0.name), min(6, max(1, $0.sets)), min(30, max(1, $0.reps)),
                                   min(300, max(0, $0.weightKg)))
         }
-        guard !exercises.isEmpty else { throw CloudError.server("entreno vacío") }
+        guard !exercises.isEmpty else { throw CloudError.server("empty workout") }
         return WorkoutTemplate(id: "ai-\(Int(Date().timeIntervalSince1970))", name: res.name,
                                description: AppStore.summary(of: exercises),
-                               block: res.block.isEmpty ? "Otros" : res.block, exercises: exercises)
+                               block: res.block.isEmpty ? "Others" : res.block, exercises: exercises)
     }
 
     /// El modelo a veces envuelve el JSON en ```json …``` o añade una frase: lo extraemos.
     private static func parse(_ raw: String) throws -> CloudWorkout {
         var t = raw.trimmingCharacters(in: .whitespacesAndNewlines)
         if let a = t.firstIndex(of: "{"), let b = t.lastIndex(of: "}") { t = String(t[a...b]) }
-        guard let d = t.data(using: .utf8) else { throw CloudError.server("respuesta ilegible") }
+        guard let d = t.data(using: .utf8) else { throw CloudError.server("unreadable response") }
         return try JSONDecoder().decode(CloudWorkout.self, from: d)
     }
 
@@ -105,7 +105,7 @@ enum CloudAI {
     static func analyzeBody(photo: Data, store: AppStore) async throws -> String {
         guard let client = Backend.shared.client else { throw CloudError.notConfigured }
         guard let token = try? await client.auth.session.accessToken else { throw CloudError.noSession }
-        guard let (b64, media) = downscaledJPEGBase64(photo) else { throw CloudError.server("imagen ilegible") }
+        guard let (b64, media) = downscaledJPEGBase64(photo) else { throw CloudError.server("unreadable image") }
 
         var req = URLRequest(url: URL(string: "\(BackendConfig.supabaseURL)/functions/v1/forgey-ai")!)
         req.httpMethod = "POST"
@@ -115,7 +115,7 @@ enum CloudAI {
         req.setValue("application/json", forHTTPHeaderField: "Content-Type")
         let system = ForgeyPrompts.analyzeInstructions(split: ForgeyAI.trainingSplit(from: store))
         let body: [String: Any] = ["system": String(system.prefix(8000)),
-                                   "prompt": "¿Qué partes debería mejorar? Analiza mi físico.",
+                                   "prompt": "Which areas should I improve? Analyse my physique. Answer in English.",
                                    "maxTokens": 500,
                                    "image": ["media_type": media, "data": b64]]
         req.httpBody = try JSONSerialization.data(withJSONObject: body)
@@ -129,7 +129,7 @@ enum CloudAI {
         case 401: throw CloudError.noSession
         case 429: throw CloudError.dailyLimit
         case 503: throw CloudError.notConfigured
-        default: throw CloudError.server("código \(status)")
+        default: throw CloudError.server("code \(status)")
         }
     }
 

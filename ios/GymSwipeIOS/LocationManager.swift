@@ -4,7 +4,7 @@ import CoreLocation
 @MainActor
 final class LocationManager: NSObject, ObservableObject, CLLocationManagerDelegate {
     @Published var coordinate: CLLocationCoordinate2D?
-    @Published var status = "Ubicación aproximada"
+    @Published var status = "Approximate location"
     /// Nombre legible y aproximado (p. ej. "Chamberí, Madrid") de la última ubicación.
     @Published var placeName: String?
 
@@ -18,11 +18,11 @@ final class LocationManager: NSObject, ObservableObject, CLLocationManagerDelega
     }
 
     func request() {
-        status = "Buscando ubicación…"
+        status = "Finding your location…"
         switch manager.authorizationStatus {
         case .notDetermined: manager.requestWhenInUseAuthorization()
         case .authorizedWhenInUse, .authorizedAlways: manager.requestLocation()
-        default: status = "Permiso de ubicación denegado"
+        default: status = "Location permission denied"
         }
     }
 
@@ -32,7 +32,7 @@ final class LocationManager: NSObject, ObservableObject, CLLocationManagerDelega
             if s == .authorizedWhenInUse || s == .authorizedAlways {
                 manager.requestLocation()
             } else if s == .denied || s == .restricted {
-                self.status = "Permiso de ubicación denegado"
+                self.status = "Location permission denied"
             }
         }
     }
@@ -45,7 +45,7 @@ final class LocationManager: NSObject, ObservableObject, CLLocationManagerDelega
         guard let loc = locations.last else { return }
         Task { @MainActor in
             self.coordinate = loc.coordinate
-            self.status = "Tu zona aproximada"
+            self.status = "Your approximate area"
             self.resolvePlaceName(for: loc)
         }
     }
@@ -53,7 +53,7 @@ final class LocationManager: NSObject, ObservableObject, CLLocationManagerDelega
     /// Geocodificación inversa → zona aproximada (barrio + ciudad), sin calle ni número.
     private func resolvePlaceName(for loc: CLLocation) {
         geocoder.cancelGeocode()
-        geocoder.reverseGeocodeLocation(loc, preferredLocale: Locale(identifier: "es_ES")) { [weak self] marks, _ in
+        geocoder.reverseGeocodeLocation(loc, preferredLocale: L10n.locale) { [weak self] marks, _ in
             guard let self, let m = marks?.first else { return }
             let area = m.subLocality ?? m.locality ?? m.subAdministrativeArea
             let city = m.locality ?? m.subAdministrativeArea ?? m.administrativeArea
@@ -69,6 +69,6 @@ final class LocationManager: NSObject, ObservableObject, CLLocationManagerDelega
     }
 
     nonisolated func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
-        Task { @MainActor in self.status = "Ubicación no disponible" }
+        Task { @MainActor in self.status = "Location unavailable" }
     }
 }

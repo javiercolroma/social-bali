@@ -8,10 +8,10 @@ final class AppStore: ObservableObject {
     @Published var exercises: [Exercise] = []
     @Published var player = Player(xp: 0, streak: 0, focus: 80, hearts: 3)
     @Published var history: [HistoryEntry] = []
-    @Published var profile = Profile(sex: "", age: "", country: "España", city: "Madrid", gym: "Mi gimnasio")
+    @Published var profile = Profile(sex: "", age: "", country: "Spain", city: "Madrid", gym: "My gym")
     @Published var savedWorkouts: [WorkoutTemplate] = []
     @Published var sessions: [WorkoutSession] = []
-    @Published var lastAction = "Listo para empezar"
+    @Published var lastAction = "Ready to start"
 
     @Published var auth: Auth?
     @Published var account: Account?
@@ -76,7 +76,6 @@ final class AppStore: ObservableObject {
     /// Mi celda (~5 km) del servidor, para distancias aproximadas en Partner.
     @Published var myCell: (Double, Double)? = nil
     /// Cambia al cambiar el idioma en Ajustes → reconstruye toda la UI al instante.
-    @Published var languageToken = UUID()
     /// Solicitudes de seguimiento RECIBIDAS (tu cuenta es privada) pendientes de aceptar.
     @Published var incomingRequestPeople: [SocialPerson] = []
 
@@ -306,7 +305,7 @@ final class AppStore: ObservableObject {
         // Usuario real no cacheado: placeholder para que SIEMPRE se abra el perfil;
         // FriendProfileView carga sus datos reales (nombre, sesiones, contadores).
         if BackendConfig.isConfigured, UUID(uuidString: id) != nil {
-            return SocialPerson(id: id, name: "Atleta", handle: "", avatar: "🙂", gym: "")
+            return SocialPerson(id: id, name: "Athlete", handle: "", avatar: "🙂", gym: "")
         }
         return nil
     }
@@ -396,7 +395,7 @@ final class AppStore: ObservableObject {
             copy.setLog = nil
             return copy
         }
-        lastAction = "\(template.name) cargada"
+        lastAction = "\(L10n.x(template.name)) loaded"
         persist()
     }
 
@@ -425,7 +424,7 @@ final class AppStore: ObservableObject {
         } else { ex.skippedSets += 1 }
         ex.status = ex.resolvedStatus
         exercises[idx] = ex
-        lastAction = done ? "Serie completada" : "Serie saltada"
+        lastAction = done ? "Set completed" : "Set skipped"
         persist()
     }
 
@@ -533,12 +532,12 @@ final class AppStore: ObservableObject {
         checkStreakMilestones()                // hitos de racha (celebra + monedas + congelador)
         if verified { detectPRs(sessionItems, celebrate: true) }   // sesión fake → ni registra ni celebra récords
         exercises = []
-        lastAction = "Entreno guardado"
+        lastAction = "Workout saved"
         // Misiones recién completadas por esta sesión → aviso para reclamar.
         for q in Quests.weekly where questDone(q) && !(questsBefore[q.id] ?? false) && !questClaimed(q) {
             questCompleted.append(q)
         }
-        if !verified { flashMessage = "Entreno guardado. Por ser muy rápido, no cuenta para la liga, los récords ni el Gym Score." }
+        if !verified { flashMessage = "Workout saved. It was very short, so it doesn't count towards the league, records or Gym Score." }
         persist()
         pushSessionToBackend(sessions[0])      // sesiones[0] = la nueva YA con sus insights (best-effort, gateado)
         refreshAchievements(celebrate: true)   // desbloquea + celebra logros nuevos
@@ -692,7 +691,7 @@ final class AppStore: ObservableObject {
 
     func discardSession() {
         exercises = []
-        lastAction = "Entreno descartado"
+        lastAction = "Workout discarded"
         persist()
     }
 
@@ -857,10 +856,10 @@ final class AppStore: ObservableObject {
         exercises = []
         player = Player(xp: 0, streak: 0, focus: 80, hearts: 3)
         history = []
-        profile = Profile(sex: "", age: "", country: "España", city: "Madrid", gym: "Mi gimnasio")
+        profile = Profile(sex: "", age: "", country: "Spain", city: "Madrid", gym: "My gym")
         savedWorkouts = []
         sessions = []
-        lastAction = "Listo para empezar"
+        lastAction = "Ready to start"
         relationships = [:]
         conversations = []
         notifications = []
@@ -955,13 +954,13 @@ final class AppStore: ObservableObject {
 
     /// Respuesta (simulada) del usuario privado a TU solicitud de seguimiento.
     private func scheduleFollowResponse(_ personId: String) {
-        let name = person(personId)?.name ?? "Esa persona"
+        let name = person(personId)?.name ?? "That person"
         DispatchQueue.main.asyncAfter(deadline: .now() + 4.5) { [weak self] in
             guard let self, self.relationships[personId] == .outgoing else { return }
             self.relationships[personId] = .friends
             self.notifications.insert(AppNotification(
-                id: self.newId("n"), type: .friendAccepted, title: "Solicitud aceptada",
-                body: "\(name) ha aceptado tu solicitud de seguimiento.", at: Date(), read: false, personId: personId), at: 0)
+                id: self.newId("n"), type: .friendAccepted, title: "Request accepted",
+                body: "\(name) accepted your follow request.", at: Date(), read: false, personId: personId), at: 0)
             self.persist()
         }
     }
@@ -979,8 +978,8 @@ final class AppStore: ObservableObject {
             return
         }
         relationships[personId] = .friends
-        let name = person(personId)?.name ?? "Esa persona"
-        updateFollowRequestNotif(personId, body: "Has aceptado la solicitud de \(name).")
+        let name = person(personId)?.name ?? "That person"
+        updateFollowRequestNotif(personId, body: "You accepted \(name)'s request.")
         persist()
     }
 
@@ -993,8 +992,8 @@ final class AppStore: ObservableObject {
             return
         }
         relationships[personId] = .none
-        let name = person(personId)?.name ?? "Esa persona"
-        updateFollowRequestNotif(personId, body: "Has rechazado la solicitud de \(name).")
+        let name = person(personId)?.name ?? "That person"
+        updateFollowRequestNotif(personId, body: "You declined \(name)'s request.")
         persist()
     }
 
@@ -1072,7 +1071,7 @@ final class AppStore: ObservableObject {
 
     static func asPeople(_ profiles: [ProfileRow]) -> [SocialPerson] {
         profiles.map { p in
-            SocialPerson(id: p.id.uuidString.lowercased(), name: p.name ?? p.handle ?? "Atleta",
+            SocialPerson(id: p.id.uuidString.lowercased(), name: p.name ?? p.handle ?? "Athlete",
                          handle: p.handle ?? "", avatar: "🙂", gym: p.gym ?? "",
                          city: p.city ?? "", country: p.country ?? "",
                          isPrivate: p.is_private ?? false, avatarURL: p.avatar_url, club: p.club,
@@ -1150,12 +1149,12 @@ final class AppStore: ObservableObject {
     private func scheduleReply(_ personId: String, activeConversation: String?) {
         guard person(personId) != nil else { return }
         let replies = [
-            "¡Genial! Me viene bien mañana por la tarde.",
-            "Perfecto, ¿a qué hora te pasa mejor?",
-            "Hecho. Nos vemos en el gym 💪",
-            "Vale, te confirmo el sitio luego.",
+            "Great! Tomorrow afternoon works for me.",
+            "Perfect, what time suits you best?",
+            "Done. See you at the gym 💪",
+            "OK, I'll confirm the place later.",
         ]
-        let text = replies.randomElement() ?? "¡Vamos!"
+        let text = replies.randomElement() ?? "Let's go!"
         DispatchQueue.main.asyncAfter(deadline: .now() + 2.6) { [weak self] in
             guard let self else { return }
             let isOpen = activeConversation == conversationId(personId)
@@ -1191,10 +1190,10 @@ final class AppStore: ObservableObject {
         }
         let id = conversationId(personId)
         append(message: ChatMessage(id: newId("m"), fromMe: true, text: text, at: Date()), to: personId, markRead: true)
-        let name = person(personId)?.name ?? "tu compañero"
+        let name = person(personId)?.name ?? "your partner"
         notifications.insert(AppNotification(
-            id: newId("n"), type: .trainingAccepted, title: "Entrenamiento aceptado",
-            body: "Has aceptado el entreno de \(name).", at: Date(), read: false, personId: personId, conversationId: id), at: 0)
+            id: newId("n"), type: .trainingAccepted, title: "Workout accepted",
+            body: "You accepted \(name)'s workout.", at: Date(), read: false, personId: personId, conversationId: id), at: 0)
         persist()
         scheduleReply(personId, activeConversation: id)
         return id
@@ -1242,7 +1241,7 @@ final class AppStore: ObservableObject {
         }
         persist()
         pushSessionToBackend(sessions[idx])   // re-upsert (nombre/nota) + re-sube la foto si cambió
-        lastAction = "Actividad actualizada"
+        lastAction = "Activity updated"
         return true
     }
 
@@ -1283,8 +1282,8 @@ final class AppStore: ObservableObject {
     // MARK: - Workouts (create / delete)
 
     static func summary(of exercises: [Exercise]) -> String {
-        if exercises.isEmpty { return "Sin ejercicios" }
-        let names = exercises.prefix(3).map { $0.name }.joined(separator: " · ")
+        if exercises.isEmpty { return "No exercises" }
+        let names = exercises.prefix(3).map { L10n.x($0.name) }.joined(separator: " · ")
         return exercises.count > 3 ? "\(names)…" : names
     }
 
@@ -1394,33 +1393,33 @@ final class AppStore: ObservableObject {
         conversations = [Conversation(
             id: conversationId("p-mika"), personId: "p-mika",
             messages: [
-                ChatMessage(id: "s1", fromMe: false, text: "¡Buen entreno el otro día!", at: now.addingTimeInterval(-3600)),
-                ChatMessage(id: "s2", fromMe: true, text: "Gracias! ¿Repetimos esta semana?", at: now.addingTimeInterval(-3500)),
-                ChatMessage(id: "s3", fromMe: false, text: "¿Entrenamos mañana pecho?", at: now.addingTimeInterval(-8 * 60)),
+                ChatMessage(id: "s1", fromMe: false, text: "Great session the other day!", at: now.addingTimeInterval(-3600)),
+                ChatMessage(id: "s2", fromMe: true, text: "Thanks! Same again this week?", at: now.addingTimeInterval(-3500)),
+                ChatMessage(id: "s3", fromMe: false, text: "Chest tomorrow?", at: now.addingTimeInterval(-8 * 60)),
             ],
             unread: 1, lastAt: now.addingTimeInterval(-8 * 60))]
         notifications = [
             AppNotification(
-                id: "sn1", type: .friendRequest, title: "Nueva solicitud de seguimiento",
-                body: "Leo quiere seguirte.", at: now.addingTimeInterval(-40 * 60), read: false, personId: "p-leo"),
+                id: "sn1", type: .friendRequest, title: "New follow request",
+                body: "Leo wants to follow you.", at: now.addingTimeInterval(-40 * 60), read: false, personId: "p-leo"),
             AppNotification(
-                id: "sn2", type: .newFollower, title: "Nuevo seguidor",
-                body: "Noa ha empezado a seguirte.", at: now.addingTimeInterval(-3 * 3600), read: false, personId: "p-noa"),
+                id: "sn2", type: .newFollower, title: "New follower",
+                body: "Noa started following you.", at: now.addingTimeInterval(-3 * 3600), read: false, personId: "p-noa"),
         ]
         trainingPlans = [
-            TrainingPlan(id: "plan-mika", title: "Pecho + tríceps", when: "Mañana", place: "Basic-Fit Gran Vía", spots: "1 persona", ownerId: "p-mika", score: 71, note: "Busco alguien para hacer fuerza por la mañana, ritmo alto."),
-            TrainingPlan(id: "plan-sofia", title: "Pierna", when: "Esta semana", place: "Zona cercana", spots: "2 personas", ownerId: "p-sofia", score: 64, note: "Día de pierna durillo, se agradece motivación 💪"),
+            TrainingPlan(id: "plan-mika", title: "Chest + triceps", when: "Tomorrow", place: "Basic-Fit Gran Vía", spots: "1 person", ownerId: "p-mika", score: 71, note: "Looking for someone to lift with in the morning, fast pace."),
+            TrainingPlan(id: "plan-sofia", title: "Legs", when: "This week", place: "Nearby", spots: "2 people", ownerId: "p-sofia", score: 64, note: "Tough leg day, motivation welcome 💪"),
         ]
         player = Player(xp: 260, streak: 4, focus: 82, hearts: 3)
     }
 
     static let demoPeople: [SocialPerson] = [
-        SocialPerson(id: "p-mika", name: "Mika", handle: "mika", avatar: "🦊", gym: "Basic-Fit Gran Vía", flag: "🇪🇸", city: "Madrid", country: "España"),
-        SocialPerson(id: "p-leo", name: "Leo", handle: "leo_lifts", avatar: "🐻", gym: "McFit Chamberí", flag: "🇪🇸", city: "Zaragoza", country: "España"),
-        SocialPerson(id: "p-sofia", name: "Sofía", handle: "sofia_fit", avatar: "🦅", gym: "Altafit Retiro", flag: "🇲🇽", city: "Ciudad de México", country: "México", isPrivate: true),
+        SocialPerson(id: "p-mika", name: "Mika", handle: "mika", avatar: "🦊", gym: "Basic-Fit Gran Vía", flag: "🇪🇸", city: "Madrid", country: "Spain"),
+        SocialPerson(id: "p-leo", name: "Leo", handle: "leo_lifts", avatar: "🐻", gym: "McFit Chamberí", flag: "🇪🇸", city: "Zaragoza", country: "Spain"),
+        SocialPerson(id: "p-sofia", name: "Sofía", handle: "sofia_fit", avatar: "🦅", gym: "Altafit Retiro", flag: "🇲🇽", city: "Mexico City", country: "Mexico", isPrivate: true),
         SocialPerson(id: "p-dani", name: "Dani", handle: "dani", avatar: "🐺", gym: "Basic-Fit Sol", flag: "🇦🇷", city: "Buenos Aires", country: "Argentina"),
-        SocialPerson(id: "p-vera", name: "Vera", handle: "vera_strong", avatar: "🦌", gym: "VivaGym Malasaña", flag: "🇫🇷", city: "París", country: "Francia"),
-        SocialPerson(id: "p-iker", name: "Iker", handle: "iker", avatar: "🦁", gym: "Synergym Salamanca", flag: "🇪🇸", city: "Bilbao", country: "España", isPrivate: true),
+        SocialPerson(id: "p-vera", name: "Vera", handle: "vera_strong", avatar: "🦌", gym: "VivaGym Malasaña", flag: "🇫🇷", city: "Paris", country: "France"),
+        SocialPerson(id: "p-iker", name: "Iker", handle: "iker", avatar: "🦁", gym: "Synergym Salamanca", flag: "🇪🇸", city: "Bilbao", country: "Spain", isPrivate: true),
         SocialPerson(id: "p-noa", name: "Noa", handle: "noa_gym", avatar: "🐯", gym: "Basic-Fit Atocha", flag: "🇨🇴", city: "Bogotá", country: "Colombia"),
     ]
 
@@ -1493,7 +1492,7 @@ func buildFriendHistory(_ person: SocialPerson) -> [HistoryEntry] {
     let pool: [(String, Int, Int, Double)] = [
         ("Press banca", 4, 6, 80), ("Sentadilla trasera", 5, 5, 110), ("Peso muerto", 3, 5, 140),
         ("Remo con barra", 4, 8, 70), ("Press militar", 4, 6, 45), ("Dominadas lastradas", 4, 6, 15),
-        ("Hip thrust", 4, 8, 120), ("Press inclinado", 4, 8, 55), ("Jalón dorsal", 3, 10, 60),
+        ("Hip thrust", 4, 8, 120), ("Press inclinado con barra", 4, 8, 55), ("Jalón al pecho", 3, 10, 60),
     ]
     let strength = 0.6 + rng() * 0.85
     let sessions = 10 + Int(rng() * 4)

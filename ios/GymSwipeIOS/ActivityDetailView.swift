@@ -61,7 +61,7 @@ struct ActivityDetailView: View {
                     }
                     VStack(spacing: 14) {
                         author
-                        Text(data.title).font(.system(size: 22, weight: .heavy)).foregroundColor(Brand.ink)
+                        Text(L10n.x(data.title)).font(.system(size: 22, weight: .heavy)).foregroundColor(Brand.ink)
                             .frame(maxWidth: .infinity, alignment: .leading)
                         if !data.note.isEmpty {
                             Text(data.note).font(.system(size: 15)).foregroundColor(Color(hex: "2c3127"))
@@ -70,15 +70,15 @@ struct ActivityDetailView: View {
                         WorkoutInsightsStrip(insights: data.insights)
                         if !data.medals.isEmpty { medalsSection }
                         HStack(spacing: 10) {
-                            metric(durationText(data.elapsed), "Tiempo", "clock")
+                            metric(durationText(data.elapsed), "Time", "clock")
                             metric("\(data.sets)", "Series", "checkmark.circle")
-                            metric("\(data.exercises)", "Ejercicios", "list.bullet")
+                            metric("\(data.exercises)", "Exercises", "list.bullet")
                             if data.xp > 0 { metric("+\(data.xp)", "XP", "star.fill") }
                         }
                         if let avg = data.avgHeartRate {
                             HStack(spacing: 10) {
                                 metric("\(avg) ppm", "FC media", "heart.fill")
-                                metric("\(data.maxHeartRate ?? avg) ppm", "FC máx", "heart.fill")
+                                metric("\(data.maxHeartRate ?? avg) ppm", "Max HR", "heart.fill")
                             }
                         }
                         if !data.items.isEmpty {
@@ -101,9 +101,9 @@ struct ActivityDetailView: View {
                 if isMine {
                     ToolbarItem(placement: .primaryAction) {
                         Menu {
-                            Button { FX.tap(); showEdit = true } label: { Label("Editar actividad", systemImage: "pencil") }
-                            Button { FX.tap(); showAddMedia = true } label: { Label("Añadir multimedia", systemImage: "photo.badge.plus") }
-                            Button(role: .destructive) { FX.tap(); showDelete = true } label: { Label("Eliminar actividad", systemImage: "trash") }
+                            Button { FX.tap(); showEdit = true } label: { Label("Edit activity", systemImage: "pencil") }
+                            Button { FX.tap(); showAddMedia = true } label: { Label("Add media", systemImage: "photo.badge.plus") }
+                            Button(role: .destructive) { FX.tap(); showDelete = true } label: { Label("Delete activity", systemImage: "trash") }
                         } label: {
                             Image(systemName: "ellipsis").font(.system(size: 16, weight: .bold)).foregroundColor(Brand.ink)
                                 .frame(width: 34, height: 34).background(Brand.chip).clipShape(Circle())
@@ -131,7 +131,7 @@ struct ActivityDetailView: View {
                 addMediaItem = nil
             }
         }
-        .confirmationDialog("¿Eliminar esta actividad?", isPresented: $showDelete, titleVisibility: .visible) {
+        .confirmationDialog("Delete this activity?", isPresented: $showDelete, titleVisibility: .visible) {
             Button("Eliminar", role: .destructive) {
                 if let id = data.sessionId { store.deleteSession(id) }
                 dismiss()
@@ -273,24 +273,24 @@ private struct EditActivitySheet: View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 18) {
-                    Text("FOTO").font(.caption2).fontWeight(.heavy).foregroundColor(Brand.muted)
+                    Text("PHOTO").font(.caption2).fontWeight(.heavy).foregroundColor(Brand.muted)
                     photoPreview
                     PhotosPicker(selection: $pickedItem, matching: .images) {
-                        Label(hasAnyPhoto ? "Cambiar foto" : "Añadir foto", systemImage: "photo.badge.plus")
+                        Label(hasAnyPhoto ? "Change photo" : "Add photo", systemImage: "photo.badge.plus")
                             .font(.system(size: 15, weight: .heavy)).foregroundColor(Brand.ink)
                             .frame(maxWidth: .infinity).frame(height: 46)
                             .background(Brand.chip).clipShape(RoundedRectangle(cornerRadius: 12))
                     }
 
                     Text("NOMBRE").font(.caption2).fontWeight(.heavy).foregroundColor(Brand.muted)
-                    TextField("Nombre de la actividad", text: $name)
+                    TextField("Activity name", text: $name)
                         .font(.system(size: 16, weight: .semibold))
                         .padding(.horizontal, 14).frame(height: 48).background(Color.white)
                         .clipShape(RoundedRectangle(cornerRadius: 12)).overlay(RoundedRectangle(cornerRadius: 12).stroke(Brand.line))
                         .onChange(of: name) { v in if v.count > 60 { name = String(v.prefix(60)) } }
 
-                    Text("DESCRIPCIÓN").font(.caption2).fontWeight(.heavy).foregroundColor(Brand.muted)
-                    TextField("Añade una descripción…", text: $note, axis: .vertical)
+                    Text("DESCRIPTION").font(.caption2).fontWeight(.heavy).foregroundColor(Brand.muted)
+                    TextField("Add a description…", text: $note, axis: .vertical)
                         .font(.system(size: 15)).lineLimit(2...5)
                         .padding(14).background(Color.white)
                         .clipShape(RoundedRectangle(cornerRadius: 12)).overlay(RoundedRectangle(cornerRadius: 12).stroke(Brand.line))
@@ -299,7 +299,7 @@ private struct EditActivitySheet: View {
                 .padding(16)
             }
             .background(Brand.bg)
-            .navigationTitle("Editar actividad").navigationBarTitleDisplayMode(.inline)
+            .navigationTitle("Edit activity").navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) { Button("Cancelar") { dismiss() } }
                 ToolbarItem(placement: .confirmationAction) {
@@ -330,7 +330,7 @@ private struct EditActivitySheet: View {
             RoundedRectangle(cornerRadius: 12).fill(Brand.chip).frame(height: h)
                 .overlay(VStack(spacing: 6) {
                     Image(systemName: "photo").font(.system(size: 30)).foregroundColor(Brand.soft)
-                    Text("Sin foto").font(.footnote).foregroundColor(Brand.muted)
+                    Text("No photo").font(.footnote).foregroundColor(Brand.muted)
                 })
         }
     }

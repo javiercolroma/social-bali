@@ -20,7 +20,7 @@ struct WorkoutLiveActivity: Widget {
                 DynamicIslandExpandedRegion(.leading) {
                     VStack(alignment: .leading, spacing: 2) {
                         Label {
-                            Text(s.currentExercise.isEmpty ? "En marcha" : s.currentExercise)
+                            Text(s.currentExercise.isEmpty ? "In progress" : s.currentExercise)
                                 .font(.caption).fontWeight(.heavy).lineLimit(1)
                         } icon: {
                             Image(systemName: "dumbbell.fill").foregroundColor(lime)
@@ -39,7 +39,7 @@ struct WorkoutLiveActivity: Widget {
                             .monospacedDigit().font(.title3.weight(.heavy))
                             .foregroundColor(lime).frame(maxWidth: 72, alignment: .trailing)
                     } else if s.exerciseSets > 0 {
-                        Text("Serie \(s.setIndex)/\(s.exerciseSets)")
+                        Text("Set \(s.setIndex)/\(s.exerciseSets)")
                             .font(.caption.weight(.heavy)).foregroundColor(.white)
                             .frame(maxWidth: 90, alignment: .trailing)
                     }
@@ -110,7 +110,7 @@ private struct LockScreenView: View {
             // eliminado; el chip "Serie X/Y" ocupa el hueco que dejó arriba a la derecha.
             HStack(spacing: 8) {
                 Image(systemName: "dumbbell.fill").foregroundColor(lime)
-                Text(state.currentExercise.isEmpty ? "Entreno en marcha" : state.currentExercise)
+                Text(state.currentExercise.isEmpty ? "Workout in progress" : state.currentExercise)
                     .font(.headline).foregroundColor(.white).lineLimit(1)
                 Spacer(minLength: 8)
                 if let bpm = state.bpm {
@@ -119,7 +119,7 @@ private struct LockScreenView: View {
                         .labelStyle(.titleAndIcon)
                 }
                 if state.exerciseSets > 0 {
-                    Text("Serie \(state.setIndex)/\(state.exerciseSets)")
+                    Text("Set \(state.setIndex)/\(state.exerciseSets)")
                         .font(.caption2.weight(.heavy)).foregroundColor(ink)
                         .padding(.horizontal, 8).padding(.vertical, 3)
                         .background(lime).clipShape(Capsule())
@@ -128,7 +128,7 @@ private struct LockScreenView: View {
             if let partner = state.supersetPartner, !partner.isEmpty {
                 HStack(spacing: 5) {
                     Image(systemName: "link").font(.system(size: 9, weight: .heavy))
-                    Text("SUPERSERIE").font(.system(size: 9, weight: .heavy))
+                    Text("SUPERSET").font(.system(size: 9, weight: .heavy))
                     Image(systemName: "arrow.right").font(.system(size: 8, weight: .heavy))
                     Text(partner).font(.system(size: 10, weight: .heavy)).lineLimit(1)
                     Spacer(minLength: 0)
@@ -159,8 +159,8 @@ private struct ControlsView: View {
                     stepper("dumbbell.fill", wText(state.weight), "kg", down: .weightDown, up: .weightUp)
                 }
                 HStack(spacing: 8) {
-                    action("Saltar", "xmark", .skip, bg: Color(red: 0.55, green: 0.16, blue: 0.16).opacity(0.85), fg: .white)
-                    action("Hecho", "checkmark", .done, bg: lime, fg: ink)
+                    action("Skip", "xmark", .skip, bg: Color(red: 0.55, green: 0.16, blue: 0.16).opacity(0.85), fg: .white)
+                    action("Done", "checkmark", .done, bg: lime, fg: ink)
                 }
             }
         } else {
@@ -195,15 +195,15 @@ private struct ControlsView: View {
             .frame(width: 62, height: 62)
 
             VStack(alignment: .leading, spacing: 2) {
-                Text("DESCANSO").font(.system(size: 14, weight: .heavy)).foregroundColor(lime)
-                Text("Recupera fuerzas").font(.caption2).foregroundColor(.white.opacity(0.6)).lineLimit(1)
+                Text("REST").font(.system(size: 14, weight: .heavy)).foregroundColor(lime)
+                Text("Catch your breath").font(.caption2).foregroundColor(.white.opacity(0.6)).lineLimit(1)
             }
 
             Spacer(minLength: 8)
 
             if #available(iOS 17.0, *) {
                 Button(intent: WorkoutControlIntent(.restSkip)) {
-                    Text("Saltar")
+                    Text("Skip")
                         .font(.system(size: 14, weight: .heavy))
                         .foregroundColor(ink)
                         .padding(.horizontal, 16)

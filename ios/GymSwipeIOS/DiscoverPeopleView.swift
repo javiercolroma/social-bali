@@ -76,7 +76,7 @@ struct DiscoverPeopleView: View {
                         Avatar(emoji: "🙂", size: 44)
                     }
                     VStack(alignment: .leading, spacing: 2) {
-                        Text(p.name ?? p.handle ?? "Usuario").font(.system(size: 15, weight: .heavy)).foregroundColor(Brand.ink)
+                        Text(p.name ?? p.handle ?? "User").font(.system(size: 15, weight: .heavy)).foregroundColor(Brand.ink)
                         if let h = p.handle { Text("@\(h)").font(.caption).foregroundColor(Brand.muted) }
                     }
                 }
@@ -101,7 +101,7 @@ struct DiscoverPeopleView: View {
                     }
                 }
             } label: {
-                Text(isFollowing ? "Siguiendo" : "Seguir")
+                Text(isFollowing ? "Following" : "Follow")
                     .font(.system(size: 14, weight: .heavy))
                     .foregroundColor(isFollowing ? Brand.ink : Color(hex: "10150a"))
                     .padding(.horizontal, 16).frame(height: 36)

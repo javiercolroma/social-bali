@@ -27,10 +27,10 @@ struct ForgeyChatView: View {
     }
 
     private let suggestions = [
-        "¿Qué debería entrenar hoy?",
-        "¿En qué ejercicios progreso menos?",
-        "¿En qué crees que debo mejorar?",
-        "¿Cómo va mi constancia este mes?",
+        "What should I train today?",
+        "Which exercises am I progressing least on?",
+        "What do you think I should improve?",
+        "How's my consistency this month?",
     ]
     private var unavailable: String? { ForgeyEngine.unavailableReason() }
 
@@ -109,7 +109,7 @@ struct ForgeyChatView: View {
             .toolbar { ToolbarItem(placement: .cancellationAction) { SheetBackButton { dismiss() } } }
         }
         // Opt-in la PRIMERA vez que se analiza una foto (la imagen sale del dispositivo).
-        .alert("Analizar tu físico", isPresented: $showVisionConsent) {
+        .alert("Analyse your physique", isPresented: $showVisionConsent) {
             Button("Cancelar", role: .cancel) { pendingPhoto = nil }
             Button("Continuar") {
                 UserDefaults.standard.set(true, forKey: consentKey)
@@ -117,7 +117,7 @@ struct ForgeyChatView: View {
                 pendingPhoto = nil
             }
         } message: {
-            Text("Para analizar tu físico, tu foto se enviará de forma segura a nuestro servicio de IA. No se guarda ni se comparte. ¿Quieres continuar?")
+            Text("To analyse your physique, your photo is sent securely to our AI service. It is not stored or shared. Do you want to continue?")
         }
         // «Crear entreno de esto»: generador prellenado con el último consejo de Forgey.
         .sheet(item: $genTopic) { t in
@@ -259,14 +259,14 @@ struct ForgeyChatView: View {
     private func analyzePhoto(_ data: Data) {
         guard !thinking else { return }
         FX.tap()
-        messages.append(ChatLine(fromMe: true, text: "¿Qué partes debería mejorar? 📷", image: data))
+        messages.append(ChatLine(fromMe: true, text: "Which areas should I improve? 📷", image: data))
         thinking = true
         Task {
             do {
                 let r = try await ForgeyEngine.analyzeBody(photo: data, store: store)
                 messages.append(ChatLine(fromMe: false, text: r.text, suggestion: r.suggestion))
             } catch {
-                messages.append(ChatLine(fromMe: false, text: "No he podido analizar la foto 😅 \(error.localizedDescription)"))
+                messages.append(ChatLine(fromMe: false, text: "I couldn't analyse the photo 😅 \(error.localizedDescription)"))
             }
             thinking = false
         }
@@ -283,7 +283,7 @@ struct ForgeyChatView: View {
                 let r = try await ForgeyEngine.ask(q, store: store)
                 messages.append(ChatLine(fromMe: false, text: r.text, suggestion: r.suggestion))
             } catch {
-                messages.append(ChatLine(fromMe: false, text: "Ups, no he podido pensar la respuesta 😅 \(error.localizedDescription)"))
+                messages.append(ChatLine(fromMe: false, text: "Oops, I couldn't come up with an answer 😅 \(error.localizedDescription)"))
             }
             thinking = false
         }
@@ -315,9 +315,9 @@ struct AIWorkoutSheet: View {
     @State private var adjusting = false   // abrir el editor completo con el entreno generado
 
     private let examples = [
-        "Pecho y tríceps, 45 minutos, nivel intermedio",
-        "Pierna completa con énfasis en glúteo",
-        "Full body rápido para un día flojo",
+        "Chest and triceps, 45 minutes, intermediate level",
+        "Full leg day with a glute focus",
+        "Quick full body for a low-energy day",
     ]
 
     var body: some View {
@@ -358,7 +358,7 @@ struct AIWorkoutSheet: View {
                         HStack(spacing: 8) {
                             if generating { ProgressView().tint(Color(hex: "10150a")) }
                             Image(systemName: "sparkles")
-                            Text(generating ? "Creando…" : (generated == nil ? "Crear entreno" : "Regenerar"))
+                            Text(generating ? "Creating…" : (generated == nil ? "Create workout" : "Regenerate"))
                         }.frame(maxWidth: .infinity)
                     }
                     .buttonStyle(PrimaryButtonStyle(enabled: !descriptionText.isEmpty && !generating))
@@ -458,7 +458,7 @@ struct AIWorkoutSheet: View {
     /// Apartados existentes del plan + sugerencias típicas (sin duplicados).
     private var groupOptions: [String] {
         var seen = Set<String>(); var out: [String] = []
-        for g in store.customGroups + ["Pierna", "Pecho", "Espalda", "Push", "Pull", "Full body", "Otros"]
+        for g in (store.customGroups + ["Legs", "Chest", "Back", "Push", "Pull", "Full body", "Others"]).map(L10n.x)
         where seen.insert(g).inserted { out.append(g) }
         return out
     }
@@ -481,7 +481,7 @@ struct AIWorkoutSheet: View {
         Task {
             do {
                 let w = try await ForgeyEngine.generateWorkout(from: descriptionText, store: store)
-                generated = w; editName = w.name; editGroup = w.block
+                generated = w; editName = L10n.x(w.name); editGroup = L10n.x(w.block)
                 FX.success()
             }
             catch { self.error = error.localizedDescription }

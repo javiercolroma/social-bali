@@ -32,8 +32,8 @@ final class NotificationManager {
         center.removePendingNotificationRequests(withIdentifiers: [streakId])
         guard streak > 0 else { return }
         let content = UNMutableNotificationContent()
-        content.title = "🔥 Tu racha de \(streak) está en peligro"
-        content.body = "Llevas 3 días sin entrenar. Un entreno hoy la salva."
+        content.title = "🔥 Your \(streak)-day streak is at risk"
+        content.body = "You haven't trained in 3 days. One workout today saves it."
         content.sound = .default
         // 3 días desde ahora, redondeado a las 18:00 de ese día (hora amable).
         var fire = Date().addingTimeInterval(3 * 24 * 3600)

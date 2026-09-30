@@ -24,14 +24,14 @@ func formatCount(_ n: Int) -> String {
 func profileCountsRow(entrenos: Int, seguidores: Int, siguiendo: Int, locked: Bool = false,
                       onSeguidores: @escaping () -> Void, onSiguiendo: @escaping () -> Void) -> some View {
     HStack(spacing: 0) {
-        profileCountTile(formatCount(entrenos), "Entrenos")
+        profileCountTile(formatCount(entrenos), "Workouts")
         // Cuenta privada que no sigues: los contadores no son tocables (no se ve la lista).
         if locked {
-            profileCountTile(formatCount(seguidores), "Seguidores")
-            profileCountTile(formatCount(siguiendo), "Siguiendo")
+            profileCountTile(formatCount(seguidores), "Followers")
+            profileCountTile(formatCount(siguiendo), "Following")
         } else {
-            Button { onSeguidores() } label: { profileCountTile(formatCount(seguidores), "Seguidores") }.buttonStyle(.plain)
-            Button { onSiguiendo() } label: { profileCountTile(formatCount(siguiendo), "Siguiendo") }.buttonStyle(.plain)
+            Button { onSeguidores() } label: { profileCountTile(formatCount(seguidores), "Followers") }.buttonStyle(.plain)
+            Button { onSiguiendo() } label: { profileCountTile(formatCount(siguiendo), "Following") }.buttonStyle(.plain)
         }
     }
     .padding(.vertical, 12)
@@ -89,7 +89,7 @@ struct FollowListSheet: View {
                 ScrollView {
                     VStack(spacing: 8) {
                         if results.isEmpty {
-                            Text(people.isEmpty ? "Nadie por aquí todavía." : "Sin resultados.").font(.footnote).foregroundColor(Brand.muted).padding(.top, 30)
+                            Text(people.isEmpty ? "No one here yet." : "No results.").font(.footnote).foregroundColor(Brand.muted).padding(.top, 30)
                         } else {
                             ForEach(results) { p in row(p) }
                         }
@@ -106,7 +106,7 @@ struct FollowListSheet: View {
 
     private func row(_ p: SocialPerson) -> some View {
         let rel = store.relationship(p.id)
-        let label = rel == .friends ? "Siguiendo" : (rel == .outgoing ? "Pendiente" : "Seguir")
+        let label = rel == .friends ? "Following" : (rel == .outgoing ? "Pending" : "Follow")
         return HStack(spacing: 11) {
             Button { profileTarget = IdString(id: p.id) } label: {
                 HStack(spacing: 11) {
@@ -152,8 +152,8 @@ struct MessagesSheet: View {
                 // Selector propio (el Picker segmentado no admite badges): "Mensajes" lleva
                 // un circulito verde con el nº de chats con mensajes nuevos, estilo WhatsApp.
                 HStack(spacing: 6) {
-                    switchTab(0, incoming.isEmpty ? "Amigos" : "Amigos (\(incoming.count))")
-                    switchTab(1, "Mensajes", badge: unreadChats)
+                    switchTab(0, incoming.isEmpty ? "Friends" : "Friends (\(incoming.count))")
+                    switchTab(1, "Messages", badge: unreadChats)
                 }.padding(.horizontal, 16)
 
                 SlidingPages(index: tab) {
@@ -212,7 +212,7 @@ struct MessagesSheet: View {
     private var chats: some View {
         VStack(spacing: 8) {
             if conversations.isEmpty {
-                emptyState(icon: "tray", title: "Sin conversaciones", body: "Acepta un entrenamiento o escribe a un amigo.")
+                emptyState(icon: "tray", title: "No conversations", body: "Accept a workout or message a friend.")
             } else {
                 ForEach(conversations) { conv in
                     let person = store.person(conv.personId)
@@ -221,7 +221,7 @@ struct MessagesSheet: View {
                             Avatar(emoji: person?.avatar ?? "👤")
                             VStack(alignment: .leading, spacing: 3) {
                                 HStack {
-                                    Text(person?.name ?? "Compañero").font(.system(size: 15, weight: .heavy)).foregroundColor(Brand.ink)
+                                    Text(person?.name ?? "Partner").font(.system(size: 15, weight: .heavy)).foregroundColor(Brand.ink)
                                     Spacer()
                                     if let m = conv.lastMessage { Text(shortTime(m.at)).font(.caption2).foregroundColor(Brand.soft) }
                                 }
@@ -245,8 +245,8 @@ struct MessagesSheet: View {
     }
 
     private func previewText(_ conv: Conversation) -> String {
-        guard let m = conv.lastMessage else { return "Sin mensajes todavía" }
-        return (m.fromMe ? "Tú: " : "") + m.preview
+        guard let m = conv.lastMessage else { return "No messages yet" }
+        return (m.fromMe ? "You: " : "") + m.preview
     }
 }
 
@@ -315,11 +315,11 @@ struct FriendsContent: View {
             .overlay(Capsule().stroke(Brand.line))
 
             if !query.isEmpty {
-                section("Resultados", people: results, empty: "Nadie coincide con “\(query)”.")
+                section("Results", people: results, empty: "No one matches “\(query)”.")
             } else {
-                if !incoming.isEmpty { section("Solicitudes recibidas", people: incoming, empty: "") }
-                if !friends.isEmpty { section("Tus amigos", people: friends, empty: "") }
-                if !discover.isEmpty { section("Descubre compañeros", people: discover, empty: "") }
+                if !incoming.isEmpty { section("Requests received", people: incoming, empty: "") }
+                if !friends.isEmpty { section("Your friends", people: friends, empty: "") }
+                if !discover.isEmpty { section("Discover partners", people: discover, empty: "") }
                 inviteCard   // cold start: trae a tu gente al gimnasio
             }
         }.padding(.horizontal, 14).padding(.bottom, 16)
@@ -331,7 +331,7 @@ struct FriendsContent: View {
     private var inviteCard: some View {
         let handle = store.account?.handle ?? ""
         let url = "https://javiercolroma.github.io/gym-swipe-ios/invite.html" + (handle.isEmpty ? "" : "?u=\(handle)")
-        return ShareLink(item: "Entreno con Forge Loop 💪 Sígueme, soy @\(handle.isEmpty ? "forgeloop" : handle). Únete aquí: \(url)") {
+        return ShareLink(item: "I train with Forge Loop 💪 Follow me, I'm @\(handle.isEmpty ? "forgeloop" : handle). Join here: \(url)") {
             HStack(spacing: 11) {
                 ZStack {
                     Circle().fill(Brand.greenSoft).frame(width: 40, height: 40)
@@ -465,7 +465,7 @@ struct ChatView: View {
                     HStack(spacing: 11) {
                         Avatar(emoji: person?.avatar ?? "👤")
                         VStack(alignment: .leading, spacing: 1) {
-                            Text(person?.name ?? "Compañero").font(.system(size: 16, weight: .heavy)).foregroundColor(Brand.ink)
+                            Text(person?.name ?? "Partner").font(.system(size: 16, weight: .heavy)).foregroundColor(Brand.ink)
                             Text(person?.gym ?? "").font(.caption).foregroundColor(Brand.muted)
                         }
                     }
@@ -490,7 +490,7 @@ struct ChatView: View {
                         if !messages.isEmpty {
                             ForEach(messages) { m in bubble(m).id(m.id) }
                         } else {
-                            emptyState(icon: "message", title: "Sin mensajes", body: "Escribe el primer mensaje.")
+                            emptyState(icon: "message", title: "No messages", body: "Write the first message.")
                         }
                     }.padding(16)
                 }
@@ -644,7 +644,7 @@ struct SharedWorkoutCard: View {
                 Spacer(minLength: 0)
                 Image(systemName: "chevron.right").font(.system(size: 12, weight: .bold)).foregroundColor(Brand.soft)
             }
-            Text("\(workout.exercises.count) ejercicios · \(workout.block)")
+            Text("\(workout.exercises.count) ejercicios · \(L10n.x(workout.block))")
                 .font(.system(size: 12, weight: .semibold)).foregroundColor(Brand.muted)
             // Vista rápida de los primeros ejercicios.
             VStack(alignment: .leading, spacing: 3) {
@@ -667,7 +667,7 @@ struct SharedWorkoutCard: View {
                 } label: {
                     HStack(spacing: 6) {
                         Image(systemName: added ? "checkmark.circle.fill" : "plus.circle.fill")
-                        Text(added ? "Añadido a tu plan" : "Añadir a mi plan")
+                        Text(added ? "Added to your plan" : "Add to my plan")
                     }
                     .font(.system(size: 14, weight: .heavy))
                     .foregroundColor(added ? Brand.ink : Color(hex: "10150a"))
@@ -732,7 +732,7 @@ struct SharedWorkoutPreview: View {
                         }
                         VStack(alignment: .leading, spacing: 2) {
                             Text("ENTRENO COMPARTIDO").font(.system(size: 10, weight: .heavy)).foregroundColor(Brand.soft).tracking(0.5)
-                            Text("\(template.exercises.count) ejercicios · \(template.block)").font(.footnote).foregroundColor(Brand.muted)
+                            Text("\(template.exercises.count) ejercicios · \(L10n.x(template.block))").font(.footnote).foregroundColor(Brand.muted)
                         }
                         Spacer()
                     }
@@ -741,7 +741,7 @@ struct SharedWorkoutPreview: View {
                         Button { FX.tap(); showSave = true } label: {
                             HStack(spacing: 6) {
                                 Image(systemName: isAdded ? "checkmark.circle.fill" : "plus.circle.fill")
-                                Text(isAdded ? "Añadido a tu plan" : "Añadir a mi plan")
+                                Text(isAdded ? "Added to your plan" : "Add to my plan")
                             }.frame(maxWidth: .infinity)
                         }.buttonStyle(PrimaryButtonStyle(enabled: !isAdded)).disabled(isAdded).padding(.top, 4)
                     }
@@ -774,8 +774,8 @@ struct SaveSharedWorkoutSheet: View {
     /// Tus apartados del plan + sugerencias típicas (sin duplicados).
     private var groupOptions: [String] {
         var seen = Set<String>(); var out: [String] = []
-        for g in store.customGroups + ["Compartidos", "Pierna", "Pecho", "Espalda", "Push", "Pull", "Otros"]
-        where seen.insert(g).inserted { out.append(g) }
+        for g in store.customGroups + ["Shared", "Pierna", "Pecho", "Espalda", "Push", "Pull", "Otros"]
+        where seen.insert(L10n.x(g)).inserted { out.append(L10n.x(g)) }
         return out
     }
 
@@ -826,7 +826,7 @@ struct SaveSharedWorkoutSheet: View {
 
             Button {
                 FX.success()
-                store.addSharedWorkout(workout, name: name, group: group)
+                store.addSharedWorkout(workout, name: name, group: store.customGroups.first { L10n.x($0).caseInsensitiveCompare(group) == .orderedSame } ?? group)
                 onSaved()
                 dismiss()
             } label: { Label("Guardar", systemImage: "checkmark").frame(maxWidth: .infinity) }
@@ -839,7 +839,7 @@ struct SaveSharedWorkoutSheet: View {
         .overlay(alignment: .topLeading) { SheetBackButton { dismiss() }.padding(.leading, 14).padding(.top, 14) }
         .presentationDetents([.medium])
         .presentationDragIndicator(.visible)
-        .onAppear { name = workout.name; group = workout.block.isEmpty ? "Compartidos" : workout.block }
+        .onAppear { name = L10n.x(workout.name); group = workout.block.isEmpty ? "Shared" : L10n.x(workout.block) }
     }
 }
 
@@ -865,7 +865,7 @@ struct ShareWorkoutPicker: View {
                                 }
                                 VStack(alignment: .leading, spacing: 2) {
                                     Text(L10n.x(w.name)).font(.system(size: 15, weight: .heavy)).foregroundColor(Brand.ink)
-                                    Text("\(w.exercises.count) ejercicios · \(w.block)").font(.caption).foregroundColor(Brand.muted)
+                                    Text("\(w.exercises.count) ejercicios · \(L10n.x(w.block))").font(.caption).foregroundColor(Brand.muted)
                                 }
                                 Spacer()
                                 Image(systemName: "paperplane.fill").foregroundColor(Brand.green)
@@ -901,7 +901,7 @@ struct NotificationsSheet: View {
             ScrollView {
                 VStack(spacing: 8) {
                     if sorted.isEmpty {
-                        emptyState(icon: "bell", title: "Sin notificaciones", body: "Aquí verás solicitudes y entrenos aceptados.")
+                        emptyState(icon: "bell", title: "No notifications", body: "Requests and accepted workouts will show up here.")
                     } else {
                         ForEach(sorted) { n in row(n) }
                     }
@@ -1064,11 +1064,11 @@ struct FriendProfileView: View {
                         PanelCard {
                             Text(score.tier).font(.system(size: 13, weight: .heavy)).foregroundColor(Color(hex: "10150a"))
                                 .padding(.horizontal, 10).padding(.vertical, 3).background(Brand.greenSoft).clipShape(Capsule())
-                            ScoreBarView(label: "Fuerza", value: score.strength)
-                            ScoreBarView(label: "Constancia", value: score.consistency)
-                            ScoreBarView(label: "Progreso", value: score.progression)
-                            ScoreBarView(label: "Volumen", value: score.volume)
-                            ScoreBarView(label: "Variedad", value: score.variety)
+                            ScoreBarView(label: "Strength", value: score.strength)
+                            ScoreBarView(label: "Consistency", value: score.consistency)
+                            ScoreBarView(label: "Progress", value: score.progression)
+                            ScoreBarView(label: "Volume", value: score.volume)
+                            ScoreBarView(label: "Variety", value: score.variety)
                         }
                         TrainingCalendarView(sessions: sessionsList) { date, day in
                             daySheet = DayPayload(id: date, date: date, sessions: day)
@@ -1124,7 +1124,7 @@ struct FriendProfileView: View {
                 HStack(spacing: 10) {
                     WorkoutTypeBadge(size: .compact)
                     VStack(alignment: .leading, spacing: 2) {
-                        Text(s.name).font(.system(size: 16, weight: .heavy)).foregroundColor(Brand.ink).lineLimit(1)
+                        Text(L10n.x(s.name)).font(.system(size: 16, weight: .heavy)).foregroundColor(Brand.ink).lineLimit(1)
                         Text(relativeTime(s.date)).font(.system(size: 13)).foregroundColor(Brand.soft)
                     }
                     Spacer()
@@ -1180,8 +1180,8 @@ struct FriendProfileView: View {
                              siguiendo: realFollowing ?? deterministicCount(person.id, salt: 13, lo: 30, hi: 700),
                              locked: locked,
                              // Con backend real, las listas de seguidores/seguidos ajenas no son públicas: solo el número.
-                             onSeguidores: { if !BackendConfig.isConfigured { followList = FollowListData(title: "Seguidores", people: demoFollowList(store, seed: person.id, salt: 7, exclude: person.id)) } },
-                             onSiguiendo: { if !BackendConfig.isConfigured { followList = FollowListData(title: "Siguiendo", people: demoFollowList(store, seed: person.id, salt: 13, exclude: person.id)) } })
+                             onSeguidores: { if !BackendConfig.isConfigured { followList = FollowListData(title: "Followers", people: demoFollowList(store, seed: person.id, salt: 7, exclude: person.id)) } },
+                             onSiguiendo: { if !BackendConfig.isConfigured { followList = FollowListData(title: "Following", people: demoFollowList(store, seed: person.id, salt: 13, exclude: person.id)) } })
             followButton
         }
     }
@@ -1189,7 +1189,7 @@ struct FriendProfileView: View {
     @ViewBuilder
     private var followButton: some View {
         let rel = store.relationship(person.id)
-        let label = rel == .friends ? "Siguiendo" : (rel == .outgoing ? "Pendiente" : "Seguir")
+        let label = rel == .friends ? "Following" : (rel == .outgoing ? "Pending" : "Follow")
         Button { FX.tap(); store.followOrRequest(person.id) } label: {
             HStack(spacing: 6) {
                 if rel == .friends { Image(systemName: "checkmark") }
@@ -1238,9 +1238,9 @@ struct FriendProfileView: View {
         var counts: [String: Int] = [:]
         for e in entries { counts[GymScoreEngine.pattern(for: e.exerciseName).group, default: 0] += 1 }
         let top = counts.max { $0.value < $1.value }?.key ?? "accesorio"
-        let names = ["pierna": "Pierna", "bisagra": "Cadena posterior", "empuje": "Empuje",
-                     "tiron": "Tirón", "condicion": "Cardio & core", "accesorio": "Full body"]
-        return names[top] ?? "Entreno"
+        let names = ["pierna": "Legs", "bisagra": "Posterior chain", "empuje": "Push",
+                     "tiron": "Pull", "condicion": "Cardio & core", "accesorio": "Full body"]
+        return names[top] ?? "Workout"
     }
 }
 
@@ -1277,11 +1277,11 @@ struct MeProfileView: View {
                     PanelCard {
                         Text(score.tier).font(.system(size: 13, weight: .heavy)).foregroundColor(Color(hex: "10150a"))
                             .padding(.horizontal, 10).padding(.vertical, 3).background(Brand.greenSoft).clipShape(Capsule())
-                        ScoreBarView(label: "Fuerza", value: score.strength)
-                        ScoreBarView(label: "Constancia", value: score.consistency)
-                        ScoreBarView(label: "Progreso", value: score.progression)
-                        ScoreBarView(label: "Volumen", value: score.volume)
-                        ScoreBarView(label: "Variedad", value: score.variety)
+                        ScoreBarView(label: "Strength", value: score.strength)
+                        ScoreBarView(label: "Consistency", value: score.consistency)
+                        ScoreBarView(label: "Progress", value: score.progression)
+                        ScoreBarView(label: "Volume", value: score.volume)
+                        ScoreBarView(label: "Variety", value: score.variety)
                     }
                     TrainingCalendarView(sessions: sessionsList) { date, day in
                         daySheet = DayPayload(id: date, date: date, sessions: day)
@@ -1355,10 +1355,10 @@ struct MeProfileView: View {
             ScoredAvatar(account: store.account, score: store.gymScore.total, size: 84)
             VStack(spacing: 6) {
                 HStack(spacing: 6) {
-                    Text(store.account?.name ?? "Tú").font(.system(size: 22, weight: .heavy)).foregroundColor(Brand.ink)
+                    Text(store.account?.name ?? "You").font(.system(size: 22, weight: .heavy)).foregroundColor(Brand.ink)
                     if store.profile.isPrivate { Image(systemName: "lock.fill").font(.system(size: 13)).foregroundColor(Brand.soft) }
                 }
-                Text("@\(store.account?.handle ?? "tu_usuario")").font(.subheadline).foregroundColor(Brand.muted)
+                Text("@\(store.account?.handle ?? "your_handle")").font(.subheadline).foregroundColor(Brand.muted)
                 socialPills
             }
             profileCountsRow(entrenos: entrenos,
@@ -1366,9 +1366,9 @@ struct MeProfileView: View {
                              siguiendo: store.following.count,
                              onSeguidores: {
                                  let list = BackendConfig.isConfigured ? store.followerPeople : demoFollowList(store, seed: store.account?.handle ?? "me", salt: 7, exclude: nil)
-                                 followList = FollowListData(title: "Seguidores", people: list)
+                                 followList = FollowListData(title: "Followers", people: list)
                              },
-                             onSiguiendo: { followList = FollowListData(title: "Siguiendo", people: store.following) })
+                             onSiguiendo: { followList = FollowListData(title: "Following", people: store.following) })
         }
     }
 
@@ -1378,7 +1378,7 @@ struct MeProfileView: View {
                 HStack(spacing: 10) {
                     WorkoutTypeBadge(size: .compact)
                     VStack(alignment: .leading, spacing: 2) {
-                        Text(s.name).font(.system(size: 16, weight: .heavy)).foregroundColor(Brand.ink).lineLimit(1)
+                        Text(L10n.x(s.name)).font(.system(size: 16, weight: .heavy)).foregroundColor(Brand.ink).lineLimit(1)
                         Text(relativeTime(s.date)).font(.system(size: 13)).foregroundColor(Brand.soft)
                     }
                     Spacer()
@@ -1443,8 +1443,8 @@ struct AccountSetupView: View {
     }
     private var taken: [String] { store.people.map { $0.handle } }
     private var handleError: String? {
-        if normalized.count < 3 { return "Mínimo 3 caracteres" }
-        if taken.contains(normalized) { return "Ese usuario ya existe" }
+        if normalized.count < 3 { return "At least 3 characters" }
+        if taken.contains(normalized) { return "That username already exists" }
         return nil
     }
     private var canSubmit: Bool {
@@ -1458,7 +1458,7 @@ struct AccountSetupView: View {
             VStack(alignment: .leading, spacing: 14) {
                 VStack(alignment: .leading, spacing: 5) {
                     Text("FORGE LOOP").font(.caption2).fontWeight(.heavy).foregroundColor(Color(hex: "4b6211"))
-                    Text(store.account == nil ? "Crea tu cuenta" : "Editar cuenta").font(.system(size: 26, weight: .heavy)).foregroundColor(Brand.ink)
+                    Text(store.account == nil ? "Create your account" : "Edit account").font(.system(size: 26, weight: .heavy)).foregroundColor(Brand.ink)
                     Text("Elige tu nombre y un @usuario único para que tus amigos te encuentren.").font(.footnote).foregroundColor(Brand.muted)
                 }
                 HStack {
@@ -1476,7 +1476,7 @@ struct AccountSetupView: View {
                     }
                     Spacer()
                 }
-                field("Nombre", text: $name, placeholder: "Tu nombre")
+                field("Name", text: $name, placeholder: "Your name")
                 VStack(alignment: .leading, spacing: 5) {
                     Text("USUARIO").font(.caption2).fontWeight(.heavy).foregroundColor(Brand.muted)
                     HStack(spacing: 2) {
@@ -1491,11 +1491,11 @@ struct AccountSetupView: View {
                     } else if !normalized.isEmpty {
                         // Estado REAL del servidor (con debounce), no solo formato.
                         if handleAvailability == false {
-                            Text("Ese @usuario ya está cogido").font(.caption).foregroundColor(Color(hex: "c14b46"))
+                            Text("That @username is taken").font(.caption).foregroundColor(Color(hex: "c14b46"))
                         } else if handleAvailability == true {
-                            Text("@\(normalized) disponible").font(.caption).foregroundColor(Color(hex: "4b8a1f"))
+                            Text("@\(normalized) is available").font(.caption).foregroundColor(Color(hex: "4b8a1f"))
                         } else if BackendConfig.isConfigured {
-                            Text("Comprobando disponibilidad…").font(.caption).foregroundColor(Brand.soft)
+                            Text("Checking availability…").font(.caption).foregroundColor(Brand.soft)
                         }
                     }
                 }
@@ -1508,7 +1508,7 @@ struct AccountSetupView: View {
                     FX.success(sound: true)
                     store.saveAccount(acc)
                     onCancel()
-                } label: { Text(store.account == nil ? "Empezar" : "Guardar") }
+                } label: { Text(store.account == nil ? "Get started" : "Save") }
                     .buttonStyle(PrimaryButtonStyle(enabled: canSubmit)).disabled(!canSubmit)
                 if allowCancel { Button("Cancelar") { onCancel() }.frame(maxWidth: .infinity) }
             }

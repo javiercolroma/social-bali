@@ -38,7 +38,7 @@ struct OnboardingView: View {
     /// pulsar Continuar en el sexo guardase 1997 (el valor por defecto de la rueda).
     /// Con la regla de 18 años eso daba acceso a «Dating» con una edad inventada.
     @State private var birthDone = false
-    @State private var country = "España"
+    @State private var country = ""
     @State private var city = ""
     @State private var gym = ""
 
@@ -196,7 +196,7 @@ struct OnboardingView: View {
                 if !normalized.isEmpty, let err = handleError {
                     hint(err, "exclamationmark.circle.fill", Color(hex: "c14b46"))
                 } else if !normalized.isEmpty {
-                    hint("@\(normalized) está libre", "checkmark.circle.fill", Color(hex: "4b8a1f"))
+                    hint("@\(normalized) is available", "checkmark.circle.fill", Color(hex: "4b8a1f"))
                 }
             }
         } actions: {
@@ -277,7 +277,7 @@ struct OnboardingView: View {
             TypingBubble("When were you born?",
                          typing: !shownBubbles.contains(Step.birth.rawValue)) { shownBubbles.insert(Step.birth.rawValue) }
             wheelCard {
-                Picker("Año", selection: $birthYear) {
+                Picker("Year", selection: $birthYear) {
                     ForEach(years, id: \.self) {
                         Text(String($0)).font(.system(size: 20, weight: .bold)).foregroundColor(Brand.ink).tag($0)
                     }
@@ -1003,7 +1003,7 @@ private struct OnboardingPhotoFramer: View {
                 Spacer()
             }
             .padding(20).background(Brand.bg)
-            .navigationTitle("Encuadra tu foto").navigationBarTitleDisplayMode(.inline)
+            .navigationTitle("Frame your photo").navigationBarTitleDisplayMode(.inline)
             .onAppear { lastScale = scale; lastOffset = offset }
         }
     }
@@ -1092,7 +1092,7 @@ struct CoachTour: View {
         // explicaba: se veía una mascota flotante sin saber qué hacía ni que se puede mover.
         // Va al final del primer tour (Social) y solo si el dispositivo soporta la IA.
         if section == 0, ForgeyEngine.isAvailable {
-            s.append(CoachStep("Y ese de la derecha soy yo 👋 Tócame para pedirme un entreno o un consejo. Si te estorbo, arrástrame arriba o abajo.",
+            s.append(CoachStep("And that's me on the right 👋 Tap me to ask for a workout or a tip. If I'm in the way, drag me up or down.",
                                target: "forgey.peek"))
         }
         return s
@@ -1154,7 +1154,7 @@ struct CoachTour: View {
                 }
                 Spacer()
                 Button { next() } label: {
-                    Text(isLast ? "¡Entendido!" : "Siguiente")
+                    Text(isLast ? "Got it!" : "Next")
                         .font(.system(size: 15, weight: .heavy)).foregroundColor(Color(hex: "10150a"))
                         .padding(.horizontal, 22).frame(height: 44)
                         .background(Brand.green).clipShape(Capsule())
@@ -1170,7 +1170,7 @@ struct CoachTour: View {
         .overlay(RoundedRectangle(cornerRadius: 24, style: .continuous).stroke(Brand.line))
         .overlay(alignment: .topTrailing) {
             Button { finishAll() } label: {
-                Text("Saltar").font(.system(size: 13, weight: .heavy)).foregroundColor(Brand.muted)
+                Text("Skip").font(.system(size: 13, weight: .heavy)).foregroundColor(Brand.muted)
                     .padding(.top, 12).padding(.trailing, 16)
             }
         }
@@ -1208,25 +1208,25 @@ struct CoachTour: View {
     }
     private func finishTyping() { typeTask?.cancel(); shown = current; typingDone = true }
 
-    static let names = ["Social", "Plan", "Entreno", "Comunidad", "Actividad"]
+    static let names = ["Social", "Plan", "Train", "Community", "Activity"]
     static let content: [Int: [CoachStep]] = [
-        0: [CoachStep("Aquí ves lo que entrenan tus colegas.", target: "social.switch"),
-            CoachStep("Dale like o comenta sus entrenos.", target: "social.card")],
-        1: [CoachStep("Crea tu propio entreno con este botón.", target: "plan.create"),
-            CoachStep("O toca un entreno para cargarlo.", target: "plan.item")],
-        2: [CoachStep("Aquí entrenas. Empieza eligiendo un entreno.", target: "train.choose"),
-            CoachStep("Luego marcas cada serie y yo llevo la cuenta.")],
+        0: [CoachStep("Here you see what your friends are training.", target: "social.switch"),
+            CoachStep("Like or comment on their workouts.", target: "social.card")],
+        1: [CoachStep("Create your own workout with this button.", target: "plan.create"),
+            CoachStep("Or tap a workout to load it.", target: "plan.item")],
+        2: [CoachStep("This is where you train. Start by picking a workout.", target: "train.choose"),
+            CoachStep("Then tick off each set and I'll keep count.")],
         // Con Partner oculto (v1), el tour de Comunidad solo explica el ranking.
         3: FeatureFlags.partnerEnabled
-            ? [CoachStep("Aquí subes de división, de Hierro a Maestro."),
-               CoachStep("Con esta barra eliges la distancia para buscar compañero.", target: "partner.distance"),
-               CoachStep("Con este botón publicas tu plan y buscas compañero.", target: "partner.create"),
-               CoachStep("Si un plan te encaja, pulsa «Aceptar» y se abre un chat.", target: "partner.accept"),
-               CoachStep("¿No te va? Descártalo con la ✕.", target: "partner.discard")]
-            : [CoachStep("Aquí subes de división, de Hierro a Maestro."),
-               CoachStep("Compite cada semana: el XP de tus entrenos te hace escalar en el ranking.")],
-        4: [CoachStep("Cambia entre tu progreso y tus entrenos.", target: "activity.switch"),
-            CoachStep("Aquí ves tu racha y tu Gym Score.", target: "activity.progress")],
+            ? [CoachStep("Here you climb divisions, from Iron to Master."),
+               CoachStep("Use this slider to set how far to look for a partner.", target: "partner.distance"),
+               CoachStep("Use this button to post your plan and find a partner.", target: "partner.create"),
+               CoachStep("If a plan suits you, tap “Accept” and a chat opens.", target: "partner.accept"),
+               CoachStep("Not for you? Dismiss it with the ✕.", target: "partner.discard")]
+            : [CoachStep("Here you climb divisions, from Iron to Master."),
+               CoachStep("Compete every week: the XP from your workouts moves you up the ranking.")],
+        4: [CoachStep("Switch between your progress and your workouts.", target: "activity.switch"),
+            CoachStep("Here you see your streak and your Gym Score.", target: "activity.progress")],
     ]
 }
 

@@ -18,8 +18,8 @@ struct ActivityView: View {
     @State private var showScoreInfo = false
 
     private let tabs: [(title: String, icon: String)] = [
-        ("Progreso", "chart.line.uptrend.xyaxis"),
-        ("Actividades", "clock.arrow.circlepath"),
+        ("Progress", "chart.line.uptrend.xyaxis"),
+        ("Activities", "clock.arrow.circlepath"),
     ]
 
     private var sessions: [WorkoutSession] { store.sessions.sorted { $0.date > $1.date } }
@@ -97,12 +97,12 @@ struct ActivityView: View {
     @ViewBuilder
     private var progressContent: some View {
         // Panel compacto: cada bloque se lee de un VISTAZO y el detalle vive en hojas.
-        sectionHeader("RESUMEN")
+        sectionHeader("SUMMARY")
         heroRow.tourAnchor("activity.progress")
         // El calendario, justo debajo de racha/score: tu mes de un vistazo.
         calendarBlock
 
-        sectionHeader("FUERZA POR EJERCICIO")
+        sectionHeader("STRENGTH BY EXERCISE")
         if store.sessions.isEmpty {
             Text("Completa y guarda entrenos para medir tu evolución de carga.")
                 .font(.footnote).foregroundColor(Brand.muted)
@@ -201,12 +201,12 @@ struct ActivityView: View {
             Button("Entendido", role: .cancel) {}
         } message: {
             Text("""
-            Tu 1RM es el peso máximo que podrías levantar una sola vez.
+            Your 1RM is the heaviest weight you could lift for a single rep.
 
-            Como medirlo es arriesgado, se estima con la fórmula de Epley:
-            1RM ≈ peso × (1 + reps / 30)
+            Testing it is risky, so we estimate it with the Epley formula:
+            1RM ≈ weight × (1 + reps / 30)
 
-            Usamos tu mejor serie de cada entreno. Más fiable en series de 1 a 12 repeticiones.
+            We use your best set from each workout. Most reliable for sets of 1 to 12 reps.
             """)
         }
     }
@@ -260,8 +260,8 @@ struct ActivityView: View {
     private var historyContent: some View {
         if sessions.isEmpty {
             emptyState(icon: "clock.arrow.circlepath",
-                       title: "Aún no tienes actividad",
-                       msg: "Completa y guarda un entreno para ver aquí tu historial.")
+                       title: "No activity yet",
+                       msg: "Complete and save a workout to see your history here.")
         } else {
             ForEach(sessions) { s in sessionCard(s) }
         }
@@ -324,8 +324,8 @@ struct ActivityView: View {
     /// La racha NO son días consecutivos: cuenta los entrenos encadenados mientras no pasen más de 3 días entre uno y otro.
     private var streakSubtitle: String {
         store.player.streak == 0
-            ? "Entrena para empezar tu racha (máx. 3 días sin entrenar)."
-            : "Sigue así: no pases más de 3 días sin entrenar."
+            ? "Train to start your streak (max. 3 days without training)."
+            : "Keep it up: don't go more than 3 days without training."
     }
 
     /// Gym Score igual que en Comunidad: puntuación + tier + fiabilidad + barras de pilares.
@@ -353,7 +353,7 @@ struct ActivityView: View {
                 }
                 Spacer()
                 VStack(alignment: .trailing, spacing: 4) {
-                    Text(s.reliable ? "Fiable · \(s.reliability)%" : "Provisional")
+                    Text(s.reliable ? "Reliable · \(s.reliability)%" : "Provisional")
                         .font(.system(size: 11, weight: .heavy)).foregroundColor(s.reliable ? Color(hex: "18320d") : Color(hex: "7a4d00"))
                         .padding(.horizontal, 10).padding(.vertical, 5)
                         .background(s.reliable ? Color(hex: "dff0bf") : Color(hex: "ffe2a3")).clipShape(Capsule())
@@ -367,27 +367,27 @@ struct ActivityView: View {
                     .font(.footnote).foregroundColor(Brand.muted)
             }
             VStack(spacing: 8) {
-                ScoreBarView(label: "Fuerza", value: s.strength)
-                ScoreBarView(label: "Constancia", value: s.consistency)
-                ScoreBarView(label: "Progreso", value: s.progression)
-                ScoreBarView(label: "Volumen", value: s.volume)
-                ScoreBarView(label: "Variedad", value: s.variety)
+                ScoreBarView(label: "Strength", value: s.strength)
+                ScoreBarView(label: "Consistency", value: s.consistency)
+                ScoreBarView(label: "Progress", value: s.progression)
+                ScoreBarView(label: "Volume", value: s.volume)
+                ScoreBarView(label: "Variety", value: s.variety)
             }
         }
         .alert("¿Qué es el Gym Score?", isPresented: $showScoreInfo) {
             Button("Entendido", role: .cancel) {}
         } message: {
             Text("""
-            Tu nota de entrenamiento, de 0 a 100.
+            Your training grade, from 0 to 100.
 
-            Pilares:
-            • Fuerza — cuánto levantas
-            • Constancia — cuánto entrenas
-            • Progreso — si subes cargas
-            • Volumen — trabajo total
-            • Variedad — variedad de ejercicios
+            Pillars:
+            • Strength — how much you lift
+            • Consistency — how often you train
+            • Progress — whether your loads go up
+            • Volume — total work
+            • Variety — range of exercises
 
-            Es provisional hasta los 7 días entrenando; después es definitivo.
+            It's provisional until you've trained for 7 days; after that it's final.
             """)
         }
     }
@@ -402,7 +402,7 @@ struct ActivityView: View {
                 HStack(spacing: 10) {
                     WorkoutTypeBadge(size: .compact)
                     VStack(alignment: .leading, spacing: 2) {
-                        Text(s.name).font(.system(size: 16, weight: .heavy)).foregroundColor(Brand.ink).lineLimit(1)
+                        Text(L10n.x(s.name)).font(.system(size: 16, weight: .heavy)).foregroundColor(Brand.ink).lineLimit(1)
                         Text(relativeTime(s.date)).font(.system(size: 13)).foregroundColor(Brand.soft)
                     }
                     Spacer()
@@ -481,10 +481,10 @@ struct ActivityView: View {
     private func activityData(_ s: WorkoutSession) -> ActivityData {
         // Zona aproximada donde se hizo el entreno (GPS). Para sesiones antiguas sin
         // ubicación capturada, caemos en la ciudad del perfil.
-        let profileLoc = [store.profile.city, store.profile.country].filter { !$0.isEmpty }.joined(separator: ", ")
+        let profileLoc = [store.profile.city, countryName(store.profile.country)].filter { !$0.isEmpty }.joined(separator: ", ")
         let loc = (s.location?.isEmpty == false) ? s.location! : profileLoc
         return ActivityData(
-            authorName: store.account?.name ?? "Tú",
+            authorName: store.account?.name ?? "You",
             avatarPhoto: store.account?.photoData, avatarEmoji: "🙂",
             flag: countryFlag(store.profile.country), location: loc,
             date: s.date, title: s.name, note: s.note, photo: s.photoData, photoURL: s.photoURL,

@@ -9,8 +9,8 @@ struct ExerciseProgressView: View {
     @Environment(\.dismiss) private var dismiss
     let exerciseName: String
 
-    private enum Metric: String, CaseIterable { case peso = "Peso", reps = "Reps", rm = "1RM est." }
-    private enum Range: String, CaseIterable { case m1 = "1M", m3 = "3M", all = "Todo" }
+    private enum Metric: String, CaseIterable { case peso = "Weight", reps = "Reps", rm = "Est. 1RM" }
+    private enum Range: String, CaseIterable { case m1 = "1M", m3 = "3M", all = "All" }
     @State private var metric: Metric = .peso
     @State private var range: Range = .all
 
@@ -127,15 +127,15 @@ struct ExerciseProgressView: View {
             let lo = (values.min() ?? 0), hi = (values.max() ?? 1)
             let pad = max(1, (hi - lo) * 0.25)
             Chart(marks) { m in
-                AreaMark(x: .value("Fecha", m.date), y: .value(unit, value(m)))
+                AreaMark(x: .value("Date", m.date), y: .value(unit, value(m)))
                     .interpolationMethod(.catmullRom)
                     .foregroundStyle(LinearGradient(colors: [Brand.green.opacity(0.32), Brand.green.opacity(0.02)],
                                                     startPoint: .top, endPoint: .bottom))
-                LineMark(x: .value("Fecha", m.date), y: .value(unit, value(m)))
+                LineMark(x: .value("Date", m.date), y: .value(unit, value(m)))
                     .interpolationMethod(.catmullRom)
                     .foregroundStyle(Brand.green)
                     .lineStyle(StrokeStyle(lineWidth: 3, lineCap: .round))
-                PointMark(x: .value("Fecha", m.date), y: .value(unit, value(m)))
+                PointMark(x: .value("Date", m.date), y: .value(unit, value(m)))
                     .foregroundStyle(Color(hex: "4b6211"))
                     .symbolSize(m.id == marks.last?.id ? 90 : 36)
             }
@@ -163,9 +163,9 @@ struct ExerciseProgressView: View {
 
     private var statsRow: some View {
         HStack(spacing: 10) {
-            stat(fmt(allMarks.map(\.bestWeight).max() ?? 0) + " kg", "Mejor peso")
-            stat(fmt(allMarks.map(\.bestE1RM).max() ?? 0) + " kg", "Mejor 1RM est.")
-            stat("\(allMarks.count)", "Sesiones")
+            stat(fmt(allMarks.map(\.bestWeight).max() ?? 0) + " kg", "Best weight")
+            stat(fmt(allMarks.map(\.bestE1RM).max() ?? 0) + " kg", "Best est. 1RM")
+            stat("\(allMarks.count)", "Sessions")
         }
     }
 

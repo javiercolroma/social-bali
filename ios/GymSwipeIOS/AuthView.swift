@@ -20,23 +20,23 @@ struct AuthView: View {
                     Image(systemName: "dumbbell.fill").font(.system(size: 46, weight: .heavy)).foregroundColor(Color(hex: "10150a"))
                 }
                 Text("Forge Loop").font(.system(size: 34, weight: .heavy)).foregroundColor(Brand.ink).padding(.top, 16)
-                Text("Entrena, mide tu progreso y compite con tu gente.")
+                Text("Train, track your progress and compete with your crew.")
                     .font(.system(size: 16)).foregroundColor(Brand.muted).multilineTextAlignment(.center)
                     .fixedSize(horizontal: false, vertical: true).padding(.top, 6).padding(.horizontal, 20)
                 Spacer()
 
                 Button { FX.tap(); providerMode = .signup } label: {
-                    Text("Unirme gratis").frame(maxWidth: .infinity)
+                    Text("Join for free").frame(maxWidth: .infinity)
                 }.buttonStyle(PrimaryButtonStyle())
 
                 Button { FX.tap(); providerMode = .login } label: {
                     HStack(spacing: 5) {
-                        Text("¿Ya tienes cuenta?").foregroundColor(Brand.muted)
-                        Text("Iniciar sesión").foregroundColor(Brand.ink)
+                        Text("Already have an account?").foregroundColor(Brand.muted)
+                        Text("Sign in").foregroundColor(Brand.ink)
                     }.font(.system(size: 15, weight: .heavy)).frame(maxWidth: .infinity).frame(height: 46)
                 }.buttonStyle(.plain).padding(.top, 4)
 
-                Text("Al continuar aceptas los términos y la política de privacidad.")
+                Text("By continuing you accept the terms and the privacy policy.")
                     .font(.caption2).foregroundColor(Brand.soft).multilineTextAlignment(.center).padding(.top, 8)
             }
             .padding(24)
@@ -60,9 +60,9 @@ struct AuthProviderSheet: View {
         NavigationStack {
             VStack(spacing: 14) {
                 VStack(spacing: 4) {
-                    Text(creating ? "Únete a Forge Loop" : "Bienvenido de nuevo")
+                    Text(creating ? "Join Forge Loop" : "Welcome back")
                         .font(.system(size: 24, weight: .heavy)).foregroundColor(Brand.ink)
-                    Text(creating ? "Crea tu cuenta en segundos." : "Entra para seguir con tu progreso.")
+                    Text(creating ? "Create your account in seconds." : "Sign in to keep up your progress.")
                         .font(.footnote).foregroundColor(Brand.muted)
                 }.padding(.top, 26)
 
@@ -75,10 +75,10 @@ struct AuthProviderSheet: View {
                         .signInWithAppleButtonStyle(.black)
                         .frame(height: 52).clipShape(RoundedRectangle(cornerRadius: 14))
 
-                    providerButton(creating ? "Registrarse con Google" : "Continuar con Google", action: { handleGoogle() }) {
+                    providerButton(creating ? "Sign up with Google" : "Continue with Google", action: { handleGoogle() }) {
                         GoogleGLogo(size: 18)
                     }
-                    providerButton(creating ? "Registrarse con email" : "Continuar con email", action: { FX.tap(); showEmail = true }) {
+                    providerButton(creating ? "Sign up with email" : "Continue with email", action: { FX.tap(); showEmail = true }) {
                         Image(systemName: "envelope.fill").font(.system(size: 16, weight: .bold)).foregroundColor(Brand.ink)
                     }
                 }
@@ -92,10 +92,10 @@ struct AuthProviderSheet: View {
         .presentationDetents([.medium])
         .presentationDragIndicator(.visible)
         .sheet(isPresented: $showEmail) { EmailAuthSheet(startCreating: creating).environmentObject(store) }
-        .alert("Falta configurar Google", isPresented: $googleNote) {
-            Button("Vale", role: .cancel) {}
+        .alert("Google isn't set up yet", isPresented: $googleNote) {
+            Button("OK", role: .cancel) {}
         } message: {
-            Text("Para activar Google hay que crear un OAuth Client ID de iOS en Google Cloud y pegarlo en AuthConfig.swift (instrucciones dentro). Mientras, entra con Apple o email.")
+            Text("To enable Google, create an iOS OAuth Client ID in Google Cloud and paste it into AuthConfig.swift (instructions inside). Meanwhile, sign in with Apple or email.")
         }
     }
 
@@ -199,18 +199,18 @@ struct EmailAuthSheet: View {
     private var emailStep: some View {
         Group {
             VStack(alignment: .leading, spacing: 4) {
-                Text(creating ? "Crea tu cuenta" : "Inicia sesión")
+                Text(creating ? "Create your account" : "Sign in")
                     .font(.system(size: 24, weight: .heavy)).foregroundColor(Brand.ink)
-                Text("Te enviaremos un código de 6 dígitos para verificar que este correo es tuyo.")
+                Text("We'll send you a 6-digit code to verify this email is yours.")
                     .font(.footnote).foregroundColor(Brand.muted)
             }
             .padding(.top, 22)
 
             VStack(alignment: .leading, spacing: 5) {
-                Text("CORREO").font(.caption2).fontWeight(.heavy).foregroundColor(Brand.muted)
+                Text("EMAIL").font(.caption2).fontWeight(.heavy).foregroundColor(Brand.muted)
                 HStack(spacing: 10) {
                     Image(systemName: "envelope.fill").font(.system(size: 14)).foregroundColor(Brand.soft)
-                    TextField("tu@email.com", text: $email)
+                    TextField("you@email.com", text: $email)
                         .keyboardType(.emailAddress).textContentType(.emailAddress)
                         .textInputAutocapitalization(.never).autocorrectionDisabled()
                         .focused($focusEmail).submitLabel(.go).onSubmit { sendCode() }
@@ -226,7 +226,7 @@ struct EmailAuthSheet: View {
             Button { sendCode() } label: {
                 HStack(spacing: 8) {
                     if busy { ProgressView().tint(Color(hex: "10150a")) }
-                    Text(busy ? "Enviando…" : "Enviar código")
+                    Text(busy ? "Sending…" : "Send code")
                 }.frame(maxWidth: .infinity)
             }
             .buttonStyle(PrimaryButtonStyle(enabled: validEmail && !busy)).disabled(!validEmail || busy)
@@ -234,8 +234,8 @@ struct EmailAuthSheet: View {
             // Cambiar de modo por si te equivocaste al elegir en la bienvenida.
             Button { withAnimation { creating.toggle(); error = nil } } label: {
                 HStack(spacing: 5) {
-                    Text(creating ? "¿Ya tienes cuenta?" : "¿Eres nuevo?").foregroundColor(Brand.muted)
-                    Text(creating ? "Inicia sesión" : "Crea una cuenta").foregroundColor(Brand.ink)
+                    Text(creating ? "Already have an account?" : "New here?").foregroundColor(Brand.muted)
+                    Text(creating ? "Sign in" : "Create an account").foregroundColor(Brand.ink)
                 }.font(.system(size: 13, weight: .heavy)).frame(maxWidth: .infinity)
             }.buttonStyle(.plain).padding(.top, 2)
         }
@@ -246,8 +246,8 @@ struct EmailAuthSheet: View {
     private var codeStep: some View {
         Group {
             VStack(alignment: .leading, spacing: 4) {
-                Text("Revisa tu correo").font(.system(size: 24, weight: .heavy)).foregroundColor(Brand.ink)
-                Text("Hemos enviado un código de 6 dígitos a **\(cleanEmail)**.")
+                Text("Check your email").font(.system(size: 24, weight: .heavy)).foregroundColor(Brand.ink)
+                Text("We've sent a 6-digit code to **\(cleanEmail)**.")
                     .font(.footnote).foregroundColor(Brand.muted)
             }
             .padding(.top, 22)
@@ -285,15 +285,15 @@ struct EmailAuthSheet: View {
             .frame(height: 56)
 
             if let error { Label(error, systemImage: "exclamationmark.circle.fill").font(.caption).foregroundColor(Color(hex: "a73232")) }
-            if busy { HStack(spacing: 8) { ProgressView(); Text("Verificando…").font(.caption).foregroundColor(Brand.muted) } }
+            if busy { HStack(spacing: 8) { ProgressView(); Text("Verifying…").font(.caption).foregroundColor(Brand.muted) } }
 
             HStack {
                 Button { withAnimation { step = 0; code = ""; error = nil }; DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { focusEmail = true } } label: {
-                    Label("Cambiar correo", systemImage: "arrow.left").font(.system(size: 13, weight: .heavy)).foregroundColor(Brand.soft)
+                    Label("Change email", systemImage: "arrow.left").font(.system(size: 13, weight: .heavy)).foregroundColor(Brand.soft)
                 }.buttonStyle(.plain)
                 Spacer()
                 Button { sendCode(resend: true) } label: {
-                    Text(resendIn > 0 ? "Reenviar en \(resendIn)s" : "Reenviar código")
+                    Text(resendIn > 0 ? "Resend in \(resendIn)s" : "Resend code")
                         .font(.system(size: 13, weight: .heavy))
                         .foregroundColor(resendIn > 0 ? Brand.soft : Brand.ink)
                 }.buttonStyle(.plain).disabled(resendIn > 0 || busy)
@@ -324,11 +324,11 @@ struct EmailAuthSheet: View {
                 print("[Backend] enviar código falló:", error)
                 let msg = String(describing: error).lowercased()
                 if msg.contains("signup") || msg.contains("otp_disabled") {
-                    self.error = "No existe ninguna cuenta con este correo. ¿Eres nuevo? Elige «Crea una cuenta»."
+                    self.error = "There's no account with this email. New here? Choose “Create an account”."
                 } else if msg.contains("rate") {
-                    self.error = "Demasiados intentos. Espera un minuto y vuelve a probar."
+                    self.error = "Too many attempts. Wait a minute and try again."
                 } else {
-                    self.error = "No pudimos enviar el código. Revisa el correo e inténtalo de nuevo."
+                    self.error = "We couldn't send the code. Check the email and try again."
                 }
             }
             busy = false
@@ -347,7 +347,7 @@ struct EmailAuthSheet: View {
                 store.hydrateAccountFromBackend(); store.syncSessionsFromBackend(); store.syncWorkoutsFromBackend()
             } catch {
                 print("[Backend] verificar código falló:", error)
-                self.error = "Código incorrecto o caducado. Revísalo o pide uno nuevo."
+                self.error = "Wrong or expired code. Check it or request a new one."
                 code = ""
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) { focusCode = true }
             }

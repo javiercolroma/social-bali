@@ -37,7 +37,7 @@ struct EditProfileView: View {
                         }
                         Spacer()
                     }
-                    field("Nombre", binding: accountName)
+                    field("Name", binding: accountName)
                     handleField
                 }
 
@@ -46,7 +46,7 @@ struct EditProfileView: View {
                 PanelCard { ActivityPhotosEditor() }
 
                 PanelCard {
-                    Text("DATOS").font(.caption2).fontWeight(.heavy).foregroundColor(Brand.muted)
+                    Text("DETAILS").font(.caption2).fontWeight(.heavy).foregroundColor(Brand.muted)
                     // Guarda el CÓDIGO (`man`), no la etiqueta: ver Gender en SocialClub.swift.
                     MenuField(label: "Gender", placeholder: "Choose",
                               selected: Gender.from(store.profile.sex)?.rawValue ?? "",
@@ -54,12 +54,12 @@ struct EditProfileView: View {
                         store.profile.sex = $0; store.persist()
                     }
                     VStack(alignment: .leading, spacing: 5) {
-                        Text("FECHA DE NACIMIENTO").font(.caption2).fontWeight(.heavy).foregroundColor(Brand.muted)
+                        Text("DATE OF BIRTH").font(.caption2).fontWeight(.heavy).foregroundColor(Brand.muted)
                         Button { birthSelection = store.profile.birthdate ?? birthSelection; showBirthPicker = true } label: {
                             HStack {
                                 Text(birthLabel).foregroundColor(store.profile.birthdate == nil ? Brand.soft : Brand.ink)
                                 Spacer()
-                                if !ageText.isEmpty { Text("\(ageText) años").font(.caption).fontWeight(.heavy).foregroundColor(Color(hex: "4b6211")) }
+                                if !ageText.isEmpty { Text("\(ageText) years").font(.caption).fontWeight(.heavy).foregroundColor(Color(hex: "4b6211")) }
                                 Image(systemName: "calendar").font(.caption).foregroundColor(Brand.soft)
                             }
                             .font(.system(size: 15, weight: .semibold))
@@ -67,25 +67,25 @@ struct EditProfileView: View {
                             .clipShape(RoundedRectangle(cornerRadius: 10))
                         }
                     }
-                    CountryField(label: "País", selected: store.profile.country) { store.profile.country = $0; store.persist() }
-                    CitySearchField(label: "Ciudad", selected: store.profile.city, country: store.profile.country) { store.profile.city = $0; store.persist() }
-                    field("Zona / barrio (opcional)", binding: Binding(get: { store.profile.region ?? "" }, set: { store.profile.region = $0; store.persist() }))
-                    field("Gimnasio", binding: Binding(get: { store.profile.gym }, set: { store.profile.gym = $0; store.persist() }))
+                    CountryField(label: "Country", selected: store.profile.country) { store.profile.country = $0; store.persist() }
+                    CitySearchField(label: "City", selected: store.profile.city, country: store.profile.country) { store.profile.city = $0; store.persist() }
+                    field("Area / neighbourhood (optional)", binding: Binding(get: { store.profile.region ?? "" }, set: { store.profile.region = $0; store.persist() }))
+                    field("Gym", binding: Binding(get: { store.profile.gym }, set: { store.profile.gym = $0; store.persist() }))
                 }
 
                 PanelCard {
-                    Text("REDES SOCIALES").font(.caption2).fontWeight(.heavy).foregroundColor(Brand.muted)
+                    Text("SOCIAL MEDIA").font(.caption2).fontWeight(.heavy).foregroundColor(Brand.muted)
                     socialField("Instagram", "camera.circle.fill", Binding(get: { store.profile.instagram ?? "" }, set: { store.profile.instagram = clean($0); store.persist() }))
                     socialField("TikTok", "music.note", Binding(get: { store.profile.tiktok ?? "" }, set: { store.profile.tiktok = clean($0); store.persist() }))
                     socialField("X (Twitter)", "at", Binding(get: { store.profile.twitter ?? "" }, set: { store.profile.twitter = clean($0); store.persist() }))
-                    Text("Aparecerán como tarjetas en tu perfil que llevan directo a tus redes.")
+                    Text("They'll show up as cards on your profile that link straight to your accounts.")
                         .font(.caption2).foregroundColor(Brand.soft)
                 }
             }
             .padding(.horizontal, 14).padding(.vertical, 12)
         }
         .background(Brand.bg)
-        .navigationTitle("Editar perfil").navigationBarTitleDisplayMode(.inline)
+        .navigationTitle("Edit profile").navigationBarTitleDisplayMode(.inline)
         .onDisappear { store.syncProfileToBackend() }
         .sheet(isPresented: $showEditor) {
             if let d = editingData { PhotoEditorView(data: d).environmentObject(store) }
@@ -93,16 +93,16 @@ struct EditProfileView: View {
         .sheet(isPresented: $showBirthPicker) {
             NavigationStack {
                 VStack {
-                    DatePicker("Fecha de nacimiento", selection: $birthSelection, in: minBirth...Date(), displayedComponents: .date)
+                    DatePicker("Date of birth", selection: $birthSelection, in: minBirth...Date(), displayedComponents: .date)
                         .datePickerStyle(.wheel).labelsHidden().padding()
                     Spacer()
                 }
                 .background(Brand.bg)
-                .navigationTitle("Fecha de nacimiento").navigationBarTitleDisplayMode(.inline)
+                .navigationTitle("Date of birth").navigationBarTitleDisplayMode(.inline)
                 .toolbar {
-                    ToolbarItem(placement: .topBarLeading) { Button("Cancelar") { showBirthPicker = false } }
+                    ToolbarItem(placement: .topBarLeading) { Button("Cancel") { showBirthPicker = false } }
                     ToolbarItem(placement: .topBarTrailing) {
-                        Button("Listo") { store.profile.birthdate = birthSelection; store.persist(); showBirthPicker = false }.fontWeight(.heavy)
+                        Button("Done") { store.profile.birthdate = birthSelection; store.persist(); showBirthPicker = false }.fontWeight(.heavy)
                     }
                 }
             }
@@ -256,10 +256,10 @@ struct EditProfileView: View {
     /// servidor (debounce) y solo se aplica si está libre (o es el tuyo actual).
     private var handleField: some View {
         VStack(alignment: .leading, spacing: 5) {
-            Text("USUARIO").font(.caption2).fontWeight(.heavy).foregroundColor(Brand.muted)
+            Text("USERNAME").font(.caption2).fontWeight(.heavy).foregroundColor(Brand.muted)
             HStack(spacing: 2) {
                 Text("@").font(.system(size: 16, weight: .heavy)).foregroundColor(Brand.soft)
-                TextField("tu_usuario", text: $editedHandle)
+                TextField("your_username", text: $editedHandle)
                     .textInputAutocapitalization(.never).autocorrectionDisabled()
                     .onChange(of: editedHandle) { v in
                         let h = normalizeHandle(v)
@@ -270,11 +270,11 @@ struct EditProfileView: View {
             .padding(.horizontal, 12).frame(height: 44).background(Brand.surface).clipShape(RoundedRectangle(cornerRadius: 10))
             if !editedHandle.isEmpty, editedHandle != (store.account?.handle ?? "") {
                 if handleAvailability == false {
-                    Text("Ese @usuario ya está cogido").font(.caption).foregroundColor(Color(hex: "c14b46"))
+                    Text("That @username is taken").font(.caption).foregroundColor(Color(hex: "c14b46"))
                 } else if handleAvailability == true {
-                    Text("Disponible ✓ guardado").font(.caption).foregroundColor(Color(hex: "4b8a1f"))
+                    Text("Available ✓ saved").font(.caption).foregroundColor(Color(hex: "4b8a1f"))
                 } else if BackendConfig.isConfigured {
-                    Text("Comprobando disponibilidad…").font(.caption).foregroundColor(Brand.soft)
+                    Text("Checking availability…").font(.caption).foregroundColor(Brand.soft)
                 }
             }
         }
@@ -309,7 +309,7 @@ struct EditProfileView: View {
             HStack(spacing: 6) {
                 Image(systemName: icon).foregroundColor(Color(hex: "6ea300"))
                 Text("@").foregroundColor(Brand.soft)
-                TextField("usuario", text: binding).textInputAutocapitalization(.never).autocorrectionDisabled()
+                TextField("username", text: binding).textInputAutocapitalization(.never).autocorrectionDisabled()
             }
             .font(.system(size: 15, weight: .semibold))
             .padding(.horizontal, 12).frame(height: 44).background(Brand.surface).clipShape(RoundedRectangle(cornerRadius: 10))
@@ -318,8 +318,8 @@ struct EditProfileView: View {
 
     private var minBirth: Date { Calendar.current.date(byAdding: .year, value: -100, to: Date()) ?? Date() }
     private var birthLabel: String {
-        guard let b = store.profile.birthdate else { return "Elegir fecha" }
-        let f = DateFormatter(); f.locale = Locale(identifier: "es_ES"); f.dateStyle = .long
+        guard let b = store.profile.birthdate else { return "Choose date" }
+        let f = DateFormatter(); f.locale = L10n.locale; f.dateStyle = .long
         return f.string(from: b)
     }
 
@@ -337,30 +337,6 @@ struct EditProfileView: View {
 // MARK: - Ajustes de la app
 
 struct SettingsView: View {
-    private var currentLanguageName: String {
-        guard let langs = UserDefaults.standard.array(forKey: "AppleLanguages") as? [String],
-              let first = langs.first, UserDefaults.standard.object(forKey: "forgeLangOverride") != nil else { return NSLocalizedString("Automático", comment: "") }
-        if first.hasPrefix("en") { return "English" }
-        if first.hasPrefix("pt-BR") { return "Português (BR)" }
-        if first.hasPrefix("pt") { return "Português (PT)" }
-        if first.hasPrefix("fr") { return "Français" }
-        return "Español"
-    }
-
-    private func setLanguage(_ code: String?) {
-        FX.success()
-        if let code {
-            UserDefaults.standard.set([code], forKey: "AppleLanguages")
-            UserDefaults.standard.set(code, forKey: "forgeLangOverride")
-        } else {
-            UserDefaults.standard.removeObject(forKey: "AppleLanguages")
-            UserDefaults.standard.removeObject(forKey: "forgeLangOverride")
-        }
-        // EN VIVO: bundle dinámico + reconstrucción de toda la UI (nada de reiniciar).
-        L10n.apply(code)
-        store.languageToken = UUID()
-    }
-
     @EnvironmentObject var store: AppStore
     @Environment(\.dismiss) private var dismiss
     @AppStorage("fxSound") private var soundOn = true
@@ -384,15 +360,15 @@ struct SettingsView: View {
             ScrollView {
                 VStack(spacing: 14) {
                     PanelCard {
-                        Text("CUENTA").font(.caption2).fontWeight(.heavy).foregroundColor(Brand.muted)
+                        Text("ACCOUNT").font(.caption2).fontWeight(.heavy).foregroundColor(Brand.muted)
                         NavigationLink { EditProfileView().environmentObject(store) } label: {
-                            settingsRow("Editar perfil", "person.crop.circle", chevron: true)
+                            settingsRow("Edit profile", "person.crop.circle", chevron: true)
                         }.buttonStyle(.plain)
                         Divider()
                         Toggle(isOn: Binding(get: { store.profile.isPrivate }, set: { store.profile.isPrivate = $0; store.persist() })) {
-                            Label("Cuenta privada", systemImage: "lock.fill")
+                            Label("Private account", systemImage: "lock.fill")
                         }.tint(Brand.green)
-                        Text("Si tu cuenta es privada, quien quiera seguirte tendrá que enviarte una solicitud.")
+                        Text("If your account is private, anyone who wants to follow you will have to send you a request.")
                             .font(.caption2).foregroundColor(Brand.soft)
                     }
 
@@ -415,52 +391,33 @@ struct SettingsView: View {
                     }
 
                     PanelCard {
-                        Text("PREFERENCIAS").font(.caption2).fontWeight(.heavy).foregroundColor(Brand.muted)
-                        Toggle(isOn: $soundOn) { Label("Sonidos", systemImage: "speaker.wave.2.fill") }.tint(Brand.green)
-                        Toggle(isOn: $hapticsOn) { Label("Vibración", systemImage: "iphone.radiowaves.left.and.right") }.tint(Brand.green)
-                        Divider()
-                        // Idioma: automático (sistema) o forzado. iOS aplica el cambio al
-                        // RELANZAR la app (mecanismo estándar de AppleLanguages).
-                        Menu {
-                            Button("Automático (sistema)") { setLanguage(nil) }
-                            Button("Español") { setLanguage("es") }
-                            Button("English") { setLanguage("en") }
-                            Button("Português (Portugal)") { setLanguage("pt-PT") }
-                            Button("Português (Brasil)") { setLanguage("pt-BR") }
-                            Button("Français") { setLanguage("fr") }
-                        } label: {
-                            HStack {
-                                Label("Idioma", systemImage: "globe")
-                                Spacer()
-                                Text(currentLanguageName).foregroundColor(Brand.soft)
-                                Image(systemName: "chevron.up.chevron.down").font(.system(size: 11, weight: .bold)).foregroundColor(Brand.soft)
-                            }
-                        }
-                            .font(.system(size: 15, weight: .semibold)).foregroundColor(Brand.ink)
+                        Text("PREFERENCES").font(.caption2).fontWeight(.heavy).foregroundColor(Brand.muted)
+                        Toggle(isOn: $soundOn) { Label("Sounds", systemImage: "speaker.wave.2.fill") }.tint(Brand.green)
+                        Toggle(isOn: $hapticsOn) { Label("Haptics", systemImage: "iphone.radiowaves.left.and.right") }.tint(Brand.green)
                     }
 
                     PanelCard {
-                        Text("LEGAL Y SOPORTE").font(.caption2).fontWeight(.heavy).foregroundColor(Brand.muted)
-                        NavigationLink { LegalView(kind: .privacy) } label: { settingsRow("Política de privacidad", "hand.raised.fill", chevron: true) }.buttonStyle(.plain)
+                        Text("LEGAL & SUPPORT").font(.caption2).fontWeight(.heavy).foregroundColor(Brand.muted)
+                        NavigationLink { LegalView(kind: .privacy) } label: { settingsRow("Privacy policy", "hand.raised.fill", chevron: true) }.buttonStyle(.plain)
                         Divider()
-                        NavigationLink { LegalView(kind: .terms) } label: { settingsRow("Términos de uso", "doc.text.fill", chevron: true) }.buttonStyle(.plain)
+                        NavigationLink { LegalView(kind: .terms) } label: { settingsRow("Terms of use", "doc.text.fill", chevron: true) }.buttonStyle(.plain)
                         Divider()
-                        NavigationLink { LegalView(kind: .community) } label: { settingsRow("Normas de la comunidad", "person.2.fill", chevron: true) }.buttonStyle(.plain)
+                        NavigationLink { LegalView(kind: .community) } label: { settingsRow("Community guidelines", "person.2.fill", chevron: true) }.buttonStyle(.plain)
                         Divider()
                         if let url = URL(string: "mailto:soporte@forgeloop.app") {
-                            Link(destination: url) { settingsRow("Soporte", "questionmark.circle.fill", chevron: true) }
+                            Link(destination: url) { settingsRow("Support", "questionmark.circle.fill", chevron: true) }
                         }
                         Divider()
                         Button { FX.tap(); store.resetTours(); toursReset = true } label: {
-                            settingsRow("Ver tutoriales de nuevo", "sparkles", chevron: false)
+                            settingsRow("Replay tutorials", "sparkles", chevron: false)
                         }.buttonStyle(.plain)
                         Divider()
-                        HStack { Label("Versión", systemImage: "info.circle"); Spacer(); Text("1.0").foregroundColor(Brand.soft) }
+                        HStack { Label("Version", systemImage: "info.circle"); Spacer(); Text("1.0").foregroundColor(Brand.soft) }
                             .font(.system(size: 15, weight: .semibold)).foregroundColor(Brand.ink)
                     }
 
                     Button(role: .destructive) { confirmLogout = true } label: {
-                        Label("Cerrar sesión", systemImage: "rectangle.portrait.and.arrow.right")
+                        Label("Sign out", systemImage: "rectangle.portrait.and.arrow.right")
                             .font(.system(size: 16, weight: .heavy)).foregroundColor(Color(hex: "a73232"))
                             .frame(maxWidth: .infinity).frame(height: 50)
                             .background(Brand.redSoft).clipShape(RoundedRectangle(cornerRadius: 12))
@@ -468,25 +425,25 @@ struct SettingsView: View {
 
                     // Eliminación de cuenta in-app (obligatoria para App Store, guideline 5.1.1).
                     Button(role: .destructive) { confirmDelete = true } label: {
-                        Text("Eliminar cuenta").font(.system(size: 13, weight: .heavy)).foregroundColor(Color(hex: "a73232"))
+                        Text("Delete account").font(.system(size: 13, weight: .heavy)).foregroundColor(Color(hex: "a73232"))
                             .frame(maxWidth: .infinity)
                     }.padding(.top, 2)
                 }
                 .padding(.horizontal, 14).padding(.vertical, 12)
             }
             .background(Brand.bg)
-            .navigationTitle("Ajustes").navigationBarTitleDisplayMode(.inline)
-            .alert("Tutoriales reactivados", isPresented: $toursReset) {
-                Button("Entendido", role: .cancel) {}
+            .navigationTitle("Settings").navigationBarTitleDisplayMode(.inline)
+            .alert("Tutorials turned back on", isPresented: $toursReset) {
+                Button("Got it", role: .cancel) {}
             } message: {
-                Text("Forgey te volverá a guiar la próxima vez que entres en cada sección.")
+                Text("Forgey will guide you again the next time you open each section.")
             }
-            .confirmationDialog("¿Cerrar sesión?", isPresented: $confirmLogout, titleVisibility: .visible) {
-                Button("Cerrar sesión", role: .destructive) { FX.warning(); store.logout(); dismiss() }
-                Button("Cancelar", role: .cancel) {}
-            } message: { Text("Volverás a la pantalla de creación de cuenta.") }
-            .confirmationDialog("¿Eliminar tu cuenta?", isPresented: $confirmDelete, titleVisibility: .visible) {
-                Button("Eliminar definitivamente", role: .destructive) {
+            .confirmationDialog("Sign out?", isPresented: $confirmLogout, titleVisibility: .visible) {
+                Button("Sign out", role: .destructive) { FX.warning(); store.logout(); dismiss() }
+                Button("Cancel", role: .cancel) {}
+            } message: { Text("You'll go back to the sign-up screen.") }
+            .confirmationDialog("Delete your account?", isPresented: $confirmDelete, titleVisibility: .visible) {
+                Button("Delete permanently", role: .destructive) {
                     deleting = true
                     Task {
                         let ok = await store.deleteAccount()
@@ -494,13 +451,13 @@ struct SettingsView: View {
                         if ok { FX.warning(); dismiss() } else { deleteFailed = true }
                     }
                 }
-                Button("Cancelar", role: .cancel) {}
+                Button("Cancel", role: .cancel) {}
             } message: {
-                Text("Se borrarán PARA SIEMPRE tu perfil, entrenos, mensajes, seguidores y fotos. Esta acción no se puede deshacer.")
+                Text("Your profile, workouts, messages, followers and photos will be deleted FOREVER. This can't be undone.")
             }
-            .alert("No se pudo eliminar la cuenta", isPresented: $deleteFailed) {
-                Button("Entendido", role: .cancel) {}
-            } message: { Text("Comprueba tu conexión e inténtalo de nuevo.") }
+            .alert("Couldn't delete the account", isPresented: $deleteFailed) {
+                Button("Got it", role: .cancel) {}
+            } message: { Text("Check your connection and try again.") }
             .overlay { if deleting { ZStack { Color.black.opacity(0.25).ignoresSafeArea(); ProgressView().tint(.white) } } }
         }
     }
@@ -531,7 +488,7 @@ struct LegalView: View {
                 .padding(16)
         }
         .background(Brand.bg)
-        .navigationTitle(kind == .privacy ? "Política de privacidad" : (kind == .community ? "Normas de la comunidad" : "Términos de uso"))
+        .navigationTitle(kind == .privacy ? "Privacy policy" : (kind == .community ? "Community guidelines" : "Terms of use"))
         .navigationBarTitleDisplayMode(.inline)
     }
 
@@ -539,70 +496,70 @@ struct LegalView: View {
         switch kind {
         case .privacy:
             return """
-            En Forge Loop nos tomamos en serio tu privacidad.
+            At Forge Loop we take your privacy seriously.
 
-            Datos que tratamos
-            • Tu cuenta (nombre, @usuario y foto), tus datos de perfil (sexo, edad, país, ciudad, gimnasio) y tus entrenos.
-            • Si conectas la app Salud, leemos tu frecuencia cardíaca solo durante el entrenamiento para mostrarla y guardarla en la sesión.
-            • Si concedes permiso de ubicación, la usamos para el ranking y para mostrarte gente cercana; nunca compartimos tu posición exacta.
+            Data we process
+            • Your account (name, @username and photo), your profile details (sex, age, country, city, gym) and your workouts.
+            • If you connect the Health app, we read your heart rate only during a workout, to show it and save it with the session.
+            • If you grant location permission, we use it for the ranking and to show you people nearby; we never share your exact position.
 
-            Dónde se guardan
-            • Actualmente tus datos se almacenan en tu dispositivo. No se venden ni se ceden a terceros con fines publicitarios.
+            Where it is stored
+            • Your data is currently stored on your device. It is not sold or passed on to third parties for advertising.
 
-            Tus derechos
-            • Puedes editar o borrar tus datos en cualquier momento desde tu perfil, y cerrar sesión para eliminar tu cuenta local.
+            Your rights
+            • You can edit or delete your data at any time from your profile, and sign out to remove your local account.
 
-            Contacto
-            • Para cualquier duda escríbenos a soporte@forgeloop.app.
+            Contact
+            • For any questions, write to us at soporte@forgeloop.app.
 
-            Esta política puede actualizarse; te avisaremos de cambios relevantes dentro de la app.
+            This policy may be updated; we will let you know about relevant changes inside the app.
             """
         case .terms:
             return """
-            Términos de uso de Forge Loop.
+            Forge Loop Terms of Use.
 
-            Uso de la app
-            • Forge Loop te ayuda a registrar tus entrenamientos y conectar con otras personas. Eres responsable de la información que publicas.
+            Using the app
+            • Forge Loop helps you log your workouts and connect with other people. You are responsible for the information you post.
 
-            Salud y seguridad
-            • El contenido de la app es informativo y no sustituye el consejo de un profesional. Entrena de forma segura y consulta a un médico antes de empezar un programa.
+            Health and safety
+            • The content in the app is for information only and does not replace advice from a professional. Train safely and see a doctor before starting a programme.
 
-            Comunidad y contenido de usuarios
-            • Trata con respeto al resto de usuarios. Aplicamos TOLERANCIA CERO con el contenido objetable y los comportamientos abusivos.
-            • Está prohibido publicar contenido ilegal, acoso, discurso de odio, amenazas, desnudos o contenido sexual, violencia, spam, suplantación o cualquier material que infrinja derechos de terceros.
-            • Puedes REPORTAR cualquier publicación o usuario (menú ⋯) y BLOQUEAR a quien no quieras ver. Revisamos los reportes y retiramos el contenido infractor y a los usuarios abusivos en un plazo máximo de 24 horas. El contenido con múltiples reportes se oculta automáticamente.
-            • Consulta las "Normas de la comunidad" para el detalle. Nos reservamos el derecho de retirar contenido o cuentas que las incumplan.
+            Community and user content
+            • Treat other users with respect. We apply ZERO TOLERANCE to objectionable content and abusive behaviour.
+            • It is forbidden to post illegal content, harassment, hate speech, threats, nudity or sexual content, violence, spam, impersonation or any material that infringes the rights of others.
+            • You can REPORT any post or user (⋯ menu) and BLOCK anyone you don't want to see. We review reports and remove infringing content and abusive users within 24 hours at most. Content with multiple reports is hidden automatically.
+            • See the "Community guidelines" for details. We reserve the right to remove content or accounts that break them.
 
-            Responsabilidad
-            • La app se ofrece "tal cual". En la medida que permita la ley, no nos hacemos responsables de daños derivados del uso de la app.
+            Liability
+            • The app is provided "as is". To the extent permitted by law, we are not liable for damages arising from the use of the app.
 
-            Contacto
+            Contact
             • soporte@forgeloop.app
             """
         case .community:
             return """
-            Normas de la comunidad de Forge Loop.
+            Forge Loop Community Guidelines.
 
-            Queremos una comunidad segura y motivadora. Al usar la app aceptas estas normas. Aplicamos TOLERANCIA CERO con el contenido objetable y los usuarios abusivos.
+            We want a safe, motivating community. By using the app you accept these guidelines. We apply ZERO TOLERANCE to objectionable content and abusive users.
 
-            Contenido PROHIBIDO
-            • Acoso, intimidación o amenazas a otras personas.
-            • Discurso de odio o discriminación por raza, etnia, religión, sexo, orientación, discapacidad, etc.
-            • Desnudos, contenido sexual o sexualmente sugerente.
-            • Violencia, autolesiones o contenido que promueva trastornos alimentarios o sustancias peligrosas.
-            • Contenido ilegal, spam, estafas, o suplantación de identidad.
-            • Material que infrinja derechos de autor o de terceros.
+            FORBIDDEN content
+            • Harassment, bullying or threats towards other people.
+            • Hate speech or discrimination based on race, ethnicity, religion, sex, orientation, disability, etc.
+            • Nudity, sexual or sexually suggestive content.
+            • Violence, self-harm or content that promotes eating disorders or dangerous substances.
+            • Illegal content, spam, scams or impersonation.
+            • Material that infringes copyright or the rights of others.
 
-            Cómo mantenemos la comunidad segura
-            • REPORTAR: en cualquier publicación o perfil, abre el menú ⋯ y pulsa "Reportar".
-            • BLOQUEAR: desde el mismo menú puedes bloquear a un usuario; dejarás de ver su contenido y él el tuyo.
-            • MODERACIÓN: revisamos los reportes y retiramos el contenido infractor y expulsamos a los usuarios abusivos en un máximo de 24 horas. El contenido con varios reportes se oculta automáticamente mientras se revisa.
+            How we keep the community safe
+            • REPORT: on any post or profile, open the ⋯ menu and tap "Report".
+            • BLOCK: from the same menu you can block a user; you will stop seeing their content and they will stop seeing yours.
+            • MODERATION: we review reports, remove infringing content and ban abusive users within 24 hours at most. Content with several reports is hidden automatically while it is reviewed.
 
-            Consecuencias
-            • Incumplir estas normas puede suponer la retirada del contenido, la limitación de funciones o la eliminación de la cuenta.
+            Consequences
+            • Breaking these guidelines may lead to removal of content, limited features or deletion of the account.
 
-            Reportar un problema o apelar
-            • Escríbenos a soporte@forgeloop.app.
+            Report a problem or appeal
+            • Write to us at soporte@forgeloop.app.
             """
         }
     }

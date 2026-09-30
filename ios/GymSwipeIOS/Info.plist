@@ -40,7 +40,7 @@
 	<key>LSApplicationCategoryType</key>
 	<string>public.app-category.healthcare-fitness</string>
 	<key>NSCameraUsageDescription</key>
-	<string>Forge Loop usa la cámara para hacer la foto de tu entreno.</string>
+	<string>Forge Loop uses the camera to take your workout photo.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>Forge Loop uses your location to show how far away people in your circle are. Others only see the distance, never where you are.</string>
 	<key>NSSupportsLiveActivities</key>

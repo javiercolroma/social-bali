@@ -5,10 +5,10 @@ import AppIntents
 /// comunicarse con la sesión en marcha vía `WorkoutRemote.shared`.
 @available(iOS 17.0, *)
 struct WorkoutControlIntent: LiveActivityIntent {
-    static var title: LocalizedStringResource = "Controlar entreno"
+    static var title: LocalizedStringResource = "Control workout"
     static var isDiscoverable = false
 
-    @Parameter(title: "Acción")
+    @Parameter(title: "Action")
     var action: String
 
     init() {}
