@@ -28,7 +28,10 @@ struct ChatView: View {
     @State private var showProfile = false
     @State private var attachMenu = false
     @State private var showLibrary = false
-    @State private var libraryItem: PhotosPickerItem?
+    @State private var libraryItems: [PhotosPickerItem] = []
+    @State private var showLocation = false
+    /// Lo elegido (tira, galería o cámara), pendiente de la vista previa con pie de foto.
+    @State private var pendingBatch: PendingBatch?
     @State private var showCamera = false
     @State private var sending = 0
     @State private var sendError: String?
@@ -133,30 +136,53 @@ struct ChatView: View {
         .onChange(of: draft) { v in if !v.isEmpty { sendTyping() } }
         .sheet(isPresented: $showProfile) { ClubProfileView(personId: personId).environmentObject(store) }
         .sheet(isPresented: $attachMenu) {
-            AttachSheet { choice in
+            AttachPanel(onAction: { action in
                 attachMenu = false
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
-                    switch choice {
+                    switch action {
                     case .camera: showCamera = true
-                    case .photos: showLibrary = true
-                    case .location: Task { await sendLocation() }
+                    case .library: showLibrary = true
+                    case .location: showLocation = true
                     }
                 }
-            }
+            }, onSend: { items in
+                attachMenu = false
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) { pendingBatch = PendingBatch(items: items) }
+            })
         }
-        .photosPicker(isPresented: $showLibrary, selection: $libraryItem, matching: .any(of: [.images, .videos, .livePhotos]),
-                      photoLibrary: .shared())
-        .onChange(of: libraryItem) { item in
-            guard let item else { return }
-            libraryItem = nil
-            Task { await sendPicked(item) }
+        .photosPicker(isPresented: $showLibrary, selection: $libraryItems, maxSelectionCount: 10,
+                      matching: .any(of: [.images, .videos]), photoLibrary: .shared())
+        .onChange(of: libraryItems) { items in
+            guard !items.isEmpty else { return }
+            libraryItems = []
+            Task { await preparePicked(items) }
         }
         .fullScreenCover(isPresented: $showCamera) {
             CameraPicker { result in
                 showCamera = false
-                Task { await sendCamera(result) }
+                guard let result else { return }
+                // Como en WhatsApp: tras la foto, vista previa con pie de foto antes de enviar.
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+                    switch result {
+                    case .image(let img): pendingBatch = PendingBatch(items: [.image(img)])
+                    case .video(let url): pendingBatch = PendingBatch(items: [.video(url)])
+                    }
+                }
             }
             .ignoresSafeArea()
+        }
+        .fullScreenCover(item: $pendingBatch) { batch in
+            MediaSendPreview(items: batch.items, recipientName: person?.name ?? "",
+                             onSend: { caption in
+                                 pendingBatch = nil
+                                 Task { await sendPending(batch.items, caption: caption) }
+                             },
+                             onCancel: { pendingBatch = nil })
+        }
+        .sheet(isPresented: $showLocation) {
+            LocationSendSheet { c in
+                deliver(MessageInsert(sender_id: "", recipient_id: "", text: "", kind: "location", lat: c.latitude, lon: c.longitude))
+            }
         }
         .fullScreenCover(item: $viewer) { MediaViewer(message: $0) }
     }
@@ -493,6 +519,36 @@ struct ChatView: View {
         }
     }
 
+    /// Galería completa → vista previa (como con la tira y la cámara).
+    private func preparePicked(_ items: [PhotosPickerItem]) async {
+        var out: [PendingMedia] = []
+        for it in items {
+            if it.supportedContentTypes.contains(where: { $0.conforms(to: .movie) }),
+               let m = try? await it.loadTransferable(type: PickedMovie.self) {
+                out.append(.video(m.url))
+            } else if let d = try? await it.loadTransferable(type: Data.self), let img = UIImage(data: d) {
+                out.append(.image(img))
+            }
+        }
+        if !out.isEmpty { pendingBatch = PendingBatch(items: out) }
+    }
+
+    /// Sube y envía; el pie de foto va con la primera.
+    private func sendPending(_ items: [PendingMedia], caption: String) async {
+        sending += items.count
+        for (i, m) in items.enumerated() {
+            do {
+                var ins = insert(for: try await PendingUploader.upload(m))
+                if i == 0 { ins = MessageInsert(sender_id: "", recipient_id: "", text: caption, kind: ins.kind, media_url: ins.media_url,
+                                                poster_url: ins.poster_url, media_w: ins.media_w, media_h: ins.media_h) }
+                deliver(ins)
+            } catch {
+                sendError = (error as? LocalizedError)?.errorDescription ?? L10n.t("Couldn't send. Try again.")
+            }
+            sending -= 1
+        }
+    }
+
     private func sendPicked(_ item: PhotosPickerItem) async {
         sending += 1; defer { sending -= 1 }
         do { deliver(insert(for: try await MediaUploader.upload(item))) }
@@ -619,6 +675,11 @@ struct ChatView: View {
     }
 }
 
+struct PendingBatch: Identifiable {
+    let id = UUID()
+    let items: [PendingMedia]
+}
+
 // MARK: - Burbujas
 
 struct ChatBubble: View {
@@ -727,6 +788,10 @@ struct ChatBubble: View {
                         }
                         .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
                     }.buttonStyle(.plain)
+                    if !message.text.trimmingCharacters(in: .whitespaces).isEmpty {
+                        Text(message.text).font(.system(size: 16)).foregroundColor(Brand.ink)
+                            .frame(width: 222, alignment: .leading).padding(.horizontal, 4).padding(.bottom, 2)
+                    }
                 }
                 .padding(4)
                 .padding(message.fromMe ? .trailing : .leading, tail ? 6 : 0)
@@ -759,16 +824,28 @@ struct ChatBubble: View {
             default:
                 VStack(alignment: .leading, spacing: 4) {
                     quote
-                    // La hora va pegada al final del texto, como en WhatsApp.
-                    (Text(message.preview).font(.system(size: 16)).foregroundColor(Brand.ink)
-                     + Text(message.fromMe ? "          ‎ " : "      ‎ ").font(.system(size: 11)))
-                        .fixedSize(horizontal: false, vertical: true)
-                        .overlay(alignment: .bottomTrailing) { meta.foregroundColor(Brand.muted).offset(y: 2) }
+                    // Como en WhatsApp: si cabe, la hora va al final de la misma línea;
+                    // si el texto ocupa varias líneas, baja a su propia línea (nunca encima).
+                    ViewThatFits(in: .horizontal) {
+                        HStack(alignment: .lastTextBaseline, spacing: 8) {
+                            bodyText.fixedSize()
+                            meta.foregroundColor(Brand.muted)
+                        }
+                        VStack(alignment: .trailing, spacing: 2) {
+                            bodyText.fixedSize(horizontal: false, vertical: true)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                            meta.foregroundColor(Brand.muted)
+                        }
+                    }
                 }
                 .padding(.horizontal, 10).padding(.vertical, 7)
                 .padding(message.fromMe ? .trailing : .leading, tail ? 6 : 0)
             }
         }
+    }
+
+    private var bodyText: some View {
+        Text(message.preview).font(.system(size: 16)).foregroundColor(Brand.ink)
     }
 
     private var mediaAspect: CGFloat {
@@ -791,12 +868,15 @@ struct ChatBubble: View {
         }
     }
 
+    /// Abre la ubicación en Google Maps (la app si está instalada; si no, la web).
     private func openInMaps() {
         guard let lat = message.lat, let lon = message.lon else { return }
-        let item = MKMapItem(placemark: MKPlacemark(coordinate: CLLocationCoordinate2D(latitude: lat, longitude: lon)))
-        item.name = message.fromMe ? L10n.t("My location") : L10n.t("Shared location")
-        item.openInMaps()
+        let app = URL(string: "comgooglemaps://?q=\(lat),\(lon)&center=\(lat),\(lon)&zoom=16")!
+        let web = URL(string: "https://www.google.com/maps/search/?api=1&query=\(lat),\(lon)")!
+        if UIApplication.shared.canOpenURL(app) { UIApplication.shared.open(app) }
+        else { UIApplication.shared.open(web) }
     }
+
 }
 
 /// Burbuja con «colita» en la última de cada grupo, como en WhatsApp.

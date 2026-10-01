@@ -7,6 +7,7 @@ struct GymSwipeIOSApp: App {
     @StateObject private var store = AppStore()
 
     @Environment(\.scenePhase) private var scenePhase
+    @State private var showSplash = true
 
     var body: some Scene {
         WindowGroup {
@@ -20,6 +21,14 @@ struct GymSwipeIOSApp: App {
             // Vía NATIVA de SwiftUI: los Text localizan con el locale del entorno.
             .environment(\.locale, L10n.locale)
             .environmentObject(store)
+            // Arranque con el logo dibujándose.
+            .overlay {
+                if showSplash {
+                    LaunchSplash { withAnimation(.easeOut(duration: 0.35)) { showSplash = false } }
+                        .transition(.opacity)
+                        .zIndex(100)
+                }
+            }
             // La paleta de Brand es CLARA fija (fondos blancos, tinta casi negra) y los
             // fondos se escriben a mano con `Color.white`. En un iPhone en modo oscuro,
             // todo lo que NO lleva color explícito (el texto que escribes en un TextField,

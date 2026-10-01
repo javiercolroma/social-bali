@@ -24,6 +24,7 @@
 		6A9B443DE5B7B54DE374C3A1 /* ClubProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2240957DB593117FC154CFD /* ClubProfileView.swift */; };
 		6F3B3519B39CCE8280492005 /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 29747A9B85AA4E6D8D9D3843 /* RootView.swift */; };
 		851668B790A10004977975C2 /* ChatsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 867161603B2BAD433155C11B /* ChatsView.swift */; };
+		8D97FCE1E2969654D912871F /* ChatAttach.swift in Sources */ = {isa = PBXBuildFile; fileRef = C79990C6E9E1DD8E1E2ECE72 /* ChatAttach.swift */; };
 		943FFB855FB199E7284B3F19 /* SocialClub.swift in Sources */ = {isa = PBXBuildFile; fileRef = D6EC6B48C1199B831CEB9E85 /* SocialClub.swift */; };
 		96BF0657964B419B9F01B3EB /* SearchFields.swift in Sources */ = {isa = PBXBuildFile; fileRef = A13A6C62B64C684CF0D535E4 /* SearchFields.swift */; };
 		A6EA57786D3C06C98EFBF7E5 /* NotificationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 65AB2F19CF6DCC5B645AB356 /* NotificationManager.swift */; };
@@ -32,6 +33,7 @@
 		AFA3179FD6DCF9C72EA02C7A /* ChatKit.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1F5D6DB2C7D68DB27D0C39C4 /* ChatKit.swift */; };
 		B2BA2EDCA173DDEDD61FF8BD /* SocialViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = A94209F7155C5A09DA6E950A /* SocialViews.swift */; };
 		BA42448E61D8F741BC01820C /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD5D6AB5B854D33B50CA68B /* OnboardingView.swift */; };
+		BAA07060CE7F7A1A7CC504CA /* LaunchSplash.swift in Sources */ = {isa = PBXBuildFile; fileRef = B882A7727979F051EE5D14F5 /* LaunchSplash.swift */; };
 		BAD7EE358BFA5FB317D4B4BE /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = 576D24DF9F2FA5F465491620 /* Localizable.strings */; };
 		C01A2049E004FBE4ADDF5F10 /* SessionFX.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6323375755B5CE9680137707 /* SessionFX.swift */; };
 		C621063B40DD7E4CCC5A1CF6 /* BackendConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7E6B792B4F4EA9197E1B827D /* BackendConfig.swift */; };
@@ -69,6 +71,8 @@
 		A94209F7155C5A09DA6E950A /* SocialViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SocialViews.swift; sourceTree = "<group>"; };
 		A9D179BB3951BE1D2D1A2028 /* ProfilePhotos.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfilePhotos.swift; sourceTree = "<group>"; };
 		B83B0B92285D78A53157123F /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		B882A7727979F051EE5D14F5 /* LaunchSplash.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LaunchSplash.swift; sourceTree = "<group>"; };
+		C79990C6E9E1DD8E1E2ECE72 /* ChatAttach.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatAttach.swift; sourceTree = "<group>"; };
 		CD3AC12803315FF68CF2026F /* YourCircleView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = YourCircleView.swift; sourceTree = "<group>"; };
 		CF4285C11A5627FB6E0D6934 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/Localizable.strings; sourceTree = "<group>"; };
 		D0B083763AEA6D7CE3C7B500 /* AppStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppStore.swift; sourceTree = "<group>"; };
@@ -119,6 +123,7 @@
 				75B84C1241AA6578E1A438C3 /* AuthView.swift */,
 				525FBF89172E34D317FCAF44 /* Backend.swift */,
 				7E6B792B4F4EA9197E1B827D /* BackendConfig.swift */,
+				C79990C6E9E1DD8E1E2ECE72 /* ChatAttach.swift */,
 				1F5D6DB2C7D68DB27D0C39C4 /* ChatKit.swift */,
 				867161603B2BAD433155C11B /* ChatsView.swift */,
 				EDB23F12AC1449D14A818B0F /* ChatView.swift */,
@@ -129,6 +134,7 @@
 				9CAC012CB53EB545C20ED468 /* GymSwipeIOSApp.swift */,
 				45AAAB98E146869DA2747469 /* Info.plist */,
 				00CC401644E3732F65E33662 /* L10n.swift */,
+				B882A7727979F051EE5D14F5 /* LaunchSplash.swift */,
 				9C951BC98D3C387AE7EC6AB5 /* Media.swift */,
 				D1596E5BECE9666DDA76867A /* Models.swift */,
 				51DF717BE919A8C661988A97 /* Moments.swift */,
@@ -236,6 +242,7 @@
 				A89D564806DC6E75C368E3EB /* AuthView.swift in Sources */,
 				0B44BA771BBDD065482CD7C3 /* Backend.swift in Sources */,
 				C621063B40DD7E4CCC5A1CF6 /* BackendConfig.swift in Sources */,
+				8D97FCE1E2969654D912871F /* ChatAttach.swift in Sources */,
 				AFA3179FD6DCF9C72EA02C7A /* ChatKit.swift in Sources */,
 				CCFF2A0C3EF3643596E9504F /* ChatView.swift in Sources */,
 				851668B790A10004977975C2 /* ChatsView.swift in Sources */,
@@ -244,6 +251,7 @@
 				FF1D8080F80F010C04EB3609 /* Countries.swift in Sources */,
 				FBCDEE4F608FFD8E2591F44A /* GymSwipeIOSApp.swift in Sources */,
 				0897EB10B993D37439BAEE79 /* L10n.swift in Sources */,
+				BAA07060CE7F7A1A7CC504CA /* LaunchSplash.swift in Sources */,
 				282D409F85299EB36125F5F7 /* Media.swift in Sources */,
 				D1A51AF5DF1BCC6CDABBD42C /* Models.swift in Sources */,
 				2DBD55AA73382ED2781DF3BB /* Moments.swift in Sources */,
@@ -312,7 +320,7 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 10;
+				CURRENT_PROJECT_VERSION = 11;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				DEVELOPMENT_TEAM = 5JHD53WQ67;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
@@ -379,7 +387,7 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 10;
+				CURRENT_PROJECT_VERSION = 11;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = 5JHD53WQ67;
 				ENABLE_NS_ASSERTIONS = NO;

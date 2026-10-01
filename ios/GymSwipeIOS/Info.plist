@@ -33,12 +33,18 @@
 	<false/>
 	<key>LSApplicationCategoryType</key>
 	<string>public.app-category.social-networking</string>
+	<key>LSApplicationQueriesSchemes</key>
+	<array>
+		<string>comgooglemaps</string>
+	</array>
 	<key>NSCameraUsageDescription</key>
 	<string>Bali Circle uses the camera when you send a photo or video in a chat.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>Bali Circle uses your location to show how far away people in your circle are. Others only see the distance, never where you are.</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>Bali Circle uses the microphone to record voice messages.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Bali Circle shows your recent photos so you can send them quickly in a chat.</string>
 	<key>UILaunchScreen</key>
 	<dict>
 		<key>UIColorName</key>
