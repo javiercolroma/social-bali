@@ -61,7 +61,7 @@ struct YourCircleView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 18) {
                 header
-                Masonry(spacing: 10, aspects: people.map(Self.aspect)) {
+                Masonry(spacing: 10, aspects: people.indices.map { Self.aspect(people[$0], at: $0) }) {
                     ForEach(Array(people.enumerated()), id: \.element.id) { i, row in
                         CircleCell(row: row, myArea: area) { FX.tap(); openProfile = row }
                             .onAppear { markSeen(i + 1) }
@@ -74,11 +74,11 @@ struct YourCircleView: View {
         .refreshable { await load() }
     }
 
-    /// Alturas distintas aunque falten medidas, para que la rejilla respire.
-    static func aspect(_ r: ProfileRow) -> CGFloat {
-        if let a = r.media?.first?.aspect { return a }
-        return r.id.uuidString.last.map { "02468ace".contains($0.lowercased()) } == true ? 3 / 4 : 4 / 5
-    }
+    /// Ritmo tipo Pinterest: alturas que alternan por posición (las fotos se recortan
+    /// para llenar), así la rejilla nunca queda uniforme aunque todas sean 4:5.
+    static let rhythm: [CGFloat] = [0.72, 0.58, 0.8, 0.64, 0.86, 0.6, 0.75, 0.68]
+
+    static func aspect(_ r: ProfileRow, at i: Int) -> CGFloat { rhythm[i % rhythm.count] }
 
     private var newCount: Int { people.filter { $0.first_time == true || $0.badge == "new" || $0.badge == "just_arrived" }.count }
 
