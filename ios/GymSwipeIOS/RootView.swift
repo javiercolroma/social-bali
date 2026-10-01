@@ -8,7 +8,6 @@ struct RootView: View {
     enum Tab: Hashable { case circle, chats, profile }
     @State private var tab: Tab = .circle
     @State private var chatPerson: IdString?
-    @ObservedObject private var match = MatchCenter.shared
 
     var body: some View {
         VStack(spacing: 0) {
@@ -20,11 +19,9 @@ struct RootView: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .onChange(of: tab) { _ in FX.selection() }
 
-            ClubTabBar(tab: tab, chatsBadge: store.unreadMessages + store.incomingRequests.count) { tab = $0 }
+            ClubTabBar(tab: tab, chatsBadge: store.unreadMessages) { tab = $0 }
         }
         .background(Brand.bg.ignoresSafeArea())
-        // «It's a match» (los dos dijeron «interested»): a pantalla completa, sobre todo.
-        .fullScreenCover(item: $match.match) { MatchView(info: $0).environmentObject(store) }
         // «Message» / aceptar una conexión: abre el chat desde cualquier pantalla.
         .onReceive(store.$openChatWith.compactMap { $0 }) { pid in
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.45) {

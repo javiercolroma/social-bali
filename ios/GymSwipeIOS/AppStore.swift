@@ -25,8 +25,6 @@ final class AppStore: ObservableObject {
     @Published var messagedPeople: [SocialPerson] = []
     /// Conectar con motivo (ver Connections.swift): solicitudes visibles para mí
     /// (enviadas, recibidas y aceptadas) y los perfiles de quienes aparecen en ellas.
-    @Published var connections: [ConnectionRow] = []
-    @Published var connectionPeople: [SocialPerson] = []
     /// Abre el chat con esta persona desde cualquier pantalla (RootView lo observa).
     @Published var openChatWith: String? = nil
     var myUserId: String? = nil
@@ -86,7 +84,7 @@ final class AppStore: ObservableObject {
     func person(_ id: String) -> SocialPerson? {
         // Insensible a mayúsculas (Postgres da el UUID en minúscula; Swift en mayúscula).
         let key = id.lowercased()
-        let all = messagedPeople + connectionPeople
+        let all = messagedPeople
         if let p = all.first(where: { $0.id.lowercased() == key }) { return p }
         // Usuario real no cacheado: placeholder para que SIEMPRE se abra el perfil;
         // ClubProfileView carga sus datos reales.
@@ -284,7 +282,7 @@ final class AppStore: ObservableObject {
         account = nil
         profile = Profile(sex: "", age: "", country: "", city: "", gym: "")
         conversations = []
-        connections = []; connectionPeople = []; myUserId = nil
+        myUserId = nil
         messagedPeople = []
         openChatWith = nil
         deepLinkPersonId = nil
@@ -359,4 +357,15 @@ final class AppStore: ObservableObject {
     }
 
     private func newId(_ prefix: String) -> String { "\(prefix)-\(Int(Date().timeIntervalSince1970 * 1000))-\(Int.random(in: 0..<100000))" }
+}
+
+extension AppStore {
+    /// ¿Busco citas (y puedo)? Decide si veo la intención «Dating» de los demás.
+    var iAmOpenToDating: Bool { profile.canDate && profile.intentList.contains(.dating) }
+
+    /// Guarda a una persona que acabo de ver, para que el chat sepa su nombre y foto
+    /// aunque aún no hayamos hablado.
+    func remember(_ p: SocialPerson) {
+        if !messagedPeople.contains(where: { $0.id.lowercased() == p.id.lowercased() }) { messagedPeople.append(p) }
+    }
 }

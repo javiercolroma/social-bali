@@ -20,7 +20,6 @@ struct YourCircleView: View {
     @State private var loading = true
     @State private var failed = false
     @State private var openProfile: ProfileRow?
-    @State private var showRequests = false
 
     var body: some View {
         Group {
@@ -53,7 +52,6 @@ struct YourCircleView: View {
             if ok { Task { try? await Task.sleep(nanoseconds: 3_000_000_000); await load() } }
         }
         .sheet(item: $openProfile) { ClubProfileView(personId: $0.id.uuidString.lowercased(), initial: $0).environmentObject(store) }
-        .sheet(isPresented: $showRequests) { ConnectionRequestsSheet().environmentObject(store) }
         .onChange(of: store.openChatWith) { v in if v != nil { openProfile = nil } }
     }
 
@@ -63,7 +61,6 @@ struct YourCircleView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 18) {
                 header
-                if !store.incomingRequests.isEmpty { requestsBanner }
                 Masonry(spacing: 10, aspects: people.map(Self.aspect)) {
                     ForEach(Array(people.enumerated()), id: \.element.id) { i, row in
                         CircleCell(row: row, myArea: area) { FX.tap(); openProfile = row }
@@ -100,21 +97,6 @@ struct YourCircleView: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.top, 4)
-    }
-
-    private var requestsBanner: some View {
-        Button { FX.tap(); showRequests = true } label: {
-            HStack(spacing: 10) {
-                Image(systemName: "hand.wave.fill").font(.system(size: 16))
-                Text(String(format: L10n.t("%lld people want to connect"), store.incomingRequests.count))
-                    .font(.system(size: 15, weight: .semibold))
-                Spacer()
-                Image(systemName: "chevron.right").font(.system(size: 12, weight: .bold))
-            }
-            .foregroundColor(Brand.onAccent)
-            .padding(.horizontal, 16).frame(height: 52)
-            .background(Brand.accent).clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-        }.buttonStyle(.plain)
     }
 
     private var endOfDay: some View {
@@ -163,7 +145,6 @@ struct YourCircleView: View {
         for attempt in 0..<3 {
             do {
                 let deck = try await Backend.shared.yourCircle()
-                store.loadConnections()
                 locked = deck.locked == true
                 people = deck.profiles
                 area = deck.area
@@ -212,10 +193,6 @@ struct CircleCell: View {
                     VStack(alignment: .leading, spacing: 2) {
                         HStack(spacing: 6) {
                             Text(nameLine).font(.system(size: 16, weight: .semibold)).lineLimit(1).minimumScaleFactor(0.8)
-                            if row.online == true {
-                                Circle().fill(Brand.online).frame(width: 8, height: 8)
-                                    .accessibilityLabel(Text("Online"))
-                            }
                         }
                         if let sub = subline {
                             Text(sub).font(.system(size: 12, weight: .medium)).opacity(0.85).lineLimit(1)
@@ -224,6 +201,16 @@ struct CircleCell: View {
                     .foregroundColor(.white)
                     .shadow(color: .black.opacity(0.3), radius: 3)
                     .padding(11)
+                }
+                // Activo ahora: punto verde arriba a la derecha, como en Grindr.
+                .overlay(alignment: .topTrailing) {
+                    if row.online == true {
+                        Circle().fill(Brand.online).frame(width: 12, height: 12)
+                            .overlay(Circle().stroke(Color.white, lineWidth: 2))
+                            .shadow(color: .black.opacity(0.25), radius: 2)
+                            .padding(10)
+                            .accessibilityLabel(Text("Active now"))
+                    }
                 }
                 .overlay(alignment: .topLeading) {
                     if let b = badgeText {

@@ -48,7 +48,7 @@ struct GymSwipeIOSApp: App {
                 if store.account == nil { store.hydrateAccountFromBackend() }
                 Task { await Backend.shared.touchPresence() }
                 PresenceService.shared.start()   // online + distancia de Your Circle (solo con la app abierta)
-                store.loadConversations(); store.loadConnections()
+                store.loadConversations()
             }
             .onChange(of: scenePhase) { phase in
                 if phase == .active {

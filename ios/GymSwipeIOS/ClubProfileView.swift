@@ -124,8 +124,10 @@ struct ClubProfileView: View {
                 if p.online == true {
                     HStack(spacing: 5) {
                         Circle().fill(Brand.online).frame(width: 9, height: 9)
-                        Text("Online").font(.system(size: 12, weight: .heavy)).foregroundColor(Brand.bronze)
+                        Text("Active now").font(.system(size: 12, weight: .semibold)).foregroundColor(Brand.online)
                     }
+                    .padding(.horizontal, 9).frame(height: 24)
+                    .background(Brand.online.opacity(0.12)).clipShape(Capsule())
                 }
             }
             if let d = p.distance_m {
@@ -196,21 +198,25 @@ struct ClubProfileView: View {
             .padding(.horizontal, 12).frame(height: 32).background(Brand.chip).clipShape(Capsule())
     }
 
-    // MARK: Connect (fijo abajo)
+    // MARK: Mensaje (fijo abajo) — chat directo, sin solicitud previa
 
     private func connectBar(_ p: ProfileRow) -> some View {
-        ConnectControl(personId: personId,
-                       theyAreOpenToDating: p.club.intentList.contains(.dating),
-                       name: p.name ?? p.handle, photoURL: p.avatar_url)
-            .padding(.horizontal, 18).padding(.top, 12).padding(.bottom, 8)
-            .background(Brand.bg.opacity(0.96).ignoresSafeArea(edges: .bottom))
+        Button {
+            FX.tap()
+            store.remember(AppStore.asPeople([p])[0])
+            store.openChatWith = personId
+        } label: {
+            Label(String(format: L10n.t("Message %@"), p.name ?? ""), systemImage: "paperplane.fill")
+        }
+        .buttonStyle(PrimaryButtonStyle())
+        .padding(.horizontal, 18).padding(.top, 12).padding(.bottom, 8)
+        .background(Brand.bg.opacity(0.96).ignoresSafeArea(edges: .bottom))
     }
 
     // MARK: Datos y moderación
 
     private func load() async {
         guard BackendConfig.isConfigured else { return }
-        store.loadConnections()
         do {
             if let fresh = try await Backend.shared.clubProfile(personId) {
                 row = fresh
@@ -232,7 +238,7 @@ struct ClubProfileView: View {
         FX.warning()
         Task {
             try? await Backend.shared.blockUser(personId)
-            store.loadConnections()
+            store.loadConversations()
         }
         dismiss()
     }

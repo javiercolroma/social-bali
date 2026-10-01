@@ -25,12 +25,10 @@
 		851668B790A10004977975C2 /* ChatsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 867161603B2BAD433155C11B /* ChatsView.swift */; };
 		943FFB855FB199E7284B3F19 /* SocialClub.swift in Sources */ = {isa = PBXBuildFile; fileRef = D6EC6B48C1199B831CEB9E85 /* SocialClub.swift */; };
 		96BF0657964B419B9F01B3EB /* SearchFields.swift in Sources */ = {isa = PBXBuildFile; fileRef = A13A6C62B64C684CF0D535E4 /* SearchFields.swift */; };
-		9D4FBEE3B57C17DF17E47E2F /* ConnectFlow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3B26FE6BEDDE5599D7F2A266 /* ConnectFlow.swift */; };
 		A6EA57786D3C06C98EFBF7E5 /* NotificationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 65AB2F19CF6DCC5B645AB356 /* NotificationManager.swift */; };
 		A89D564806DC6E75C368E3EB /* AuthView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 75B84C1241AA6578E1A438C3 /* AuthView.swift */; };
 		ABC05E1BF5F85BCB72A3094C /* ProfilePhotos.swift in Sources */ = {isa = PBXBuildFile; fileRef = A9D179BB3951BE1D2D1A2028 /* ProfilePhotos.swift */; };
 		B2BA2EDCA173DDEDD61FF8BD /* SocialViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = A94209F7155C5A09DA6E950A /* SocialViews.swift */; };
-		B4C61EC392493D8C74EF5E39 /* Connections.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0B199B340DE39BAD8B333E2E /* Connections.swift */; };
 		BA42448E61D8F741BC01820C /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD5D6AB5B854D33B50CA68B /* OnboardingView.swift */; };
 		BAD7EE358BFA5FB317D4B4BE /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = 576D24DF9F2FA5F465491620 /* Localizable.strings */; };
 		C01A2049E004FBE4ADDF5F10 /* SessionFX.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6323375755B5CE9680137707 /* SessionFX.swift */; };
@@ -44,11 +42,9 @@
 
 /* Begin PBXFileReference section */
 		00CC401644E3732F65E33662 /* L10n.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = L10n.swift; sourceTree = "<group>"; };
-		0B199B340DE39BAD8B333E2E /* Connections.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Connections.swift; sourceTree = "<group>"; };
 		1D19B1F26226F79DC0669B52 /* Countries.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Countries.swift; sourceTree = "<group>"; };
 		29747A9B85AA4E6D8D9D3843 /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
 		3A318726DFFA74FF768BA96D /* PhotoSupport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhotoSupport.swift; sourceTree = "<group>"; };
-		3B26FE6BEDDE5599D7F2A266 /* ConnectFlow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConnectFlow.swift; sourceTree = "<group>"; };
 		43FB86BA08732C17FD45EDF6 /* GymSwipeIOS.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = GymSwipeIOS.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		45AAAB98E146869DA2747469 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		4FDBAEC8202622CA34A302EA /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
@@ -120,8 +116,6 @@
 				867161603B2BAD433155C11B /* ChatsView.swift */,
 				A2240957DB593117FC154CFD /* ClubProfileView.swift */,
 				A415A6402658DC75C3C37C3C /* Components.swift */,
-				3B26FE6BEDDE5599D7F2A266 /* ConnectFlow.swift */,
-				0B199B340DE39BAD8B333E2E /* Connections.swift */,
 				1D19B1F26226F79DC0669B52 /* Countries.swift */,
 				6D844158ED27007A7D1CBEDB /* GymSwipeIOS.entitlements */,
 				9CAC012CB53EB545C20ED468 /* GymSwipeIOSApp.swift */,
@@ -236,8 +230,6 @@
 				851668B790A10004977975C2 /* ChatsView.swift in Sources */,
 				6A9B443DE5B7B54DE374C3A1 /* ClubProfileView.swift in Sources */,
 				2A71043ED4BBAF7A09523AFF /* Components.swift in Sources */,
-				9D4FBEE3B57C17DF17E47E2F /* ConnectFlow.swift in Sources */,
-				B4C61EC392493D8C74EF5E39 /* Connections.swift in Sources */,
 				FF1D8080F80F010C04EB3609 /* Countries.swift in Sources */,
 				FBCDEE4F608FFD8E2591F44A /* GymSwipeIOSApp.swift in Sources */,
 				0897EB10B993D37439BAEE79 /* L10n.swift in Sources */,

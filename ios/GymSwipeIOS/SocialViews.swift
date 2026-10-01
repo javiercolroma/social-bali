@@ -56,10 +56,6 @@ struct ChatView: View {
     }
 
     private var person: SocialPerson? { store.person(personId) }
-    /// Usuario real sin conexión aceptada: el servidor rechazaría el mensaje (0026).
-    private var mustConnectFirst: Bool {
-        BackendConfig.isConfigured && UUID(uuidString: personId) != nil && !store.isConnected(personId)
-    }
     private var conversation: Conversation? { store.conversations.first { $0.personId == personId } }
     private var messages: [ChatMessage] { realMode ? realMessages : (conversation?.messages ?? []) }
 
@@ -93,22 +89,13 @@ struct ChatView: View {
             .padding(.horizontal, 16).padding(.vertical, 12)
             .background(Brand.bg).overlay(Divider(), alignment: .bottom)
 
-            // La conversación nace con un motivo (PRODUCT.md, principio 4).
-            if case .connected(let r) = store.connectionState(personId) {
-                Text(r == .interested ? "✨ " + L10n.t("It's a match") : L10n.t("You're connected"))
-                    .font(.caption).fontWeight(.semibold).foregroundColor(Brand.bronze)
-                    .padding(.horizontal, 12).padding(.vertical, 6)
-                    .background(Brand.sand.opacity(0.6)).clipShape(Capsule())
-                    .padding(.top, 8)
-            }
-
             ScrollViewReader { proxy in
                 ScrollView {
                     VStack(spacing: 8) {
                         if !messages.isEmpty {
                             ForEach(messages) { m in bubble(m).id(m.id) }
                         } else {
-                            emptyState(icon: "message", title: "No messages", body: "Write the first message.")
+                            emptyState(icon: "hand.wave", title: "Say hi", body: "Be friendly — this is a small community.")
                         }
                     }.padding(16)
                 }
@@ -118,19 +105,10 @@ struct ChatView: View {
                 }
             }
 
-            if mustConnectFirst {
-                VStack(spacing: 6) {
-                    Text("Connect first to send a message").font(.system(size: 15, weight: .heavy)).foregroundColor(Brand.ink)
-                    Text("Messages open once you've both agreed to connect.")
-                        .font(.caption).foregroundColor(Brand.muted).multilineTextAlignment(.center)
-                }
-                .frame(maxWidth: .infinity).padding(.horizontal, 14).padding(.vertical, 14)
-                .background(Brand.bg).overlay(Divider(), alignment: .top)
-            } else {
             VStack(spacing: 8) {
                 HStack(spacing: 8) {
                     TextField("Message", text: $draft, axis: .vertical)
-                .lineLimit(1...4)
+                        .lineLimit(1...4)
                         .padding(.horizontal, 16).frame(height: 46).background(Color.white).clipShape(Capsule())
                         .overlay(Capsule().stroke(Brand.line))
                     Button { send() } label: {
@@ -141,7 +119,6 @@ struct ChatView: View {
             }
             .padding(.horizontal, 14).padding(.vertical, 10)
             .background(Brand.bg).overlay(Divider(), alignment: .top)
-            }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Brand.bg.ignoresSafeArea())
