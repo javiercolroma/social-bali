@@ -87,7 +87,11 @@ struct YourCircleView: View {
 
     private var header: some View {
         VStack(alignment: .leading, spacing: 4) {
-            Text("YOUR CIRCLE").font(.system(size: 11, weight: .bold)).tracking(1.6).foregroundColor(Brand.muted)
+            HStack {
+                Text("YOUR CIRCLE").font(.system(size: 11, weight: .bold)).tracking(1.6).foregroundColor(Brand.muted)
+                Spacer()
+                NextCircleTimer()
+            }
             Text(Neighborhood(rawValue: area ?? "")?.label ?? "Bali").font(.display(34)).foregroundColor(Brand.ink)
             Text(newCount > 0
                  ? String(format: L10n.t("%1$lld people around you today · %2$lld new"), people.count, newCount)
@@ -176,6 +180,13 @@ struct YourCircleView: View {
 
     private static let bali = TimeZone(identifier: "Asia/Makassar") ?? .current
 
+    /// Segundos hasta la medianoche de Bali (cuando cambia el Circle).
+    static func secondsToNextCircle(from now: Date) -> Int {
+        var cal = Calendar(identifier: .gregorian); cal.timeZone = bali
+        let next = cal.date(byAdding: .day, value: 1, to: cal.startOfDay(for: now)) ?? now
+        return max(0, Int(next.timeIntervalSince(now)))
+    }
+
     static func untilTomorrow(from now: Date) -> String {
         var cal = Calendar(identifier: .gregorian); cal.timeZone = bali
         let next = cal.date(byAdding: .day, value: 1, to: cal.startOfDay(for: now)) ?? now
@@ -230,14 +241,31 @@ struct CircleCell: View {
         .buttonStyle(.plain)
     }
 
+    /// 0: zona · distancia — 1: bandera junto al nombre — 2: país · zona. Estable por persona.
+    private var style: Int {
+        guard row.club.homeCountry?.isEmpty == false else { return 0 }
+        return Int(row.id.uuidString.unicodeScalars.reduce(0) { ($0 &* 31 &+ Int($1.value)) & 0xffff } % 3)
+    }
+
+    private var flag: String { row.club.homeCountry.map(countryFlag) ?? "" }
+
     private var nameLine: String {
         let name = row.name ?? ""
-        return row.age.map { "\(name), \($0)" } ?? name
+        let base = row.age.map { "\(name), \($0)" } ?? name
+        return style == 1 ? "\(base) \(flag)" : base
     }
 
     private var subline: String? {
-        if let m = row.distance_m { return CircleDistance.label(m) }
-        return row.club.area?.label
+        let dist = row.distance_m.map(CircleDistance.label)
+        let area = row.club.area?.label
+        switch style {
+        case 2:
+            let country = row.club.homeCountry.map(countryName) ?? ""
+            return ["\(flag) \(country)", area].compactMap { $0 }.joined(separator: " · ")
+        default:
+            let parts = [area, dist].compactMap { $0 }
+            return parts.isEmpty ? nil : parts.joined(separator: " · ")
+        }
     }
 
     private var badgeText: String? {
@@ -270,6 +298,26 @@ struct CircleCell: View {
                 LinearGradient(colors: [Brand.sand, Brand.sandDeep], startPoint: .topLeading, endPoint: .bottomTrailing)
                 Text(row.club.sportList.first?.emoji ?? "🙂").font(.system(size: 54)).offset(y: -14)
             }
+        }
+    }
+}
+
+// MARK: - Cronómetro del Circle
+
+/// «New in 05:12:33»: cuenta atrás hasta que llega gente nueva (medianoche de Bali).
+struct NextCircleTimer: View {
+    var body: some View {
+        TimelineView(.periodic(from: .now, by: 1)) { ctx in
+            let s = YourCircleView.secondsToNextCircle(from: ctx.date)
+            HStack(spacing: 5) {
+                Image(systemName: "hourglass").font(.system(size: 10, weight: .semibold))
+                Text(String(format: "%02d:%02d:%02d", s / 3600, (s % 3600) / 60, s % 60))
+                    .font(.system(size: 12, weight: .semibold).monospacedDigit())
+            }
+            .foregroundColor(Brand.ink)
+            .padding(.horizontal, 10).frame(height: 26)
+            .background(Brand.chip).clipShape(Capsule())
+            .accessibilityLabel(Text("New people in \(s / 3600) hours \((s % 3600) / 60) minutes"))
         }
     }
 }

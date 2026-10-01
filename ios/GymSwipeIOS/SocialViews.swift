@@ -95,7 +95,7 @@ struct ChatView: View {
 
             // La conversación nace con un motivo (PRODUCT.md, principio 4).
             if case .connected(let r) = store.connectionState(personId) {
-                Text("\(r.emoji) \(String(format: L10n.t("You connected to %@"), r.label.lowercased()))")
+                Text(r == .interested ? "✨ " + L10n.t("It's a match") : L10n.t("You're connected"))
                     .font(.caption).fontWeight(.semibold).foregroundColor(Brand.bronze)
                     .padding(.horizontal, 12).padding(.vertical, 6)
                     .background(Brand.sand.opacity(0.6)).clipShape(Capsule())

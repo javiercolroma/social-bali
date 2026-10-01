@@ -128,16 +128,37 @@ struct ClubProfileView: View {
                     }
                 }
             }
-            let place = [club.area?.label, p.distance_m.map(CircleDistance.label)].compactMap { $0 }
-            if !place.isEmpty {
-                Label(place.joined(separator: " · "), systemImage: "mappin.and.ellipse")
-                    .font(.system(size: 15, weight: .semibold)).foregroundColor(Brand.muted)
+            if let d = p.distance_m {
+                Label(CircleDistance.label(d) + " " + L10n.t("away"), systemImage: "location.fill")
+                    .font(.system(size: 14, weight: .medium)).foregroundColor(Brand.muted)
             }
-            if let home = club.homeLine {
-                Label(String(format: L10n.t("From %@"), home), systemImage: "globe.europe.africa.fill")
-                    .font(.system(size: 15, weight: .semibold)).foregroundColor(Brand.muted)
+            // Dónde vive y de dónde es: con presencia, no como una línea más.
+            HStack(spacing: 10) {
+                if let a = club.area { placeCard(L10n.t("LIVES IN"), a.label, symbol: "mappin.and.ellipse") }
+                if let c = club.homeCountry, !c.isEmpty { placeCard(L10n.t("FROM"), countryName(c), flag: countryFlag(c)) }
             }
+            .padding(.top, 6)
         }
+    }
+
+    private func placeCard(_ title: String, _ value: String, symbol: String? = nil, flag: String? = nil) -> some View {
+        HStack(spacing: 10) {
+            if let flag { Text(flag).font(.system(size: 30)) }
+            else if let symbol {
+                Image(systemName: symbol).font(.system(size: 16, weight: .semibold)).foregroundColor(Brand.bronze)
+                    .frame(width: 34, height: 34).background(Brand.sand).clipShape(Circle())
+            }
+            VStack(alignment: .leading, spacing: 1) {
+                Text(title).font(.system(size: 10, weight: .bold)).tracking(1).foregroundColor(Brand.muted)
+                Text(value).font(.display(17)).foregroundColor(Brand.ink).lineLimit(1).minimumScaleFactor(0.8)
+            }
+            Spacer(minLength: 0)
+        }
+        .padding(12)
+        .frame(maxWidth: .infinity)
+        .background(Brand.panel)
+        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).stroke(Brand.line))
     }
 
     /// «In Bali until Nov 12 · 2 weeks left»: lo que más cambia la utilidad de conectar.

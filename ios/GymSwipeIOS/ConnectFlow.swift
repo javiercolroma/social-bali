@@ -1,10 +1,10 @@
 import SwiftUI
 
-// MARK: - Connect: elegir el motivo (PRODUCT.md · Connect)
+// MARK: - Connect: una nota propia, no un mensaje predefinido
 //
-// No hay ❤️ mudo: al conectar se dice POR QUÉ. Quien lo recibe ve «Javier wants to go
-// surfing with you» y decide. «I'm interested» solo aparece si los dos buscan citas (y
-// tienen 18+), y solo se revela si es mutuo.
+// Al conectar puedes escribir una nota (opcional) que la otra persona ve con la
+// solicitud. Si los dos buscáis citas, aparece además «I'm interested», que es PRIVADO:
+// la otra persona solo lo sabe si también lo marca.
 
 struct ConnectSheet: View {
     @EnvironmentObject var store: AppStore
@@ -14,57 +14,84 @@ struct ConnectSheet: View {
     let photoURL: String?
     /// ¿Ofrecer «I'm interested»? Solo si ambos buscan citas.
     let offerInterested: Bool
+    @State private var note = ""
+    @State private var interested = false
     @State private var busy = false
+    @FocusState private var focused: Bool
 
-    private var reasons: [ConnectReason] { ConnectReason.social + (offerInterested ? [.interested] : []) }
+    private static let maxNote = 200
 
     var body: some View {
         VStack(alignment: .leading, spacing: 18) {
             Capsule().fill(Brand.line).frame(width: 40, height: 5).frame(maxWidth: .infinity).padding(.top, 8)
-            VStack(alignment: .leading, spacing: 4) {
-                Text(String(format: L10n.t("Connect with %@"), name))
-                    .font(.system(size: 24, weight: .heavy)).foregroundColor(Brand.ink)
-                Text("Say why. They'll see it with your request.")
-                    .font(.subheadline).foregroundColor(Brand.muted)
-            }
-            VStack(spacing: 10) {
-                ForEach(reasons) { r in
-                    Button { send(r) } label: {
-                        HStack(spacing: 14) {
-                            Text(r.emoji).font(.system(size: 26))
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text(r.label).font(.system(size: 17, weight: .heavy)).foregroundColor(Brand.ink)
-                                if r == .interested {
-                                    Text("Private — they'll only know if they're interested too.")
-                                        .font(.caption).foregroundColor(Brand.muted)
-                                }
-                            }
-                            Spacer()
-                            Image(systemName: "arrow.right").font(.system(size: 14, weight: .bold)).foregroundColor(Brand.soft)
-                        }
-                        .padding(.horizontal, 16).frame(minHeight: 60)
-                        .background(r == .interested ? Brand.sand.opacity(0.45) : Brand.chip.opacity(0.6))
-                        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-                    }
-                    .buttonStyle(.plain)
-                    .disabled(busy)
+            HStack(spacing: 14) {
+                Group {
+                    if let u = photoURL { RemoteFill(url: u) } else { Brand.sand }
+                }
+                .frame(width: 56, height: 56).clipShape(Circle())
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(String(format: L10n.t("Connect with %@"), name)).font(.display(24)).foregroundColor(Brand.ink)
+                    Text("They'll see your note with the request.").font(.subheadline).foregroundColor(Brand.muted)
                 }
             }
+
+            VStack(alignment: .trailing, spacing: 6) {
+                TextField(String(format: L10n.t("Say hi to %@… (optional)"), name), text: $note, axis: .vertical)
+                    .font(.system(size: 16)).foregroundColor(Brand.ink).tint(Brand.ink)
+                    .lineLimit(3...5)
+                    .focused($focused)
+                    .padding(14)
+                    .background(Color.white)
+                    .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                    .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).stroke(focused ? Brand.ink : Brand.line))
+                    .onChange(of: note) { v in if v.count > Self.maxNote { note = String(v.prefix(Self.maxNote)) } }
+                Text("\(note.count)/\(Self.maxNote)").font(.caption2).foregroundColor(Brand.soft)
+            }
+
+            if offerInterested {
+                Button { FX.selection(); interested.toggle() } label: {
+                    HStack(spacing: 12) {
+                        Text("✨").font(.system(size: 22))
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("I'm interested").font(.system(size: 16, weight: .semibold)).foregroundColor(Brand.ink)
+                            Text("Private — they'll only know if they're interested too.")
+                                .font(.caption).foregroundColor(Brand.muted)
+                        }
+                        Spacer()
+                        Image(systemName: interested ? "checkmark.circle.fill" : "circle")
+                            .font(.system(size: 22)).foregroundColor(interested ? Brand.ink : Brand.line)
+                    }
+                    .padding(.horizontal, 14).frame(minHeight: 60)
+                    .background(interested ? Brand.sand : Color.white)
+                    .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                    .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous)
+                        .stroke(interested ? Brand.ink : Brand.line, lineWidth: interested ? 1.5 : 1))
+                }
+                .buttonStyle(.plain)
+            }
+
+            Button { send() } label: {
+                if busy { ProgressView().tint(Brand.onAccent) } else { Text("Send request") }
+            }
+            .buttonStyle(PrimaryButtonStyle())
+            .disabled(busy)
             Spacer(minLength: 0)
         }
         .padding(.horizontal, 20)
         .background(Brand.bg)
-        .presentationDetents([.height(offerInterested ? 470 : 390)])
+        .presentationDetents([.large])
     }
 
-    private func send(_ r: ConnectReason) {
+    private func send() {
         busy = true
+        let reason: ConnectReason = interested ? .interested : .connect
+        let text = note.trimmingCharacters(in: .whitespacesAndNewlines)
         Task {
-            let result = await store.connect(personId, reason: r)
+            let result = await store.connect(personId, reason: reason, note: text.isEmpty ? nil : text)
             busy = false
             dismiss()
             // Los dos dijeron «interested»: se celebra como un match.
-            if result == "connected" && r == .interested {
+            if result == "connected" && reason == .interested {
                 try? await Task.sleep(nanoseconds: 350_000_000)
                 MatchCenter.shared.match = MatchInfo(personId: personId, name: name, photoURL: photoURL)
             }

@@ -7,42 +7,45 @@ import SwiftUI
 // puede escribir: lo impone el servidor (`messages_insert`), no solo la interfaz.
 
 enum ConnectReason: String, CaseIterable, Identifiable {
-    case train, surf, coffee, interested
+    /// Lo normal desde 2026-10-01: conectar con una nota propia opcional.
+    case connect
+    /// Citas: solo se revela si es mutuo.
+    case interested
+    /// Motivos predefinidos antiguos: se siguen leyendo en solicitudes ya enviadas.
+    case train, surf, coffee
 
     var id: String { rawValue }
 
-    /// Lo que eliges al conectar.
     var label: String {
         switch self {
+        case .connect:    return L10n.t("Connect")
+        case .interested: return L10n.t("I'm interested")
         case .train:      return L10n.t("Train together")
         case .surf:       return L10n.t("Surf sometime")
         case .coffee:     return L10n.t("Grab a coffee")
-        case .interested: return L10n.t("I'm interested")
         }
     }
 
-    /// Lo que ve quien lo recibe: «wants to surf sometime».
+    /// Lo que ve quien lo recibe.
     var receivedLine: String {
         switch self {
+        case .connect:    return L10n.t("wants to connect")
+        case .interested: return L10n.t("is interested in you")
         case .train:      return L10n.t("wants to train together")
         case .surf:       return L10n.t("wants to surf sometime")
         case .coffee:     return L10n.t("wants to grab a coffee")
-        case .interested: return L10n.t("is interested in you")
         }
     }
 
     var emoji: String {
         switch self {
+        case .connect: return "👋"
+        case .interested: return "✨"
         case .train: return "🏋️"
         case .surf: return "🏄"
         case .coffee: return "☕️"
-        case .interested: return "✨"
         }
     }
-
-    /// Los motivos sociales, siempre disponibles. «interested» va aparte (solo si ambos
-    /// buscan citas y tienen 18+).
-    static let social: [ConnectReason] = [.train, .surf, .coffee]
 }
 
 /// Fila de `public.connection_requests` (la RLS ya filtra lo que puedo ver).
@@ -53,6 +56,8 @@ struct ConnectionRow: Codable, Identifiable, Hashable {
     let reason: String
     let status: String
     let created_at: String
+    /// Nota personal de quien envía (0031).
+    var note: String? = nil
 
     var connectReason: ConnectReason? { ConnectReason(rawValue: reason) }
 }
@@ -70,16 +75,16 @@ extension Backend {
         guard let client else { return [] }
         _ = try await client.auth.session   // token renovado (ver todaysPeople)
         return try await client.from("connection_requests")
-            .select("id,from_id,to_id,reason,status,created_at")
+            .select("id,from_id,to_id,reason,status,created_at,note")
             .order("created_at", ascending: false)
             .execute().value
     }
 
     /// 'connected' o 'pending'.
-    func sendConnection(to personId: String, reason: ConnectReason) async throws -> String {
+    func sendConnection(to personId: String, reason: ConnectReason, note: String?) async throws -> String {
         guard let client else { throw BackendError.notConfigured }
-        struct P: Encodable { let target: String; let reason: String }
-        return try await client.rpc("send_connection", params: P(target: personId.lowercased(), reason: reason.rawValue))
+        struct P: Encodable { let target: String; let reason: String; let note: String? }
+        return try await client.rpc("send_connection", params: P(target: personId.lowercased(), reason: reason.rawValue, note: note))
             .execute().value
     }
 
@@ -126,6 +131,13 @@ extension AppStore {
         return false
     }
 
+    /// Mis últimas solicitudes enviadas (para ver su estado en Chats). Un rechazo es
+    /// silencioso: se sigue viendo como pendiente.
+    var sentRequests: [ConnectionRow] {
+        guard let me = myUserId else { return [] }
+        return Array(connections.filter { $0.from_id.lowercased() == me }.prefix(10))
+    }
+
     /// Solicitudes recibidas pendientes (las «interested» nunca llegan aquí: son ocultas).
     var incomingRequests: [ConnectionRow] {
         guard let me = myUserId else { return [] }
@@ -137,9 +149,9 @@ extension AppStore {
 
     /// 'connected', 'pending' o nil si falló.
     @discardableResult
-    func connect(_ personId: String, reason: ConnectReason) async -> String? {
+    func connect(_ personId: String, reason: ConnectReason, note: String? = nil) async -> String? {
         do {
-            let result = try await Backend.shared.sendConnection(to: personId, reason: reason)
+            let result = try await Backend.shared.sendConnection(to: personId, reason: reason, note: note)
             FX.success()
             loadConnections()
             // El match de «interested» lo celebra `ConnectSheet`; el resto, un aviso.
@@ -197,7 +209,7 @@ struct ConnectControl: View {
             }
         case .sent(let r):
             VStack(alignment: .leading, spacing: 4) {
-                pill(icon: r == .interested ? "lock.fill" : "clock", text: r == .interested ? L10n.t("Interested · private") : "\(r.emoji) \(L10n.t("Request sent"))", filled: false)
+                pill(icon: r == .interested ? "lock.fill" : "clock", text: r == .interested ? L10n.t("Interested · private") : L10n.t("Request sent"), filled: false)
                 if r == .interested {
                     Text("They'll only know if they're interested too.").font(.caption2).foregroundColor(Brand.soft)
                 }
@@ -256,8 +268,12 @@ struct ConnectionRequestsSheet: View {
                                     PersonAvatar(person: person, size: 52)
                                     VStack(alignment: .leading, spacing: 2) {
                                         Text(person?.name ?? "…").font(.system(size: 17, weight: .heavy)).foregroundColor(Brand.ink)
-                                        Text("\(req.connectReason?.emoji ?? "") \(req.connectReason?.receivedLine ?? "")")
+                                        Text(req.connectReason?.receivedLine ?? "")
                                             .font(.subheadline).foregroundColor(Brand.muted)
+                                        if let n = req.note, !n.isEmpty {
+                                            Text("“\(n)”").font(.system(size: 15)).foregroundColor(Brand.ink)
+                                                .fixedSize(horizontal: false, vertical: true)
+                                        }
                                     }
                                     Spacer()
                                     Image(systemName: "chevron.right").font(.system(size: 12, weight: .bold)).foregroundColor(Brand.soft)

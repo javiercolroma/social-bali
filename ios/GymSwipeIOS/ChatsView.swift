@@ -38,6 +38,7 @@ struct ChatsView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 18) {
                     if !store.incomingRequests.isEmpty { requests }
+                    if !store.sentRequests.isEmpty { sent }
                     VStack(alignment: .leading, spacing: 8) {
                         Text("CONNECTIONS").font(.caption2).fontWeight(.heavy).foregroundColor(Brand.muted)
                         if rows.isEmpty {
@@ -73,8 +74,12 @@ struct ChatsView: View {
                             avatar(person, size: 52)
                             VStack(alignment: .leading, spacing: 2) {
                                 Text(person?.name ?? "…").font(.system(size: 16, weight: .heavy)).foregroundColor(Brand.ink)
-                                Text("\(req.connectReason?.emoji ?? "") \(req.connectReason?.receivedLine ?? "")")
+                                Text(req.connectReason?.receivedLine ?? "")
                                     .font(.subheadline).foregroundColor(Brand.muted)
+                                if let n = req.note, !n.isEmpty {
+                                    Text("“\(n)”").font(.system(size: 15)).foregroundColor(Brand.ink)
+                                        .fixedSize(horizontal: false, vertical: true).multilineTextAlignment(.leading)
+                                }
                             }
                             Spacer()
                             Image(systemName: "chevron.right").font(.system(size: 12, weight: .bold)).foregroundColor(Brand.soft)
@@ -86,6 +91,42 @@ struct ChatsView: View {
                 .overlay(RoundedRectangle(cornerRadius: 14).stroke(Brand.line))
             }
         }
+    }
+
+    /// Mis últimas solicitudes: a quién, cuándo y cómo van.
+    private var sent: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("SENT").font(.caption2).fontWeight(.heavy).foregroundColor(Brand.muted)
+            ForEach(store.sentRequests) { req in
+                let person = store.person(req.to_id)
+                Button { openProfile = IdString(id: req.to_id) } label: {
+                    HStack(spacing: 12) {
+                        avatar(person, size: 44)
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(person?.name ?? "…").font(.system(size: 15, weight: .semibold)).foregroundColor(Brand.ink)
+                            Text(req.note.map { "“\($0)”" } ?? relativeTime(BackendDate.parse(req.created_at) ?? Date()))
+                                .font(.caption).foregroundColor(Brand.muted).lineLimit(1)
+                        }
+                        Spacer()
+                        statusPill(req)
+                    }
+                    .padding(12).background(Brand.panel).clipShape(RoundedRectangle(cornerRadius: 14))
+                    .overlay(RoundedRectangle(cornerRadius: 14).stroke(Brand.line))
+                }.buttonStyle(.plain)
+            }
+        }
+    }
+
+    private func statusPill(_ req: ConnectionRow) -> some View {
+        let connected = req.status == "accepted"
+        let text = connected ? L10n.t("Connected") : (req.reason == "interested" ? L10n.t("Private") : L10n.t("Pending"))
+        return HStack(spacing: 5) {
+            Circle().fill(connected ? Brand.online : Brand.sandDeep).frame(width: 7, height: 7)
+            Text(text).font(.system(size: 12, weight: .semibold))
+        }
+        .foregroundColor(Brand.ink)
+        .padding(.horizontal, 10).frame(height: 26)
+        .background(connected ? Brand.online.opacity(0.12) : Brand.chip).clipShape(Capsule())
     }
 
     private func chatRow(_ personId: String, _ conv: Conversation?, _ reason: ConnectReason?) -> some View {
@@ -119,7 +160,7 @@ struct ChatsView: View {
     private func preview(_ conv: Conversation?, _ reason: ConnectReason?) -> String {
         if let m = conv?.lastMessage { return (m.fromMe ? L10n.t("You: ") : "") + m.preview }
         if reason == .interested { return "✨ " + L10n.t("It's a match — say hi") }
-        if let r = reason { return "\(r.emoji) " + String(format: L10n.t("Connected to %@ — say hi"), r.label.lowercased()) }
+        if reason != nil { return L10n.t("You're connected — say hi") }
         return L10n.t("Say hi")
     }
 
