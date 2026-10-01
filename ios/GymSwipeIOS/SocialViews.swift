@@ -71,6 +71,9 @@ struct MeProfileView: View {
 
                 Text(nameLine).font(.display(32)).foregroundColor(Brand.ink)
                 ClubIdentityCard(club: store.profile.club, onEdit: { editing = true })
+                if let me = Backend.shared.currentUserId?.uuidString {
+                    MomentsSection(userId: me, isMe: true)
+                }
                 MediaGallery(items: Array((store.profile.media ?? []).dropFirst()))
 
                 HStack(spacing: 10) {

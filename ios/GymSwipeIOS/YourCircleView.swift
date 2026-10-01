@@ -245,6 +245,7 @@ struct CircleCell: View {
     private var badgeText: String? {
         switch row.badge {
         case "just_arrived": return L10n.t("JUST ARRIVED")
+        case "today": return row.activity_today.map { MomentActivity(raw: $0).todayBadge }
         case "new": return L10n.t("NEW")
         case "new_in_area":
             let a = row.club.area?.label ?? Neighborhood(rawValue: myArea ?? "")?.label ?? "Bali"

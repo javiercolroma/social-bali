@@ -58,40 +58,36 @@ struct ClubProfileView: View {
     @ViewBuilder
     private func content(_ p: ProfileRow) -> some View {
         let club = p.club.visible(toViewerOpenToDating: store.iAmOpenToDating)
-        VStack(alignment: .leading, spacing: 22) {
+        VStack(alignment: .leading, spacing: 24) {
             hero(p)
-            VStack(alignment: .leading, spacing: 22) {
-                identity(p, club)
+                .overlay(LinearGradient(colors: [.clear, .black.opacity(0.55)], startPoint: .center, endPoint: .bottom))
+                .overlay(alignment: .bottomLeading) { heroTitle(p, club) }
+            VStack(alignment: .leading, spacing: 24) {
+                facts(p, club)
+                if let bio = club.trimmedBio {
+                    // La bio como cita, con la voz de la persona.
+                    Text("“\(bio)”").font(.display(22, weight: .regular)).foregroundColor(Brand.ink)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                // Identidad viva: lo que ha hecho de verdad (Highlights + Recent).
+                MomentsSection(userId: personId)
                 // El resto de la galería, tipo Pinterest.
                 MediaGallery(items: Array((p.media ?? []).dropFirst()))
-                if let stay = club.stay { baliStatus(stay) }
                 if !club.sportList.isEmpty {
-                    section("SPORTS & INTERESTS") {
+                    section("INTO") {
                         WrapLayout(spacing: 6) {
                             ForEach(club.sportList) { s in chip("\(s.emoji) \(s.label)") }
                         }
                     }
                 }
-                if let bio = club.trimmedBio {
-                    section("BIO") {
-                        Text(bio).font(.system(size: 17, weight: .semibold)).foregroundColor(Brand.ink)
-                            .fixedSize(horizontal: false, vertical: true)
-                    }
-                }
                 if !club.intentList.isEmpty {
                     section("LOOKING FOR") {
-                        WrapLayout(spacing: 6) {
-                            ForEach(club.intentList) { i in
-                                Label(i.label, systemImage: i.icon)
-                                    .font(.system(size: 13, weight: .heavy)).foregroundColor(Brand.ink)
-                                    .padding(.horizontal, 11).frame(height: 30)
-                                    .background(Brand.sand).clipShape(Capsule())
-                            }
-                        }
+                        Text(club.intentList.map(\.label).joined(separator: " · "))
+                            .font(.display(19)).foregroundColor(Brand.ink)
                     }
                 }
             }
-            .padding(.horizontal, 18)
+            .padding(.horizontal, 20)
         }
     }
 
@@ -115,74 +111,62 @@ struct ClubProfileView: View {
         .clipped()
     }
 
-    /// Nombre + edad, de dónde es, dónde está en Bali y a qué distancia.
-    private func identity(_ p: ProfileRow, _ club: ClubIdentity) -> some View {
+    /// Nombre, edad y bandera sobre la foto (y «activo» si lo está).
+    private func heroTitle(_ p: ProfileRow, _ club: ClubIdentity) -> some View {
         VStack(alignment: .leading, spacing: 6) {
-            HStack(spacing: 8) {
-                Text(p.age.map { "\(p.name ?? p.handle ?? ""), \($0)" } ?? (p.name ?? p.handle ?? ""))
-                    .font(.display(32)).foregroundColor(Brand.ink)
-                if p.online == true {
-                    HStack(spacing: 5) {
-                        Circle().fill(Brand.online).frame(width: 9, height: 9)
-                        Text("Active now").font(.system(size: 12, weight: .semibold)).foregroundColor(Brand.online)
-                    }
-                    .padding(.horizontal, 9).frame(height: 24)
-                    .background(Brand.online.opacity(0.12)).clipShape(Capsule())
+            if p.online == true {
+                HStack(spacing: 6) {
+                    Circle().fill(Brand.online).frame(width: 8, height: 8)
+                    Text("Active now").font(.system(size: 12, weight: .semibold))
                 }
             }
-            if let d = p.distance_m {
-                Label(CircleDistance.label(d) + " " + L10n.t("away"), systemImage: "location.fill")
-                    .font(.system(size: 14, weight: .medium)).foregroundColor(Brand.muted)
+            HStack(alignment: .firstTextBaseline, spacing: 10) {
+                Text(p.name ?? "").font(.display(38))
+                if let a = p.age { Text("\(a)").font(.display(30, weight: .regular)).opacity(0.9) }
+                if let c = club.homeCountry, !c.isEmpty { Text(countryFlag(c)).font(.system(size: 30)) }
             }
-            // Dónde vive y de dónde es: con presencia, no como una línea más.
-            HStack(spacing: 10) {
-                if let a = club.area { placeCard(L10n.t("LIVES IN"), a.label, symbol: "mappin.and.ellipse") }
-                if let c = club.homeCountry, !c.isEmpty { placeCard(L10n.t("FROM"), countryName(c), flag: countryFlag(c)) }
+        }
+        .foregroundColor(.white)
+        .shadow(color: .black.opacity(0.3), radius: 4)
+        .padding(20)
+    }
+
+    /// País, zona, distancia y estancia en una línea que fluye — sin cajas.
+    private func facts(_ p: ProfileRow, _ club: ClubIdentity) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            WrapLayout(spacing: 14) {
+                if let c = club.homeCountry, !c.isEmpty {
+                    fact(Text(countryFlag(c)), "From", countryName(c))
+                }
+                if let a = club.area {
+                    fact(Image(systemName: "mappin").foregroundColor(Brand.bronze), "Lives in", a.label)
+                }
+                if let d = p.distance_m {
+                    fact(Image(systemName: "location.north.fill").foregroundColor(Brand.bronze), nil,
+                         CircleDistance.label(d) + " " + L10n.t("away"))
+                }
             }
-            .padding(.top, 6)
+            if let stay = club.stay {
+                HStack(spacing: 6) {
+                    Image(systemName: stay.kind == .livingHere ? "house" : stay.kind == .longTerm ? "calendar" : "airplane")
+                        .foregroundColor(Brand.bronze)
+                    Text(stay.headline).foregroundColor(Brand.ink)
+                    if let u = stay.urgency {
+                        Text("— " + u).foregroundColor(Brand.redText)
+                    }
+                }
+                .font(.system(size: 15, weight: .medium))
+            }
         }
     }
 
-    private func placeCard(_ title: String, _ value: String, symbol: String? = nil, flag: String? = nil) -> some View {
-        HStack(spacing: 10) {
-            if let flag { Text(flag).font(.system(size: 30)) }
-            else if let symbol {
-                Image(systemName: symbol).font(.system(size: 16, weight: .semibold)).foregroundColor(Brand.bronze)
-                    .frame(width: 34, height: 34).background(Brand.sand).clipShape(Circle())
-            }
-            VStack(alignment: .leading, spacing: 1) {
-                Text(title).font(.system(size: 10, weight: .bold)).tracking(1).foregroundColor(Brand.muted)
-                Text(value).font(.display(17)).foregroundColor(Brand.ink).lineLimit(1).minimumScaleFactor(0.8)
-            }
-            Spacer(minLength: 0)
+    private func fact<I: View>(_ icon: I, _ lead: LocalizedStringKey?, _ value: String) -> some View {
+        HStack(spacing: 6) {
+            icon.font(.system(size: 15))
+            if let lead { Text(lead).foregroundColor(Brand.muted) }
+            Text(value).fontWeight(.semibold).foregroundColor(Brand.ink)
         }
-        .padding(12)
-        .frame(maxWidth: .infinity)
-        .background(Brand.panel)
-        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).stroke(Brand.line))
-    }
-
-    /// «In Bali until Nov 12 · 2 weeks left»: lo que más cambia la utilidad de conectar.
-    private func baliStatus(_ stay: Stay) -> some View {
-        HStack(spacing: 12) {
-            Image(systemName: stay.kind == .livingHere ? "house.fill" : stay.kind == .longTerm ? "calendar" : "airplane.departure")
-                .font(.system(size: 18, weight: .semibold)).foregroundColor(Brand.bronze)
-                .frame(width: 40, height: 40).background(Brand.sand.opacity(0.5)).clipShape(Circle())
-            VStack(alignment: .leading, spacing: 2) {
-                Text("BALI STATUS").font(.caption2).fontWeight(.heavy).foregroundColor(Brand.muted)
-                Text(stay.headline).font(.system(size: 17, weight: .heavy)).foregroundColor(Brand.ink)
-            }
-            Spacer()
-            if let u = stay.urgency {
-                Text(u).font(.system(size: 12, weight: .heavy)).foregroundColor(Brand.redText)
-                    .padding(.horizontal, 9).frame(height: 24).background(Brand.redSoft).clipShape(Capsule())
-            }
-        }
-        .padding(14)
-        .background(Brand.panel)
-        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).stroke(Brand.line))
+        .font(.system(size: 15))
     }
 
     private func section<C: View>(_ title: LocalizedStringKey, @ViewBuilder _ body: () -> C) -> some View {

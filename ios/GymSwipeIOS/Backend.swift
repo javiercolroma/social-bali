@@ -472,6 +472,8 @@ struct ProfileRow: Codable {
     var days_left: Int?
     /// Primera vez que aparece en MI Circle (para «4 new»).
     var first_time: Bool?
+    /// Actividad de un momento compartido HOY (0034): «SURF TODAY».
+    var activity_today: String?
     /// Solo en el perfil social (`club_profile`); nil si la cuenta es privada.
     var activity: ActivitySignals?
 
