@@ -28,12 +28,13 @@ struct PrimaryButtonStyle: ButtonStyle {
     var enabled = true
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .font(.system(size: 16, weight: .heavy))
-            .foregroundColor(Color(hex: "10150a"))
-            .frame(maxWidth: .infinity).frame(minHeight: 50)
-            .background(enabled ? Brand.green : Brand.greenSoft)
-            .clipShape(RoundedRectangle(cornerRadius: 12))
+            .font(.system(size: 16, weight: .semibold))
+            .foregroundColor(Brand.onAccent)
+            .frame(maxWidth: .infinity).frame(minHeight: 54)
+            .background(Brand.accent.opacity(enabled ? 1 : 0.25))
+            .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
             .opacity(configuration.isPressed ? 0.85 : 1)
+            .scaleEffect(configuration.isPressed ? 0.985 : 1)
     }
 }
 
@@ -43,9 +44,9 @@ struct Tag: View {
     var body: some View {
         Text(text)
             .font(.system(size: 12, weight: .heavy))
-            .foregroundColor(highlight ? Color(hex: "10150a") : Color(hex: "394234"))
+            .foregroundColor(highlight ? Brand.ink : Color(hex: "394234"))
             .padding(.horizontal, 9).padding(.vertical, 5)
-            .background(highlight ? Brand.greenSoft : Brand.chip)
+            .background(highlight ? Brand.sand : Brand.chip)
             .clipShape(Capsule())
     }
 }

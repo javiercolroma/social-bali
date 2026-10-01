@@ -13,31 +13,37 @@ struct AuthView: View {
     var body: some View {
         ZStack {
             Brand.bg.ignoresSafeArea()
-            VStack(spacing: 0) {
+            VStack(alignment: .leading, spacing: 0) {
+                Text("BALI · PRIVATE CLUB").font(.system(size: 11, weight: .bold)).tracking(2.4).foregroundColor(Brand.bronze)
+                    .padding(.top, 24)
                 Spacer()
-                ZStack {
-                    Circle().fill(Brand.greenSoft).frame(width: 108, height: 108)
-                    Image(systemName: "dumbbell.fill").font(.system(size: 46, weight: .heavy)).foregroundColor(Color(hex: "10150a"))
+                Text("Bali\nCircle").font(.display(64, weight: .regular)).foregroundColor(Brand.ink)
+                    .lineSpacing(-6)
+                Text("Meet the active people around you — to surf, train, explore, and maybe more.")
+                    .font(.system(size: 17)).foregroundColor(Brand.muted)
+                    .fixedSize(horizontal: false, vertical: true).padding(.top, 14)
+                HStack(spacing: 8) {
+                    ForEach(["🏄 Surf", "🏋️ Train", "☕ Coffee", "🌅 Explore"], id: \.self) { t in
+                        Text(t).font(.system(size: 13, weight: .medium)).foregroundColor(Brand.ink)
+                            .padding(.horizontal, 10).frame(height: 30).background(Brand.chip).clipShape(Capsule())
+                    }
                 }
-                Text("Bali Circle").font(.system(size: 34, weight: .heavy)).foregroundColor(Brand.ink).padding(.top, 16)
-                Text("Train, track your progress and compete with your crew.")
-                    .font(.system(size: 16)).foregroundColor(Brand.muted).multilineTextAlignment(.center)
-                    .fixedSize(horizontal: false, vertical: true).padding(.top, 6).padding(.horizontal, 20)
+                .padding(.top, 18)
                 Spacer()
 
                 Button { FX.tap(); providerMode = .signup } label: {
-                    Text("Join for free").frame(maxWidth: .infinity)
+                    Text("Join Bali Circle").frame(maxWidth: .infinity)
                 }.buttonStyle(PrimaryButtonStyle())
 
                 Button { FX.tap(); providerMode = .login } label: {
                     HStack(spacing: 5) {
                         Text("Already have an account?").foregroundColor(Brand.muted)
                         Text("Sign in").foregroundColor(Brand.ink)
-                    }.font(.system(size: 15, weight: .heavy)).frame(maxWidth: .infinity).frame(height: 46)
+                    }.font(.system(size: 15, weight: .semibold)).frame(maxWidth: .infinity).frame(height: 46)
                 }.buttonStyle(.plain).padding(.top, 4)
 
                 Text("By continuing you accept the terms and the privacy policy.")
-                    .font(.caption2).foregroundColor(Brand.soft).multilineTextAlignment(.center).padding(.top, 8)
+                    .font(.caption2).foregroundColor(Brand.soft).frame(maxWidth: .infinity).multilineTextAlignment(.center).padding(.top, 8)
             }
             .padding(24)
         }
@@ -63,7 +69,7 @@ struct AuthProviderSheet: View {
             VStack(spacing: 14) {
                 VStack(spacing: 4) {
                     Text(creating ? "Join Bali Circle" : "Welcome back")
-                        .font(.system(size: 24, weight: .heavy)).foregroundColor(Brand.ink)
+                        .font(.display(26)).foregroundColor(Brand.ink)
                     Text(creating ? "Create your account in seconds." : "Good to see you again.")
                         .font(.footnote).foregroundColor(Brand.muted)
                 }.padding(.top, 26)
@@ -237,14 +243,14 @@ struct EmailAuthSheet: View {
                 .padding(.horizontal, 14).frame(height: 52).background(Color.white)
                 .clipShape(RoundedRectangle(cornerRadius: 14))
                 .overlay(RoundedRectangle(cornerRadius: 14)
-                    .stroke(focusEmail ? Brand.green : Brand.line, lineWidth: focusEmail ? 1.5 : 1))
+                    .stroke(focusEmail ? Brand.accent : Brand.line, lineWidth: focusEmail ? 1.5 : 1))
             }
 
-            if let error { Label(error, systemImage: "exclamationmark.circle.fill").font(.caption).foregroundColor(Color(hex: "a73232")) }
+            if let error { Label(error, systemImage: "exclamationmark.circle.fill").font(.caption).foregroundColor(Brand.redText) }
 
             Button { sendCode() } label: {
                 HStack(spacing: 8) {
-                    if busy { ProgressView().tint(Color(hex: "10150a")) }
+                    if busy { ProgressView().tint(Brand.ink) }
                     Text(busy ? "Sending…" : "Send code")
                 }.frame(maxWidth: .infinity)
             }
@@ -294,7 +300,7 @@ struct EmailAuthSheet: View {
                             .background(Color.white)
                             .clipShape(RoundedRectangle(cornerRadius: 12))
                             .overlay(RoundedRectangle(cornerRadius: 12)
-                                .stroke(isCursor ? Brand.green : (filled ? Brand.greenSoft : Brand.line),
+                                .stroke(isCursor ? Brand.accent : (filled ? Brand.sand : Brand.line),
                                         lineWidth: isCursor ? 2 : 1.2))
                     }
                 }
@@ -303,7 +309,7 @@ struct EmailAuthSheet: View {
             }
             .frame(height: 56)
 
-            if let error { Label(error, systemImage: "exclamationmark.circle.fill").font(.caption).foregroundColor(Color(hex: "a73232")) }
+            if let error { Label(error, systemImage: "exclamationmark.circle.fill").font(.caption).foregroundColor(Brand.redText) }
             if busy { HStack(spacing: 8) { ProgressView(); Text("Verifying…").font(.caption).foregroundColor(Brand.muted) } }
 
             HStack {

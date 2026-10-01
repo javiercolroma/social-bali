@@ -62,6 +62,8 @@ struct ClubProfileView: View {
             hero(p)
             VStack(alignment: .leading, spacing: 22) {
                 identity(p, club)
+                // El resto de la galería, tipo Pinterest.
+                MediaGallery(items: Array((p.media ?? []).dropFirst()))
                 if let stay = club.stay { baliStatus(stay) }
                 if !club.sportList.isEmpty {
                     section("SPORTS & INTERESTS") {
@@ -81,9 +83,9 @@ struct ClubProfileView: View {
                         WrapLayout(spacing: 6) {
                             ForEach(club.intentList) { i in
                                 Label(i.label, systemImage: i.icon)
-                                    .font(.system(size: 13, weight: .heavy)).foregroundColor(Color(hex: "10150a"))
+                                    .font(.system(size: 13, weight: .heavy)).foregroundColor(Brand.ink)
                                     .padding(.horizontal, 11).frame(height: 30)
-                                    .background(Brand.greenSoft).clipShape(Capsule())
+                                    .background(Brand.sand).clipShape(Capsule())
                             }
                         }
                     }
@@ -93,15 +95,19 @@ struct ClubProfileView: View {
         }
     }
 
+    /// La pieza principal, en grande (foto, vídeo o Live Photo en movimiento).
+    @ViewBuilder
     private func hero(_ p: ProfileRow) -> some View {
-        var urls: [String] = []
-        for u in [p.avatar_url].compactMap({ $0 }) + (p.photos ?? []) + (p.moments ?? []) where !urls.contains(u) {
-            urls.append(u)
-        }
-        return PhotoPager(urls: urls) {
-            ZStack {
-                LinearGradient(colors: [Brand.greenSoft, Color(hex: "e7f0d6")], startPoint: .topLeading, endPoint: .bottomTrailing)
-                Text(p.club.sportList.first?.emoji ?? "🙂").font(.system(size: 110))
+        Group {
+            if let m = p.media?.first {
+                MediaView(item: m)
+            } else if let u = ([p.avatar_url].compactMap { $0 } + (p.photos ?? [])).first {
+                RemoteFill(url: u)
+            } else {
+                ZStack {
+                    LinearGradient(colors: [Brand.sand, Brand.sandDeep], startPoint: .topLeading, endPoint: .bottomTrailing)
+                    Text(p.club.sportList.first?.emoji ?? "🙂").font(.system(size: 110))
+                }
             }
         }
         .frame(maxWidth: .infinity)
@@ -114,11 +120,11 @@ struct ClubProfileView: View {
         VStack(alignment: .leading, spacing: 6) {
             HStack(spacing: 8) {
                 Text(p.age.map { "\(p.name ?? p.handle ?? ""), \($0)" } ?? (p.name ?? p.handle ?? ""))
-                    .font(.system(size: 30, weight: .heavy)).foregroundColor(Brand.ink)
+                    .font(.display(32)).foregroundColor(Brand.ink)
                 if p.online == true {
                     HStack(spacing: 5) {
-                        Circle().fill(Brand.green).frame(width: 9, height: 9)
-                        Text("Online").font(.system(size: 12, weight: .heavy)).foregroundColor(Color(hex: "4b6211"))
+                        Circle().fill(Brand.online).frame(width: 9, height: 9)
+                        Text("Online").font(.system(size: 12, weight: .heavy)).foregroundColor(Brand.bronze)
                     }
                 }
             }
@@ -138,15 +144,15 @@ struct ClubProfileView: View {
     private func baliStatus(_ stay: Stay) -> some View {
         HStack(spacing: 12) {
             Image(systemName: stay.kind == .livingHere ? "house.fill" : stay.kind == .longTerm ? "calendar" : "airplane.departure")
-                .font(.system(size: 18, weight: .semibold)).foregroundColor(Color(hex: "5e910e"))
-                .frame(width: 40, height: 40).background(Brand.greenSoft.opacity(0.5)).clipShape(Circle())
+                .font(.system(size: 18, weight: .semibold)).foregroundColor(Brand.bronze)
+                .frame(width: 40, height: 40).background(Brand.sand.opacity(0.5)).clipShape(Circle())
             VStack(alignment: .leading, spacing: 2) {
                 Text("BALI STATUS").font(.caption2).fontWeight(.heavy).foregroundColor(Brand.muted)
                 Text(stay.headline).font(.system(size: 17, weight: .heavy)).foregroundColor(Brand.ink)
             }
             Spacer()
             if let u = stay.urgency {
-                Text(u).font(.system(size: 12, weight: .heavy)).foregroundColor(Color(hex: "a73232"))
+                Text(u).font(.system(size: 12, weight: .heavy)).foregroundColor(Brand.redText)
                     .padding(.horizontal, 9).frame(height: 24).background(Brand.redSoft).clipShape(Capsule())
             }
         }

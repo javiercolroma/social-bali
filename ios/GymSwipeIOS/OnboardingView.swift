@@ -17,7 +17,7 @@ struct OnboardingView: View {
     // parte, o sea 4 pantallas para generar datos muertos. En su lugar entran los que
     // alimentan Discover: deportes, zona, estancia, origen, bio e intenciones.
     enum Step: Int, CaseIterable {
-        case welcome, name, sports, area, stay, home, photo, birth, sex, bio, intents, done
+        case welcome, name, birth, photos, sports, arrival, stay, area, home, bio, intents, location, done
     }
     private enum Field { case name }
 
@@ -32,6 +32,12 @@ struct OnboardingView: View {
     @State private var photoScale: CGFloat = 1
     @State private var photoOffset: CGSize = .zero
     @State private var showFramer = false
+    /// Galería (mínimo 3 para entrar): fotos, vídeos y Live Photos.
+    @State private var media: [MediaItem] = []
+    /// ¿Ya está en Bali? Si no, cuándo llega (el Circle se abre al llegar).
+    @State private var inBaliNow: Bool? = nil
+    @State private var arrivalDate = Calendar.current.date(byAdding: .day, value: 14, to: Date()) ?? Date()
+    @ObservedObject private var presence = PresenceService.shared
     @State private var birthYear = 1997
     @State private var sexSel: Gender? = nil
     /// Separados a propósito: antes un solo `aboutDone` hacía que saltarse el año y
@@ -102,8 +108,8 @@ struct OnboardingView: View {
         VStack(spacing: 10) {
             GeometryReader { geo in
                 ZStack(alignment: .leading) {
-                    Capsule().fill(Brand.greenSoft.opacity(0.5))
-                    Capsule().fill(Brand.green).frame(width: max(0, geo.size.width * progress))
+                    Capsule().fill(Brand.sand.opacity(0.5))
+                    Capsule().fill(Brand.accent).frame(width: max(0, geo.size.width * progress))
                         .animation(.spring(response: 0.4, dampingFraction: 0.85), value: progress)
                 }
             }.frame(height: 3)
@@ -127,27 +133,25 @@ struct OnboardingView: View {
         switch step {
         case .welcome: welcomeStep
         case .name: nameStep
-        case .sports: sportsStep
-        case .area: areaStep
-        case .stay: stayStep
-        case .home: homeStep
-        case .photo: photoStep
         case .birth: birthStep
-        case .sex: sexStep
+        case .photos: photosStep
+        case .sports: sportsStep
+        case .arrival: arrivalStep
+        case .stay: stayStep
+        case .area: areaStep
+        case .home: homeStep
         case .bio: bioStep
         case .intents: intentsStep
+        case .location: locationStep
         case .done: doneStep
         }
     }
 
     private var welcomeStep: some View {
         layout {
-            ZStack {
-                Circle().fill(Brand.greenSoft).frame(width: 128, height: 128)
-                Image(systemName: "person.3.fill").font(.system(size: 50, weight: .heavy)).foregroundColor(Color(hex: "10150a"))
-            }
-            Question("Welcome to Bali Circle")
-            Text("Let's set up your profile in a minute, so the right people can find you.")
+            Text("BALI CIRCLE").font(.system(size: 12, weight: .bold)).tracking(3).foregroundColor(Brand.bronze)
+            Question("A private club for active people in Bali")
+            Text("Surf, train, explore — and meet the people doing it around you. Let's set up your profile.")
                 .font(.system(size: 16)).foregroundColor(Brand.muted).multilineTextAlignment(.center)
                 .fixedSize(horizontal: false, vertical: true)
         } actions: {
@@ -160,13 +164,13 @@ struct OnboardingView: View {
         layout {
             Question("What's your first name?")
             TextField("First name", text: $name)
-                .multilineTextAlignment(.center).font(.system(size: 22, weight: .heavy))
+                .multilineTextAlignment(.center).font(.display(26))
                 .foregroundColor(Brand.ink).tint(Brand.ink)
                 .textContentType(.givenName)
                 .focused($focus, equals: .name).submitLabel(.next).onSubmit { if nameOK { advance() } }
                 .padding(.horizontal, 14).frame(height: 58).background(Color.white)
                 .clipShape(RoundedRectangle(cornerRadius: 14))
-                .overlay(RoundedRectangle(cornerRadius: 14).stroke(focus == .name ? Brand.green : Brand.line, lineWidth: focus == .name ? 1.8 : 1))
+                .overlay(RoundedRectangle(cornerRadius: 14).stroke(focus == .name ? Brand.accent : Brand.line, lineWidth: focus == .name ? 1.8 : 1))
         } actions: {
             primary("Continue", enabled: nameOK) { advance() }
         }
@@ -203,9 +207,9 @@ struct OnboardingView: View {
             if photoData == nil {
                 PhotoPickerLabel(item: $pickerItem, onPicked: { onPhotoPicked($0) }) {
                     Text("Pick a photo")
-                        .font(.system(size: 16, weight: .heavy)).foregroundColor(Color(hex: "10150a"))
+                        .font(.system(size: 16, weight: .heavy)).foregroundColor(Brand.onAccent)
                         .frame(maxWidth: .infinity).frame(minHeight: 50)
-                        .background(Brand.green).clipShape(RoundedRectangle(cornerRadius: 12))
+                        .background(Brand.accent).clipShape(RoundedRectangle(cornerRadius: 12))
                 }
             } else {
                 primary("Use this photo") { advance() }
@@ -225,7 +229,7 @@ struct OnboardingView: View {
 
     private func badge(_ icon: String) -> some View {
         Image(systemName: icon).font(.system(size: 16, weight: .heavy))
-            .foregroundColor(Brand.ink).padding(11).background(Brand.green).clipShape(Circle())
+            .foregroundColor(Brand.onAccent).padding(11).background(Brand.accent).clipShape(Circle())
             .overlay(Circle().stroke(Brand.bg, lineWidth: 4))
     }
 
@@ -250,7 +254,80 @@ struct OnboardingView: View {
             }
         } actions: {
             primary("Continue") { birthDone = true; advance() }
-            skip()
+        }
+    }
+
+    // MARK: - Fotos (mínimo 3)
+
+    private var photosStep: some View {
+        VStack(spacing: 16) {
+            VStack(spacing: 8) {
+                Question("Show who you are")
+                Text("Add at least 3 photos — doing what you love beats posing. Videos and Live Photos come to life on your profile.")
+                    .font(.system(size: 15)).foregroundColor(Brand.muted).multilineTextAlignment(.center)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            .padding(.top, 8)
+            ScrollView { MediaGalleryEditor(items: $media).padding(.vertical, 4) }
+            VStack(spacing: 4) {
+                primary(media.count >= MediaRules.minToJoin ? "Continue"
+                        : String(format: L10n.t("Add %lld more"), MediaRules.minToJoin - media.count),
+                        enabled: media.count >= MediaRules.minToJoin) { advance() }
+            }
+            .padding(.bottom, 14)
+        }
+    }
+
+    // MARK: - ¿Ya estás en Bali?
+
+    private var arrivalStep: some View {
+        layout {
+            Question("Are you in Bali right now?")
+            VStack(spacing: 10) {
+                SelectCard(emoji: "🌴", label: L10n.t("Yes, I'm here"), selected: inBaliNow == true) {
+                    FX.selection(); inBaliNow = true
+                }
+                SelectCard(emoji: "✈️", label: L10n.t("Not yet — I'm coming"), selected: inBaliNow == false) {
+                    FX.selection(); inBaliNow = false
+                }
+                if inBaliNow == false {
+                    DatePicker("Arriving on", selection: $arrivalDate, in: Date()..., displayedComponents: .date)
+                        .datePickerStyle(.compact)
+                        .font(.system(size: 15, weight: .semibold)).foregroundColor(Brand.ink)
+                        .padding(.horizontal, 14).frame(height: 52).background(Color.white)
+                        .clipShape(RoundedRectangle(cornerRadius: 14))
+                        .overlay(RoundedRectangle(cornerRadius: 14).stroke(Brand.line))
+                        .transition(.opacity.combined(with: .move(edge: .top)))
+                    Text("You can set up everything now. Your circle opens when your location shows you're in Bali.")
+                        .font(.footnote).foregroundColor(Brand.muted).multilineTextAlignment(.center)
+                }
+            }
+            .animation(.spring(response: 0.34, dampingFraction: 0.85), value: inBaliNow)
+        } actions: {
+            primary("Continue", enabled: inBaliNow != nil) { advance() }
+        }
+    }
+
+    // MARK: - Ubicación (obligatoria)
+
+    private var locationStep: some View {
+        layout {
+            Image(systemName: presence.canUseLocation ? "checkmark.circle" : "location.circle")
+                .font(.system(size: 56, weight: .ultraLight)).foregroundColor(Brand.bronze)
+            Question(presence.canUseLocation ? "You're all set to see who's around" : "Share your location")
+            Text("It confirms you're in Bali and shows how far people are. Others only ever see a distance like “800 m” — never where you are. You can hide your distance and online status anytime.")
+                .font(.system(size: 15)).foregroundColor(Brand.muted).multilineTextAlignment(.center)
+                .fixedSize(horizontal: false, vertical: true)
+        } actions: {
+            if presence.canUseLocation {
+                primary("Continue") { advance() }
+            } else {
+                primary(presence.locationDenied ? "Open Settings" : "Share my location") { presence.requestPermission() }
+                if presence.locationDenied {
+                    Text("Bali Circle needs your location to work.").font(.footnote).foregroundColor(Brand.muted)
+                        .frame(height: 36)
+                }
+            }
         }
     }
 
@@ -310,8 +387,8 @@ struct OnboardingView: View {
     /// Pererenan (ver SocialClub.swift).
     private var areaStep: some View {
         layout {
-            Question("Where in Bali are you based?")
-            ChipGrid(items: Neighborhood.allCases.map { ($0.rawValue, $0.label) },
+            Question(inBaliNow == false ? "Where in Bali will you stay?" : "Where in Bali are you based?")
+            ChipGrid(items: Neighborhood.picker.map { ($0.rawValue, $0.label) },
                      selected: areaSel.map { [$0] } ?? []) { raw in
                 FX.selection(); areaSel = (areaSel == raw) ? nil : raw
             }
@@ -324,7 +401,7 @@ struct OnboardingView: View {
     /// una conexión saber si alguien vive aquí o se va el martes.
     private var stayStep: some View {
         layout {
-            Question("How long are you around?")
+            Question(inBaliNow == false ? "How long will you stay?" : "How long are you around?")
             VStack(spacing: 10) {
                 ForEach(StayKind.allCases) { k in
                     SelectCard(emoji: k == .livingHere ? "🏝️" : (k == .longTerm ? "🗓️" : "✈️"),
@@ -387,7 +464,6 @@ struct OnboardingView: View {
             }
         } actions: {
             primary("Continue", enabled: !bioText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty) { advance() }
-            skip()
         }
     }
 
@@ -424,11 +500,14 @@ struct OnboardingView: View {
     private var doneStep: some View {
         layout {
             ZStack {
-                Circle().stroke(Brand.greenSoft, lineWidth: 7).frame(width: 150, height: 150)
-                Circle().trim(from: 0, to: drawCheck).stroke(Brand.green, style: StrokeStyle(lineWidth: 7, lineCap: .round))
+                Circle().stroke(Brand.sand, lineWidth: 7).frame(width: 150, height: 150)
+                Circle().trim(from: 0, to: drawCheck).stroke(Brand.accent, style: StrokeStyle(lineWidth: 7, lineCap: .round))
                     .rotationEffect(.degrees(-90)).frame(width: 150, height: 150)
-                MeAvatar(account: previewAccount, size: 116)
-                    .scaleEffect(avatarIn ? 1 : 0.4).opacity(avatarIn ? 1 : 0)
+                Group {
+                    if let m = media.first { RemoteFill(url: m.url) } else { MeAvatar(account: previewAccount, size: 116) }
+                }
+                .frame(width: 116, height: 116).clipShape(Circle())
+                .scaleEffect(avatarIn ? 1 : 0.4).opacity(avatarIn ? 1 : 0)
             }
             Question(firstName.isEmpty ? "You're all set!" : "You're all set, \(firstName)!")
         } actions: {
@@ -528,6 +607,8 @@ struct OnboardingView: View {
         store.profile.bio = bio.isEmpty ? nil : bio
         store.profile.intents = ConnectionIntent.allCases.map(\.rawValue).filter(intentsSel.contains)
             .filter { $0 != ConnectionIntent.dating.rawValue || canDate }
+        store.profile.media = media
+        store.profile.arrivalDate = inBaliNow == false ? arrivalDate : nil
 
         // La cuenta se guarda AL FINAL: `saveAccount` sincroniza con el servidor, y
         // antes se llamaba al principio, con el perfil del club aún sin rellenar.
@@ -542,7 +623,7 @@ private struct Question: View {
     init(_ text: String) { self.text = text }
     var body: some View {
         Text(LocalizedStringKey(text))
-            .font(.system(size: 26, weight: .heavy)).foregroundColor(Brand.ink)
+            .font(.display(30)).foregroundColor(Brand.ink)
             .multilineTextAlignment(.center).fixedSize(horizontal: false, vertical: true)
             .padding(.horizontal, 8)
     }
@@ -566,13 +647,13 @@ private struct ChipGrid: View {
                 } label: {
                     Text(label)
                         .font(.system(size: 14, weight: .heavy))
-                        .foregroundColor(on ? Color(hex: "10150a") : Brand.ink)
+                        .foregroundColor(on ? Brand.onAccent : Brand.ink)
                         .lineLimit(1).minimumScaleFactor(0.7)
                         .padding(.horizontal, 12).frame(height: 42).frame(maxWidth: .infinity)
-                        .background(on ? Brand.green : Color.white)
+                        .background(on ? Brand.accent : Color.white)
                         .clipShape(Capsule())
                         .overlay(Capsule().stroke(on ? Color.clear : Brand.line))
-                        .shadow(color: on ? Brand.green.opacity(0.30) : .clear, radius: 6, y: 3)
+                        .shadow(color: on ? Brand.accent.opacity(0.30) : .clear, radius: 6, y: 3)
                 }
                 .buttonStyle(PressableButtonStyle())
                 .animation(.spring(response: 0.28, dampingFraction: 0.6), value: on)
@@ -592,17 +673,17 @@ private struct SelectCard: View {
             HStack(spacing: 12) {
                 Text(emoji).font(.system(size: 24)).scaleEffect(selected ? 1.18 : 1).frame(width: 34)
                 Text(label).font(.system(size: 17, weight: .heavy))
-                    .foregroundColor(selected ? Color(hex: "10150a") : Brand.ink)
+                    .foregroundColor(selected ? Brand.ink : Brand.ink)
                 Spacer()
                 Image(systemName: selected ? "checkmark.circle.fill" : "circle")
                     .font(.system(size: 22, weight: selected ? .bold : .regular))
-                    .foregroundColor(selected ? Color(hex: "10150a") : Brand.line)
+                    .foregroundColor(selected ? Brand.onAccent : Brand.line)
             }
             .padding(.horizontal, 16).frame(minHeight: 60).frame(maxWidth: .infinity)
-            .background(selected ? Brand.green : Color.white)
+            .background(selected ? Brand.accent : Color.white)
             .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
             .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).stroke(selected ? Color.clear : Brand.line))
-            .shadow(color: selected ? Brand.green.opacity(0.35) : .clear, radius: 9, y: 5)
+            .shadow(color: selected ? Brand.accent.opacity(0.35) : .clear, radius: 9, y: 5)
         }
         .buttonStyle(PressableButtonStyle())
         .animation(.spring(response: 0.3, dampingFraction: 0.55), value: selected)
@@ -629,7 +710,7 @@ private struct OnboardingPhotoFramer: View {
                     Image(uiImage: ui).resizable().scaledToFill()
                         .scaleEffect(scale).offset(offset)
                         .frame(width: editSize, height: editSize).clipShape(Circle())
-                        .overlay(Circle().stroke(Brand.green, lineWidth: 3))
+                        .overlay(Circle().stroke(Brand.accent, lineWidth: 3))
                         .contentShape(Circle())
                         .gesture(SimultaneousGesture(
                             MagnificationGesture()

@@ -96,9 +96,9 @@ struct ChatView: View {
             // La conversación nace con un motivo (PRODUCT.md, principio 4).
             if case .connected(let r) = store.connectionState(personId) {
                 Text("\(r.emoji) \(String(format: L10n.t("You connected to %@"), r.label.lowercased()))")
-                    .font(.caption).fontWeight(.semibold).foregroundColor(Color(hex: "4b6211"))
+                    .font(.caption).fontWeight(.semibold).foregroundColor(Brand.bronze)
                     .padding(.horizontal, 12).padding(.vertical, 6)
-                    .background(Brand.greenSoft.opacity(0.6)).clipShape(Capsule())
+                    .background(Brand.sand.opacity(0.6)).clipShape(Capsule())
                     .padding(.top, 8)
             }
 
@@ -134,8 +134,8 @@ struct ChatView: View {
                         .padding(.horizontal, 16).frame(height: 46).background(Color.white).clipShape(Capsule())
                         .overlay(Capsule().stroke(Brand.line))
                     Button { send() } label: {
-                        Image(systemName: "paperplane.fill").foregroundColor(Color(hex: "10150a"))
-                            .frame(width: 46, height: 46).background(Brand.green).clipShape(Circle())
+                        Image(systemName: "paperplane.fill").foregroundColor(Brand.onAccent)
+                            .frame(width: 46, height: 46).background(Brand.accent).clipShape(Circle())
                     }.disabled(draft.trimmingCharacters(in: .whitespaces).isEmpty)
                 }
             }
@@ -182,11 +182,11 @@ struct ChatView: View {
         HStack {
             if m.fromMe { Spacer(minLength: 50) }
             VStack(alignment: m.fromMe ? .trailing : .leading, spacing: 2) {
-                Text(m.text).font(.system(size: 15)).foregroundColor(m.fromMe ? Color(hex: "10150a") : Color(hex: "2c3127"))
+                Text(m.text).font(.system(size: 15)).foregroundColor(m.fromMe ? Brand.ink : Color(hex: "2c3127"))
                 Text(shortTime(m.at)).font(.system(size: 10, weight: .semibold)).opacity(0.5)
             }
             .padding(.horizontal, 12).padding(.vertical, 8)
-            .background(m.fromMe ? Brand.greenSoft : Brand.chip)
+            .background(m.fromMe ? Brand.sand : Brand.chip)
             .clipShape(RoundedRectangle(cornerRadius: 16))
             if !m.fromMe { Spacer(minLength: 50) }
         }
@@ -202,7 +202,7 @@ struct PersonAvatar: View {
     var body: some View {
         Group {
             if let url = person?.avatarURL { RemoteFill(url: url) }
-            else { Brand.greenSoft.overlay(Text(person?.club?.sportList.first?.emoji ?? "🙂").font(.system(size: size * 0.45))) }
+            else { Brand.sand.overlay(Text(person?.club?.sportList.first?.emoji ?? "🙂").font(.system(size: size * 0.45))) }
         }
         .frame(width: size, height: size).clipShape(Circle())
     }
@@ -216,26 +216,39 @@ struct MeProfileView: View {
     @State private var editing = false
     @State private var settings = false
 
+    private var nameLine: String {
+        let name = store.account?.name ?? ""
+        guard let b = store.profile.birthdate,
+              let y = Calendar.current.dateComponents([.year], from: b, to: Date()).year else { return name }
+        return "\(name), \(y)"
+    }
+
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
                 Group {
-                    if let d = store.account?.photoData, let img = UIImage(data: d) {
+                    if let m = store.profile.media?.first {
+                        MediaView(item: m)
+                    } else if let d = store.account?.photoData, let img = UIImage(data: d) {
                         Color.clear.overlay(Image(uiImage: img).resizable().scaledToFill())
                     } else {
-                        PhotoPager(urls: store.profile.photos ?? []) {
+                        Button { editing = true } label: {
                             ZStack {
-                                LinearGradient(colors: [Brand.greenSoft, Color(hex: "e7f0d6")], startPoint: .topLeading, endPoint: .bottomTrailing)
-                                Text(store.profile.club.sportList.first?.emoji ?? "🙂").font(.system(size: 90))
+                                LinearGradient(colors: [Brand.sand, Brand.sandDeep], startPoint: .topLeading, endPoint: .bottomTrailing)
+                                VStack(spacing: 8) {
+                                    Image(systemName: "photo.stack").font(.system(size: 40, weight: .light))
+                                    Text("Add your photos").font(.system(size: 15, weight: .semibold))
+                                }.foregroundColor(Brand.ink)
                             }
-                        }
+                        }.buttonStyle(.plain)
                     }
                 }
                 .frame(maxWidth: .infinity).aspectRatio(4 / 5, contentMode: .fit)
                 .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
 
-                Text(store.account?.name ?? "").font(.system(size: 30, weight: .heavy)).foregroundColor(Brand.ink)
+                Text(nameLine).font(.display(32)).foregroundColor(Brand.ink)
                 ClubIdentityCard(club: store.profile.club, onEdit: { editing = true })
+                MediaGallery(items: Array((store.profile.media ?? []).dropFirst()))
 
                 HStack(spacing: 10) {
                     Button { FX.tap(); editing = true } label: {
@@ -295,9 +308,9 @@ struct ClubIdentityCard: View {
                         WrapLayout(spacing: 6) {
                             ForEach(club.intentList) { i in
                                 Label(i.label, systemImage: i.icon)
-                                    .font(.system(size: 13, weight: .heavy)).foregroundColor(Color(hex: "10150a"))
+                                    .font(.system(size: 13, weight: .heavy)).foregroundColor(Brand.ink)
                                     .padding(.horizontal, 11).frame(height: 30)
-                                    .background(Brand.greenSoft).clipShape(Capsule())
+                                    .background(Brand.sand).clipShape(Capsule())
                             }
                         }
                     }
@@ -317,7 +330,7 @@ struct ClubIdentityCard: View {
                     HStack(spacing: 8) {
                         fact(stayIcon(stay.kind), stay.headline)
                         if let u = stay.urgency {
-                            Text(u).font(.system(size: 11, weight: .heavy)).foregroundColor(Color(hex: "a73232"))
+                            Text(u).font(.system(size: 11, weight: .heavy)).foregroundColor(Brand.redText)
                                 .padding(.horizontal, 8).frame(height: 22).background(Brand.redSoft).clipShape(Capsule())
                         }
                     }
@@ -338,7 +351,7 @@ struct ClubIdentityCard: View {
 
     private func fact(_ icon: String, _ text: String) -> some View {
         HStack(spacing: 7) {
-            Image(systemName: icon).font(.system(size: 13, weight: .semibold)).foregroundColor(Color(hex: "6ea300")).frame(width: 18)
+            Image(systemName: icon).font(.system(size: 13, weight: .semibold)).foregroundColor(Brand.bronze).frame(width: 18)
             Text(text).font(.system(size: 14, weight: .semibold)).foregroundColor(Brand.ink)
         }
     }

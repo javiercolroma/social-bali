@@ -226,9 +226,9 @@ struct ConnectControl: View {
             Text(text).lineLimit(1).minimumScaleFactor(0.8)
         }
         .font(.system(size: 15, weight: .heavy))
-        .foregroundColor(filled ? Color(hex: "10150a") : Brand.ink)
+        .foregroundColor(filled ? Brand.onAccent : Brand.ink)
         .frame(maxWidth: .infinity).frame(height: 44)
-        .background(filled ? Brand.green : Brand.chip)
+        .background(filled ? Brand.accent : Brand.chip)
         .clipShape(RoundedRectangle(cornerRadius: 12))
     }
 }

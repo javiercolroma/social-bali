@@ -21,19 +21,34 @@ extension Color {
     }
 }
 
+/// Paleta de Bali Circle: marfil cálido, tinta casi negra y un acento arena/bronce.
+/// Elegante y adulta — nada de verde lima de app de gimnasio.
 enum Brand {
-    static let bg = Color(hex: "fbfcf7")
-    static let ink = Color(hex: "171913")
-    static let muted = Color(hex: "71756d")
-    static let soft = Color(hex: "8a8f82")
-    static let green = Color(hex: "a7f22d")
-    static let greenSoft = Color(hex: "c8e98a")
-    static let panel = Color.white.opacity(0.9)
-    static let line = Color(hex: "171913").opacity(0.08)
-    static let red = Color(hex: "e95752")
-    static let redSoft = Color(hex: "fff0ef")
-    static let chip = Color(hex: "ece9df")
-    static let surface = Color(hex: "f8f6ee")
-    static let gold = Color(hex: "ffcf3f")
-    static let teal = Color(hex: "26d9c4")
+    static let bg = Color(hex: "f7f4ee")         // marfil
+    static let ink = Color(hex: "161514")        // tinta
+    static let muted = Color(hex: "6f6a62")
+    static let soft = Color(hex: "a09a90")
+    /// Relleno de los botones principales (negro) y su texto.
+    static let accent = Color(hex: "161514")
+    static let onAccent = Color(hex: "faf8f3")
+    /// Arena: chips seleccionados, burbujas propias, fondos suaves.
+    static let sand = Color(hex: "e9e0d0")
+    static let sandDeep = Color(hex: "d8cab2")
+    /// Bronce: iconos y textos de acento sobre fondo claro.
+    static let bronze = Color(hex: "8a6a3d")
+    static let online = Color(hex: "34c46a")
+    static let panel = Color.white
+    static let line = Color(hex: "161514").opacity(0.08)
+    static let red = Color(hex: "d9534f")
+    static let redSoft = Color(hex: "f8ebe7")
+    static let redText = Color(hex: "a33a2f")
+    static let chip = Color(hex: "efeae1")
+    static let surface = Color(hex: "f2eee6")
+}
+
+extension Font {
+    /// Titulares con serifa (New York): el toque editorial de la marca.
+    static func display(_ size: CGFloat, weight: Font.Weight = .semibold) -> Font {
+        .system(size: size, weight: weight, design: .serif)
+    }
 }

@@ -117,7 +117,7 @@ struct ActivityPhotosEditor: View {
                     }
                 }
             }
-            if failed { Text("Couldn't upload the photo. Try again.").font(.caption).foregroundColor(Color(hex: "a73232")) }
+            if failed { Text("Couldn't upload the photo. Try again.").font(.caption).foregroundColor(Brand.redText) }
         }
         .onChange(of: pickerItem) { item in
             guard let item else { return }

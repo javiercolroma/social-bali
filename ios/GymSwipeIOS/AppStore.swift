@@ -164,8 +164,9 @@ final class AppStore: ObservableObject {
         Task {
             guard let uid = await Backend.shared.currentUserIdAsync() else { return }
             // Sube el avatar a Storage (si hay) y usa su URL pública en el perfil.
-            var avatarURL: String? = nil
-            if let photo = account?.photoData { avatarURL = try? await Backend.shared.uploadAvatar(photo) }
+            // La foto principal de la galería es la foto de perfil.
+            var avatarURL: String? = profile.media?.first?.url
+            if avatarURL == nil, let photo = account?.photoData { avatarURL = try? await Backend.shared.uploadAvatar(photo) }
             // La fecha va PRIMERO: el servidor rechaza «dating» si aún no la tiene.
             if let b = profile.birthdate {
                 do { try await Backend.shared.upsertMyBirthdate(b) }
@@ -208,7 +209,9 @@ final class AppStore: ObservableObject {
             stay_kind: profile.stayKind,
             stay_until: profile.stayUntil.map(StayDate.string(from:)),
             intents: (profile.intents?.isEmpty == false) ? profile.intents : nil,
-            photos: (profile.photos?.isEmpty == false) ? profile.photos : nil)
+            photos: (profile.photos?.isEmpty == false) ? profile.photos : nil,
+            media: (profile.media?.isEmpty == false) ? profile.media : nil,
+            arrival_date: profile.arrivalDate.map(StayDate.string(from:)))
         // (Los intents ya pasan por `enforceDatingAge` en cada `persist`.)
     }
 
@@ -260,6 +263,8 @@ final class AppStore: ObservableObject {
                 profile.stayUntil = p.stay_until.flatMap(StayDate.date(from:))
                 profile.intents = p.intents
                 profile.photos = p.photos
+                profile.media = p.media
+                profile.arrivalDate = p.arrival_date.flatMap(StayDate.date(from:))
                 // La fecha vive aparte (privada). Sin ella, «Dating» quedaría bloqueado
                 // para alguien que ya demostró su edad antes de reinstalar.
                 if let b = (try? await Backend.shared.fetchMyBirthdate()) ?? nil { profile.birthdate = b }

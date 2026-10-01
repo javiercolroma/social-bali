@@ -43,7 +43,7 @@ struct ConnectSheet: View {
                             Image(systemName: "arrow.right").font(.system(size: 14, weight: .bold)).foregroundColor(Brand.soft)
                         }
                         .padding(.horizontal, 16).frame(minHeight: 60)
-                        .background(r == .interested ? Brand.greenSoft.opacity(0.45) : Brand.chip.opacity(0.6))
+                        .background(r == .interested ? Brand.sand.opacity(0.45) : Brand.chip.opacity(0.6))
                         .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
                     }
                     .buttonStyle(.plain)
@@ -95,17 +95,17 @@ struct MatchView: View {
 
     var body: some View {
         ZStack {
-            LinearGradient(colors: [Color(hex: "10150a"), Color(hex: "24310f")], startPoint: .top, endPoint: .bottom)
+            LinearGradient(colors: [Brand.ink, Color(hex: "2b2722")], startPoint: .top, endPoint: .bottom)
                 .ignoresSafeArea()
             VStack(spacing: 22) {
                 Spacer()
                 Group {
                     if let url = info.photoURL { RemoteFill(url: url) }
-                    else { Brand.greenSoft.overlay(Text("✨").font(.system(size: 60))) }
+                    else { Brand.sand.overlay(Text("✨").font(.system(size: 60))) }
                 }
                 .frame(width: 160, height: 160).clipShape(Circle())
-                .overlay(Circle().stroke(Brand.green, lineWidth: 4))
-                Text("It's a match.").font(.system(size: 36, weight: .heavy)).foregroundColor(.white)
+                .overlay(Circle().stroke(Brand.sand, lineWidth: 3))
+                Text("It's a match.").font(.display(40)).foregroundColor(.white)
                 Text(String(format: L10n.t("You and %@ are both interested."), info.name))
                     .font(.system(size: 17, weight: .semibold)).foregroundColor(.white.opacity(0.8))
                     .multilineTextAlignment(.center)
@@ -116,9 +116,9 @@ struct MatchView: View {
                     dismiss()
                     store.openChatWith = id
                 } label: {
-                    Text("Say hi").font(.system(size: 17, weight: .heavy)).foregroundColor(Color(hex: "10150a"))
+                    Text("Say hi").font(.system(size: 17, weight: .heavy)).foregroundColor(Brand.ink)
                         .frame(maxWidth: .infinity).frame(height: 54)
-                        .background(Brand.green).clipShape(RoundedRectangle(cornerRadius: 16))
+                        .background(Brand.sand).clipShape(RoundedRectangle(cornerRadius: 16))
                 }.buttonStyle(.plain)
                 Button { dismiss() } label: {
                     Text("Keep exploring").font(.system(size: 15, weight: .heavy)).foregroundColor(.white.opacity(0.75))

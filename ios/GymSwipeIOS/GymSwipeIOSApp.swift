@@ -26,7 +26,7 @@ struct GymSwipeIOSApp: App {
             // sobre todo) se volvía BLANCO SOBRE BLANCO: invisible. Hasta que exista un
             // tema oscuro de verdad, la app se declara clara y se ve igual en ambos modos.
             .preferredColorScheme(.light)
-            .tint(Color(hex: "5e910e"))
+            .tint(Brand.bronze)
             // Deep links: invitaciones balicircle://user/<usuario> + callback OAuth de Google.
             .onOpenURL { url in
                 if url.scheme == "balicircle" {
@@ -43,9 +43,8 @@ struct GymSwipeIOSApp: App {
             // rechazó): se cierra, para ver el login en vez de pantallas que no cargan.
             .task {
                 guard store.auth != nil else { return }
-                if BackendConfig.isConfigured, await Backend.shared.currentUserIdAsync() == nil {
-                    store.logout(); return
-                }
+                await store.validateBackendSession()
+                guard store.auth != nil else { return }
                 if store.account == nil { store.hydrateAccountFromBackend() }
                 Task { await Backend.shared.touchPresence() }
                 PresenceService.shared.start()   // online + distancia de Your Circle (solo con la app abierta)

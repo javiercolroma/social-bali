@@ -191,6 +191,21 @@ final class Backend {
         return try client.storage.from("avatars").getPublicURL(path: path).absoluteString
     }
 
+    /// Sube una foto o vídeo de la galería del perfil (bucket `media`, 0029).
+    func uploadMedia(_ data: Data, ext: String, contentType: String) async throws -> String {
+        guard let client, let uid = await currentUserIdAsync() else { throw BackendError.notConfigured }
+        let path = "\(uid.uuidString.lowercased())/\(UUID().uuidString.lowercased()).\(ext)"
+        _ = try await client.storage.from("media")
+            .upload(path, data: data, options: FileOptions(contentType: contentType, upsert: false))
+        return try client.storage.from("media").getPublicURL(path: path).absoluteString
+    }
+
+    /// ¿Estoy en Bali? (0029) — decide si el Circle se abre o enseña la llegada.
+    func myArrival() async -> ArrivalState? {
+        guard let client, client.auth.currentSession != nil else { return nil }
+        return try? await client.rpc("my_arrival").execute().value
+    }
+
     /// Borra el fichero de una foto de actividad (best-effort).
     func deleteActivityPhoto(_ url: String) async {
         guard let client, let r = url.range(of: "/avatars/") else { return }
@@ -392,7 +407,7 @@ struct ProfileRow: Codable {
     /// Columnas que se LEEN. Incluye las del club: si falta una, `hydrateAccountFromBackend`
     /// la leería como nil y borraría la identidad local al reinstalar.
     static let columns = "id,handle,name,avatar_url,country,city,gym,is_private,"
-        + "bio,sports,neighborhood,home_city,home_country,stay_kind,stay_until,intents,photos"
+        + "bio,sports,neighborhood,home_city,home_country,stay_kind,stay_until,intents,photos,media,arrival_date"
 
     let id: UUID
     var handle: String?
@@ -418,6 +433,10 @@ struct ProfileRow: Codable {
     var intents: [String]?
     /// Hasta 4 fotos «haciendo lo que te gusta» (0027).
     var photos: [String]?
+    /// Galería: hasta 9 fotos, vídeos o Live Photos (0029).
+    var media: [MediaItem]?
+    /// Fecha de llegada declarada por quien aún no está en Bali (0029).
+    var arrival_date: String?
     /// Fotos de sus últimos entrenos públicos. Solo llega en Descubrir; NO es columna.
     var moments: [String]?
 
@@ -458,6 +477,8 @@ struct ProfileRow: Codable {
         try c.encode(stay_until, forKey: .stay_until)
         try c.encode(intents, forKey: .intents)
         try c.encode(photos, forKey: .photos)
+        try c.encode(media, forKey: .media)
+        try c.encode(arrival_date, forKey: .arrival_date)
         // `moments` no se envía: no es una columna.
     }
 
@@ -482,9 +503,18 @@ struct ActivitySignals: Codable, Hashable {
     let week_streak: Int?
 }
 
+struct ArrivalState: Decodable {
+    let in_bali: Bool
+    let arrival_date: String?
+    let arrived_at: String?
+}
+
 struct CircleDeck: Decodable {
     let day: String
     let position: Int
+    /// Aún no estás en Bali: el Circle se abre al llegar (0029).
+    var locked: Bool? = nil
+    var arrival_date: String? = nil
     /// Mi barrio declarado (cabecera «YOUR CIRCLE · Canggu»).
     let area: String?
     let profiles: [ProfileRow]

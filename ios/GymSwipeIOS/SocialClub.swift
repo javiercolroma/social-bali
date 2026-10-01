@@ -264,6 +264,10 @@ enum Neighborhood: String, Codable, CaseIterable, Identifiable {
     static let launchAreas: [Neighborhood] = [.canggu, .berawa, .pererenan, .uluwatu, .bingin, .pecatu]
 
     var isLaunchArea: Bool { Neighborhood.launchAreas.contains(self) }
+
+    /// Lo que se ofrece al elegir zona: pocas opciones, de la más popular a la menos.
+    /// (El resto de casos se conserva para no romper perfiles ya guardados.)
+    static let picker: [Neighborhood] = [.canggu, .uluwatu, .ubud, .seminyak, .berawa, .pererenan, .bingin, .sanur, .other]
 }
 
 // MARK: - Identidad del club (lo que se PINTA)

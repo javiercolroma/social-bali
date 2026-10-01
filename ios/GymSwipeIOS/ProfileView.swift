@@ -32,7 +32,7 @@ struct EditProfileView: View {
                             ZStack(alignment: .bottomTrailing) {
                                 MeAvatar(account: store.account, size: 84)
                                 Image(systemName: "camera.fill").font(.system(size: 12, weight: .bold))
-                                    .foregroundColor(Brand.ink).padding(6).background(Brand.green).clipShape(Circle())
+                                    .foregroundColor(Brand.onAccent).padding(6).background(Brand.accent).clipShape(Circle())
                             }
                         }
                         Spacer()
@@ -43,7 +43,14 @@ struct EditProfileView: View {
 
                 clubSection
 
-                PanelCard { ActivityPhotosEditor() }
+                PanelCard {
+                    Text("PHOTOS & VIDEOS").font(.caption2).fontWeight(.heavy).foregroundColor(Brand.muted)
+                    Text("Up to 9. Videos and Live Photos play on your profile. The first one is your main photo.")
+                        .font(.caption).foregroundColor(Brand.soft)
+                    MediaGalleryEditor(items: Binding(
+                        get: { store.profile.media ?? [] },
+                        set: { store.profile.media = $0; store.persist(); store.syncProfileToBackend() }))
+                }
 
                 PanelCard {
                     Text("DETAILS").font(.caption2).fontWeight(.heavy).foregroundColor(Brand.muted)
@@ -59,7 +66,7 @@ struct EditProfileView: View {
                             HStack {
                                 Text(birthLabel).foregroundColor(store.profile.birthdate == nil ? Brand.soft : Brand.ink)
                                 Spacer()
-                                if !ageText.isEmpty { Text("\(ageText) years").font(.caption).fontWeight(.heavy).foregroundColor(Color(hex: "4b6211")) }
+                                if !ageText.isEmpty { Text("\(ageText) years").font(.caption).fontWeight(.heavy).foregroundColor(Brand.bronze) }
                                 Image(systemName: "calendar").font(.caption).foregroundColor(Brand.soft)
                             }
                             .font(.system(size: 15, weight: .semibold))
@@ -139,7 +146,7 @@ struct EditProfileView: View {
 
             MenuField(label: "Where in Bali", placeholder: "Choose",
                       selected: store.profile.neighborhood ?? "",
-                      options: Neighborhood.allCases.map { ($0.label, $0.rawValue) }) {
+                      options: Neighborhood.picker.map { ($0.label, $0.rawValue) }) {
                 store.profile.neighborhood = $0; store.persist()
             }
 
@@ -182,7 +189,7 @@ struct EditProfileView: View {
                     if store.profile.birthdate == nil {
                         Button { birthSelection = store.profile.birthdate ?? birthSelection; showBirthPicker = true } label: {
                             Text("Dating is for members 18 and over. Add your date of birth to turn it on.")
-                                .font(.caption).foregroundColor(Color(hex: "4b6211")).multilineTextAlignment(.leading)
+                                .font(.caption).foregroundColor(Brand.bronze).multilineTextAlignment(.leading)
                         }.buttonStyle(.plain)
                     } else {
                         Text("Dating is for members 18 and over.").font(.caption).foregroundColor(Brand.soft)
@@ -230,9 +237,9 @@ struct EditProfileView: View {
                 Text(text)
             }
             .font(.system(size: 13, weight: .heavy))
-            .foregroundColor(on ? Color(hex: "10150a") : Brand.ink)
+            .foregroundColor(on ? Brand.onAccent : Brand.ink)
             .padding(.horizontal, 11).frame(height: 32)
-            .background(on ? Brand.green : Brand.surface)
+            .background(on ? Brand.accent : Brand.surface)
             .clipShape(Capsule())
             .overlay(Capsule().stroke(on ? Color.clear : Brand.line))
         }.buttonStyle(.plain)
@@ -307,7 +314,7 @@ struct EditProfileView: View {
         VStack(alignment: .leading, spacing: 5) {
             Text(label.uppercased()).font(.caption2).fontWeight(.heavy).foregroundColor(Brand.muted)
             HStack(spacing: 6) {
-                Image(systemName: icon).foregroundColor(Color(hex: "6ea300"))
+                Image(systemName: icon).foregroundColor(Brand.bronze)
                 Text("@").foregroundColor(Brand.soft)
                 TextField("username", text: binding).textInputAutocapitalization(.never).autocorrectionDisabled()
             }
@@ -370,10 +377,10 @@ struct SettingsView: View {
                         Text("YOUR CIRCLE").font(.caption2).fontWeight(.heavy).foregroundColor(Brand.muted)
                         Toggle(isOn: Binding(get: { showDistance }, set: { showDistance = $0; savePresenceVisibility() })) {
                             Label("Show my distance", systemImage: "location.fill")
-                        }.tint(Brand.green)
+                        }.tint(Brand.accent)
                         Toggle(isOn: Binding(get: { showOnline }, set: { showOnline = $0; savePresenceVisibility() })) {
                             Label("Show when I'm online", systemImage: "circle.fill")
-                        }.tint(Brand.green)
+                        }.tint(Brand.accent)
                         Text("Others only see how far away you are, never where you are.")
                             .font(.caption2).foregroundColor(Brand.soft)
                     }
@@ -385,8 +392,8 @@ struct SettingsView: View {
 
                     PanelCard {
                         Text("PREFERENCES").font(.caption2).fontWeight(.heavy).foregroundColor(Brand.muted)
-                        Toggle(isOn: $soundOn) { Label("Sounds", systemImage: "speaker.wave.2.fill") }.tint(Brand.green)
-                        Toggle(isOn: $hapticsOn) { Label("Haptics", systemImage: "iphone.radiowaves.left.and.right") }.tint(Brand.green)
+                        Toggle(isOn: $soundOn) { Label("Sounds", systemImage: "speaker.wave.2.fill") }.tint(Brand.accent)
+                        Toggle(isOn: $hapticsOn) { Label("Haptics", systemImage: "iphone.radiowaves.left.and.right") }.tint(Brand.accent)
                     }
 
                     PanelCard {
@@ -407,14 +414,14 @@ struct SettingsView: View {
 
                     Button(role: .destructive) { confirmLogout = true } label: {
                         Label("Sign out", systemImage: "rectangle.portrait.and.arrow.right")
-                            .font(.system(size: 16, weight: .heavy)).foregroundColor(Color(hex: "a73232"))
+                            .font(.system(size: 16, weight: .heavy)).foregroundColor(Brand.redText)
                             .frame(maxWidth: .infinity).frame(height: 50)
                             .background(Brand.redSoft).clipShape(RoundedRectangle(cornerRadius: 12))
                     }
 
                     // Eliminación de cuenta in-app (obligatoria para App Store, guideline 5.1.1).
                     Button(role: .destructive) { confirmDelete = true } label: {
-                        Text("Delete account").font(.system(size: 13, weight: .heavy)).foregroundColor(Color(hex: "a73232"))
+                        Text("Delete account").font(.system(size: 13, weight: .heavy)).foregroundColor(Brand.redText)
                             .frame(maxWidth: .infinity)
                     }.padding(.top, 2)
                 }

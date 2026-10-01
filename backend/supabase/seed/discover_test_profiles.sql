@@ -317,3 +317,25 @@ update public.profiles p
    set last_in_bali_at = now(),
        arrived_at = now() - make_interval(days => case when p.id::text like '%0005' or p.id::text like '%0014' then 1 else 60 end)
  where p.is_seed;
+
+-- Galería de prueba (0029): 3-5 imágenes genéricas de picsum.photos por perfil, con
+-- proporciones variadas para ver la rejilla tipo Pinterest. Solo perfiles is_seed.
+update public.profiles p
+   set media = g.items, avatar_url = g.items->0->>'url'
+  from (
+    select p2.id,
+      jsonb_agg(jsonb_build_object(
+        'kind', 'photo',
+        'url', 'https://picsum.photos/seed/' || substr(md5(p2.id::text), 1, 8) || n || '/' || w || '/' || h,
+        'w', w, 'h', h) order by n) as items
+    from public.profiles p2
+    cross join lateral (
+      select n,
+             600 as w,
+             (array[800, 750, 900, 640, 720])[1 + ((('x' || substr(md5(p2.id::text || n), 1, 2))::bit(8)::int) % 5)] as h
+        from generate_series(1, 3 + ((('x' || substr(md5(p2.id::text), 13, 2))::bit(8)::int) % 3)) n
+    ) s
+    where p2.is_seed
+    group by p2.id
+  ) g
+ where p.id = g.id;

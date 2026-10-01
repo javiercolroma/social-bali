@@ -9,7 +9,7 @@ private func fieldBox<Content: View>(_ focused: Bool, @ViewBuilder content: () -
         .font(.system(size: 15, weight: .semibold))
         .padding(.horizontal, 12).frame(height: 46).background(Color.white)
         .clipShape(RoundedRectangle(cornerRadius: 10))
-        .overlay(RoundedRectangle(cornerRadius: 10).stroke(focused ? Brand.greenSoft : Brand.line, lineWidth: focused ? 1.5 : 1))
+        .overlay(RoundedRectangle(cornerRadius: 10).stroke(focused ? Brand.sand : Brand.line, lineWidth: focused ? 1.5 : 1))
 }
 
 private func dropdown<Content: View>(@ViewBuilder content: () -> Content) -> some View {
@@ -133,7 +133,7 @@ struct CitySearchField: View {
                             Button { onSelect(r.title); query = r.title; focused = false } label: {
                                 HStack(spacing: 11) {
                                     ZStack {
-                                        Circle().fill(Brand.greenSoft).frame(width: 32, height: 32)
+                                        Circle().fill(Brand.sand).frame(width: 32, height: 32)
                                         Image(systemName: "mappin").font(.system(size: 13, weight: .bold)).foregroundColor(Color(hex: "4f7a00"))
                                     }
                                     VStack(alignment: .leading, spacing: 1) {

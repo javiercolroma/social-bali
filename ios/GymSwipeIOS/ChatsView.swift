@@ -104,8 +104,8 @@ struct ChatsView: View {
                             .foregroundColor((conv?.unread ?? 0) > 0 ? Brand.ink : Brand.muted).lineLimit(1)
                         Spacer()
                         if let u = conv?.unread, u > 0 {
-                            Text("\(u)").font(.system(size: 11, weight: .heavy)).foregroundColor(Color(hex: "10150a"))
-                                .padding(.horizontal, 6).frame(minWidth: 20, minHeight: 20).background(Brand.green).clipShape(Capsule())
+                            Text("\(u)").font(.system(size: 11, weight: .heavy)).foregroundColor(Brand.onAccent)
+                                .padding(.horizontal, 6).frame(minWidth: 20, minHeight: 20).background(Brand.accent).clipShape(Capsule())
                         }
                     }
                 }
@@ -126,7 +126,7 @@ struct ChatsView: View {
     private func avatar(_ p: SocialPerson?, size: CGFloat) -> some View {
         Group {
             if let url = p?.avatarURL { RemoteFill(url: url) }
-            else { Brand.greenSoft.overlay(Text(p?.club?.sportList.first?.emoji ?? "🙂").font(.system(size: size * 0.45))) }
+            else { Brand.sand.overlay(Text(p?.club?.sportList.first?.emoji ?? "🙂").font(.system(size: size * 0.45))) }
         }
         .frame(width: size, height: size).clipShape(Circle())
     }

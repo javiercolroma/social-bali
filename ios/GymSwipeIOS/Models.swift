@@ -36,8 +36,12 @@ struct Profile: Codable {
     var stayUntil: Date? = nil
     /// Qué tipo de conexiones busca (rawValue de `ConnectionIntent`), multi-selección.
     var intents: [String]? = nil
-    /// Hasta 4 fotos «haciendo lo que te gusta» (URLs públicas). Opcionales, sin presión.
+    /// Fotos antiguas (0027). La galería nueva es `media`.
     var photos: [String]? = nil
+    /// Galería del perfil: hasta 9 fotos, vídeos o Live Photos; la primera es la principal.
+    var media: [MediaItem]? = nil
+    /// Si aún no está en Bali: cuándo llega (el Circle se abre al llegar).
+    var arrivalDate: Date? = nil
 
     // ─── Accesos tipados (el almacenamiento es texto; la app trabaja con enums) ───
 

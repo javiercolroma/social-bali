@@ -11,6 +11,7 @@
 		0B44BA771BBDD065482CD7C3 /* Backend.swift in Sources */ = {isa = PBXBuildFile; fileRef = 525FBF89172E34D317FCAF44 /* Backend.swift */; };
 		0C13CF2C45615798373A8B62 /* GoogleSignIn in Frameworks */ = {isa = PBXBuildFile; productRef = A833925758C2164FA36A9245 /* GoogleSignIn */; };
 		1F54E30433E9D3FBB2C4FE04 /* YourCircleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD3AC12803315FF68CF2026F /* YourCircleView.swift */; };
+		282D409F85299EB36125F5F7 /* Media.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9C951BC98D3C387AE7EC6AB5 /* Media.swift */; };
 		2A369E47736FA626323CEF25 /* ProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E53E08D1A4CF0DE70074A344 /* ProfileView.swift */; };
 		2A71043ED4BBAF7A09523AFF /* Components.swift in Sources */ = {isa = PBXBuildFile; fileRef = A415A6402658DC75C3C37C3C /* Components.swift */; };
 		2A882A99A8CD48DE197DD5A5 /* PhotoSupport.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3A318726DFFA74FF768BA96D /* PhotoSupport.swift */; };
@@ -59,6 +60,7 @@
 		75B84C1241AA6578E1A438C3 /* AuthView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthView.swift; sourceTree = "<group>"; };
 		7E6B792B4F4EA9197E1B827D /* BackendConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackendConfig.swift; sourceTree = "<group>"; };
 		867161603B2BAD433155C11B /* ChatsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatsView.swift; sourceTree = "<group>"; };
+		9C951BC98D3C387AE7EC6AB5 /* Media.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Media.swift; sourceTree = "<group>"; };
 		9CAC012CB53EB545C20ED468 /* GymSwipeIOSApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GymSwipeIOSApp.swift; sourceTree = "<group>"; };
 		A13A6C62B64C684CF0D535E4 /* SearchFields.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SearchFields.swift; sourceTree = "<group>"; };
 		A2240957DB593117FC154CFD /* ClubProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClubProfileView.swift; sourceTree = "<group>"; };
@@ -125,6 +127,7 @@
 				9CAC012CB53EB545C20ED468 /* GymSwipeIOSApp.swift */,
 				45AAAB98E146869DA2747469 /* Info.plist */,
 				00CC401644E3732F65E33662 /* L10n.swift */,
+				9C951BC98D3C387AE7EC6AB5 /* Media.swift */,
 				D1596E5BECE9666DDA76867A /* Models.swift */,
 				65AB2F19CF6DCC5B645AB356 /* NotificationManager.swift */,
 				FCD5D6AB5B854D33B50CA68B /* OnboardingView.swift */,
@@ -238,6 +241,7 @@
 				FF1D8080F80F010C04EB3609 /* Countries.swift in Sources */,
 				FBCDEE4F608FFD8E2591F44A /* GymSwipeIOSApp.swift in Sources */,
 				0897EB10B993D37439BAEE79 /* L10n.swift in Sources */,
+				282D409F85299EB36125F5F7 /* Media.swift in Sources */,
 				D1A51AF5DF1BCC6CDABBD42C /* Models.swift in Sources */,
 				A6EA57786D3C06C98EFBF7E5 /* NotificationManager.swift in Sources */,
 				BA42448E61D8F741BC01820C /* OnboardingView.swift in Sources */,
