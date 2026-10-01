@@ -349,8 +349,55 @@ final class Backend {
         var row = m
         row = MessageInsert(sender_id: me.uuidString, recipient_id: otherUserId.uuidString, text: m.text, kind: m.kind,
                             media_url: m.media_url, poster_url: m.poster_url, media_w: m.media_w, media_h: m.media_h,
-                            duration: m.duration, lat: m.lat, lon: m.lon)
+                            duration: m.duration, lat: m.lat, lon: m.lon, reply_to: m.reply_to)
         try await client.from("messages").insert(row).execute()
+    }
+
+    // MARK: - Chat tipo WhatsApp (0035)
+
+    func reactMessage(_ id: String, _ emoji: String?) async {
+        guard let client else { return }
+        struct P: Encodable { let message: String; let emoji: String? }
+        do { try await client.rpc("react_message", params: P(message: id, emoji: emoji)).execute() }
+        catch { print("[Chat] reacción falló:", error) }
+    }
+
+    func deleteMessageForEveryone(_ id: String) async {
+        guard let client else { return }
+        struct P: Encodable { let message: String }
+        do { try await client.rpc("delete_message", params: P(message: id)).execute() }
+        catch { print("[Chat] borrar falló:", error) }
+    }
+
+    /// «last seen» de otra persona (nil si lo oculta).
+    func lastSeen(_ userId: String) async -> Date? {
+        guard let client, client.auth.currentSession != nil else { return nil }
+        struct P: Encodable { let target: String }
+        let s: String? = try? await client.rpc("last_seen", params: P(target: userId.lowercased())).execute().value
+        return s.flatMap(BackendDate.parse)
+    }
+
+    struct ChatSetting: Codable {
+        let other_id: String
+        var pinned: Bool
+        var muted: Bool
+        var cleared_at: String?
+    }
+
+    func fetchChatSettings() async -> [ChatSetting] {
+        guard let client else { return [] }
+        return (try? await client.from("chat_settings").select("other_id,pinned,muted,cleared_at").execute().value) ?? []
+    }
+
+    func saveChatSetting(other: String, pinned: Bool? = nil, muted: Bool? = nil, clear: Bool = false) async {
+        guard let client, let me = await currentUserIdAsync() else { return }
+        var row: [String: AnyJSON] = ["user_id": .string(me.uuidString.lowercased()), "other_id": .string(other.lowercased()),
+                                      "updated_at": .string(BackendDate.iso.string(from: Date()))]
+        if let pinned { row["pinned"] = .bool(pinned) }
+        if let muted { row["muted"] = .bool(muted) }
+        if clear { row["cleared_at"] = .string(BackendDate.iso.string(from: Date())) }
+        do { try await client.from("chat_settings").upsert(row, onConflict: "user_id,other_id").execute() }
+        catch { print("[Chat] ajustes del chat fallaron:", error) }
     }
 
     /// Miembros por nombre, para el buscador de Chats.
@@ -585,6 +632,7 @@ struct MessageInsert: Encodable {
     var duration: Double? = nil
     var lat: Double? = nil
     var lon: Double? = nil
+    var reply_to: String? = nil
 }
 
 /// Mensaje leído de `public.messages`.
@@ -603,12 +651,20 @@ struct MessageRow: Codable {
     var duration: Double? = nil
     var lat: Double? = nil
     var lon: Double? = nil
+    var reply_to: String? = nil
+    var deleted: Bool? = nil
+    var react_sender: String? = nil
+    var react_recipient: String? = nil
 
     /// El mensaje tal y como lo pinta el chat, visto desde `me`.
     func message(me: String?) -> ChatMessage {
-        ChatMessage(id: id, fromMe: sender_id.lowercased() == me?.lowercased(), text: text,
+        let mine = sender_id.lowercased() == me?.lowercased()
+        return ChatMessage(id: id, fromMe: mine, text: text,
                     at: BackendDate.parse(created_at) ?? Date(), kind: kind, mediaURL: media_url,
-                    posterURL: poster_url, w: media_w, h: media_h, duration: duration, lat: lat, lon: lon, read: read)
+                    posterURL: poster_url, w: media_w, h: media_h, duration: duration, lat: lat, lon: lon, read: read,
+                    replyTo: reply_to, deleted: deleted,
+                    myReaction: mine ? react_sender : react_recipient,
+                    theirReaction: mine ? react_recipient : react_sender)
     }
 }
 

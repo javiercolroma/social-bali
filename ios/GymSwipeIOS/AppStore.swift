@@ -14,6 +14,8 @@ final class AppStore: ObservableObject {
     @Published var auth: Auth?
     @Published var account: Account?
     @Published var conversations: [Conversation] = []
+    /// Ajustes de cada chat (fijado, silenciado, vaciado), por id de la otra persona.
+    @Published var chatSettings: [String: Backend.ChatSetting] = [:]
 
     @Published var flashMessage: String? = nil             // aviso breve tipo toast (efímero)
 
@@ -114,10 +116,16 @@ final class AppStore: ObservableObject {
         Task {
             guard let me = await Backend.shared.currentUserIdAsync() else { return }
             let meStr = me.uuidString.lowercased()
-            let msgs = (try? await Backend.shared.fetchRecentMessages()) ?? []
+            async let fetched = Backend.shared.fetchRecentMessages()
+            async let settings = Backend.shared.fetchChatSettings()
+            let msgs = (try? await fetched) ?? []
+            chatSettings = Dictionary((await settings).map { ($0.other_id.lowercased(), $0) }, uniquingKeysWith: { a, _ in a })
             var byPartner: [String: [MessageRow]] = [:]
             for m in msgs {
-                let partner = m.sender_id.lowercased() == meStr ? m.recipient_id : m.sender_id
+                let partner = (m.sender_id.lowercased() == meStr ? m.recipient_id : m.sender_id).lowercased()
+                // «Vaciar chat»: lo anterior a esa fecha ya no se ve (solo para mí).
+                if let c = chatSettings[partner]?.cleared_at.flatMap(BackendDate.parse),
+                   let at = BackendDate.parse(m.created_at), at <= c { continue }
                 byPartner[partner, default: []].append(m)
             }
             let ids = byPartner.keys.compactMap { UUID(uuidString: $0) }
@@ -364,5 +372,34 @@ extension AppStore {
     /// aunque aún no hayamos hablado.
     func remember(_ p: SocialPerson) {
         if !messagedPeople.contains(where: { $0.id.lowercased() == p.id.lowercased() }) { messagedPeople.append(p) }
+    }
+}
+
+// MARK: - Bandeja de entrada tipo WhatsApp: fijar, no leído, vaciar
+
+extension AppStore {
+    func isPinned(_ personId: String) -> Bool { chatSettings[personId.lowercased()]?.pinned == true }
+
+    func setPinned(_ personId: String, _ on: Bool) {
+        let k = personId.lowercased()
+        var s = chatSettings[k] ?? Backend.ChatSetting(other_id: k, pinned: false, muted: false, cleared_at: nil)
+        s.pinned = on; chatSettings[k] = s
+        Task { await Backend.shared.saveChatSetting(other: k, pinned: on) }
+    }
+
+    /// Marcar como no leído (como en WhatsApp): solo en este dispositivo.
+    func toggleUnread(_ personId: String) {
+        guard let i = conversations.firstIndex(where: { $0.personId.lowercased() == personId.lowercased() }) else { return }
+        conversations[i].unread = conversations[i].unread > 0 ? 0 : 1
+        if conversations[i].unread == 0 { markConversationRead(personId) }
+    }
+
+    /// Vaciar y quitar el chat de la lista (solo para mí; la otra persona lo conserva).
+    func clearChat(_ personId: String) {
+        let k = personId.lowercased()
+        conversations.removeAll { $0.personId.lowercased() == k }
+        var s = chatSettings[k] ?? Backend.ChatSetting(other_id: k, pinned: false, muted: false, cleared_at: nil)
+        s.cleared_at = BackendDate.iso.string(from: Date()); s.pinned = false; chatSettings[k] = s
+        Task { await Backend.shared.saveChatSetting(other: k, pinned: false, clear: true) }
     }
 }

@@ -147,6 +147,11 @@ struct ChatMessage: Identifiable, Codable, Hashable {
     var lon: Double? = nil
     /// Lo ha leído la otra persona (para el doble check azul).
     var read: Bool? = nil
+    // ─── Tipo WhatsApp (0035) ───
+    var replyTo: String? = nil
+    var deleted: Bool? = nil
+    var myReaction: String? = nil
+    var theirReaction: String? = nil
 
     var type: String { kind ?? "text" }
 
@@ -156,6 +161,7 @@ struct ChatMessage: Identifiable, Codable, Hashable {
     var isLegacyWorkout: Bool { text.hasPrefix(Self.legacyWorkoutMarker) }
     /// Texto legible para la lista de conversaciones y la burbuja del chat.
     var preview: String {
+        if deleted == true { return L10n.t("This message was deleted") }
         switch type {
         case "image": return "📷 " + L10n.t("Photo")
         case "video": return "🎥 " + L10n.t("Video")
