@@ -299,13 +299,11 @@ struct ClubIdentity: Codable, Hashable {
         return b.isEmpty ? nil : b
     }
 
-    /// «Barcelona 🇪🇸». Solo la ciudad cuando la hay (si no, el país, en inglés).
+    /// «Spain 🇪🇸»: solo el país (decisión del 2026-10-01).
     var homeLine: String? {
-        let city = homeCity?.trimmingCharacters(in: .whitespaces) ?? ""
         let country = homeCountry?.trimmingCharacters(in: .whitespaces) ?? ""
-        if city.isEmpty && country.isEmpty { return nil }
-        let flag = country.isEmpty ? "" : " " + countryFlag(country)
-        return (city.isEmpty ? countryName(country) : city) + flag
+        if country.isEmpty { return nil }
+        return countryName(country) + " " + countryFlag(country)
     }
 
     /// Como la ve otra persona: «dating» solo aparece a quien también lo busca (y puede).

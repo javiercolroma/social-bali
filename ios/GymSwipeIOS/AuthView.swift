@@ -86,9 +86,6 @@ struct AuthProviderSheet: View {
                     providerButton(creating ? "Sign up with Google" : "Continue with Google", action: { handleGoogle() }) {
                         GoogleGLogo(size: 18)
                     }
-                    providerButton(creating ? "Sign up with email" : "Continue with email", action: { FX.tap(); showEmail = true }) {
-                        Image(systemName: "envelope.fill").font(.system(size: 16, weight: .bold)).foregroundColor(Brand.ink)
-                    }
                 }
                 if busy { ProgressView().tint(Brand.ink) }
                 if let signInError {
@@ -104,11 +101,10 @@ struct AuthProviderSheet: View {
         }
         .presentationDetents([.medium])
         .presentationDragIndicator(.visible)
-        .sheet(isPresented: $showEmail) { EmailAuthSheet(startCreating: creating).environmentObject(store) }
         .alert("Google isn't set up yet", isPresented: $googleNote) {
             Button("OK", role: .cancel) {}
         } message: {
-            Text("To enable Google, create an iOS OAuth Client ID in Google Cloud and paste it into AuthConfig.swift (instructions inside). Meanwhile, sign in with Apple or email.")
+            Text("Google sign-in is coming soon. For now, continue with Apple.")
         }
     }
 
@@ -392,23 +388,25 @@ struct GoogleGLogo: View {
     private let green = Color(red: 0.204, green: 0.659, blue: 0.325)  // #34A853
 
     var body: some View {
-        let lw = size * 0.28
+        // Ángulos desde las 3 en punto, en sentido horario (como `trim`): el hueco queda
+        // arriba a la derecha y la barra azul sale del centro hacia la derecha.
+        let lw = size * 0.22
+        let d = size - lw
         ZStack {
-            seg(0.60, 0.88, red, lw)      // arco superior
-            seg(0.35, 0.60, yellow, lw)   // arco izquierdo
-            seg(0.10, 0.35, green, lw)    // arco inferior
-            seg(0.88, 1.00, blue, lw)     // arco superior-derecha (hacia la barra)
-            // Barra horizontal azul (lo que hace que sea una "G" y no un anillo).
-            Capsule().fill(blue)
-                .frame(width: size * 0.40, height: lw)
-                .offset(x: size * 0.23, y: size * 0.02)
+            seg(0.000, 0.130, blue, lw, d)
+            seg(0.130, 0.420, green, lw, d)
+            seg(0.420, 0.600, yellow, lw, d)
+            seg(0.600, 0.875, red, lw, d)
+            Rectangle().fill(blue)
+                .frame(width: d / 2 + lw / 2, height: lw)
+                .offset(x: d / 4 + lw / 4)
         }
         .frame(width: size, height: size)
     }
 
-    private func seg(_ from: CGFloat, _ to: CGFloat, _ color: Color, _ lw: CGFloat) -> some View {
+    private func seg(_ from: CGFloat, _ to: CGFloat, _ color: Color, _ lw: CGFloat, _ d: CGFloat) -> some View {
         Circle().trim(from: from, to: to)
             .stroke(color, style: StrokeStyle(lineWidth: lw, lineCap: .butt))
-            .frame(width: size, height: size)
+            .frame(width: d, height: d)
     }
 }

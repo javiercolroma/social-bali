@@ -232,7 +232,7 @@ begin
         public.presence_distance_m(uid, p.id) as dist
       from public.profiles p
       where p.id <> uid
-        and p.last_in_bali_at > now() - interval '7 days'
+        and public.is_in_bali(p.id)
         and (nullif(trim(p.bio), '') is not null or cardinality(p.sports) > 0)
         and not (p.stay_kind = 'until' and p.stay_until is not null and p.stay_until < d)
         and not public.is_blocked_pair(uid, p.id)

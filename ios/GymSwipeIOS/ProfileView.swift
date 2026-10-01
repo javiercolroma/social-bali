@@ -74,10 +74,6 @@ struct EditProfileView: View {
                             .clipShape(RoundedRectangle(cornerRadius: 10))
                         }
                     }
-                    CountryField(label: "Country", selected: store.profile.country) { store.profile.country = $0; store.persist() }
-                    CitySearchField(label: "City", selected: store.profile.city, country: store.profile.country) { store.profile.city = $0; store.persist() }
-                    field("Area / neighbourhood (optional)", binding: Binding(get: { store.profile.region ?? "" }, set: { store.profile.region = $0; store.persist() }))
-                    field("Gym", binding: Binding(get: { store.profile.gym }, set: { store.profile.gym = $0; store.persist() }))
                 }
 
                 PanelCard {
@@ -172,9 +168,6 @@ struct EditProfileView: View {
             CountryField(label: L10n.t("Where are you from?"), selected: store.profile.homeCountry ?? "") {
                 store.profile.homeCountry = $0; store.persist()
             }
-            CitySearchField(label: L10n.t("Home city"), selected: store.profile.homeCity ?? "", country: store.profile.homeCountry ?? "") {
-                store.profile.homeCity = $0; store.persist()
-            }
 
             VStack(alignment: .leading, spacing: 7) {
                 Text("OPEN TO").font(.caption2).fontWeight(.heavy).foregroundColor(Brand.muted)
@@ -236,12 +229,12 @@ struct EditProfileView: View {
                 if let icon { Image(systemName: icon) }
                 Text(text)
             }
-            .font(.system(size: 13, weight: .heavy))
-            .foregroundColor(on ? Brand.onAccent : Brand.ink)
+            .font(.system(size: 13, weight: .semibold))
+            .foregroundColor(Brand.ink)
             .padding(.horizontal, 11).frame(height: 32)
-            .background(on ? Brand.accent : Brand.surface)
+            .background(on ? Brand.sand : Brand.surface)
             .clipShape(Capsule())
-            .overlay(Capsule().stroke(on ? Color.clear : Brand.line))
+            .overlay(Capsule().stroke(on ? Brand.ink : Brand.line, lineWidth: on ? 1.5 : 1))
         }.buttonStyle(.plain)
     }
 
@@ -392,7 +385,6 @@ struct SettingsView: View {
 
                     PanelCard {
                         Text("PREFERENCES").font(.caption2).fontWeight(.heavy).foregroundColor(Brand.muted)
-                        Toggle(isOn: $soundOn) { Label("Sounds", systemImage: "speaker.wave.2.fill") }.tint(Brand.accent)
                         Toggle(isOn: $hapticsOn) { Label("Haptics", systemImage: "iphone.radiowaves.left.and.right") }.tint(Brand.accent)
                     }
 

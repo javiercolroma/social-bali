@@ -431,14 +431,10 @@ struct OnboardingView: View {
     /// Escribe también `country`/`city`, que son los que alimentan la banderita ya existente.
     private var homeStep: some View {
         layout {
-            Question("And where are you from?")
-            VStack(spacing: 10) {
-                CountryField(label: "", selected: country) { country = $0 }
-                CitySearchField(label: "", selected: city, country: country) { city = $0 }
-            }
+            Question("Which country are you from?")
+            CountryField(label: "", selected: country) { country = $0 }
         } actions: {
-            primary("Continue") { advance() }
-            skip()
+            primary("Continue", enabled: !country.isEmpty) { advance() }
         }
     }
 
@@ -646,14 +642,13 @@ private struct ChipGrid: View {
                     onTap(value)
                 } label: {
                     Text(label)
-                        .font(.system(size: 14, weight: .heavy))
-                        .foregroundColor(on ? Brand.onAccent : Brand.ink)
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundColor(Brand.ink)
                         .lineLimit(1).minimumScaleFactor(0.7)
                         .padding(.horizontal, 12).frame(height: 42).frame(maxWidth: .infinity)
-                        .background(on ? Brand.accent : Color.white)
+                        .background(on ? Brand.sand : Color.white)
                         .clipShape(Capsule())
-                        .overlay(Capsule().stroke(on ? Color.clear : Brand.line))
-                        .shadow(color: on ? Brand.accent.opacity(0.30) : .clear, radius: 6, y: 3)
+                        .overlay(Capsule().stroke(on ? Brand.ink : Brand.line, lineWidth: on ? 1.5 : 1))
                 }
                 .buttonStyle(PressableButtonStyle())
                 .animation(.spring(response: 0.28, dampingFraction: 0.6), value: on)
@@ -672,18 +667,17 @@ private struct SelectCard: View {
         Button(action: action) {
             HStack(spacing: 12) {
                 Text(emoji).font(.system(size: 24)).scaleEffect(selected ? 1.18 : 1).frame(width: 34)
-                Text(label).font(.system(size: 17, weight: .heavy))
-                    .foregroundColor(selected ? Brand.ink : Brand.ink)
+                Text(label).font(.system(size: 17, weight: .semibold))
+                    .foregroundColor(Brand.ink)
                 Spacer()
                 Image(systemName: selected ? "checkmark.circle.fill" : "circle")
-                    .font(.system(size: 22, weight: selected ? .bold : .regular))
-                    .foregroundColor(selected ? Brand.onAccent : Brand.line)
+                    .font(.system(size: 22, weight: .regular))
+                    .foregroundColor(selected ? Brand.ink : Brand.line)
             }
             .padding(.horizontal, 16).frame(minHeight: 60).frame(maxWidth: .infinity)
-            .background(selected ? Brand.accent : Color.white)
+            .background(selected ? Brand.sand : Color.white)
             .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-            .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).stroke(selected ? Color.clear : Brand.line))
-            .shadow(color: selected ? Brand.accent.opacity(0.35) : .clear, radius: 9, y: 5)
+            .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).stroke(selected ? Brand.ink : Brand.line, lineWidth: selected ? 1.5 : 1))
         }
         .buttonStyle(PressableButtonStyle())
         .animation(.spring(response: 0.3, dampingFraction: 0.55), value: selected)

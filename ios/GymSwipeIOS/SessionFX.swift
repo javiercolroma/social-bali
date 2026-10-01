@@ -13,7 +13,8 @@ enum Haptics {
 /// App-wide feedback helper that respects the user's Sonidos/Vibración toggles.
 enum FX {
     static var hapticsOn: Bool { UserDefaults.standard.object(forKey: "fxHaptics") as? Bool ?? true }
-    static var soundOn: Bool { UserDefaults.standard.object(forKey: "fxSound") as? Bool ?? true }
+    /// Sonidos apagados: los heredados de la app anterior no encajan con el club.
+    static var soundOn: Bool { false }
 
     /// Light feedback for routine taps (navigation, toggles, minor actions).
     static func tap() { if hapticsOn { Haptics.soft() } }
