@@ -39,20 +39,21 @@ struct GymSwipeIOSApp: App {
                 }
                 GIDSignIn.sharedInstance.handle(url)
             }
-            // Arranque: si ya hay sesión Supabase, trae el histórico y el ranking real (gateado).
-            // Y si hay sesión pero no cuenta local, rehidrata el perfil (evita repetir onboarding).
+            // Arranque. Sesión local SIN sesión en el servidor (p. ej. un login que el servidor
+            // rechazó): se cierra, para ver el login en vez de pantallas que no cargan.
             .task {
-                if store.auth != nil && store.account == nil { store.hydrateAccountFromBackend() }
-                store.syncSessionsFromBackend(); store.syncWorkoutsFromBackend(); store.loadLeaderboard()
-                Task { await Backend.shared.touchPresence() }   // cuenta como "activo" (30 días)
+                guard store.auth != nil else { return }
+                if BackendConfig.isConfigured, await Backend.shared.currentUserIdAsync() == nil {
+                    store.logout(); return
+                }
+                if store.account == nil { store.hydrateAccountFromBackend() }
+                Task { await Backend.shared.touchPresence() }
                 PresenceService.shared.start()   // online + distancia de Your Circle (solo con la app abierta)
-                store.loadFollowing(); store.loadConversations(); store.loadConnections()
+                store.loadConversations(); store.loadConnections()
             }
-            // Al volver a primer plano: re-sincroniza (SUBE cualquier entreno que no subiera en su
-            // momento) y refresca no leídos. Así el muro del otro ve TODOS los entrenos.
             .onChange(of: scenePhase) { phase in
                 if phase == .active {
-                    store.syncSessionsFromBackend(); store.loadConversations()
+                    store.loadConversations()
                     if store.auth != nil { PresenceService.shared.start() }
                 } else if phase == .background {
                     PresenceService.shared.stop()   // deja de salir online al momento

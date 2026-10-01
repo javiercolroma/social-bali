@@ -30,7 +30,6 @@ targets:
     sources:
       - path: GymSwipeIOS
     dependencies:
-      - target: ForgeWidget
       - package: GoogleSignIn
         product: GoogleSignIn
       - package: Supabase
@@ -57,10 +56,8 @@ targets:
           - CFBundleURLSchemes:
               - balicircle
         ITSAppUsesNonExemptEncryption: false
-        NSSupportsLiveActivities: true
-        LSApplicationCategoryType: public.app-category.healthcare-fitness
+        LSApplicationCategoryType: public.app-category.social-networking
         NSLocationWhenInUseUsageDescription: Bali Circle uses your location to show how far away people in your circle are. Others only see the distance, never where you are.
-        NSCameraUsageDescription: Bali Circle uses the camera to take your workout photo.
         UILaunchScreen:
           UIColorName: LaunchBackground
         UISupportedInterfaceOrientations:
@@ -81,33 +78,6 @@ targets:
         SUPPORTS_MACCATALYST: false
         SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD: false
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
-        TARGETED_DEVICE_FAMILY: "1,2"
-  ForgeWidget:
-    type: app-extension
-    platform: iOS
-    deploymentTarget: "16.2"
-    sources:
-      - path: ForgeWidget
-      - path: GymSwipeIOS/WorkoutActivityAttributes.swift
-      - path: GymSwipeIOS/WorkoutRemote.swift
-      - path: GymSwipeIOS/WorkoutIntents.swift
-      - path: GymSwipeIOS/LiveActivityManager.swift
-    info:
-      path: ForgeWidget/Info.plist
-      properties:
-        CFBundleDisplayName: Bali Circle
-        # La extensión DEBE llevar la misma versión que la app o falla la subida.
-        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
-        CFBundleShortVersionString: $(MARKETING_VERSION)
-        NSExtension:
-          NSExtensionPointIdentifier: com.apple.widgetkit-extension
-    settings:
-      base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.javiercolroma.balicircle.widget
-        PRODUCT_NAME: BaliCircleWidget
-        SDKROOT: iphoneos
-        SUPPORTED_PLATFORMS: "iphoneos iphonesimulator"
-        SUPPORTS_MACCATALYST: false
         TARGETED_DEVICE_FAMILY: "1,2"
 schemes:
   GymSwipeIOS:

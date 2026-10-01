@@ -55,6 +55,8 @@ struct AuthProviderSheet: View {
     @State private var showEmail = false
     @State private var googleNote = false
     @State private var appleNonce = ""
+    @State private var busy = false
+    @State private var signInError: String?
 
     var body: some View {
         NavigationStack {
@@ -62,7 +64,7 @@ struct AuthProviderSheet: View {
                 VStack(spacing: 4) {
                     Text(creating ? "Join Bali Circle" : "Welcome back")
                         .font(.system(size: 24, weight: .heavy)).foregroundColor(Brand.ink)
-                    Text(creating ? "Create your account in seconds." : "Sign in to keep up your progress.")
+                    Text(creating ? "Create your account in seconds." : "Good to see you again.")
                         .font(.footnote).foregroundColor(Brand.muted)
                 }.padding(.top, 26)
 
@@ -82,8 +84,13 @@ struct AuthProviderSheet: View {
                         Image(systemName: "envelope.fill").font(.system(size: 16, weight: .bold)).foregroundColor(Brand.ink)
                     }
                 }
+                if busy { ProgressView().tint(Brand.ink) }
+                if let signInError {
+                    Text(signInError).font(.footnote).foregroundColor(Brand.red).multilineTextAlignment(.center)
+                }
                 Spacer()
             }
+            .disabled(busy)
             .padding(.horizontal, 20)
             .background(Brand.bg)
             .navigationBarTitleDisplayMode(.inline)
@@ -119,16 +126,10 @@ struct AuthProviderSheet: View {
         GIDSignIn.sharedInstance.signIn(withPresenting: root) { result, error in
             guard error == nil, let user = result?.user else { return }
             let profile = user.profile
-            let uid = user.userID ?? profile?.email ?? UUID().uuidString
-            FX.success(sound: true)
-            withAnimation { store.signIn(provider: "google", userId: uid, email: profile?.email, name: profile?.name) }
-            if Backend.shared.isConfigured, let idToken = user.idToken?.tokenString {
-                Task {
-                    do { let uid = try await Backend.shared.signInWithGoogle(idToken: idToken)
-                         print("[Backend] sesión Supabase (Google) abierta: \(uid)")
-                         store.hydrateAccountFromBackend(); store.syncSessionsFromBackend(); store.syncWorkoutsFromBackend() }
-                    catch { print("[Backend] Google → Supabase falló:", error); store.checkingProfile = false }
-                }
+            guard let idToken = user.idToken?.tokenString else { signInError = Self.failed; return }
+            // Solo se entra cuando el SERVIDOR acepta la sesión: si no, todo fallaría dentro.
+            enter(provider: "google", email: profile?.email, name: profile?.name) {
+                try await Backend.shared.signInWithGoogle(idToken: idToken)
             }
         }
     }
@@ -137,17 +138,35 @@ struct AuthProviderSheet: View {
         guard case .success(let authorization) = result,
               let c = authorization.credential as? ASAuthorizationAppleIDCredential else { return }
         let name = [c.fullName?.givenName, c.fullName?.familyName].compactMap { $0 }.joined(separator: " ")
-        FX.success(sound: true)
-        withAnimation { store.signIn(provider: "apple", userId: c.user, email: c.email, name: name.isEmpty ? nil : name) }
-        if Backend.shared.isConfigured, let tokenData = c.identityToken,
-           let idToken = String(data: tokenData, encoding: .utf8) {
-            let nonce = appleNonce
-            Task {
-                do { let uid = try await Backend.shared.signInWithApple(idToken: idToken, nonce: nonce)
-                     print("[Backend] sesión Supabase (Apple) abierta: \(uid)")
-                     store.hydrateAccountFromBackend(); store.syncSessionsFromBackend(); store.syncWorkoutsFromBackend() }
-                catch { print("[Backend] Apple → Supabase falló:", error); store.checkingProfile = false }
+        guard let tokenData = c.identityToken, let idToken = String(data: tokenData, encoding: .utf8) else {
+            signInError = Self.failed; return
+        }
+        let nonce = appleNonce
+        enter(provider: "apple", email: c.email, name: name.isEmpty ? nil : name) {
+            try await Backend.shared.signInWithApple(idToken: idToken, nonce: nonce)
+        }
+    }
+
+    private static let failed = "Couldn't sign you in. Please try again."
+
+    /// Abre la sesión en Supabase y SOLO entonces entra en la app.
+    private func enter(provider: String, email: String?, name: String?, signIn: @escaping () async throws -> UUID) {
+        guard Backend.shared.isConfigured else { return }
+        busy = true; signInError = nil
+        Task {
+            do {
+                let uid = try await signIn()
+                print("[Backend] sesión Supabase (\(provider)) abierta: \(uid)")
+                FX.success(sound: true)
+                withAnimation { store.signIn(provider: provider, userId: uid.uuidString, email: email, name: name) }
+                store.hydrateAccountFromBackend()
+                dismiss()
+            } catch {
+                print("[Backend] \(provider) → Supabase falló:", error)
+                FX.warning()
+                signInError = Self.failed
             }
+            busy = false
         }
     }
 }
@@ -344,7 +363,7 @@ struct EmailAuthSheet: View {
                 print("[Backend] sesión Supabase (email OTP) abierta: \(uid)")
                 FX.success(sound: true); dismiss()
                 withAnimation { store.signIn(provider: "email", userId: uid.uuidString, email: cleanEmail, name: nil) }
-                store.hydrateAccountFromBackend(); store.syncSessionsFromBackend(); store.syncWorkoutsFromBackend()
+                store.hydrateAccountFromBackend()
             } catch {
                 print("[Backend] verificar código falló:", error)
                 self.error = "Wrong or expired code. Check it or request a new one."

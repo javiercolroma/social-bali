@@ -253,8 +253,7 @@ struct ConnectionRequestsSheet: View {
                         PanelCard {
                             Button { if let person { openProfile = person } } label: {
                                 HStack(spacing: 12) {
-                                    ScoredAvatar(emoji: person?.club?.sportList.first?.emoji ?? "🙂",
-                                                 avatarURL: person?.avatarURL, score: store.personScore(req.from_id), size: 52)
+                                    PersonAvatar(person: person, size: 52)
                                     VStack(alignment: .leading, spacing: 2) {
                                         Text(person?.name ?? "…").font(.system(size: 17, weight: .heavy)).foregroundColor(Brand.ink)
                                         Text("\(req.connectReason?.emoji ?? "") \(req.connectReason?.receivedLine ?? "")")

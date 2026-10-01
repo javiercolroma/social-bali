@@ -5,8 +5,8 @@ import Supabase
 /// Capa de acceso a Supabase. Gateada por `BackendConfig`: si no hay credenciales,
 /// `client == nil` y `isConfigured == false`, así que la app sigue funcionando en local.
 ///
-/// Fase 1 (actual): auth con Apple/Google (ID token) + upsert del perfil.
-/// Las fases siguientes (sesiones, follows, feed, ranking) se añaden aquí encima.
+/// Auth (Apple/Google/email), perfil del club, Your Circle, presencia, conexiones,
+/// mensajes y moderación. Todo lo de entrenos/feed/ranking se quitó de la app.
 @MainActor
 final class Backend {
     static let shared = Backend()
@@ -197,14 +197,6 @@ final class Backend {
         _ = try? await client.storage.from("avatars").remove(paths: [String(url[r.upperBound...])])
     }
 
-    // MARK: - Sesiones de entreno
-
-    /// Sube (o actualiza) una sesión de entreno. Idempotente por `id`.
-    func upsertSession(_ row: SessionRow) async throws {
-        guard let client else { throw BackendError.notConfigured }
-        try await client.from("workout_sessions").upsert(row).execute()
-    }
-
     // MARK: - Eliminar cuenta (App Store 5.1.1: obligatorio con registro)
 
     /// Borra la cuenta COMPLETA del usuario actual: archivos de Storage (best-effort) y la
@@ -224,56 +216,7 @@ final class Backend {
         try? await client.auth.signOut()
     }
 
-    // MARK: - Solicitudes de seguimiento (cuentas privadas)
-
-    /// Solicitudes RECIBIDAS pendientes de aceptar (gente que quiere seguirte).
-    func fetchFollowRequests() async throws -> [FollowRow] {
-        guard let client, let me = await currentUserIdAsync() else { return [] }
-        return try await client.from("follows").select()
-            .eq("following_id", value: me.uuidString).eq("status", value: "pending").execute().value
-    }
-    func acceptFollowRequest(from follower: UUID) async throws {
-        guard let client, let me = await currentUserIdAsync() else { throw BackendError.notConfigured }
-        try await client.from("follows").update(["status": "accepted"])
-            .eq("follower_id", value: follower.uuidString).eq("following_id", value: me.uuidString).execute()
-    }
-    func rejectFollowRequest(from follower: UUID) async throws {
-        guard let client, let me = await currentUserIdAsync() else { throw BackendError.notConfigured }
-        try await client.from("follows").delete()
-            .eq("follower_id", value: follower.uuidString).eq("following_id", value: me.uuidString).execute()
-    }
-
-    /// Borra una sesión de entreno del servidor (y su foto de Storage, best-effort).
-    func deleteSession(id: String) async {
-        guard let client, let me = await currentUserIdAsync() else { return }
-        _ = try? await client.storage.from("session-photos")
-            .remove(paths: ["\(me.uuidString.lowercased())/\(id.lowercased()).jpg"])
-        _ = try? await client.from("workout_sessions").delete().eq("id", value: id).execute()
-    }
-
-    // MARK: - Partner (planes de entrenamiento REALES)
-
-    func fetchTrainingPlans() async throws -> [TrainingPlanRow] {
-        guard let client else { return [] }
-        return try await client.from("training_plans")
-            .select("id,user_id,title,when_text,place,spots,note,created_at,cell_lat,cell_lon,author:profiles!training_plans_user_id_fkey(handle,name,avatar_url)")
-            .gte("created_at", value: BackendDate.iso.string(from: Date().addingTimeInterval(-14 * 24 * 3600)))
-            .order("created_at", ascending: false)
-            .limit(50)
-            .execute().value
-    }
-    func createTrainingPlan(title: String, when: String, place: String, spots: String, note: String?) async throws {
-        guard let client, let me = await currentUserIdAsync() else { throw BackendError.notConfigured }
-        struct Ins: Encodable { let user_id: String; let title: String; let when_text: String; let place: String; let spots: String; let note: String? }
-        try await client.from("training_plans")
-            .insert(Ins(user_id: me.uuidString.lowercased(), title: title, when_text: when, place: place, spots: spots, note: note)).execute()
-    }
-    func deleteTrainingPlan(id: String) async throws {
-        guard let client else { throw BackendError.notConfigured }
-        try await client.from("training_plans").delete().eq("id", value: id).execute()
-    }
-
-    // MARK: - Presencia + mapa de calor (privacidad: celda de ~5 km, nunca exacta)
+    // MARK: - Presencia (privacidad: celda de ~5 km, nunca exacta)
 
     /// Redondea a la celda de 0,05° (~5 km) y actualiza tu presencia. NUNCA se sube
     /// la ubicación exacta — solo la celda y la marca de actividad.
@@ -307,40 +250,6 @@ final class Backend {
         return rows.first?.id == me   // tu propio handle actual cuenta como disponible
     }
 
-    /// Registra una petición de IA (persistente por usuario y día; ver 0019_ai_usage).
-    func bumpAIUsage(kind: String, inTokens: Int = 0, outTokens: Int = 0) async {
-        guard let client else { return }
-        struct P: Encodable { let p_kind: String; let p_in: Int; let p_out: Int }
-        _ = try? await client.rpc("bump_ai_usage", params: P(p_kind: kind, p_in: inTokens, p_out: outTokens)).execute()
-    }
-
-    /// Sube MI Gym Score al perfil (fuente única para badges de feed/búsquedas).
-    func pushGymScore(_ score: Int) async {
-        guard let client, let me = await currentUserIdAsync() else { return }
-        _ = try? await client.from("profiles").update(["gym_score": score])
-            .eq("id", value: me.uuidString).execute()
-    }
-
-    /// Mi celda (~5 km) guardada en el perfil; para calcular distancias aproximadas.
-    func fetchMyCell() async -> (Double, Double)? {
-        guard let client, let me = await currentUserIdAsync() else { return nil }
-        struct C: Codable { let geo_cell_lat: Double?; let geo_cell_lon: Double? }
-        let c: C? = try? await client.from("profiles").select("geo_cell_lat,geo_cell_lon")
-            .eq("id", value: me.uuidString).single().execute().value
-        guard let la = c?.geo_cell_lat, let lo = c?.geo_cell_lon else { return nil }
-        return (la, lo)
-    }
-
-    /// Celdas agregadas (celda → nº de usuarios activos 30 días). Sin identidades.
-    func fetchHeatmap() async throws -> [HeatCell] {
-        guard let client else { return [] }
-        return try await client.rpc("activity_heatmap").execute().value
-    }
-    func fetchActiveUsersCount() async throws -> Int {
-        guard let client else { return 0 }
-        return try await client.rpc("active_users_count").execute().value
-    }
-
     // MARK: - Push (token del dispositivo)
 
     /// Registra/actualiza el token APNs del dispositivo para poder recibir pushes.
@@ -349,78 +258,6 @@ final class Backend {
         struct Row: Codable { let token: String; let user_id: String; let platform: String }
         try await client.from("device_tokens")
             .upsert(Row(token: token, user_id: uid.uuidString.lowercased(), platform: "ios")).execute()
-    }
-
-    // MARK: - Entrenos creados (plantillas) — para que no se pierdan al cerrar sesión
-
-    func upsertWorkout(_ row: WorkoutRow) async throws {
-        guard let client else { throw BackendError.notConfigured }
-        try await client.from("workouts").upsert(row).execute()
-    }
-    func deleteWorkout(id: String) async throws {
-        guard let client else { throw BackendError.notConfigured }
-        try await client.from("workouts").delete().eq("id", value: id).execute()
-    }
-    /// Entrenos del usuario actual (RLS ya los limita a los suyos), más recientes primero.
-    func fetchMyWorkouts() async throws -> [WorkoutRow] {
-        guard let client else { throw BackendError.notConfigured }
-        return try await client.from("workouts").select().order("updated_at", ascending: false).execute().value
-    }
-
-    /// Trae las sesiones del usuario actual, más recientes primero.
-    func fetchMySessions() async throws -> [SessionRow] {
-        guard let client, let uid = await currentUserIdAsync() else { return [] }
-        return try await client.from("workout_sessions")
-            .select()
-            .eq("user_id", value: uid.uuidString)
-            .order("date", ascending: false)
-            .execute()
-            .value
-    }
-
-    /// Sesiones de OTRO usuario (la RLS ya filtra a lo que puedes ver de él).
-    func fetchUserSessions(_ userId: String) async throws -> [SessionRow] {
-        guard let client else { return [] }
-        return try await client.from("workout_sessions").select()
-            .eq("user_id", value: userId).order("date", ascending: false).execute().value
-    }
-
-    /// Contadores públicos de seguidores/seguidos de un usuario (RPC).
-    func followCounts(_ userId: String) async throws -> (followers: Int, following: Int) {
-        guard let client else { return (0, 0) }
-        let rows: [FollowCountRow] = try await client.rpc("follow_counts", params: ["uid": userId]).execute().value
-        guard let r = rows.first else { return (0, 0) }
-        return (r.followers, r.following)
-    }
-
-    // MARK: - Grafo social (follows) y feed
-
-    /// Seguir / solicitar (privadas → status "pending" hasta que acepten).
-    func setFollow(_ userId: UUID, status: String = "accepted") async throws {
-        guard let client, let me = await currentUserIdAsync() else { throw BackendError.notConfigured }
-        try await client.from("follows")
-            .upsert(FollowRow(follower_id: me.uuidString, following_id: userId.uuidString, status: status))
-            .execute()
-    }
-
-    func unfollow(_ userId: UUID) async throws {
-        guard let client, let me = await currentUserIdAsync() else { throw BackendError.notConfigured }
-        try await client.from("follows").delete()
-            .eq("follower_id", value: me.uuidString)
-            .eq("following_id", value: userId.uuidString)
-            .execute()
-    }
-
-    /// A quién sigo (con su estado pendiente/aceptado).
-    func fetchFollowing() async throws -> [FollowRow] {
-        guard let client, let me = await currentUserIdAsync() else { return [] }
-        return try await client.from("follows").select().eq("follower_id", value: me.uuidString).execute().value
-    }
-
-    /// Quién me sigue.
-    func fetchFollowers() async throws -> [FollowRow] {
-        guard let client, let me = await currentUserIdAsync() else { return [] }
-        return try await client.from("follows").select().eq("following_id", value: me.uuidString).execute().value
     }
 
     /// Busca usuarios reales por @handle o por nombre.
@@ -434,16 +271,6 @@ final class Backend {
         return try await client.from("profiles")
             .select(ProfileRow.columns)
             .or("handle.ilike.%\(q)%,name.ilike.%\(q)%")
-            .limit(limit)
-            .execute().value
-    }
-
-    /// Usuarios recientes para "A quién seguir" (yo y los ya seguidos se filtran en el cliente).
-    func fetchSuggestedProfiles(limit: Int = 30) async throws -> [ProfileRow] {
-        guard let client else { return [] }
-        return try await client.from("profiles")
-            .select(ProfileRow.columns)
-            .order("created_at", ascending: false)
             .limit(limit)
             .execute().value
     }
@@ -463,73 +290,6 @@ final class Backend {
             .select(ProfileRow.columns)
             .in("id", values: ids.map { $0.uuidString })
             .execute().value
-    }
-
-    /// Feed: la RLS ya filtra a lo que puedes ver (lo tuyo + público + a quien sigues).
-    func fetchFeed(limit: Int = 50) async throws -> [SessionRow] {
-        guard let client else { return [] }
-        return try await client.from("workout_sessions")
-            .select()
-            .order("date", ascending: false)
-            .limit(limit)
-            .execute().value
-    }
-
-    /// Feed con el autor incrustado (join a profiles) para pintar nombre/avatar reales.
-    func fetchFeedWithAuthors(limit: Int = 50) async throws -> [FeedRow] {
-        guard let client else { return [] }
-        return try await client.from("workout_sessions")
-            .select("id,user_id,name,note,date,elapsed,exercises,sets,volume,xp,avg_hr,max_hr,location,photo_url,visibility,verified,items,insights,medals,author:profiles!workout_sessions_user_id_fkey(handle,name,avatar_url,gym_score),kudos(count),comments(count)")
-            .order("date", ascending: false)
-            .limit(limit)
-            .execute().value
-    }
-
-    // MARK: - Likes (kudos) y comentarios
-
-    func likeSession(_ sessionId: String) async throws {
-        guard let client, let me = await currentUserIdAsync() else { throw BackendError.notConfigured }
-        try await client.from("kudos").upsert(KudosRow(user_id: me.uuidString, session_id: sessionId)).execute()
-    }
-    func unlikeSession(_ sessionId: String) async throws {
-        guard let client, let me = await currentUserIdAsync() else { throw BackendError.notConfigured }
-        try await client.from("kudos").delete()
-            .eq("user_id", value: me.uuidString).eq("session_id", value: sessionId).execute()
-    }
-    func fetchKudos(sessionId: String) async throws -> [KudosRow] {
-        guard let client else { return [] }
-        return try await client.from("kudos").select().eq("session_id", value: sessionId).execute().value
-    }
-
-    /// IDs de sesiones a las que YO he dado like (para pintar el corazón relleno).
-    func likedSessionIds() async throws -> [String] {
-        guard let client, let me = await currentUserIdAsync() else { return [] }
-        let rows: [KudosRow] = try await client.from("kudos")
-            .select("user_id,session_id").eq("user_id", value: me.uuidString).execute().value
-        return rows.map { $0.session_id }
-    }
-
-    @discardableResult
-    func addComment(sessionId: String, text: String, parentId: String? = nil) async throws -> CommentRow {
-        guard let client, let me = await currentUserIdAsync() else { throw BackendError.notConfigured }
-        let rows: [CommentRow] = try await client.from("comments")
-            .insert(CommentInsert(session_id: sessionId, user_id: me.uuidString, parent_id: parentId, text: text))
-            .select().execute().value
-        guard let first = rows.first else { throw BackendError.notConfigured }
-        return first
-    }
-    func fetchComments(sessionId: String) async throws -> [CommentRow] {
-        guard let client else { return [] }
-        return try await client.from("comments").select()
-            .eq("session_id", value: sessionId).order("created_at", ascending: true).execute().value
-    }
-
-    /// Comentarios con el autor incrustado (para pintar nombre/@usuario reales).
-    func fetchCommentsWithAuthors(sessionId: String) async throws -> [CommentAuthorRow] {
-        guard let client else { return [] }
-        return try await client.from("comments")
-            .select("id,user_id,parent_id,text,created_at,author:profiles!comments_user_id_fkey(handle,name,avatar_url)")
-            .eq("session_id", value: sessionId).order("created_at", ascending: true).execute().value
     }
 
     // MARK: - Mensajería 1:1
@@ -598,14 +358,6 @@ final class Backend {
         return rows.map { $0.blocked_id }
     }
 
-    // MARK: - Ranking / Liga (XP semanal real)
-
-    /// Clasificación por XP de la semana en curso (RPC `weekly_xp_leaderboard`, solo verificado).
-    func fetchWeeklyLeaderboard() async throws -> [LeaderRow] {
-        guard let client else { return [] }
-        return try await client.rpc("weekly_xp_leaderboard").execute().value
-    }
-
     // MARK: - Storage (fotos). Cada archivo va bajo `<uid>/…` (lo exige la RLS de Storage).
 
     /// Sube el avatar del usuario y devuelve su URL pública.
@@ -618,15 +370,6 @@ final class Backend {
         return try client.storage.from("avatars").getPublicURL(path: path).absoluteString
     }
 
-    /// Sube la foto de un entreno y devuelve su URL pública.
-    @discardableResult
-    func uploadSessionPhoto(_ data: Data, sessionId: String) async throws -> String {
-        guard let client, let uid = await currentUserIdAsync() else { throw BackendError.notConfigured }
-        let path = "\(uid.uuidString.lowercased())/\(sessionId.lowercased()).jpg"
-        _ = try await client.storage.from("session-photos")
-            .upload(path, data: data, options: FileOptions(contentType: "image/jpeg", upsert: true))
-        return try client.storage.from("session-photos").getPublicURL(path: path).absoluteString
-    }
 }
 
 enum BackendError: Error { case notConfigured, noSession, emailTaken }
@@ -760,63 +503,6 @@ enum StayDate {
     static func date(from string: String) -> Date? { fmt.date(from: String(string.prefix(10))) }
 }
 
-/// Fila de `public.follows` (grafo social estilo Instagram).
-struct FollowRow: Codable {
-    let follower_id: String
-    let following_id: String
-    let status: String
-}
-
-/// Autor incrustado en el feed.
-struct FeedAuthor: Codable { let handle: String?; let name: String?; let avatar_url: String?; let gym_score: Int? }
-
-/// Contador incrustado (PostgREST `tabla(count)` → `[{count: N}]`).
-struct CountRow: Codable { let count: Int }
-
-/// Fila del feed = sesión + autor (join a profiles).
-struct FeedRow: Codable {
-    let id: String
-    let user_id: String
-    let name: String
-    let note: String?
-    let date: String
-    let elapsed: Int
-    let exercises: Int
-    let sets: Int
-    let volume: Double
-    let xp: Int
-    let avg_hr: Int?
-    let max_hr: Int?
-    let location: String?
-    let photo_url: String?
-    let visibility: String
-    let verified: Bool
-    let items: [SessionExercise]
-    let insights: [ProgressInsight]?
-    let medals: [SessionMedal]?
-    let author: FeedAuthor?
-    let kudos: [CountRow]?
-    let comments: [CountRow]?
-}
-
-/// Fila del ranking semanal (RPC `weekly_xp_leaderboard`).
-struct LeaderRow: Codable {
-    let user_id: UUID
-    let handle: String?
-    let name: String?
-    let avatar_url: String?
-    let weekly_xp: Int
-}
-
-/// Like de `public.kudos`.
-struct KudosRow: Codable {
-    let user_id: String
-    let session_id: String
-}
-
-/// Resultado del RPC `follow_counts`.
-struct FollowCountRow: Codable { let followers: Int; let following: Int }
-
 /// Alta de reporte de contenido.
 struct ReportInsert: Encodable {
     let reporter_id: String
@@ -830,34 +516,6 @@ struct ReportInsert: Encodable {
 struct BlockRow: Codable {
     let blocker_id: String
     let blocked_id: String
-}
-
-/// Alta de comentario (sin id/fecha: los pone el servidor).
-struct CommentInsert: Encodable {
-    let session_id: String
-    let user_id: String
-    let parent_id: String?
-    let text: String
-}
-
-/// Comentario con autor incrustado (para el feed).
-struct CommentAuthorRow: Codable {
-    let id: String
-    let user_id: String
-    let parent_id: String?
-    let text: String
-    let created_at: String
-    let author: FeedAuthor?
-}
-
-/// Comentario leído de `public.comments`.
-struct CommentRow: Codable {
-    let id: String
-    let session_id: String
-    let user_id: String
-    let parent_id: String?
-    let text: String
-    let created_at: String
 }
 
 /// Alta de mensaje (sin id/fecha).
@@ -893,108 +551,5 @@ enum BackendDate {
         plain.formatOptions = [.withInternetDateTime]
         let stripped = s.replacingOccurrences(of: #"\.\d+"#, with: "", options: .regularExpression)
         return plain.date(from: stripped)
-    }
-}
-
-/// Fila de `public.workout_sessions`. `id` es el mismo id (UUID) que la sesión local.
-struct SessionRow: Codable {
-    let id: String
-    let user_id: String
-    let name: String
-    let note: String?
-    let date: String
-    let elapsed: Int
-    let exercises: Int
-    let sets: Int
-    let volume: Double
-    let xp: Int
-    let avg_hr: Int?
-    let max_hr: Int?
-    let location: String?
-    let photo_url: String?
-    let visibility: String
-    let verified: Bool
-    let items: [SessionExercise]
-    let insights: [ProgressInsight]?   // avances por-ejercicio (jsonb); para que tus seguidores los vean
-    let medals: [SessionMedal]?        // logros/medallas del entreno (jsonb)
-
-    init(_ s: WorkoutSession, userId: UUID, photoURL: String? = nil) {
-        id = s.id.lowercased()   // determinista: Postgres normaliza el UUID a minúscula
-        user_id = userId.uuidString
-        name = s.name
-        note = s.note.isEmpty ? nil : s.note
-        date = BackendDate.iso.string(from: s.date)
-        elapsed = s.elapsed
-        exercises = s.exercises
-        sets = s.sets
-        volume = s.volume
-        xp = s.xp
-        avg_hr = s.avgHeartRate
-        max_hr = s.maxHeartRate
-        location = s.location
-        photo_url = photoURL ?? s.photoURL   // nunca borres una URL ya conocida
-        visibility = s.visibility.rawValue
-        verified = s.verified
-        items = s.items ?? []
-        insights = s.insights
-        medals = s.medals
-    }
-
-    /// Sesión local a partir de la fila del servidor (la foto llegará con Storage, Fase 5).
-    var asWorkoutSession: WorkoutSession {
-        WorkoutSession(
-            id: id, name: name, note: note ?? "",
-            date: BackendDate.parse(date) ?? Date(),
-            elapsed: elapsed, exercises: exercises, sets: sets, volume: volume, xp: xp,
-            photoData: nil, visibility: WorkoutVisibility(rawValue: visibility) ?? .all,
-            items: items, avgHeartRate: avg_hr, maxHeartRate: max_hr,
-            location: location, verified: verified, photoURL: photo_url, insights: insights, medals: medals)
-    }
-}
-
-/// Plan de entrenamiento real (Partner), con su autor embebido.
-struct TrainingPlanRow: Codable {
-    struct Author: Codable { let handle: String?; let name: String?; let avatar_url: String?; let gym_score: Int? }
-    let id: UUID
-    let user_id: UUID
-    let title: String
-    let when_text: String
-    let place: String
-    let spots: String
-    let note: String?
-    let created_at: String
-    let cell_lat: Double?
-    let cell_lon: Double?
-    let author: Author?
-}
-
-/// Celda agregada del mapa de calor (sin identidades).
-struct HeatCell: Codable, Identifiable {
-    let cell_lat: Double
-    let cell_lon: Double
-    let users: Int
-    var id: String { "\(cell_lat),\(cell_lon)" }
-}
-
-/// Fila de un entreno creado (plantilla). `exercises` se guarda como jsonb.
-struct WorkoutRow: Codable {
-    let id: String
-    let user_id: String
-    let name: String
-    let description: String
-    let block: String
-    let exercises: [Exercise]
-
-    init(_ w: WorkoutTemplate, userId: UUID) {
-        id = w.id
-        user_id = userId.uuidString.lowercased()
-        name = w.name
-        description = w.description
-        block = w.block
-        exercises = w.exercises
-    }
-
-    var asTemplate: WorkoutTemplate {
-        WorkoutTemplate(id: id, name: name, description: description, block: block, exercises: exercises)
     }
 }
