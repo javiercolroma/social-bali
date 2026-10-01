@@ -32,13 +32,9 @@
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
 	<key>LSApplicationCategoryType</key>
-	<string>public.app-category.healthcare-fitness</string>
-	<key>NSCameraUsageDescription</key>
-	<string>Bali Circle uses the camera to take your workout photo.</string>
+	<string>public.app-category.social-networking</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>Bali Circle uses your location to show how far away people in your circle are. Others only see the distance, never where you are.</string>
-	<key>NSSupportsLiveActivities</key>
-	<true/>
 	<key>UILaunchScreen</key>
 	<dict>
 		<key>UIColorName</key>

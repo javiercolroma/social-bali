@@ -345,7 +345,6 @@ struct SettingsView: View {
     @State private var confirmDelete = false
     @State private var deleting = false
     @State private var deleteFailed = false
-    @State private var toursReset = false
     @State private var showDistance = true
     @State private var showOnline = true
 
@@ -364,12 +363,6 @@ struct SettingsView: View {
                         NavigationLink { EditProfileView().environmentObject(store) } label: {
                             settingsRow("Edit profile", "person.crop.circle", chevron: true)
                         }.buttonStyle(.plain)
-                        Divider()
-                        Toggle(isOn: Binding(get: { store.profile.isPrivate }, set: { store.profile.isPrivate = $0; store.persist() })) {
-                            Label("Private account", systemImage: "lock.fill")
-                        }.tint(Brand.green)
-                        Text("If your account is private, anyone who wants to follow you will have to send you a request.")
-                            .font(.caption2).foregroundColor(Brand.soft)
                     }
 
                     // Your Circle (0028): cada persona decide si enseña su distancia y su online.
@@ -408,10 +401,6 @@ struct SettingsView: View {
                             Link(destination: url) { settingsRow("Support", "questionmark.circle.fill", chevron: true) }
                         }
                         Divider()
-                        Button { FX.tap(); store.resetTours(); toursReset = true } label: {
-                            settingsRow("Replay tutorials", "sparkles", chevron: false)
-                        }.buttonStyle(.plain)
-                        Divider()
                         HStack { Label("Version", systemImage: "info.circle"); Spacer(); Text("1.0").foregroundColor(Brand.soft) }
                             .font(.system(size: 15, weight: .semibold)).foregroundColor(Brand.ink)
                     }
@@ -433,11 +422,6 @@ struct SettingsView: View {
             }
             .background(Brand.bg)
             .navigationTitle("Settings").navigationBarTitleDisplayMode(.inline)
-            .alert("Tutorials turned back on", isPresented: $toursReset) {
-                Button("Got it", role: .cancel) {}
-            } message: {
-                Text("Forgey will guide you again the next time you open each section.")
-            }
             .confirmationDialog("Sign out?", isPresented: $confirmLogout, titleVisibility: .visible) {
                 Button("Sign out", role: .destructive) { FX.warning(); store.logout(); dismiss() }
                 Button("Cancel", role: .cancel) {}
@@ -453,7 +437,7 @@ struct SettingsView: View {
                 }
                 Button("Cancel", role: .cancel) {}
             } message: {
-                Text("Your profile, workouts, messages, followers and photos will be deleted FOREVER. This can't be undone.")
+                Text("Your profile, photos, connections and messages will be deleted forever. This can't be undone.")
             }
             .alert("Couldn't delete the account", isPresented: $deleteFailed) {
                 Button("Got it", role: .cancel) {}
@@ -499,15 +483,16 @@ struct LegalView: View {
             At Bali Circle we take your privacy seriously.
 
             Data we process
-            • Your account (name, @username and photo), your profile details (sex, age, country, city, gym) and your workouts.
-            • If you connect the Health app, we read your heart rate only during a workout, to show it and save it with the session.
-            • If you grant location permission, we use it for the ranking and to show you people nearby; we never share your exact position.
+            • Your account (name and email) and your profile: photos and videos, age, where you're from, your area in Bali, how long you're staying, your sports, bio and what you're looking for.
+            • Your location, only while the app is open. It is rounded to a grid of about 110 m before it is stored, and other members only ever see an approximate distance, never your position. It is also used to confirm you are in Bali.
+            • When you're online, if you choose to show it. You can hide your distance and your online status in Settings.
+            • Your connection requests and messages with people you've connected with.
 
             Where it is stored
-            • Your data is currently stored on your device. It is not sold or passed on to third parties for advertising.
+            • On our servers (Supabase). It is not sold or passed on to third parties for advertising.
 
             Your rights
-            • You can edit or delete your data at any time from your profile, and sign out to remove your local account.
+            • You can edit your data at any time from your profile, and delete your account and all its data from Settings.
 
             Contact
             • For any questions, write to us at soporte@forgeloop.app.
@@ -519,10 +504,10 @@ struct LegalView: View {
             Bali Circle Terms of Use.
 
             Using the app
-            • Bali Circle helps you log your workouts and connect with other people. You are responsible for the information you post.
+            • Bali Circle is a private social club to meet active people in Bali. You must be 18 or older to use dating features. You are responsible for the information you post.
 
-            Health and safety
-            • The content in the app is for information only and does not replace advice from a professional. Train safely and see a doctor before starting a programme.
+            Safety
+            • Meet in public places and tell someone where you're going. Bali Circle doesn't run background checks on members.
 
             Community and user content
             • Treat other users with respect. We apply ZERO TOLERANCE to objectionable content and abusive behaviour.
@@ -540,7 +525,7 @@ struct LegalView: View {
             return """
             Bali Circle Community Guidelines.
 
-            We want a safe, motivating community. By using the app you accept these guidelines. We apply ZERO TOLERANCE to objectionable content and abusive users.
+            We want a safe, welcoming community. By using the app you accept these guidelines. We apply ZERO TOLERANCE to objectionable content and abusive users.
 
             FORBIDDEN content
             • Harassment, bullying or threats towards other people.

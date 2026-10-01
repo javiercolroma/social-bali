@@ -7,159 +7,74 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		05F5B9B4B3BBC7AA5BBF0D0D /* WorkoutIntents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 49AFF7AA78F4C4E8A92223C7 /* WorkoutIntents.swift */; };
-		06A9A3B220C039C2F0656AB2 /* WorkoutRemote.swift in Sources */ = {isa = PBXBuildFile; fileRef = 896F243436BE8AEDD8406091 /* WorkoutRemote.swift */; };
 		0897EB10B993D37439BAEE79 /* L10n.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00CC401644E3732F65E33662 /* L10n.swift */; };
 		0B44BA771BBDD065482CD7C3 /* Backend.swift in Sources */ = {isa = PBXBuildFile; fileRef = 525FBF89172E34D317FCAF44 /* Backend.swift */; };
 		0C13CF2C45615798373A8B62 /* GoogleSignIn in Frameworks */ = {isa = PBXBuildFile; productRef = A833925758C2164FA36A9245 /* GoogleSignIn */; };
-		18DD201E427F69834868CB07 /* ForgeyChatView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 69A7DF84D73E712AC8C265F7 /* ForgeyChatView.swift */; };
 		1F54E30433E9D3FBB2C4FE04 /* YourCircleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD3AC12803315FF68CF2026F /* YourCircleView.swift */; };
-		27B6D8D9F090BE9793602AA9 /* CommunityView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B553BE8FEA6DE363E4659DB /* CommunityView.swift */; };
 		2A369E47736FA626323CEF25 /* ProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E53E08D1A4CF0DE70074A344 /* ProfileView.swift */; };
 		2A71043ED4BBAF7A09523AFF /* Components.swift in Sources */ = {isa = PBXBuildFile; fileRef = A415A6402658DC75C3C37C3C /* Components.swift */; };
 		2A882A99A8CD48DE197DD5A5 /* PhotoSupport.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3A318726DFFA74FF768BA96D /* PhotoSupport.swift */; };
-		2D4EF03878DFDEE90C1B0C79 /* ForgeWidgetBundle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8FFEDBE2AD1B3F5FF2FD48A0 /* ForgeWidgetBundle.swift */; };
 		388862FD824CE56B55EE672A /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4FDBAEC8202622CA34A302EA /* Theme.swift */; };
-		3A5B6F7B13E0E9563CFBD52F /* ForgeWidget.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 706D917063A09C4DDB833556 /* ForgeWidget.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		44168B322E9C8DF64A6B35D2 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 5D321FCC3B325158C232F567 /* PrivacyInfo.xcprivacy */; };
-		458BEC9F5810FC7661380077 /* ForgeyAI.swift in Sources */ = {isa = PBXBuildFile; fileRef = 794A239A7BBA8D929DC18AB0 /* ForgeyAI.swift */; };
-		46248B5DA3F8CE7CF349D01C /* GymScore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1250C29A42354C7EA62ADC58 /* GymScore.swift */; };
 		46EBB8712F3CB101DB8A4FED /* AppStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = D0B083763AEA6D7CE3C7B500 /* AppStore.swift */; };
 		4E84259B7279388EEDCF0D2B /* Presence.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE3D523E2B23CB071DE7E8BA /* Presence.swift */; };
 		5D87F9D09E700FC924A4C724 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B83B0B92285D78A53157123F /* Assets.xcassets */; };
-		60E08D8A66484353B6B96ADD /* TrainingCalendarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 54E87676E4306A9937FB7D0D /* TrainingCalendarView.swift */; };
-		62FA84AEC0A006A07E2C85A0 /* WorkoutIntents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 49AFF7AA78F4C4E8A92223C7 /* WorkoutIntents.swift */; };
-		66942C5A1FB587F87FB98CCC /* CloudAI.swift in Sources */ = {isa = PBXBuildFile; fileRef = F01F3A6BA9BE74390787A187 /* CloudAI.swift */; };
 		6A9B443DE5B7B54DE374C3A1 /* ClubProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2240957DB593117FC154CFD /* ClubProfileView.swift */; };
-		6DE8E5E4E1967F84A6B8AF57 /* ActivityView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FDB8BD1E12E0FD517BCB9CF5 /* ActivityView.swift */; };
 		6F3B3519B39CCE8280492005 /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 29747A9B85AA4E6D8D9D3843 /* RootView.swift */; };
-		73730EAFA44F93E2D3C79893 /* WorkoutActivityAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = C6D25F1EF920215C121A1A33 /* WorkoutActivityAttributes.swift */; };
-		795FF8DED43C3C6F7CCF9D15 /* ForgeyEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 92ACFCE394CB452DED827B37 /* ForgeyEngine.swift */; };
 		851668B790A10004977975C2 /* ChatsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 867161603B2BAD433155C11B /* ChatsView.swift */; };
-		8671E3F8A5B32C37E66F0F3B /* SessionMedals.swift in Sources */ = {isa = PBXBuildFile; fileRef = B46E8A571424C3A565D16FC2 /* SessionMedals.swift */; };
-		8A7861D45E3C7C5C05C90F80 /* WorkoutLiveActivity.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B295ED7A599C8F0FDDE74F /* WorkoutLiveActivity.swift */; };
-		8B6903E3599064FC5BE0BB2C /* WorkoutActivityAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = C6D25F1EF920215C121A1A33 /* WorkoutActivityAttributes.swift */; };
-		942CEB3E1BDC0BABD1CB038F /* Exercises.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC0D952E1A0BC084FD9FDB7C /* Exercises.swift */; };
 		943FFB855FB199E7284B3F19 /* SocialClub.swift in Sources */ = {isa = PBXBuildFile; fileRef = D6EC6B48C1199B831CEB9E85 /* SocialClub.swift */; };
 		96BF0657964B419B9F01B3EB /* SearchFields.swift in Sources */ = {isa = PBXBuildFile; fileRef = A13A6C62B64C684CF0D535E4 /* SearchFields.swift */; };
 		9D4FBEE3B57C17DF17E47E2F /* ConnectFlow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3B26FE6BEDDE5599D7F2A266 /* ConnectFlow.swift */; };
-		A4012CAB9F8D66E7AA47FCBE /* SocialFeedView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 627A3AB04978CE24F42D32E8 /* SocialFeedView.swift */; };
-		A6911B1E14CE1300F4DD0173 /* LiveActivityManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 51E3F8B26293A58B6A5DC2F4 /* LiveActivityManager.swift */; };
 		A6EA57786D3C06C98EFBF7E5 /* NotificationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 65AB2F19CF6DCC5B645AB356 /* NotificationManager.swift */; };
 		A89D564806DC6E75C368E3EB /* AuthView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 75B84C1241AA6578E1A438C3 /* AuthView.swift */; };
 		ABC05E1BF5F85BCB72A3094C /* ProfilePhotos.swift in Sources */ = {isa = PBXBuildFile; fileRef = A9D179BB3951BE1D2D1A2028 /* ProfilePhotos.swift */; };
-		AEC40F20A484762912222BA0 /* LocationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F46519F370ACB4CE695F4928 /* LocationManager.swift */; };
-		AF24880BEDF82C1B96C5A49E /* ExerciseProgress.swift in Sources */ = {isa = PBXBuildFile; fileRef = D00693AEEFD43298AF8CCCDF /* ExerciseProgress.swift */; };
-		B087CB2C4C5E2848E78E6BFE /* WorkoutRemote.swift in Sources */ = {isa = PBXBuildFile; fileRef = 896F243436BE8AEDD8406091 /* WorkoutRemote.swift */; };
 		B2BA2EDCA173DDEDD61FF8BD /* SocialViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = A94209F7155C5A09DA6E950A /* SocialViews.swift */; };
 		B4C61EC392493D8C74EF5E39 /* Connections.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0B199B340DE39BAD8B333E2E /* Connections.swift */; };
 		BA42448E61D8F741BC01820C /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD5D6AB5B854D33B50CA68B /* OnboardingView.swift */; };
 		BAD7EE358BFA5FB317D4B4BE /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = 576D24DF9F2FA5F465491620 /* Localizable.strings */; };
-		BEBB454C3035C16BFE9C0067 /* RankingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 351AF069FE04261E1DB0C543 /* RankingView.swift */; };
 		C01A2049E004FBE4ADDF5F10 /* SessionFX.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6323375755B5CE9680137707 /* SessionFX.swift */; };
-		C181C6D254D5000258AD8003 /* ActivityDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = ED8AD2852D06439AA4198279 /* ActivityDetailView.swift */; };
 		C621063B40DD7E4CCC5A1CF6 /* BackendConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7E6B792B4F4EA9197E1B827D /* BackendConfig.swift */; };
-		C858693C7D6E17A9E209653F /* ProgressInsights.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93103B207E8CE92D9C1E3D2F /* ProgressInsights.swift */; };
-		C96DA3E9AC38A13BD8D381B1 /* PartnerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C6E2A074351DB17430CAE561 /* PartnerView.swift */; };
-		CF3EFCE5F7B166F143B9B408 /* PlanView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EF5C837837CFA069C8F53AE4 /* PlanView.swift */; };
 		D1A51AF5DF1BCC6CDABBD42C /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1596E5BECE9666DDA76867A /* Models.swift */; };
 		D2CE3175CC59ED497DD03168 /* Supabase in Frameworks */ = {isa = PBXBuildFile; productRef = 3399B2AD81B7B8CE994430CC /* Supabase */; };
 		DA05549BBC317153BBD6F71E /* AuthConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = F74AC0B6B4A95C6A9638E399 /* AuthConfig.swift */; };
-		E16DCF8706F165D2CD3C5A8C /* Gamification.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3ED686425803AD9C87827576 /* Gamification.swift */; };
-		E35C82D5E1A78190A0815909 /* LiveActivityManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 51E3F8B26293A58B6A5DC2F4 /* LiveActivityManager.swift */; };
-		EF71FBCBDF30D20460C49750 /* TrainView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1DF8FC23C0BF2E64342C5D7 /* TrainView.swift */; };
-		F76E1D63AB375BD1BF06411F /* ForgeyPrompts.swift in Sources */ = {isa = PBXBuildFile; fileRef = 38A97EC1D8DFDFC712E3799C /* ForgeyPrompts.swift */; };
 		FBCDEE4F608FFD8E2591F44A /* GymSwipeIOSApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9CAC012CB53EB545C20ED468 /* GymSwipeIOSApp.swift */; };
 		FF1D8080F80F010C04EB3609 /* Countries.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1D19B1F26226F79DC0669B52 /* Countries.swift */; };
 /* End PBXBuildFile section */
 
-/* Begin PBXContainerItemProxy section */
-		66CCD894C8F0894A332B3078 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = E59A13C9409BBD82CC4E974F /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = 03A3F075B566F49E9A8B6F48;
-			remoteInfo = ForgeWidget;
-		};
-/* End PBXContainerItemProxy section */
-
-/* Begin PBXCopyFilesBuildPhase section */
-		BF42EFF6D71B10E12D8F048A /* Embed Foundation Extensions */ = {
-			isa = PBXCopyFilesBuildPhase;
-			buildActionMask = 2147483647;
-			dstPath = "";
-			dstSubfolderSpec = 13;
-			files = (
-				3A5B6F7B13E0E9563CFBD52F /* ForgeWidget.appex in Embed Foundation Extensions */,
-			);
-			name = "Embed Foundation Extensions";
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-/* End PBXCopyFilesBuildPhase section */
-
 /* Begin PBXFileReference section */
 		00CC401644E3732F65E33662 /* L10n.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = L10n.swift; sourceTree = "<group>"; };
 		0B199B340DE39BAD8B333E2E /* Connections.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Connections.swift; sourceTree = "<group>"; };
-		1250C29A42354C7EA62ADC58 /* GymScore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GymScore.swift; sourceTree = "<group>"; };
 		1D19B1F26226F79DC0669B52 /* Countries.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Countries.swift; sourceTree = "<group>"; };
 		29747A9B85AA4E6D8D9D3843 /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
-		351AF069FE04261E1DB0C543 /* RankingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RankingView.swift; sourceTree = "<group>"; };
-		38A97EC1D8DFDFC712E3799C /* ForgeyPrompts.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ForgeyPrompts.swift; sourceTree = "<group>"; };
 		3A318726DFFA74FF768BA96D /* PhotoSupport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhotoSupport.swift; sourceTree = "<group>"; };
 		3B26FE6BEDDE5599D7F2A266 /* ConnectFlow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConnectFlow.swift; sourceTree = "<group>"; };
-		3ED686425803AD9C87827576 /* Gamification.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Gamification.swift; sourceTree = "<group>"; };
 		43FB86BA08732C17FD45EDF6 /* GymSwipeIOS.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = GymSwipeIOS.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		45AAAB98E146869DA2747469 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
-		49AFF7AA78F4C4E8A92223C7 /* WorkoutIntents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutIntents.swift; sourceTree = "<group>"; };
-		4B553BE8FEA6DE363E4659DB /* CommunityView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommunityView.swift; sourceTree = "<group>"; };
 		4FDBAEC8202622CA34A302EA /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
-		51E3F8B26293A58B6A5DC2F4 /* LiveActivityManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveActivityManager.swift; sourceTree = "<group>"; };
 		525FBF89172E34D317FCAF44 /* Backend.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Backend.swift; sourceTree = "<group>"; };
-		54E87676E4306A9937FB7D0D /* TrainingCalendarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrainingCalendarView.swift; sourceTree = "<group>"; };
 		5D321FCC3B325158C232F567 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
-		5E47D6DA8F5D815485FE6ACC /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
-		627A3AB04978CE24F42D32E8 /* SocialFeedView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SocialFeedView.swift; sourceTree = "<group>"; };
 		6323375755B5CE9680137707 /* SessionFX.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionFX.swift; sourceTree = "<group>"; };
 		65AB2F19CF6DCC5B645AB356 /* NotificationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationManager.swift; sourceTree = "<group>"; };
-		69A7DF84D73E712AC8C265F7 /* ForgeyChatView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ForgeyChatView.swift; sourceTree = "<group>"; };
 		6D844158ED27007A7D1CBEDB /* GymSwipeIOS.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = GymSwipeIOS.entitlements; sourceTree = "<group>"; };
-		706D917063A09C4DDB833556 /* ForgeWidget.appex */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = "wrapper.app-extension"; path = ForgeWidget.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		75B84C1241AA6578E1A438C3 /* AuthView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthView.swift; sourceTree = "<group>"; };
-		794A239A7BBA8D929DC18AB0 /* ForgeyAI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ForgeyAI.swift; sourceTree = "<group>"; };
 		7E6B792B4F4EA9197E1B827D /* BackendConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackendConfig.swift; sourceTree = "<group>"; };
 		867161603B2BAD433155C11B /* ChatsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatsView.swift; sourceTree = "<group>"; };
-		896F243436BE8AEDD8406091 /* WorkoutRemote.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutRemote.swift; sourceTree = "<group>"; };
-		8FFEDBE2AD1B3F5FF2FD48A0 /* ForgeWidgetBundle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ForgeWidgetBundle.swift; sourceTree = "<group>"; };
-		92ACFCE394CB452DED827B37 /* ForgeyEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ForgeyEngine.swift; sourceTree = "<group>"; };
-		93103B207E8CE92D9C1E3D2F /* ProgressInsights.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProgressInsights.swift; sourceTree = "<group>"; };
 		9CAC012CB53EB545C20ED468 /* GymSwipeIOSApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GymSwipeIOSApp.swift; sourceTree = "<group>"; };
 		A13A6C62B64C684CF0D535E4 /* SearchFields.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SearchFields.swift; sourceTree = "<group>"; };
-		A1B295ED7A599C8F0FDDE74F /* WorkoutLiveActivity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutLiveActivity.swift; sourceTree = "<group>"; };
 		A2240957DB593117FC154CFD /* ClubProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClubProfileView.swift; sourceTree = "<group>"; };
 		A415A6402658DC75C3C37C3C /* Components.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Components.swift; sourceTree = "<group>"; };
 		A94209F7155C5A09DA6E950A /* SocialViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SocialViews.swift; sourceTree = "<group>"; };
 		A9D179BB3951BE1D2D1A2028 /* ProfilePhotos.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfilePhotos.swift; sourceTree = "<group>"; };
-		AC0D952E1A0BC084FD9FDB7C /* Exercises.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Exercises.swift; sourceTree = "<group>"; };
-		B46E8A571424C3A565D16FC2 /* SessionMedals.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionMedals.swift; sourceTree = "<group>"; };
 		B83B0B92285D78A53157123F /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
-		C6D25F1EF920215C121A1A33 /* WorkoutActivityAttributes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutActivityAttributes.swift; sourceTree = "<group>"; };
-		C6E2A074351DB17430CAE561 /* PartnerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PartnerView.swift; sourceTree = "<group>"; };
 		CD3AC12803315FF68CF2026F /* YourCircleView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = YourCircleView.swift; sourceTree = "<group>"; };
 		CF4285C11A5627FB6E0D6934 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/Localizable.strings; sourceTree = "<group>"; };
-		D00693AEEFD43298AF8CCCDF /* ExerciseProgress.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExerciseProgress.swift; sourceTree = "<group>"; };
 		D0B083763AEA6D7CE3C7B500 /* AppStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppStore.swift; sourceTree = "<group>"; };
 		D1596E5BECE9666DDA76867A /* Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models.swift; sourceTree = "<group>"; };
-		D1DF8FC23C0BF2E64342C5D7 /* TrainView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrainView.swift; sourceTree = "<group>"; };
 		D6EC6B48C1199B831CEB9E85 /* SocialClub.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SocialClub.swift; sourceTree = "<group>"; };
 		E53E08D1A4CF0DE70074A344 /* ProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileView.swift; sourceTree = "<group>"; };
-		ED8AD2852D06439AA4198279 /* ActivityDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActivityDetailView.swift; sourceTree = "<group>"; };
 		EE3D523E2B23CB071DE7E8BA /* Presence.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Presence.swift; sourceTree = "<group>"; };
-		EF5C837837CFA069C8F53AE4 /* PlanView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlanView.swift; sourceTree = "<group>"; };
-		F01F3A6BA9BE74390787A187 /* CloudAI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CloudAI.swift; sourceTree = "<group>"; };
-		F46519F370ACB4CE695F4928 /* LocationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationManager.swift; sourceTree = "<group>"; };
 		F74AC0B6B4A95C6A9638E399 /* AuthConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthConfig.swift; sourceTree = "<group>"; };
 		FCD5D6AB5B854D33B50CA68B /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
-		FDB8BD1E12E0FD517BCB9CF5 /* ActivityView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActivityView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -178,26 +93,14 @@
 		38A6DA15457604A9A5986D64 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				706D917063A09C4DDB833556 /* ForgeWidget.appex */,
 				43FB86BA08732C17FD45EDF6 /* GymSwipeIOS.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
 		};
-		42A7CAFFD05E4AB26FB63AC8 /* ForgeWidget */ = {
-			isa = PBXGroup;
-			children = (
-				8FFEDBE2AD1B3F5FF2FD48A0 /* ForgeWidgetBundle.swift */,
-				5E47D6DA8F5D815485FE6ACC /* Info.plist */,
-				A1B295ED7A599C8F0FDDE74F /* WorkoutLiveActivity.swift */,
-			);
-			path = ForgeWidget;
-			sourceTree = "<group>";
-		};
 		9C4D981609085AAFB38BE24C = {
 			isa = PBXGroup;
 			children = (
-				42A7CAFFD05E4AB26FB63AC8 /* ForgeWidget */,
 				DF4F6CA473D782953BF29753 /* GymSwipeIOS */,
 				38A6DA15457604A9A5986D64 /* Products */,
 			);
@@ -206,8 +109,6 @@
 		DF4F6CA473D782953BF29753 /* GymSwipeIOS */ = {
 			isa = PBXGroup;
 			children = (
-				ED8AD2852D06439AA4198279 /* ActivityDetailView.swift */,
-				FDB8BD1E12E0FD517BCB9CF5 /* ActivityView.swift */,
 				D0B083763AEA6D7CE3C7B500 /* AppStore.swift */,
 				B83B0B92285D78A53157123F /* Assets.xcassets */,
 				F74AC0B6B4A95C6A9638E399 /* AuthConfig.swift */,
@@ -215,52 +116,29 @@
 				525FBF89172E34D317FCAF44 /* Backend.swift */,
 				7E6B792B4F4EA9197E1B827D /* BackendConfig.swift */,
 				867161603B2BAD433155C11B /* ChatsView.swift */,
-				F01F3A6BA9BE74390787A187 /* CloudAI.swift */,
 				A2240957DB593117FC154CFD /* ClubProfileView.swift */,
-				4B553BE8FEA6DE363E4659DB /* CommunityView.swift */,
 				A415A6402658DC75C3C37C3C /* Components.swift */,
 				3B26FE6BEDDE5599D7F2A266 /* ConnectFlow.swift */,
 				0B199B340DE39BAD8B333E2E /* Connections.swift */,
 				1D19B1F26226F79DC0669B52 /* Countries.swift */,
-				D00693AEEFD43298AF8CCCDF /* ExerciseProgress.swift */,
-				AC0D952E1A0BC084FD9FDB7C /* Exercises.swift */,
-				794A239A7BBA8D929DC18AB0 /* ForgeyAI.swift */,
-				69A7DF84D73E712AC8C265F7 /* ForgeyChatView.swift */,
-				92ACFCE394CB452DED827B37 /* ForgeyEngine.swift */,
-				38A97EC1D8DFDFC712E3799C /* ForgeyPrompts.swift */,
-				3ED686425803AD9C87827576 /* Gamification.swift */,
-				1250C29A42354C7EA62ADC58 /* GymScore.swift */,
 				6D844158ED27007A7D1CBEDB /* GymSwipeIOS.entitlements */,
 				9CAC012CB53EB545C20ED468 /* GymSwipeIOSApp.swift */,
 				45AAAB98E146869DA2747469 /* Info.plist */,
 				00CC401644E3732F65E33662 /* L10n.swift */,
-				51E3F8B26293A58B6A5DC2F4 /* LiveActivityManager.swift */,
-				F46519F370ACB4CE695F4928 /* LocationManager.swift */,
 				D1596E5BECE9666DDA76867A /* Models.swift */,
 				65AB2F19CF6DCC5B645AB356 /* NotificationManager.swift */,
 				FCD5D6AB5B854D33B50CA68B /* OnboardingView.swift */,
-				C6E2A074351DB17430CAE561 /* PartnerView.swift */,
 				3A318726DFFA74FF768BA96D /* PhotoSupport.swift */,
-				EF5C837837CFA069C8F53AE4 /* PlanView.swift */,
 				EE3D523E2B23CB071DE7E8BA /* Presence.swift */,
 				5D321FCC3B325158C232F567 /* PrivacyInfo.xcprivacy */,
 				A9D179BB3951BE1D2D1A2028 /* ProfilePhotos.swift */,
 				E53E08D1A4CF0DE70074A344 /* ProfileView.swift */,
-				93103B207E8CE92D9C1E3D2F /* ProgressInsights.swift */,
-				351AF069FE04261E1DB0C543 /* RankingView.swift */,
 				29747A9B85AA4E6D8D9D3843 /* RootView.swift */,
 				A13A6C62B64C684CF0D535E4 /* SearchFields.swift */,
 				6323375755B5CE9680137707 /* SessionFX.swift */,
-				B46E8A571424C3A565D16FC2 /* SessionMedals.swift */,
 				D6EC6B48C1199B831CEB9E85 /* SocialClub.swift */,
-				627A3AB04978CE24F42D32E8 /* SocialFeedView.swift */,
 				A94209F7155C5A09DA6E950A /* SocialViews.swift */,
 				4FDBAEC8202622CA34A302EA /* Theme.swift */,
-				54E87676E4306A9937FB7D0D /* TrainingCalendarView.swift */,
-				D1DF8FC23C0BF2E64342C5D7 /* TrainView.swift */,
-				C6D25F1EF920215C121A1A33 /* WorkoutActivityAttributes.swift */,
-				49AFF7AA78F4C4E8A92223C7 /* WorkoutIntents.swift */,
-				896F243436BE8AEDD8406091 /* WorkoutRemote.swift */,
 				CD3AC12803315FF68CF2026F /* YourCircleView.swift */,
 				576D24DF9F2FA5F465491620 /* Localizable.strings */,
 			);
@@ -270,23 +148,6 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		03A3F075B566F49E9A8B6F48 /* ForgeWidget */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = 3C0C1DE035321FA6288C526D /* Build configuration list for PBXNativeTarget "ForgeWidget" */;
-			buildPhases = (
-				0F6FF6182193681C99F568FF /* Sources */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-			);
-			name = ForgeWidget;
-			packageProductDependencies = (
-			);
-			productName = ForgeWidget;
-			productReference = 706D917063A09C4DDB833556 /* ForgeWidget.appex */;
-			productType = "com.apple.product-type.app-extension";
-		};
 		68468B72CEEA83A73E86F243 /* GymSwipeIOS */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 88267C34260ADA5CF97A93AE /* Build configuration list for PBXNativeTarget "GymSwipeIOS" */;
@@ -294,12 +155,10 @@
 				2987ADFC3782AA9EC23E1369 /* Sources */,
 				7420902C9A241759DEA29F80 /* Resources */,
 				C9BCCDE2BE884E318D067561 /* Frameworks */,
-				BF42EFF6D71B10E12D8F048A /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
-				5A29AB270AB76A1CCDBD2D51 /* PBXTargetDependency */,
 			);
 			name = GymSwipeIOS;
 			packageProductDependencies = (
@@ -319,10 +178,6 @@
 				BuildIndependentTargetsInParallel = YES;
 				LastUpgradeCheck = 1600;
 				TargetAttributes = {
-					03A3F075B566F49E9A8B6F48 = {
-						DevelopmentTeam = 5JHD53WQ67;
-						ProvisioningStyle = Automatic;
-					};
 					68468B72CEEA83A73E86F243 = {
 						DevelopmentTeam = 5JHD53WQ67;
 						ProvisioningStyle = Automatic;
@@ -347,7 +202,6 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				03A3F075B566F49E9A8B6F48 /* ForgeWidget */,
 				68468B72CEEA83A73E86F243 /* GymSwipeIOS */,
 			);
 		};
@@ -367,87 +221,41 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
-		0F6FF6182193681C99F568FF /* Sources */ = {
-			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				2D4EF03878DFDEE90C1B0C79 /* ForgeWidgetBundle.swift in Sources */,
-				E35C82D5E1A78190A0815909 /* LiveActivityManager.swift in Sources */,
-				8B6903E3599064FC5BE0BB2C /* WorkoutActivityAttributes.swift in Sources */,
-				62FA84AEC0A006A07E2C85A0 /* WorkoutIntents.swift in Sources */,
-				8A7861D45E3C7C5C05C90F80 /* WorkoutLiveActivity.swift in Sources */,
-				06A9A3B220C039C2F0656AB2 /* WorkoutRemote.swift in Sources */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 		2987ADFC3782AA9EC23E1369 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				C181C6D254D5000258AD8003 /* ActivityDetailView.swift in Sources */,
-				6DE8E5E4E1967F84A6B8AF57 /* ActivityView.swift in Sources */,
 				46EBB8712F3CB101DB8A4FED /* AppStore.swift in Sources */,
 				DA05549BBC317153BBD6F71E /* AuthConfig.swift in Sources */,
 				A89D564806DC6E75C368E3EB /* AuthView.swift in Sources */,
 				0B44BA771BBDD065482CD7C3 /* Backend.swift in Sources */,
 				C621063B40DD7E4CCC5A1CF6 /* BackendConfig.swift in Sources */,
 				851668B790A10004977975C2 /* ChatsView.swift in Sources */,
-				66942C5A1FB587F87FB98CCC /* CloudAI.swift in Sources */,
 				6A9B443DE5B7B54DE374C3A1 /* ClubProfileView.swift in Sources */,
-				27B6D8D9F090BE9793602AA9 /* CommunityView.swift in Sources */,
 				2A71043ED4BBAF7A09523AFF /* Components.swift in Sources */,
 				9D4FBEE3B57C17DF17E47E2F /* ConnectFlow.swift in Sources */,
 				B4C61EC392493D8C74EF5E39 /* Connections.swift in Sources */,
 				FF1D8080F80F010C04EB3609 /* Countries.swift in Sources */,
-				AF24880BEDF82C1B96C5A49E /* ExerciseProgress.swift in Sources */,
-				942CEB3E1BDC0BABD1CB038F /* Exercises.swift in Sources */,
-				458BEC9F5810FC7661380077 /* ForgeyAI.swift in Sources */,
-				18DD201E427F69834868CB07 /* ForgeyChatView.swift in Sources */,
-				795FF8DED43C3C6F7CCF9D15 /* ForgeyEngine.swift in Sources */,
-				F76E1D63AB375BD1BF06411F /* ForgeyPrompts.swift in Sources */,
-				E16DCF8706F165D2CD3C5A8C /* Gamification.swift in Sources */,
-				46248B5DA3F8CE7CF349D01C /* GymScore.swift in Sources */,
 				FBCDEE4F608FFD8E2591F44A /* GymSwipeIOSApp.swift in Sources */,
 				0897EB10B993D37439BAEE79 /* L10n.swift in Sources */,
-				A6911B1E14CE1300F4DD0173 /* LiveActivityManager.swift in Sources */,
-				AEC40F20A484762912222BA0 /* LocationManager.swift in Sources */,
 				D1A51AF5DF1BCC6CDABBD42C /* Models.swift in Sources */,
 				A6EA57786D3C06C98EFBF7E5 /* NotificationManager.swift in Sources */,
 				BA42448E61D8F741BC01820C /* OnboardingView.swift in Sources */,
-				C96DA3E9AC38A13BD8D381B1 /* PartnerView.swift in Sources */,
 				2A882A99A8CD48DE197DD5A5 /* PhotoSupport.swift in Sources */,
-				CF3EFCE5F7B166F143B9B408 /* PlanView.swift in Sources */,
 				4E84259B7279388EEDCF0D2B /* Presence.swift in Sources */,
 				ABC05E1BF5F85BCB72A3094C /* ProfilePhotos.swift in Sources */,
 				2A369E47736FA626323CEF25 /* ProfileView.swift in Sources */,
-				C858693C7D6E17A9E209653F /* ProgressInsights.swift in Sources */,
-				BEBB454C3035C16BFE9C0067 /* RankingView.swift in Sources */,
 				6F3B3519B39CCE8280492005 /* RootView.swift in Sources */,
 				96BF0657964B419B9F01B3EB /* SearchFields.swift in Sources */,
 				C01A2049E004FBE4ADDF5F10 /* SessionFX.swift in Sources */,
-				8671E3F8A5B32C37E66F0F3B /* SessionMedals.swift in Sources */,
 				943FFB855FB199E7284B3F19 /* SocialClub.swift in Sources */,
-				A4012CAB9F8D66E7AA47FCBE /* SocialFeedView.swift in Sources */,
 				B2BA2EDCA173DDEDD61FF8BD /* SocialViews.swift in Sources */,
 				388862FD824CE56B55EE672A /* Theme.swift in Sources */,
-				EF71FBCBDF30D20460C49750 /* TrainView.swift in Sources */,
-				60E08D8A66484353B6B96ADD /* TrainingCalendarView.swift in Sources */,
-				73730EAFA44F93E2D3C79893 /* WorkoutActivityAttributes.swift in Sources */,
-				05F5B9B4B3BBC7AA5BBF0D0D /* WorkoutIntents.swift in Sources */,
-				B087CB2C4C5E2848E78E6BFE /* WorkoutRemote.swift in Sources */,
 				1F54E30433E9D3FBB2C4FE04 /* YourCircleView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
-
-/* Begin PBXTargetDependency section */
-		5A29AB270AB76A1CCDBD2D51 /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = 03A3F075B566F49E9A8B6F48 /* ForgeWidget */;
-			targetProxy = 66CCD894C8F0894A332B3078 /* PBXContainerItemProxy */;
-		};
-/* End PBXTargetDependency section */
 
 /* Begin PBXVariantGroup section */
 		576D24DF9F2FA5F465491620 /* Localizable.strings */ = {
@@ -588,25 +396,6 @@
 			};
 			name = Release;
 		};
-		76442AF44EFEB00633A718E9 /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				INFOPLIST_FILE = ForgeWidget/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 16.2;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-					"@executable_path/../../Frameworks",
-				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.javiercolroma.balicircle.widget;
-				PRODUCT_NAME = BaliCircleWidget;
-				SDKROOT = iphoneos;
-				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
-				SUPPORTS_MACCATALYST = NO;
-				TARGETED_DEVICE_FAMILY = "1,2";
-			};
-			name = Debug;
-		};
 		943ADECF25AEC53C370BFB49 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -625,25 +414,6 @@
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SUPPORTS_MACCATALYST = NO;
 				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
-				TARGETED_DEVICE_FAMILY = "1,2";
-			};
-			name = Release;
-		};
-		B68CF497817457A769BFEA22 /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				INFOPLIST_FILE = ForgeWidget/Info.plist;
-				IPHONEOS_DEPLOYMENT_TARGET = 16.2;
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-					"@executable_path/../../Frameworks",
-				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.javiercolroma.balicircle.widget;
-				PRODUCT_NAME = BaliCircleWidget;
-				SDKROOT = iphoneos;
-				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
-				SUPPORTS_MACCATALYST = NO;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Release;
@@ -678,15 +448,6 @@
 			buildConfigurations = (
 				0CB1D40994D17D9039D5CAB4 /* Debug */,
 				71730B16B3C6DD310629D3CA /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Debug;
-		};
-		3C0C1DE035321FA6288C526D /* Build configuration list for PBXNativeTarget "ForgeWidget" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				76442AF44EFEB00633A718E9 /* Debug */,
-				B68CF497817457A769BFEA22 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;

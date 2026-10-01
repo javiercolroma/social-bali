@@ -3,7 +3,7 @@ import SwiftUI
 /// El perfil **social** de una persona (lo que se abre desde Your Circle y desde las
 /// solicitudes). Aspiracional, no una ficha de citas ni una hoja de estadísticas:
 /// fotos → quién es y dónde está → situación en Bali → deportes → actividad → bio →
-/// qué busca → Connect. Los entrenos completos siguen en `FriendProfileView`.
+/// qué busca → Connect.
 struct ClubProfileView: View {
     @EnvironmentObject var store: AppStore
     @Environment(\.dismiss) private var dismiss
@@ -12,7 +12,6 @@ struct ClubProfileView: View {
     var initial: ProfileRow? = nil
 
     @State private var row: ProfileRow?
-    @State private var showWorkouts = false
     @State private var confirmBlock = false
 
     private var current: ProfileRow? { row ?? initial }
@@ -49,9 +48,6 @@ struct ClubProfileView: View {
             } message: {
                 Text("They won't see you and you won't see them. They aren't notified.")
             }
-            .sheet(isPresented: $showWorkouts) {
-                if let p = current { FriendProfileView(person: AppStore.asPeople([p])[0]).environmentObject(store) }
-            }
         }
         .task { await load() }
         .onChange(of: store.openChatWith) { v in if v != nil { dismiss() } }
@@ -74,16 +70,6 @@ struct ClubProfileView: View {
                         }
                     }
                 }
-                if let lines = activityLines(p.activity), !lines.isEmpty {
-                    section("ACTIVITY") {
-                        VStack(alignment: .leading, spacing: 8) {
-                            ForEach(lines, id: \.text) { l in
-                                Label(l.text, systemImage: l.icon)
-                                    .font(.system(size: 15, weight: .semibold)).foregroundColor(Brand.ink)
-                            }
-                        }
-                    }
-                }
                 if let bio = club.trimmedBio {
                     section("BIO") {
                         Text(bio).font(.system(size: 17, weight: .semibold)).foregroundColor(Brand.ink)
@@ -101,12 +87,6 @@ struct ClubProfileView: View {
                             }
                         }
                     }
-                }
-                if p.is_private != true {
-                    Button { FX.tap(); showWorkouts = true } label: {
-                        Label("See workouts", systemImage: "dumbbell.fill")
-                            .font(.system(size: 14, weight: .heavy)).foregroundColor(Brand.muted)
-                    }.buttonStyle(.plain)
                 }
             }
             .padding(.horizontal, 18)
@@ -176,22 +156,6 @@ struct ClubProfileView: View {
         .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).stroke(Brand.line))
     }
 
-    private struct ActivityLine { let icon: String; let text: String }
-
-    private func activityLines(_ a: ActivitySignals?) -> [ActivityLine]? {
-        guard let a else { return nil }
-        var out: [ActivityLine] = []
-        if let n = a.per_week, n >= 1 {
-            out.append(ActivityLine(icon: "figure.strengthtraining.traditional",
-                                    text: String(format: L10n.t("Trains %lld× / week"), n)))
-        }
-        if a.active_this_week == true { out.append(ActivityLine(icon: "bolt.fill", text: L10n.t("Active this week"))) }
-        if let s = a.week_streak, s >= 2 {
-            out.append(ActivityLine(icon: "flame.fill", text: String(format: L10n.t("%lld week streak"), s)))
-        }
-        return out
-    }
-
     private func section<C: View>(_ title: LocalizedStringKey, @ViewBuilder _ body: () -> C) -> some View {
         VStack(alignment: .leading, spacing: 10) {
             Text(title).font(.caption2).fontWeight(.heavy).foregroundColor(Brand.muted)
@@ -222,10 +186,7 @@ struct ClubProfileView: View {
         store.loadConnections()
         do {
             if let fresh = try await Backend.shared.clubProfile(personId) {
-                // `moments` solo llega en el Circle: se conservan si ya los había.
-                var r = fresh
-                if r.moments == nil { r.moments = initial?.moments }
-                row = r
+                row = fresh
             } else if initial == nil {
                 dismiss()   // no existe o hay un bloqueo
             }
@@ -243,9 +204,8 @@ struct ClubProfileView: View {
     private func block() {
         FX.warning()
         Task {
-            if let uid = UUID(uuidString: personId) { try? await Backend.shared.unfollow(uid) }
             try? await Backend.shared.blockUser(personId)
-            store.loadFollowing(); store.loadConnections()
+            store.loadConnections()
         }
         dismiss()
     }

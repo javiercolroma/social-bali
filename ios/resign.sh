@@ -8,7 +8,6 @@ SP="$(cd "$(dirname "$0")" && pwd)"
 IDENTITY="Apple Distribution: JAVIER COLAS ROMANOS (5JHD53WQ67)"
 PROF_DIR="$HOME/Library/Developer/Xcode/UserData/Provisioning Profiles"
 APP="$SP/BaliCircle.xcarchive/Products/Applications/Bali Circle.app"
-APPEX="$APP/PlugIns/BaliCircleWidget.appex"
 
 # Localiza cada perfil por el application-identifier que declara.
 find_profile() {
@@ -20,9 +19,7 @@ find_profile() {
   echo "NO ENCONTRADO: $want" >&2; return 1
 }
 P_APP="$(find_profile "5JHD53WQ67.com.javiercolroma.balicircle")"
-P_EXT="$(find_profile "5JHD53WQ67.com.javiercolroma.balicircle.widget")"
 echo "perfil app:    $(basename "$P_APP")"
-echo "perfil widget: $(basename "$P_EXT")"
 
 # Entitlements explícitos. beta-reports-active es lo que habilita TestFlight.
 cat > "$SP/ent-app.plist" <<'EOF'
@@ -36,28 +33,16 @@ cat > "$SP/ent-app.plist" <<'EOF'
   <key>get-task-allow</key><false/>
 </dict></plist>
 EOF
-cat > "$SP/ent-ext.plist" <<'EOF'
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<plist version="1.0"><dict>
-  <key>application-identifier</key><string>5JHD53WQ67.com.javiercolroma.balicircle.widget</string>
-  <key>com.apple.developer.team-identifier</key><string>5JHD53WQ67</string>
-  <key>beta-reports-active</key><true/>
-  <key>get-task-allow</key><false/>
-</dict></plist>
-EOF
 
 cp "$P_APP" "$APP/embedded.mobileprovision"
-cp "$P_EXT" "$APPEX/embedded.mobileprovision"
 
-# De dentro hacia fuera: primero frameworks, luego la extensión, luego la app.
+# De dentro hacia fuera: primero frameworks, luego la app (ya no hay extensión de widget).
 if [ -d "$APP/Frameworks" ]; then
   for fw in "$APP/Frameworks"/*; do
     [ -e "$fw" ] || continue
     codesign --force --timestamp --sign "$IDENTITY" "$fw"
   done
 fi
-codesign --force --timestamp --options runtime --sign "$IDENTITY" --entitlements "$SP/ent-ext.plist" "$APPEX"
 codesign --force --timestamp --options runtime --sign "$IDENTITY" --entitlements "$SP/ent-app.plist" "$APP"
 
 echo "=== verificación de firma ==="
@@ -68,9 +53,6 @@ echo "=== entitlements finales de la app ==="
 # `set -o pipefail` aborta el script. Se leen como texto plano.
 codesign -d --entitlements :- "$APP" 2>/dev/null | tr -d '\0' \
   | grep -oE "com\.apple\.developer\.[a-z.-]+|application-identifier|beta-reports-active|Default"
-echo "=== entitlements del widget ==="
-codesign -d --entitlements :- "$APPEX" 2>/dev/null | tr -d '\0' \
-  | grep -oE "com\.apple\.developer\.[a-z.-]+|application-identifier|beta-reports-active"
 
 # Empaqueta el .ipa
 rm -rf "$SP/ipa" "$SP/export"; mkdir -p "$SP/ipa/Payload" "$SP/export"

@@ -1,8 +1,9 @@
 import SwiftUI
 import PhotosUI
 
-/// Acompañamiento cálido para usuarios nuevos: Forgey (la mascota) te guía con una
-/// pregunta amable por pantalla. Solo para cuentas nuevas (editar usa `AccountSetupView`).
+/// Acompañamiento para usuarios nuevos: una pregunta amable por pantalla, solo con lo
+/// que alimenta el club. Solo para cuentas nuevas (editar usa `AccountSetupView`).
+/// Sin mascota y sin pasos de entreno: la app ya no es de fitness.
 struct OnboardingView: View {
     @EnvironmentObject var store: AppStore
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -16,9 +17,9 @@ struct OnboardingView: View {
     // parte, o sea 4 pantallas para generar datos muertos. En su lugar entran los que
     // alimentan Discover: deportes, zona, estancia, origen, bio e intenciones.
     enum Step: Int, CaseIterable {
-        case welcome, name, handle, sports, area, stay, home, photo, birth, sex, bio, intents, done
+        case welcome, name, sports, area, stay, home, photo, birth, sex, bio, intents, done
     }
-    private enum Field { case name, handle }
+    private enum Field { case name }
 
     @State private var step: Step = .welcome
     @State private var goingBack = false
@@ -26,7 +27,6 @@ struct OnboardingView: View {
 
     // Datos (viven aquí para no perderlos al volver atrás)
     @State private var name = ""
-    @State private var handle = ""
     @State private var pickerItem: PhotosPickerItem?
     @State private var photoData: Data?
     @State private var photoScale: CGFloat = 1
@@ -40,7 +40,6 @@ struct OnboardingView: View {
     @State private var birthDone = false
     @State private var country = ""
     @State private var city = ""
-    @State private var gym = ""
 
     // Identidad del club (ver SocialClub.swift). Se guardan rawValues.
     @State private var sportsSel: Set<String> = []
@@ -49,9 +48,6 @@ struct OnboardingView: View {
     @State private var stayDate = Calendar.current.date(byAdding: .month, value: 2, to: Date()) ?? Date()
     @State private var bioText = ""
     @State private var intentsSel: Set<String> = []
-    @State private var shownBubbles: Set<Int> = []   // pasos cuyo bocadillo ya se escribió (no re-typear al volver)
-    @State private var bounceTrigger = 0             // anima a Forgey al elegir
-    @State private var reactionLine: String?         // chip de reacción de Forgey
 
     @State private var drawCheck: CGFloat = 0
     @State private var avatarIn = false
@@ -66,15 +62,7 @@ struct OnboardingView: View {
     private var firstName: String {
         name.trimmingCharacters(in: .whitespaces).split(separator: " ").first.map(String.init) ?? ""
     }
-    private var normalized: String { normalizeHandle(handle) }
-    private var taken: [String] { store.people.map { $0.handle } }
-    private var handleError: String? {
-        if normalized.count < 3 { return "At least 3 characters" }
-        if taken.contains(normalized) { return "That username is taken" }
-        return nil
-    }
     private var nameOK: Bool { name.trimmingCharacters(in: .whitespaces).count >= 2 }
-    private var handleOK: Bool { handleError == nil }
     private var progress: Double { Double(step.rawValue) / Double(Step.allCases.count - 1) }
 
     // MARK: - Body
@@ -92,13 +80,13 @@ struct OnboardingView: View {
             }
         }
         .onAppear {
-            if name.isEmpty, let n = store.auth?.name, !n.isEmpty { name = n }   // prefijar con Apple/Google
+            // Prefijar con Apple/Google: solo el nombre de pila (no se pide apellido).
+            if name.isEmpty, let n = store.auth?.name, !n.isEmpty {
+                name = n.split(separator: " ").first.map(String.init) ?? n
+            }
         }
         .onChange(of: step) { _ in
-            reactionLine = nil   // la reacción de Forgey es por pantalla
-            if step == .name { focusSoon(.name) }
-            else if step == .handle { focusSoon(.handle) }
-            else { focus = nil }
+            if step == .name { focusSoon(.name) } else { focus = nil }
             if step == .done { runFinish() }
         }
     }
@@ -139,7 +127,6 @@ struct OnboardingView: View {
         switch step {
         case .welcome: welcomeStep
         case .name: nameStep
-        case .handle: handleStep
         case .sports: sportsStep
         case .area: areaStep
         case .stay: stayStep
@@ -155,21 +142,27 @@ struct OnboardingView: View {
 
     private var welcomeStep: some View {
         layout {
-            Mascot(size: 150, wave: true)
-            TypingBubble("Hi! I'm Forgey 💪 Let's set you up in a minute.",
-                         typing: !shownBubbles.contains(Step.welcome.rawValue)) { shownBubbles.insert(Step.welcome.rawValue) }
+            ZStack {
+                Circle().fill(Brand.greenSoft).frame(width: 128, height: 128)
+                Image(systemName: "person.3.fill").font(.system(size: 50, weight: .heavy)).foregroundColor(Color(hex: "10150a"))
+            }
+            Question("Welcome to Bali Circle")
+            Text("Let's set up your profile in a minute, so the right people can find you.")
+                .font(.system(size: 16)).foregroundColor(Brand.muted).multilineTextAlignment(.center)
+                .fixedSize(horizontal: false, vertical: true)
         } actions: {
             primary("Start") { advance() }
         }
     }
 
+    /// Solo el nombre de pila: el @usuario lo genera la app en silencio y nunca se muestra.
     private var nameStep: some View {
         layout {
-            Mascot(size: 96)
-            Bubble("What's your name?")
-            TextField("Your name", text: $name)
+            Question("What's your first name?")
+            TextField("First name", text: $name)
                 .multilineTextAlignment(.center).font(.system(size: 22, weight: .heavy))
                 .foregroundColor(Brand.ink).tint(Brand.ink)
+                .textContentType(.givenName)
                 .focused($focus, equals: .name).submitLabel(.next).onSubmit { if nameOK { advance() } }
                 .padding(.horizontal, 14).frame(height: 58).background(Color.white)
                 .clipShape(RoundedRectangle(cornerRadius: 14))
@@ -179,37 +172,9 @@ struct OnboardingView: View {
         }
     }
 
-    private var handleStep: some View {
-        layout {
-            Mascot(size: 96)
-            Bubble(firstName.isEmpty ? "Pick your username" : "Nice to meet you, \(firstName). Pick your username")
-            VStack(spacing: 8) {
-                HStack(spacing: 2) {
-                    Text("@").font(.system(size: 22, weight: .heavy)).foregroundColor(Brand.soft)
-                    TextField("username", text: $handle).font(.system(size: 22, weight: .heavy)).foregroundColor(Brand.ink).tint(Brand.ink)
-                        .textInputAutocapitalization(.never).autocorrectionDisabled()
-                        .focused($focus, equals: .handle).submitLabel(.next).onSubmit { if handleOK { advance() } }
-                }
-                .padding(.horizontal, 16).frame(height: 58).background(Color.white)
-                .clipShape(RoundedRectangle(cornerRadius: 14))
-                .overlay(RoundedRectangle(cornerRadius: 14).stroke(focus == .handle ? Brand.green : Brand.line, lineWidth: focus == .handle ? 1.8 : 1))
-                if !normalized.isEmpty, let err = handleError {
-                    hint(err, "exclamationmark.circle.fill", Color(hex: "c14b46"))
-                } else if !normalized.isEmpty {
-                    hint("@\(normalized) is available", "checkmark.circle.fill", Color(hex: "4b8a1f"))
-                }
-            }
-        } actions: {
-            primary("Continue", enabled: handleOK) { advance() }
-        }
-    }
-
-    /// Pregunta de encuesta (selección única, estilo conversacional): Forgey escribe
-    /// la pregunta, aparecen tarjetas, eliges una (con reacción de Forgey) y continúas.
     private var photoStep: some View {
         layout {
-            TypingBubble(firstName.isEmpty ? "Now let's put a face to the name 🙌" : "Now let's put a face to the name, \(firstName) 🙌",
-                         typing: !shownBubbles.contains(Step.photo.rawValue)) { shownBubbles.insert(Step.photo.rawValue) }
+            Question(firstName.isEmpty ? "Now let's put a face to the name" : "Now let's put a face to the name, \(firstName)")
             // Tocar el círculo: si hay foto, reencuadra; si no, abre el selector.
             Group {
                 if let d = photoData, let ui = UIImage(data: d) {
@@ -273,9 +238,7 @@ struct OnboardingView: View {
 
     private var birthStep: some View {
         layout {
-            Mascot(size: 88)
-            TypingBubble("When were you born?",
-                         typing: !shownBubbles.contains(Step.birth.rawValue)) { shownBubbles.insert(Step.birth.rawValue) }
+            Question("When were you born?")
             wheelCard {
                 Picker("Year", selection: $birthYear) {
                     ForEach(years, id: \.self) {
@@ -293,9 +256,7 @@ struct OnboardingView: View {
 
     private var sexStep: some View {
         layout {
-            Mascot(size: 88)
-            TypingBubble("What's your gender?",
-                         typing: !shownBubbles.contains(Step.sex.rawValue)) { shownBubbles.insert(Step.sex.rawValue) }
+            Question("What's your gender?")
             wheelCard {
                 Picker("Gender", selection: $sexSel) {
                     Text("Prefer not to say").font(.system(size: 20, weight: .bold))
@@ -333,56 +294,27 @@ struct OnboardingView: View {
 
     /// Deportes: 23 opciones, así que rejilla de chips en vez de tarjetas apiladas.
     private var sportsStep: some View {
-        let done = shownBubbles.contains(Step.sports.rawValue)
-        return layout {
-            ZStack {
-                if let line = reactionLine {
-                    ReactionChip(text: line).transition(.scale(scale: 0.6).combined(with: .opacity))
-                }
-            }
-            .frame(height: 30)
-            .animation(.spring(response: 0.3, dampingFraction: 0.55), value: reactionLine)
-            Mascot(size: 76, bounceTrigger: bounceTrigger)
-            TypingBubble("What do you move with?",
-                         typing: !done) { shownBubbles.insert(Step.sports.rawValue) }
+        layout {
+            Question("What do you move with?")
             ChipGrid(items: Sport.curated.map { ($0.rawValue, "\($0.emoji) \($0.label)") },
                      selected: sportsSel) { raw in
                 FX.selection()
-                if sportsSel.contains(raw) { sportsSel.remove(raw) }
-                else {
-                    sportsSel.insert(raw)
-                    bounceTrigger += 1
-                    if let s = Sport(rawValue: raw) {
-                        withAnimation(.easeOut(duration: 0.2)) { reactionLine = "\(s.emoji) \(s.label)" }
-                    }
-                }
+                if sportsSel.contains(raw) { sportsSel.remove(raw) } else { sportsSel.insert(raw) }
             }
         } actions: {
             primary("Continue", enabled: !sportsSel.isEmpty) { advance() }
         }
     }
 
-    /// Zona de Bali + gimnasio. Van juntos porque ambos responden a «dónde estás».
-    /// El barrio es DECLARADO: el GPS se redondea a ~5,5 km y no distingue Canggu de
+    /// Zona de Bali. El barrio es DECLARADO: el GPS se redondea a ~5,5 km y no distingue Canggu de
     /// Pererenan (ver SocialClub.swift).
     private var areaStep: some View {
         layout {
-            Mascot(size: 76)
-            TypingBubble("Where in Bali are you based?",
-                         typing: !shownBubbles.contains(Step.area.rawValue)) { shownBubbles.insert(Step.area.rawValue) }
+            Question("Where in Bali are you based?")
             ChipGrid(items: Neighborhood.allCases.map { ($0.rawValue, $0.label) },
                      selected: areaSel.map { [$0] } ?? []) { raw in
                 FX.selection(); areaSel = (areaSel == raw) ? nil : raw
             }
-            HStack(spacing: 10) {
-                Image(systemName: "dumbbell.fill").foregroundColor(Brand.soft)
-                TextField("Your gym or studio (optional)", text: $gym)
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundColor(Brand.ink).tint(Brand.ink)
-            }
-            .padding(.horizontal, 14).frame(height: 50).background(Color.white)
-            .clipShape(RoundedRectangle(cornerRadius: 12))
-            .overlay(RoundedRectangle(cornerRadius: 12).stroke(Brand.line))
         } actions: {
             primary("Continue", enabled: areaSel != nil) { advance() }
         }
@@ -392,9 +324,7 @@ struct OnboardingView: View {
     /// una conexión saber si alguien vive aquí o se va el martes.
     private var stayStep: some View {
         layout {
-            Mascot(size: 76)
-            TypingBubble("How long are you around?",
-                         typing: !shownBubbles.contains(Step.stay.rawValue)) { shownBubbles.insert(Step.stay.rawValue) }
+            Question("How long are you around?")
             VStack(spacing: 10) {
                 ForEach(StayKind.allCases) { k in
                     SelectCard(emoji: k == .livingHere ? "🏝️" : (k == .longTerm ? "🗓️" : "✈️"),
@@ -424,9 +354,7 @@ struct OnboardingView: View {
     /// Escribe también `country`/`city`, que son los que alimentan la banderita ya existente.
     private var homeStep: some View {
         layout {
-            Mascot(size: 76)
-            TypingBubble("And where are you from?",
-                         typing: !shownBubbles.contains(Step.home.rawValue)) { shownBubbles.insert(Step.home.rawValue) }
+            Question("And where are you from?")
             VStack(spacing: 10) {
                 CountryField(label: "", selected: country) { country = $0 }
                 CitySearchField(label: "", selected: city, country: country) { city = $0 }
@@ -441,9 +369,7 @@ struct OnboardingView: View {
     /// persona». Es el campo con más peso de la tarjeta de Discover.
     private var bioStep: some View {
         layout {
-            Mascot(size: 76)
-            TypingBubble("Sum yourself up in one line",
-                         typing: !shownBubbles.contains(Step.bio.rawValue)) { shownBubbles.insert(Step.bio.rawValue) }
+            Question("Sum yourself up in one line")
             VStack(alignment: .leading, spacing: 8) {
                 TextField("Sunrise surf → coffee → work.", text: $bioText, axis: .vertical)
                     .font(.system(size: 17, weight: .semibold))
@@ -468,11 +394,8 @@ struct OnboardingView: View {
     /// Qué tipo de conexiones busca. Multi-selección y sin compartimentos: una sola
     /// comunidad. Va al final porque es lo que más compromete.
     private var intentsStep: some View {
-        let done = shownBubbles.contains(Step.intents.rawValue)
-        return layout {
-            Mascot(size: 76, bounceTrigger: bounceTrigger)
-            TypingBubble("What are you open to?",
-                         typing: !done) { shownBubbles.insert(Step.intents.rawValue) }
+        layout {
+            Question("What are you open to?")
             VStack(spacing: 10) {
                 ForEach(ConnectionIntent.allCases) { i in
                     let locked = i == .dating && !canDate
@@ -480,7 +403,7 @@ struct OnboardingView: View {
                                label: i.label, selected: intentsSel.contains(i.rawValue) && !locked) {
                         FX.selection()
                         if intentsSel.contains(i.rawValue) { intentsSel.remove(i.rawValue) }
-                        else { intentsSel.insert(i.rawValue); bounceTrigger += 1 }
+                        else { intentsSel.insert(i.rawValue) }
                     }
                     .disabled(locked).opacity(locked ? 0.45 : 1)
                 }
@@ -493,9 +416,6 @@ struct OnboardingView: View {
                     .font(.footnote).foregroundColor(Brand.muted)
                     .multilineTextAlignment(.center).padding(.top, 2)
             }
-            .opacity(done ? 1 : 0)
-            .animation(.spring(response: 0.4, dampingFraction: 0.85), value: done)
-            .allowsHitTesting(done)
         } actions: {
             primary("Continue", enabled: !intentsSel.subtracting(canDate ? [] : [ConnectionIntent.dating.rawValue]).isEmpty) { FX.success(); advance() }
         }
@@ -510,14 +430,14 @@ struct OnboardingView: View {
                 MeAvatar(account: previewAccount, size: 116)
                     .scaleEffect(avatarIn ? 1 : 0.4).opacity(avatarIn ? 1 : 0)
             }
-            Bubble(firstName.isEmpty ? "You're all set! 🔥" : "You're all set, \(firstName)! 🔥")
+            Question(firstName.isEmpty ? "You're all set!" : "You're all set, \(firstName)!")
         } actions: {
             primary("Enter Bali Circle") { commit() }
         }
     }
 
     private var previewAccount: Account {
-        var a = Account(name: name.trimmingCharacters(in: .whitespaces), handle: normalized, photoData: photoData)
+        var a = Account(name: firstName, handle: "", photoData: photoData)
         a.photoScale = Double(photoScale)
         a.photoOffsetX = Double(photoOffset.width)
         a.photoOffsetY = Double(photoOffset.height)
@@ -538,15 +458,6 @@ struct OnboardingView: View {
         .padding(.bottom, 14)
     }
 
-    private func wheelLabel(_ t: String) -> some View {
-        Text(t).font(.system(size: 14, weight: .heavy)).foregroundColor(Brand.ink)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(.horizontal, 16).padding(.top, 12).padding(.bottom, 2)
-    }
-    private func hint(_ t: String, _ icon: String, _ color: Color) -> some View {
-        HStack(spacing: 5) { Image(systemName: icon); Text(t) }
-            .font(.system(size: 14, weight: .heavy)).foregroundColor(color)
-    }
     private func primary(_ label: String, enabled: Bool = true, _ action: @escaping () -> Void) -> some View {
         // LocalizedStringKey y no String: `Text(String)` NO localiza.
         Button { action() } label: { Text(LocalizedStringKey(label)) }
@@ -594,7 +505,8 @@ struct OnboardingView: View {
     private var canDate: Bool { AgeGate.isAdult(chosenBirthdate) }
 
     private func commit() {
-        var acc = Account(name: name.trimmingCharacters(in: .whitespaces), handle: normalized)
+        // El @usuario (único en el servidor) se genera aquí en silencio: la UI no lo pide ni lo enseña.
+        var acc = Account(name: firstName, handle: AppStore.generateHandle(from: firstName))
         acc.photoData = photoData
         acc.photoScale = Double(photoScale)
         acc.photoOffsetX = Double(photoOffset.width)
@@ -605,7 +517,6 @@ struct OnboardingView: View {
         // alimentan la banderita que ya se pinta en el feed y los avatares.
         if !country.isEmpty { store.profile.country = country; store.profile.homeCountry = country }
         if !city.isEmpty { store.profile.city = city; store.profile.homeCity = city }
-        if !gym.trimmingCharacters(in: .whitespaces).isEmpty { store.profile.gym = gym.trimmingCharacters(in: .whitespaces) }
 
         // Identidad del club (PRODUCT.md · Fase 1). Los deportes se guardan en el orden
         // curado, no en el del Set, para que la tarjeta se vea igual en cada render.
@@ -625,274 +536,16 @@ struct OnboardingView: View {
     }
 }
 
-// MARK: - Forgey (mascota original)
-
-/// Mascota amistosa de Bali Circle: cuerpo "blob" con degradado, brillo, ojos con
-/// destello y mejillas suaves. Acompaña en cada paso del onboarding.
-struct Mascot: View {
-    var size: CGFloat = 110
-    var wave = false
-    var holdsHeart = false
-    var accessory: String? = nil   // accesorio de la tienda (corona, gorro, auriculares…)
-    var bounceTrigger: Int = 0   // al cambiar, Forgey hace squash + cara feliz
-    @State private var bob = false
-    @State private var blink = false
-    @State private var waveAngle = false
-    @State private var squash: CGFloat = 1
-    @State private var happy = false
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
-
-    private let ink = Color(hex: "16240b")
-
-    /// Accesorios de Forgey (tienda): símbolo, tamaño relativo, color y desplazamiento sobre la cabeza.
-    static func accessory(_ id: String) -> (symbol: String, scale: CGFloat, color: Color, offset: CGFloat)? {
-        switch id {
-        case "corona":      return ("crown.fill", 0.34, Color(hex: "f2c015"), 0.60)
-        case "gorro":       return ("graduationcap.fill", 0.40, Color(hex: "16240b"), 0.58)
-        case "auriculares": return ("headphones", 0.62, Color(hex: "3a3a3c"), 0.10)
-        case "aureola":     return ("circle.dashed", 0.44, Color(hex: "f2c015"), 0.66)
-        default: return nil
-        }
-    }
-
-    var body: some View {
-        ZStack {
-            // Sombra de contacto en el suelo
-            Ellipse().fill(Color.black.opacity(0.10))
-                .frame(width: size * 0.66, height: size * 0.12)
-                .blur(radius: 7).offset(y: size * 0.56)
-
-            ZStack {
-                // Cuerpo con degradado vertical
-                BlobShape()
-                    .fill(LinearGradient(colors: [Color(hex: "c2f861"), Color(hex: "8ed11d")],
-                                         startPoint: .top, endPoint: .bottom))
-                    .overlay(BlobShape().stroke(Color(hex: "6fa916").opacity(0.5), lineWidth: 1))
-                    .frame(width: size, height: size * 1.02)
-                    .shadow(color: Color(hex: "8ed11d").opacity(0.4), radius: 14, y: 10)
-
-                // Brillo superior (gloss)
-                Ellipse().fill(Color.white.opacity(0.40))
-                    .frame(width: size * 0.52, height: size * 0.30)
-                    .blur(radius: 9).offset(x: -size * 0.11, y: -size * 0.28)
-
-                // Mejillas suaves
-                HStack(spacing: size * 0.44) { cheek; cheek }.offset(y: size * 0.15)
-
-                // Cara
-                VStack(spacing: size * 0.10) {
-                    HStack(spacing: size * 0.19) { eye; eye }
-                    Smile().stroke(ink, style: StrokeStyle(lineWidth: size * 0.05, lineCap: .round))
-                        .frame(width: size * (happy ? 0.42 : 0.34), height: size * (happy ? 0.21 : 0.16))
-                }.offset(y: size * 0.05)
-
-                if let acc = accessory, let a = Mascot.accessory(acc) {
-                    Image(systemName: a.symbol).font(.system(size: size * a.scale, weight: .heavy))
-                        .foregroundColor(a.color)
-                        .offset(y: -size * a.offset)
-                }
-                if wave {
-                    Image(systemName: "hand.wave.fill")
-                        .font(.system(size: size * 0.20)).foregroundColor(Color(hex: "f2b134"))
-                        .rotationEffect(.degrees(waveAngle ? 20 : -4), anchor: .bottomLeading)
-                        .offset(x: size * 0.5, y: -size * 0.34)
-                        .animation(.easeInOut(duration: 0.5).repeatForever(autoreverses: true), value: waveAngle)
-                }
-                if holdsHeart {
-                    Image(systemName: "heart.fill").font(.system(size: size * 0.22)).foregroundColor(Brand.red)
-                        .shadow(color: Brand.red.opacity(0.4), radius: 4, y: 2)
-                        .offset(x: size * 0.46, y: -size * 0.36)
-                        .scaleEffect(bob ? 1.14 : 0.94)
-                }
-            }
-            .scaleEffect(x: 2 - squash, y: squash)   // squash & stretch al reaccionar
-            .offset(y: bob ? -size * 0.03 : size * 0.03)
-        }
-        .frame(width: size * 1.2, height: size * 1.3)
-        .onAppear {
-            withAnimation(.easeInOut(duration: 1.6).repeatForever(autoreverses: true)) { bob = true }
-            if wave { waveAngle = true }
-            scheduleBlink()
-        }
-        .onChange(of: bounceTrigger) { _ in react() }
-    }
-
-    // Ojo: feliz = arco "^" (ojitos contentos); normal = óvalo con destello.
-    private var eye: some View {
-        Group {
-            if happy {
-                HappyEye().stroke(ink, style: StrokeStyle(lineWidth: size * 0.05, lineCap: .round))
-                    .frame(width: size * 0.14, height: size * 0.09)
-            } else {
-                Capsule().fill(ink)
-                    .frame(width: size * 0.115, height: blink ? size * 0.025 : size * 0.215)
-                    .overlay(alignment: .top) {
-                        Circle().fill(Color.white.opacity(blink ? 0 : 0.9))
-                            .frame(width: size * 0.045, height: size * 0.045)
-                            .offset(y: size * 0.035)
-                    }
-            }
-        }
-    }
-
-    private func react() {
-        if reduceMotion { happy = true; DispatchQueue.main.asyncAfter(deadline: .now() + 0.9) { happy = false }; return }
-        happy = true
-        withAnimation(.spring(response: 0.15, dampingFraction: 0.5)) { squash = 0.90 }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.12) { withAnimation(.spring(response: 0.2, dampingFraction: 0.5)) { squash = 1.08 } }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.34) { withAnimation(.spring(response: 0.3, dampingFraction: 0.6)) { squash = 1.0 } }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.9) { withAnimation(.easeInOut(duration: 0.25)) { happy = false } }
-    }
-    private var cheek: some View {
-        Circle().fill(Color(red: 1, green: 0.46, blue: 0.46).opacity(0.5))
-            .frame(width: size * 0.15, height: size * 0.15).blur(radius: size * 0.02)
-    }
-    private func scheduleBlink() {
-        DispatchQueue.main.asyncAfter(deadline: .now() + Double.random(in: 2.5...4.5)) {
-            withAnimation(.easeInOut(duration: 0.10)) { blink = true }
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.13) {
-                withAnimation(.easeInOut(duration: 0.10)) { blink = false }
-                scheduleBlink()
-            }
-        }
-    }
-}
-
-/// Cuerpo "blob" simétrico y suave (más orgánico que un cuadrado redondeado).
-private struct BlobShape: Shape {
-    func path(in r: CGRect) -> Path {
-        let w = r.width, h = r.height
-        var p = Path()
-        // Squircle suave construido con curvas (esquinas muy redondeadas, lados ligeramente abombados)
-        let cx = w * 0.5
-        p.move(to: CGPoint(x: cx, y: 0))
-        p.addCurve(to: CGPoint(x: w, y: h * 0.5),
-                   control1: CGPoint(x: w * 0.92, y: 0), control2: CGPoint(x: w, y: h * 0.12))
-        p.addCurve(to: CGPoint(x: cx, y: h),
-                   control1: CGPoint(x: w, y: h * 0.9), control2: CGPoint(x: w * 0.9, y: h))
-        p.addCurve(to: CGPoint(x: 0, y: h * 0.5),
-                   control1: CGPoint(x: w * 0.1, y: h), control2: CGPoint(x: 0, y: h * 0.9))
-        p.addCurve(to: CGPoint(x: cx, y: 0),
-                   control1: CGPoint(x: 0, y: h * 0.12), control2: CGPoint(x: w * 0.08, y: 0))
-        p.closeSubpath()
-        return p
-    }
-}
-
-/// Sonrisa (arco suave) para la mascota.
-private struct Smile: Shape {
-    func path(in r: CGRect) -> Path {
-        var p = Path()
-        p.move(to: CGPoint(x: r.minX, y: r.minY))
-        p.addQuadCurve(to: CGPoint(x: r.maxX, y: r.minY), control: CGPoint(x: r.midX, y: r.maxY * 1.6))
-        return p
-    }
-}
-
-/// Bocadillo de Forgey: texto amable (en tinta, no gris) con una cola hacia la mascota.
-private struct Bubble: View {
+/// Pregunta de cada paso: titular grande y centrado.
+private struct Question: View {
     let text: String
     init(_ text: String) { self.text = text }
     var body: some View {
-        VStack(spacing: 0) {
-            Triangle().fill(Color.white).frame(width: 22, height: 11)
-                .overlay(Triangle().stroke(Brand.line, lineWidth: 1).clipShape(Rectangle().offset(y: 1)))
-            Text(LocalizedStringKey(text))
-                .font(.system(size: 19, weight: .heavy)).foregroundColor(Brand.ink)
-                .multilineTextAlignment(.center).fixedSize(horizontal: false, vertical: true)
-                .padding(.horizontal, 18).padding(.vertical, 14)
-                .background(Color.white).clipShape(RoundedRectangle(cornerRadius: 16))
-                .overlay(RoundedRectangle(cornerRadius: 16).stroke(Brand.line))
-        }
-        .padding(.horizontal, 8)
+        Text(LocalizedStringKey(text))
+            .font(.system(size: 26, weight: .heavy)).foregroundColor(Brand.ink)
+            .multilineTextAlignment(.center).fixedSize(horizontal: false, vertical: true)
+            .padding(.horizontal, 8)
     }
-}
-
-private struct Triangle: Shape {
-    func path(in r: CGRect) -> Path {
-        var p = Path()
-        p.move(to: CGPoint(x: r.midX, y: r.minY))
-        p.addLine(to: CGPoint(x: r.minX, y: r.maxY))
-        p.addLine(to: CGPoint(x: r.maxX, y: r.maxY))
-        p.closeSubpath()
-        return p
-    }
-}
-
-/// Ojo feliz: arco "^" (ojitos contentos al reaccionar).
-private struct HappyEye: Shape {
-    func path(in r: CGRect) -> Path {
-        var p = Path()
-        p.move(to: CGPoint(x: r.minX, y: r.maxY))
-        p.addQuadCurve(to: CGPoint(x: r.maxX, y: r.maxY), control: CGPoint(x: r.midX, y: r.minY))
-        return p
-    }
-}
-
-/// Bocadillo que se ESCRIBE letra a letra (la pregunta "habla" como Forgey).
-/// Toca para completar al instante; respeta Reduce Motion.
-private struct TypingBubble: View {
-    let full: String
-    var typing: Bool
-    var onDone: (() -> Void)?
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    @State private var shown = ""
-    @State private var task: Task<Void, Never>?
-
-    private let font = Font.system(size: 19, weight: .heavy)
-
-    init(_ text: String, typing: Bool = true, onDone: (() -> Void)? = nil) {
-        // OJO: se localiza AQUÍ, a mano. El bocadillo se escribe letra a letra, así que
-        // necesita el String ya traducido para poder recortarlo; `Text(String)` NO
-        // localiza (solo lo hace `Text(LocalizedStringKey)`), y por eso los bocadillos
-        // salían siempre en el idioma del código aunque el catálogo tuviera la clave.
-        self.full = L10n.t(text)
-        self.typing = typing; self.onDone = onDone
-    }
-
-    var body: some View {
-        VStack(spacing: 0) {
-            Triangle().fill(Color.white).frame(width: 22, height: 11)
-                .overlay(Triangle().stroke(Brand.line, lineWidth: 1).clipShape(Rectangle().offset(y: 1)))
-            // El texto completo (invisible) reserva el tamaño final → el bocadillo no salta
-            // al ir apareciendo las letras; encima, el texto que se va escribiendo.
-            ZStack {
-                Text(full).font(font).foregroundColor(.clear).multilineTextAlignment(.center)
-                Text(shown).font(font).foregroundColor(Brand.ink).multilineTextAlignment(.center)
-            }
-            .fixedSize(horizontal: false, vertical: true)
-            .padding(.horizontal, 18).padding(.vertical, 14)
-            .frame(maxWidth: .infinity)
-            .background(Color.white).clipShape(RoundedRectangle(cornerRadius: 16))
-            .overlay(RoundedRectangle(cornerRadius: 16).stroke(Brand.line))
-        }
-        .padding(.horizontal, 8)
-        .contentShape(Rectangle())
-        .onTapGesture { finish() }
-        .onAppear { start() }
-        .onDisappear { task?.cancel() }
-    }
-
-    private func start() {
-        if !typing || reduceMotion { shown = full; onDone?(); return }
-        shown = ""
-        // Ritmo pausado y natural: ~40 ms/letra con variación humana por letra
-        // (no mecánico) + pausas tras la puntuación. Tope total para frases largas.
-        let perChar = min(0.042, 2.6 / Double(max(1, full.count)))
-        task = Task { @MainActor in
-            try? await Task.sleep(nanoseconds: 200_000_000)   // respira un instante antes
-            for ch in full {
-                if Task.isCancelled { return }
-                shown.append(ch)
-                var d = perChar * Double.random(in: 0.7...1.45)   // variación natural
-                if ".!?…".contains(ch) { d += 0.12 }
-                else if ",;".contains(ch) { d += 0.06 }
-                try? await Task.sleep(nanoseconds: UInt64(d * 1_000_000_000))
-            }
-            onDone?()
-        }
-    }
-    private func finish() { task?.cancel(); if shown != full { shown = full }; onDone?() }
 }
 
 /// Tarjeta de respuesta de selección única (estilo conversacional).
@@ -956,18 +609,6 @@ private struct SelectCard: View {
     }
 }
 
-/// Chip de reacción de Forgey ("¡A por esos músculos!").
-private struct ReactionChip: View {
-    let text: String
-    var body: some View {
-        Text(LocalizedStringKey(text)).font(.system(size: 14, weight: .heavy)).foregroundColor(Brand.ink)
-            .padding(.horizontal, 12).padding(.vertical, 7)
-            .background(Brand.greenSoft).clipShape(Capsule())
-            .overlay(Capsule().stroke(Brand.green.opacity(0.45)))
-            .shadow(color: .black.opacity(0.10), radius: 6, y: 3)
-    }
-}
-
 /// Encuadre manual de la foto (arrastrar + pellizcar) durante el onboarding.
 /// Devuelve escala y desplazamiento al estado del onboarding (no toca la cuenta todavía).
 private struct OnboardingPhotoFramer: View {
@@ -1007,229 +648,4 @@ private struct OnboardingPhotoFramer: View {
             .onAppear { lastScale = scale; lastOffset = offset }
         }
     }
-}
-
-// MARK: - Encuesta del onboarding (preguntas propias)
-
-// MARK: - Tutorial guiado por sección (Forgey te acompaña)
-
-/// Un paso del tour: texto de Forgey + (opcional) el id del componente a resaltar.
-struct CoachStep {
-    let text: String
-    var target: String? = nil
-    init(_ text: String, target: String? = nil) { self.text = text; self.target = target }
-}
-
-/// Recoge los marcos (frames) de los componentes marcados con `.tourAnchor(id)` para
-/// que el tour pueda dibujar un foco (spotlight) sobre el que hay que usar en cada paso.
-struct TourAnchorKey: PreferenceKey {
-    static var defaultValue: [String: Anchor<CGRect>] = [:]
-    static func reduce(value: inout [String: Anchor<CGRect>], nextValue: () -> [String: Anchor<CGRect>]) {
-        value.merge(nextValue(), uniquingKeysWith: { $1 })
-    }
-}
-
-extension View {
-    /// Marca este componente como diana de un paso del tutorial (`CoachTour`).
-    func tourAnchor(_ id: String) -> some View {
-        anchorPreference(key: TourAnchorKey.self, value: .bounds) { [id: $0] }
-    }
-    @ViewBuilder func tourAnchor(_ id: String, if condition: Bool) -> some View {
-        if condition { tourAnchor(id) } else { self }
-    }
-    /// Máscara inversa: recorta un "agujero" en la vista (para el foco del spotlight).
-    @ViewBuilder func reverseMask<M: View>(@ViewBuilder _ mask: () -> M) -> some View {
-        self.mask { Rectangle().overlay(mask().blendMode(.destinationOut)) }
-    }
-}
-
-/// Velo oscuro que atenúa la pantalla dejando un hueco iluminado sobre el componente
-/// diana (o atenúa todo si no hay diana). El hueco se anima al cambiar de paso.
-struct CoachDim: View {
-    let target: CGRect?
-    var body: some View {
-        Rectangle().fill(Brand.ink.opacity(target == nil ? 0.3 : 0.55))
-            .reverseMask {
-                if let t = target {
-                    RoundedRectangle(cornerRadius: 14, style: .continuous)
-                        .frame(width: t.width + 16, height: t.height + 16)
-                        .position(x: t.midX, y: t.midY)
-                }
-            }
-            .allowsHitTesting(false)
-    }
-}
-
-/// Tour de bienvenida a cada una de las 5 secciones del menú: Forgey asoma desde el
-/// lateral y te acompaña con consejos escritos a máquina, resaltando el componente
-/// que hay que usar en cada paso. Profesional y saltable, una sola vez por sección.
-struct CoachTour: View {
-    let section: Int
-    var onFinish: () -> Void
-    var onStep: ((Int) -> Void)? = nil     // paso actual (para efectos como cambiar de sub-pestaña)
-    var onTarget: ((String?) -> Void)? = nil   // id del componente a resaltar en el paso actual
-
-    // `startStep` permite arrancar en un paso concreto (previews / verificación); producción usa 0.
-    init(section: Int, startStep: Int = 0, onFinish: @escaping () -> Void,
-         onStep: ((Int) -> Void)? = nil, onTarget: ((String?) -> Void)? = nil) {
-        self.section = section
-        self.onFinish = onFinish
-        self.onStep = onStep
-        self.onTarget = onTarget
-        _step = State(initialValue: startStep)
-    }
-
-    @State private var step = 0
-    @State private var shown = ""
-    @State private var typingDone = false
-    @State private var typeTask: Task<Void, Never>?
-    @State private var appear = false
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
-
-    private var steps: [CoachStep] {
-        var s = CoachTour.content[section] ?? []
-        // Forgey se asoma por el borde DERECHO en todas las pantallas, pero nadie lo
-        // explicaba: se veía una mascota flotante sin saber qué hacía ni que se puede mover.
-        // Va al final del primer tour (Social) y solo si el dispositivo soporta la IA.
-        if section == 0, ForgeyEngine.isAvailable {
-            s.append(CoachStep("And that's me on the right 👋 Tap me to ask for a workout or a tip. If I'm in the way, drag me up or down.",
-                               target: "forgey.peek"))
-        }
-        return s
-    }
-    private var current: String { steps.indices.contains(step) ? steps[step].text : "" }
-    private var currentTarget: String? { steps.indices.contains(step) ? steps[step].target : nil }
-    private var isLast: Bool { step >= steps.count - 1 }
-
-    var body: some View {
-        // Sin velo propio: RootView dibuja el atenuado + spotlight detrás de esta tarjeta.
-        ZStack(alignment: .bottom) {
-            Color.clear
-            ZStack(alignment: .topLeading) {
-                card
-                // Forgey asoma sobre la esquina superior izquierda de la tarjeta,
-                // entrando deslizándose desde el lateral y saludando al llegar.
-                Mascot(size: 82, wave: appear, bounceTrigger: reduceMotion ? 0 : step)
-                    .offset(x: 14, y: -44)
-                    .offset(x: appear ? 0 : -210)
-                    .allowsHitTesting(false)
-            }
-            .padding(.horizontal, 14)
-            .padding(.bottom, 12)
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .contentShape(Rectangle())
-        .onTapGesture { if !typingDone { finishTyping() } }   // modal: bloquea toques al contenido
-        .onAppear {
-            withAnimation(reduceMotion ? .easeOut(duration: 0.18)
-                                       : .spring(response: 0.34, dampingFraction: 0.74)) { appear = true }
-            onStep?(step); onTarget?(currentTarget)
-            startTyping()
-        }
-        .onChange(of: step) { s in onStep?(s); onTarget?(currentTarget); startTyping() }
-        .onDisappear { typeTask?.cancel() }
-    }
-
-    private var card: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            Text(CoachTour.names[safe: section] ?? "")
-                .font(.system(size: 12, weight: .heavy)).foregroundColor(Color(hex: "6ea300"))
-                .textCase(.uppercase).kerning(0.5)
-            // Consejo escrito a máquina; el texto completo (invisible) reserva la altura
-            // para que la tarjeta no salte mientras aparecen las letras.
-            ZStack(alignment: .topLeading) {
-                Text(current).font(.system(size: 16, weight: .heavy)).foregroundColor(.clear)
-                Text(shown).font(.system(size: 16, weight: .heavy)).foregroundColor(Brand.ink)
-            }
-            .fixedSize(horizontal: false, vertical: true)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .contentShape(Rectangle())
-            .onTapGesture { if !typingDone { finishTyping() } }
-
-            HStack(spacing: 8) {
-                // Puntos de progreso
-                ForEach(0..<max(1, steps.count), id: \.self) { i in
-                    Capsule().fill(i == step ? Brand.green : Brand.ink.opacity(0.16))
-                        .frame(width: i == step ? 18 : 6, height: 6)
-                }
-                Spacer()
-                Button { next() } label: {
-                    Text(isLast ? "Got it!" : "Next")
-                        .font(.system(size: 15, weight: .heavy)).foregroundColor(Color(hex: "10150a"))
-                        .padding(.horizontal, 22).frame(height: 44)
-                        .background(Brand.green).clipShape(Capsule())
-                        .shadow(color: Brand.green.opacity(0.35), radius: 8, y: 4)
-                }
-            }
-        }
-        .padding(18)
-        .padding(.top, 34)   // hueco para Forgey asomando arriba a la izquierda
-        .frame(maxWidth: .infinity)
-        .background(Color.white)
-        .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: 24, style: .continuous).stroke(Brand.line))
-        .overlay(alignment: .topTrailing) {
-            Button { finishAll() } label: {
-                Text("Skip").font(.system(size: 13, weight: .heavy)).foregroundColor(Brand.muted)
-                    .padding(.top, 12).padding(.trailing, 16)
-            }
-        }
-        .shadow(color: Brand.ink.opacity(0.16), radius: 22, y: 12)
-    }
-
-    private func next() {
-        FX.tap()
-        if isLast { finishAll() } else { step += 1 }
-    }
-
-    private func finishAll() {
-        FX.tap()
-        typeTask?.cancel()
-        withAnimation(.easeIn(duration: 0.2)) { appear = false }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.18) { onFinish() }
-    }
-
-    private func startTyping() {
-        typeTask?.cancel(); typingDone = false; shown = ""
-        let full = current
-        if reduceMotion { shown = full; typingDone = true; return }
-        let perChar = min(0.04, 2.4 / Double(max(1, full.count)))
-        typeTask = Task { @MainActor in
-            try? await Task.sleep(nanoseconds: 110_000_000)
-            for ch in full {
-                if Task.isCancelled { return }
-                shown.append(ch)
-                var d = perChar * Double.random(in: 0.7...1.4)
-                if ".!?…".contains(ch) { d += 0.11 } else if ",;".contains(ch) { d += 0.05 }
-                try? await Task.sleep(nanoseconds: UInt64(d * 1_000_000_000))
-            }
-            typingDone = true
-        }
-    }
-    private func finishTyping() { typeTask?.cancel(); shown = current; typingDone = true }
-
-    static let names = ["Social", "Plan", "Train", "Community", "Activity"]
-    static let content: [Int: [CoachStep]] = [
-        0: [CoachStep("Here you see what your friends are training.", target: "social.switch"),
-            CoachStep("Like or comment on their workouts.", target: "social.card")],
-        1: [CoachStep("Create your own workout with this button.", target: "plan.create"),
-            CoachStep("Or tap a workout to load it.", target: "plan.item")],
-        2: [CoachStep("This is where you train. Start by picking a workout.", target: "train.choose"),
-            CoachStep("Then tick off each set and I'll keep count.")],
-        // Con Partner oculto (v1), el tour de Comunidad solo explica el ranking.
-        3: FeatureFlags.partnerEnabled
-            ? [CoachStep("Here you climb divisions, from Iron to Master."),
-               CoachStep("Use this slider to set how far to look for a partner.", target: "partner.distance"),
-               CoachStep("Use this button to post your plan and find a partner.", target: "partner.create"),
-               CoachStep("If a plan suits you, tap “Accept” and a chat opens.", target: "partner.accept"),
-               CoachStep("Not for you? Dismiss it with the ✕.", target: "partner.discard")]
-            : [CoachStep("Here you climb divisions, from Iron to Master."),
-               CoachStep("Compete every week: the XP from your workouts moves you up the ranking.")],
-        4: [CoachStep("Switch between your progress and your workouts.", target: "activity.switch"),
-            CoachStep("Here you see your streak and your Gym Score.", target: "activity.progress")],
-    ]
-}
-
-private extension Array {
-    subscript(safe i: Int) -> Element? { indices.contains(i) ? self[i] : nil }
 }

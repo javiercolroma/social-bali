@@ -6,6 +6,8 @@ import SwiftUI
 struct ChatsView: View {
     @EnvironmentObject var store: AppStore
     @Environment(\.dismiss) private var dismiss
+    /// Como pestaña no lleva «Done» (solo cuando se presenta como hoja).
+    var asTab = false
     var onOpenChat: (String) -> Void
     @State private var openProfile: IdString?
 
@@ -54,7 +56,7 @@ struct ChatsView: View {
             }
             .background(Brand.bg)
             .navigationTitle("Chats").navigationBarTitleDisplayMode(.inline)
-            .toolbar { ToolbarItem(placement: .topBarTrailing) { Button("Done") { dismiss() }.fontWeight(.heavy) } }
+            .toolbar { if !asTab { ToolbarItem(placement: .topBarTrailing) { Button("Done") { dismiss() }.fontWeight(.heavy) } } }
             .task { store.loadConnections(); store.loadConversations() }
             .sheet(item: $openProfile) { ClubProfileView(personId: $0.id).environmentObject(store) }
         }

@@ -1,64 +1,7 @@
 import Foundation
 
-/// Flags de producto. Partner (buscar compañero de gym) sigue funcionando con datos DEMO:
-/// se oculta en v1 para no mezclar gente falsa con usuarios reales. Ponlo a true cuando
-/// se migre a backend real (planes en Supabase + matching por cercanía).
-enum FeatureFlags {
-    static let partnerEnabled = true   // Partner REAL (planes en Supabase + chat real)
-    /// ⚠️ SOLO PRUEBAS: permite guardar entrenos cortos/implausibles (ignora la regla
-    /// anti-fake en el cliente). APAGAR antes de cualquier lanzamiento público.
-    static let allowShortWorkouts = true
-    /// IA en la NUBE para dispositivos sin Apple Intelligence (Claude vía Edge Function).
-    /// Desactivada de momento (pendiente de pruebas y de configurar ANTHROPIC_API_KEY en
-    /// los secretos de Supabase). La infraestructura está desplegada y lista.
-    static let cloudAIEnabled = false
-    /// Análisis del físico por FOTO (Claude ve la imagen en la nube). Es SOLO-nube: no hay
-    /// on-device (el modelo de Apple no ve imágenes). Apagado hasta poner ANTHROPIC_API_KEY;
-    /// además exige consentimiento explícito del usuario (la foto sale del dispositivo).
-    static let cloudVisionEnabled = false
-}
-
-enum ExerciseStatus: String, Codable {
-    case pending, done, skipped
-}
-
-struct SetLog: Codable, Hashable {
-    var reps: Int
-    var weight: Double
-}
-
-struct Exercise: Identifiable, Codable, Hashable {
-    var id: String
-    var day: String
-    var name: String
-    var targetSets: Int
-    var sets: Int
-    var completedSets: Int
-    var skippedSets: Int
-    var reps: Int
-    var weight: Double
-    var rest: Int
-    var note: String
-    var status: ExerciseStatus
-    var setLog: [SetLog]? = nil
-    /// Superserie: ejercicios CONSECUTIVOS con el mismo id de grupo se entrenan alternando
-    /// una serie de cada, sin descanso entre ellos (descanso al cerrar la ronda). `nil` = normal.
-    var supersetGroup: String? = nil
-
-    var closedSets: Int { min(sets, completedSets + skippedSets) }
-    var resolvedStatus: ExerciseStatus {
-        if closedSets < sets { return .pending }
-        return completedSets > 0 ? .done : .skipped
-    }
-}
-
-struct Player: Codable {
-    var xp: Int
-    var streak: Int
-    var focus: Int
-    var hearts: Int
-}
-
+/// Perfil propio. `gym` y las redes sociales son campos heredados: se conservan para
+/// poder decodificar datos locales antiguos, pero la app ya no los pide ni los enseña.
 struct Profile: Codable {
     var sex: String
     var age: String
@@ -71,11 +14,6 @@ struct Profile: Codable {
     var instagram: String? = nil
     var tiktok: String? = nil
     var twitter: String? = nil
-    // Respuestas del onboarding (encuesta de tarjetas). Opcionales y decode-safe.
-    var goal: String? = nil
-    var level: String? = nil
-    var weeklyDays: String? = nil
-    var motivation: String? = nil
 
     // ─── Club social (PRODUCT.md · Fase 1 «Identidad») ───────────────────────────
     // TODO opcional: son perfiles ya guardados los que se decodifican, y un campo no
@@ -152,102 +90,7 @@ struct Profile: Codable {
     }
 }
 
-struct HistoryEntry: Identifiable, Codable {
-    var id: String
-    var exerciseName: String
-    var day: String
-    var status: ExerciseStatus
-    var sets: Int
-    var reps: Int
-    var weight: Double
-    var volume: Double
-    var xp: Int
-    var completedAt: Date
-    var sessionId: String?
-    /// nil (datos antiguos) = verificada. false = sesión implausible: NO cuenta para el Gym Score.
-    var verified: Bool? = nil
-}
-
-enum WorkoutVisibility: String, Codable, CaseIterable {
-    case all, followers, onlyMe
-    var label: String {
-        switch self { case .all: return "Everyone"; case .followers: return "Followers"; case .onlyMe: return "Only me" }
-    }
-    var icon: String {
-        switch self { case .all: return "globe"; case .followers: return "person.2.fill"; case .onlyMe: return "lock.fill" }
-    }
-}
-
-struct SessionExercise: Codable, Hashable, Identifiable {
-    var id = UUID()
-    var name: String
-    var sets: Int
-    var reps: Int
-    var weight: Double
-    var logs: [SetLog]? = nil
-}
-
-struct WorkoutSession: Identifiable, Codable {
-    var id: String
-    var name: String
-    var note: String
-    var date: Date
-    var elapsed: Int
-    var exercises: Int
-    var sets: Int
-    var volume: Double
-    var xp: Int
-    var photoData: Data?
-    var visibility: WorkoutVisibility
-    var items: [SessionExercise]? = nil
-    var avgHeartRate: Int? = nil
-    var maxHeartRate: Int? = nil
-    /// Zona aproximada donde se hizo el entreno (GPS reverse-geocoded al guardar).
-    var location: String? = nil
-    /// ¿Sesión plausible? Las demasiado rápidas no cuentan para liga/récords públicos.
-    var verified: Bool = true
-    /// URL pública de la foto en Storage (para verla en otro dispositivo cuando no hay `photoData` local).
-    var photoURL: String? = nil
-    /// Avances por ejercicio vs. el historial propio (calculados al guardar). nil = sin calcular
-    /// todavía (sesiones antiguas o ajenas) → la tarjeta no muestra la tira de progreso.
-    var insights: [ProgressInsight]? = nil
-    /// Logros estilo Strava (medallas oro/plata/bronce) del entreno. nil = sin calcular todavía.
-    var medals: [SessionMedal]? = nil
-}
-
-struct WorkoutTemplate: Identifiable, Codable, Hashable {
-    var id: String
-    var name: String
-    var description: String
-    var block: String
-    var exercises: [Exercise]
-}
-
-// MARK: - Partner
-
-struct TrainingPlan: Identifiable, Codable, Hashable {
-    var id: String
-    var title: String
-    var when: String
-    var place: String
-    var spots: String
-    var ownerId: String   // "me", id demo o UUID real del autor
-    var score: Int
-    var note: String? = nil   // descripción opcional del plan
-    // Autor REAL (desde el servidor); nil en planes demo/locales.
-    var authorName: String? = nil
-    var authorHandle: String? = nil
-    var authorAvatarURL: String? = nil
-    // Celda (~5 km) del autor al publicar; nil si no compartió ubicación.
-    var cellLat: Double? = nil
-    var cellLon: Double? = nil
-}
-
 // MARK: - Social
-
-enum RelationshipStatus: String, Codable {
-    case none, outgoing, incoming, friends
-}
 
 /// Sesión iniciada (identidad del proveedor). Sin backend todavía: se guarda local.
 struct Auth: Codable, Equatable {
@@ -290,31 +133,12 @@ struct ChatMessage: Identifiable, Codable, Hashable {
     var text: String
     var at: Date
 
-    /// Si el mensaje es un entreno compartido, devuelve la plantilla decodificada.
-    var sharedWorkout: WorkoutTemplate? { WorkoutShare.decode(text) }
-    /// Texto legible para la lista de conversaciones (nunca el JSON codificado del entreno).
-    var preview: String {
-        if let w = sharedWorkout { return "📋 Workout: \(L10n.x(w.name))" }
-        return text
-    }
-}
-
-/// Compartir un entreno por el chat SIN cambiar el esquema: la plantilla viaja
-/// codificada (base64 JSON) dentro del propio texto del mensaje, tras un marcador.
-/// Un cliente que no lo entienda vería el texto crudo; como ambos son la misma app,
-/// siempre se renderiza como tarjeta.
-enum WorkoutShare {
-    static let marker = "\u{1FAAF}FORGE-WKT1::"
-    static func encode(_ t: WorkoutTemplate) -> String {
-        guard let data = try? JSONEncoder().encode(t) else { return "Workout: \(t.name)" }
-        return marker + data.base64EncodedString()
-    }
-    static func decode(_ text: String) -> WorkoutTemplate? {
-        guard text.hasPrefix(marker),
-              let data = Data(base64Encoded: String(text.dropFirst(marker.count))),
-              let t = try? JSONDecoder().decode(WorkoutTemplate.self, from: data) else { return nil }
-        return t
-    }
+    /// Marcador de los entrenos compartidos de versiones anteriores (se quitaron de la app).
+    private static let legacyWorkoutMarker = "\u{1FAAF}FORGE-WKT1::"
+    /// Mensaje antiguo con un entreno codificado: no se enseña su contenido crudo.
+    var isLegacyWorkout: Bool { text.hasPrefix(Self.legacyWorkoutMarker) }
+    /// Texto legible para la lista de conversaciones y la burbuja del chat.
+    var preview: String { isLegacyWorkout ? L10n.t("This message is no longer supported") : text }
 }
 
 struct Conversation: Identifiable, Codable, Hashable {
@@ -324,38 +148,4 @@ struct Conversation: Identifiable, Codable, Hashable {
     var unread: Int
     var lastAt: Date
     var lastMessage: ChatMessage? { messages.last }
-}
-
-enum NotificationType: String, Codable {
-    case friendRequest, friendAccepted, trainingAccepted, newFollower
-}
-
-struct AppNotification: Identifiable, Codable, Hashable {
-    var id: String
-    var type: NotificationType
-    var title: String
-    var body: String
-    var at: Date
-    var read: Bool
-    var personId: String?
-    var conversationId: String?
-}
-
-// MARK: - Gym Score
-
-struct GymScore {
-    var total: Int
-    var potential: Int
-    var reliability: Int
-    var reliable: Bool
-    var daysUntilReliable: Int
-    var tier: String
-    var strength: Int
-    var consistency: Int
-    var volume: Int
-    var progression: Int
-    var variety: Int
-    var quality: Int
-    var sessions: Int
-    var trainingDays: Int
 }
