@@ -19,7 +19,10 @@ struct RootView: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .onChange(of: tab) { _ in FX.selection() }
 
+            // .id(tab): obliga a redibujar la barra al cambiar de pestaña. Sin él, SwiftUI a
+            // veces se salta el refresco y el resaltado se queda en la primera pestaña.
             ClubTabBar(tab: tab, chatsBadge: store.unreadMessages) { tab = $0 }
+                .id(tab)
         }
         .background(Brand.bg.ignoresSafeArea())
         // «Message» / aceptar una conexión: abre el chat desde cualquier pantalla.
@@ -92,7 +95,7 @@ struct ClubTabBar: View {
             item(.chats, "Chats", "bubble.left.and.bubble.right.fill", badge: chatsBadge)
             item(.profile, "Profile", "person.crop.circle.fill", badge: 0)
         }
-        .padding(.top, 8)
+        .padding(.top, 2)
         .padding(.bottom, max(8, safeBottom))
         .background(Brand.bg.overlay(Divider(), alignment: .top))
     }
@@ -105,7 +108,10 @@ struct ClubTabBar: View {
         let active = tab == t
         return Button { onSelect(t) } label: {
             VStack(spacing: 4) {
-                Image(systemName: icon).font(.system(size: 20, weight: .semibold))
+                // Rayita arriba en la pestaña activa: se ve aunque el color cambie poco.
+                Capsule().fill(active ? Brand.ink : Color.clear).frame(width: 18, height: 3).padding(.bottom, 2)
+                Image(systemName: active ? icon : icon.replacingOccurrences(of: ".fill", with: ""))
+                    .font(.system(size: 20, weight: active ? .semibold : .regular))
                     .overlay(alignment: .topTrailing) {
                         if badge > 0 {
                             Text("\(badge)").font(.system(size: 10, weight: .heavy)).foregroundColor(.white)
@@ -113,9 +119,9 @@ struct ClubTabBar: View {
                                 .background(Brand.red).clipShape(Capsule()).offset(x: 10, y: -6)
                         }
                     }
-                Text(title).font(.system(size: 11, weight: .heavy))
+                Text(title).font(.system(size: 11, weight: active ? .bold : .medium))
             }
-            .foregroundColor(active ? Brand.ink : Brand.soft)
+            .foregroundColor(active ? Brand.ink : Brand.soft.opacity(0.8))
             .frame(maxWidth: .infinity)
             .contentShape(Rectangle())
         }

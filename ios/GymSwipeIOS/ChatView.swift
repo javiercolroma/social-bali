@@ -29,6 +29,10 @@ struct ChatView: View {
     @State private var sendError: String?
     @State private var viewer: ChatMessage?
     @StateObject private var recorder = VoiceRecorder()
+    /// Nota de voz «mantener para grabar»: desplazamiento del dedo y si ya se canceló.
+    @State private var holdDragX: CGFloat = 0
+    @State private var holdCancelled = false
+    @State private var holding = false
     @FocusState private var typing: Bool
 
     private var person: SocialPerson? { store.person(personId) }
@@ -83,11 +87,18 @@ struct ChatView: View {
         }
         .onDisappear { Task { await unsubscribe() } }
         .sheet(isPresented: $showProfile) { ClubProfileView(personId: personId).environmentObject(store) }
-        .confirmationDialog("", isPresented: $attachMenu) {
-            Button("Photo or video") { showLibrary = true }
-            if UIImagePickerController.isSourceTypeAvailable(.camera) { Button("Camera") { showCamera = true } }
-            Button("Share my location") { Task { await sendLocation() } }
-            Button("Cancel", role: .cancel) {}
+        .sheet(isPresented: $attachMenu) {
+            AttachSheet { choice in
+                attachMenu = false
+                // Se deja cerrar la hoja antes de abrir la siguiente pantalla.
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
+                    switch choice {
+                    case .camera: showCamera = true
+                    case .photos: showLibrary = true
+                    case .location: Task { await sendLocation() }
+                    }
+                }
+            }
         }
         .photosPicker(isPresented: $showLibrary, selection: $libraryItem, matching: .any(of: [.images, .videos, .livePhotos]),
                       photoLibrary: .shared())
@@ -148,49 +159,85 @@ struct ChatView: View {
     // MARK: Escribir
 
     private var composer: some View {
-        Group {
+        HStack(alignment: .bottom, spacing: 8) {
             if recorder.isRecording {
-                HStack(spacing: 12) {
-                    Button { recorder.cancel() } label: {
-                        Image(systemName: "trash").font(.system(size: 18)).foregroundColor(Brand.redText).frame(width: 44, height: 44)
-                    }
+                // Grabando (con el dedo en el micro): soltar envía, deslizar a la izquierda cancela.
+                HStack(spacing: 10) {
                     Circle().fill(Brand.red).frame(width: 9, height: 9)
-                    Text(timeString(recorder.elapsed)).font(.system(size: 15, weight: .medium).monospacedDigit()).foregroundColor(Brand.ink)
+                        .opacity(Int(recorder.elapsed * 2) % 2 == 0 ? 1 : 0.35)
+                    Text(timeString(recorder.elapsed)).font(.system(size: 16, weight: .medium).monospacedDigit()).foregroundColor(Brand.ink)
                     Spacer()
-                    Button { Task { await sendVoice() } } label: {
-                        Image(systemName: "arrow.up").font(.system(size: 17, weight: .bold)).foregroundColor(Brand.onAccent)
-                            .frame(width: 44, height: 44).background(Brand.accent).clipShape(Circle())
+                    HStack(spacing: 4) {
+                        Image(systemName: "chevron.left").font(.system(size: 12, weight: .semibold))
+                        Text("Slide to cancel").font(.system(size: 14))
                     }
+                    .foregroundColor(Brand.muted)
+                    .offset(x: max(-80, min(0, holdDragX)))
+                    .opacity(1 + Double(max(-90, min(0, holdDragX))) / 120)
+                    Spacer()
                 }
+                .padding(.horizontal, 14).frame(height: 44)
+                .background(Color.white).clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
+                .overlay(RoundedRectangle(cornerRadius: 22, style: .continuous).stroke(Brand.line))
+                .transition(.opacity)
             } else {
-                HStack(alignment: .bottom, spacing: 8) {
-                    Button { typing = false; attachMenu = true } label: {
-                        Image(systemName: "plus").font(.system(size: 20, weight: .medium)).foregroundColor(Brand.ink)
-                            .frame(width: 44, height: 44)
-                    }
-                    TextField("Message", text: $draft, axis: .vertical)
-                        .lineLimit(1...5)
-                        .focused($typing)
-                        .font(.system(size: 16))
-                        .padding(.horizontal, 14).padding(.vertical, 11)
-                        .background(Color.white).clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
-                        .overlay(RoundedRectangle(cornerRadius: 22, style: .continuous).stroke(Brand.line))
-                    if draft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                        Button { recorder.start() } label: {
-                            Image(systemName: "mic.fill").font(.system(size: 18)).foregroundColor(Brand.ink)
-                                .frame(width: 44, height: 44)
-                        }
-                    } else {
-                        Button { sendText() } label: {
-                            Image(systemName: "arrow.up").font(.system(size: 17, weight: .bold)).foregroundColor(Brand.onAccent)
-                                .frame(width: 44, height: 44).background(Brand.accent).clipShape(Circle())
-                        }
-                    }
+                Button { typing = false; attachMenu = true } label: {
+                    Image(systemName: "plus").font(.system(size: 20, weight: .medium)).foregroundColor(Brand.ink)
+                        .frame(width: 44, height: 44)
+                }
+                TextField("Message", text: $draft, axis: .vertical)
+                    .lineLimit(1...5)
+                    .focused($typing)
+                    .font(.system(size: 16))
+                    .padding(.horizontal, 14).padding(.vertical, 11)
+                    .background(Color.white).clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
+                    .overlay(RoundedRectangle(cornerRadius: 22, style: .continuous).stroke(Brand.line))
+            }
+            if draft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                micButton
+            } else {
+                Button { sendText() } label: {
+                    Image(systemName: "arrow.up").font(.system(size: 17, weight: .bold)).foregroundColor(Brand.onAccent)
+                        .frame(width: 44, height: 44).background(Brand.accent).clipShape(Circle())
                 }
             }
         }
+        .animation(.easeOut(duration: 0.15), value: recorder.isRecording)
         .padding(.horizontal, 10).padding(.vertical, 8)
         .background(Brand.bg).overlay(Divider(), alignment: .top)
+    }
+
+    /// Mantener para grabar, como en WhatsApp.
+    private var micButton: some View {
+        Image(systemName: "mic.fill")
+            .font(.system(size: recorder.isRecording ? 22 : 18))
+            .foregroundColor(recorder.isRecording ? Brand.onAccent : Brand.ink)
+            .frame(width: recorder.isRecording ? 58 : 44, height: recorder.isRecording ? 58 : 44)
+            .background(Circle().fill(recorder.isRecording ? Brand.accent : Color.clear))
+            .offset(x: recorder.isRecording ? max(-90, min(0, holdDragX)) : 0)
+            .contentShape(Circle())
+            .gesture(
+                DragGesture(minimumDistance: 0)
+                    .onChanged { v in
+                        if !holding {
+                            holding = true; holdCancelled = false; holdDragX = 0
+                            recorder.start()
+                        }
+                        holdDragX = v.translation.width
+                        if holdDragX < -90 && !holdCancelled {
+                            holdCancelled = true
+                            recorder.cancel()
+                            FX.warning()
+                        }
+                    }
+                    .onEnded { _ in
+                        holding = false
+                        holdDragX = 0
+                        if holdCancelled { holdCancelled = false; return }
+                        Task { await sendVoice() }
+                    }
+            )
+            .accessibilityLabel(Text("Hold to record a voice message"))
     }
 
     private func timeString(_ t: TimeInterval) -> String { String(format: "%d:%02d", Int(t) / 60, Int(t) % 60) }
@@ -273,7 +320,12 @@ struct ChatView: View {
     }
 
     private func sendVoice() async {
-        guard let (file, seconds) = recorder.stop(), seconds >= 1 else { return }
+        guard let (file, seconds) = recorder.stop() else { return }
+        guard seconds >= 1 else {
+            try? FileManager.default.removeItem(at: file)
+            sendError = L10n.t("Hold to record, release to send.")
+            return
+        }
         sending += 1; defer { sending -= 1 }
         do {
             let data = try Data(contentsOf: file)
@@ -318,6 +370,46 @@ struct ChatView: View {
     private func unsubscribe() async {
         if let ch = channel, let client = Backend.shared.client { await client.removeChannel(ch) }
         channel = nil
+    }
+}
+
+// MARK: - Adjuntar (panel propio, estilo de la app)
+
+struct AttachSheet: View {
+    enum Choice { case camera, photos, location }
+    var onPick: (Choice) -> Void
+
+    var body: some View {
+        VStack(spacing: 22) {
+            Capsule().fill(Brand.line).frame(width: 40, height: 5).padding(.top, 8)
+            HStack(spacing: 0) {
+                if UIImagePickerController.isSourceTypeAvailable(.camera) {
+                    item(.camera, "Camera", "camera.fill")
+                }
+                item(.photos, "Photos", "photo.on.rectangle.angled")
+                item(.location, "Location", "mappin.and.ellipse")
+            }
+            Spacer(minLength: 0)
+        }
+        .padding(.horizontal, 20)
+        .frame(maxWidth: .infinity)
+        .background(Brand.bg)
+        .presentationDetents([.height(190)])
+        .presentationDragIndicator(.hidden)
+    }
+
+    private func item(_ c: Choice, _ title: LocalizedStringKey, _ icon: String) -> some View {
+        Button { FX.tap(); onPick(c) } label: {
+            VStack(spacing: 8) {
+                Image(systemName: icon).font(.system(size: 22, weight: .medium)).foregroundColor(Brand.ink)
+                    .frame(width: 62, height: 62)
+                    .background(Brand.sand).clipShape(Circle())
+                    .overlay(Circle().stroke(Brand.sandDeep, lineWidth: 1))
+                Text(title).font(.system(size: 13, weight: .medium)).foregroundColor(Brand.ink)
+            }
+            .frame(maxWidth: .infinity)
+        }
+        .buttonStyle(PressableButtonStyle())
     }
 }
 
