@@ -228,31 +228,18 @@ struct CircleCell: View {
         .buttonStyle(.plain)
     }
 
-    /// 0: zona · distancia — 1: bandera junto al nombre — 2: país · zona. Estable por persona.
-    private var style: Int {
-        guard row.club.homeCountry?.isEmpty == false else { return 0 }
-        return Int(row.id.uuidString.unicodeScalars.reduce(0) { ($0 &* 31 &+ Int($1.value)) & 0xffff } % 3)
-    }
-
     private var flag: String { row.club.homeCountry.map(countryFlag) ?? "" }
 
+    /// «Lena, 37 🇩🇪»: la bandera de su país en todas las tarjetas.
     private var nameLine: String {
         let name = row.name ?? ""
         let base = row.age.map { "\(name), \($0)" } ?? name
-        return style == 1 ? "\(base) \(flag)" : base
+        return flag.isEmpty ? base : "\(base) \(flag)"
     }
 
     private var subline: String? {
-        let dist = row.distance_m.map(CircleDistance.label)
-        let area = row.club.area?.label
-        switch style {
-        case 2:
-            let country = row.club.homeCountry.map(countryName) ?? ""
-            return ["\(flag) \(country)", area].compactMap { $0 }.joined(separator: " · ")
-        default:
-            let parts = [area, dist].compactMap { $0 }
-            return parts.isEmpty ? nil : parts.joined(separator: " · ")
-        }
+        let parts = [row.club.area?.label, row.distance_m.map(CircleDistance.label)].compactMap { $0 }
+        return parts.isEmpty ? nil : parts.joined(separator: " · ")
     }
 
     private var badgeText: String? {
