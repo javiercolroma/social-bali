@@ -22,10 +22,13 @@ struct GymSwipeIOSApp: App {
             .environment(\.locale, L10n.locale)
             .environmentObject(store)
             // Arranque con el logo dibujándose.
+            // Entrada suave: la app aparece (y se asienta) mientras el logo crece y se desvanece.
+            .opacity(showSplash ? 0 : 1)
+            .scaleEffect(showSplash ? 0.97 : 1)
             .overlay {
                 if showSplash {
-                    LaunchSplash { withAnimation(.easeOut(duration: 0.35)) { showSplash = false } }
-                        .transition(.opacity)
+                    LaunchSplash { withAnimation(.easeInOut(duration: 0.7)) { showSplash = false } }
+                        .transition(.opacity.combined(with: .scale(scale: 1.08)))
                         .zIndex(100)
                 }
             }
