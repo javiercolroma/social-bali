@@ -136,13 +136,34 @@ struct ChatMessage: Identifiable, Codable, Hashable {
     var fromMe: Bool
     var text: String
     var at: Date
+    // ─── Chat tipo WhatsApp (0033). Opcionales: los mensajes guardados antes no los tienen.
+    var kind: String? = nil          // text · image · video · location · audio
+    var mediaURL: String? = nil
+    var posterURL: String? = nil
+    var w: Int? = nil
+    var h: Int? = nil
+    var duration: Double? = nil
+    var lat: Double? = nil
+    var lon: Double? = nil
+    /// Lo ha leído la otra persona (para el doble check azul).
+    var read: Bool? = nil
+
+    var type: String { kind ?? "text" }
 
     /// Marcador de los entrenos compartidos de versiones anteriores (se quitaron de la app).
     private static let legacyWorkoutMarker = "\u{1FAAF}FORGE-WKT1::"
     /// Mensaje antiguo con un entreno codificado: no se enseña su contenido crudo.
     var isLegacyWorkout: Bool { text.hasPrefix(Self.legacyWorkoutMarker) }
     /// Texto legible para la lista de conversaciones y la burbuja del chat.
-    var preview: String { isLegacyWorkout ? L10n.t("This message is no longer supported") : text }
+    var preview: String {
+        switch type {
+        case "image": return "📷 " + L10n.t("Photo")
+        case "video": return "🎥 " + L10n.t("Video")
+        case "location": return "📍 " + L10n.t("Location")
+        case "audio": return "🎤 " + L10n.t("Voice message")
+        default: return isLegacyWorkout ? L10n.t("This message is no longer supported") : text
+        }
+    }
 }
 
 struct Conversation: Identifiable, Codable, Hashable {

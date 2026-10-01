@@ -338,12 +338,34 @@ final class Backend {
             .execute()
     }
 
-    /// Envía un mensaje a otro usuario.
+    /// Envía un mensaje de texto a otro usuario.
     func sendMessage(to otherUserId: UUID, text: String) async throws {
+        try await sendMessage(to: otherUserId, MessageInsert(sender_id: "", recipient_id: "", text: text))
+    }
+
+    /// Envía cualquier mensaje (foto, vídeo, ubicación, voz). Rellena emisor y receptor.
+    func sendMessage(to otherUserId: UUID, _ m: MessageInsert) async throws {
         guard let client, let me = await currentUserIdAsync() else { throw BackendError.notConfigured }
-        try await client.from("messages")
-            .insert(MessageInsert(sender_id: me.uuidString, recipient_id: otherUserId.uuidString, text: text))
-            .execute()
+        var row = m
+        row = MessageInsert(sender_id: me.uuidString, recipient_id: otherUserId.uuidString, text: m.text, kind: m.kind,
+                            media_url: m.media_url, poster_url: m.poster_url, media_w: m.media_w, media_h: m.media_h,
+                            duration: m.duration, lat: m.lat, lon: m.lon)
+        try await client.from("messages").insert(row).execute()
+    }
+
+    /// Miembros por nombre, para el buscador de Chats.
+    func searchMembers(_ q: String) async -> [ProfileRow] {
+        guard let client, client.auth.currentSession != nil else { return [] }
+        struct P: Encodable { let q: String }
+        return (try? await client.rpc("search_members", params: P(q: q)).execute().value) ?? []
+    }
+
+    /// De estas personas, quién está activo ahora.
+    func onlineAmong(_ ids: [String]) async -> Set<String> {
+        guard let client, client.auth.currentSession != nil, !ids.isEmpty else { return [] }
+        struct P: Encodable { let ids: [String] }
+        let r: [String] = (try? await client.rpc("online_among", params: P(ids: ids.map { $0.lowercased() })).execute().value) ?? []
+        return Set(r.map { $0.lowercased() })
     }
 
     // MARK: - Moderación (reportar / bloquear)
@@ -553,6 +575,14 @@ struct MessageInsert: Encodable {
     let sender_id: String
     let recipient_id: String
     let text: String
+    var kind: String = "text"
+    var media_url: String? = nil
+    var poster_url: String? = nil
+    var media_w: Int? = nil
+    var media_h: Int? = nil
+    var duration: Double? = nil
+    var lat: Double? = nil
+    var lon: Double? = nil
 }
 
 /// Mensaje leído de `public.messages`.
@@ -563,6 +593,21 @@ struct MessageRow: Codable {
     let text: String
     let created_at: String
     var read: Bool? = nil
+    var kind: String? = nil
+    var media_url: String? = nil
+    var poster_url: String? = nil
+    var media_w: Int? = nil
+    var media_h: Int? = nil
+    var duration: Double? = nil
+    var lat: Double? = nil
+    var lon: Double? = nil
+
+    /// El mensaje tal y como lo pinta el chat, visto desde `me`.
+    func message(me: String?) -> ChatMessage {
+        ChatMessage(id: id, fromMe: sender_id.lowercased() == me?.lowercased(), text: text,
+                    at: BackendDate.parse(created_at) ?? Date(), kind: kind, mediaURL: media_url,
+                    posterURL: poster_url, w: media_w, h: media_h, duration: duration, lat: lat, lon: lon, read: read)
+    }
 }
 
 /// Fecha ↔ `timestamptz`. Escribimos ISO8601 con milisegundos; al leer somos tolerantes

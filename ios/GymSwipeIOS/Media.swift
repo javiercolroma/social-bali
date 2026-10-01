@@ -175,7 +175,7 @@ enum MediaUploader {
     }
 
     /// Vídeo/Live: se recomprime a ~720p (mp4) y se sube junto a su portada.
-    private static func uploadMoving(kind: String, stillData: Data, videoURL: URL) async throws -> MediaItem {
+    static func uploadMoving(kind: String, stillData: Data, videoURL: URL) async throws -> MediaItem {
         let asset = AVURLAsset(url: videoURL)
         let seconds = try await asset.load(.duration).seconds
         if seconds > MediaRules.maxVideoSeconds + 0.5 { throw Failure.tooLong }
@@ -200,7 +200,7 @@ enum MediaUploader {
         return out
     }
 
-    private static func poster(of url: URL) async throws -> Data {
+    static func poster(of url: URL) async throws -> Data {
         let gen = AVAssetImageGenerator(asset: AVURLAsset(url: url))
         gen.appliesPreferredTrackTransform = true
         let cg = try gen.copyCGImage(at: .zero, actualTime: nil)

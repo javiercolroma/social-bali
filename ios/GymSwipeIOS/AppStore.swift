@@ -124,10 +124,7 @@ final class AppStore: ObservableObject {
             let mp = (try? await Backend.shared.fetchProfiles(ids: ids)) ?? []
             messagedPeople = Self.asPeople(mp)
             conversations = byPartner.map { (partner, rows) in
-                let msgs = rows.sorted { $0.created_at < $1.created_at }.map { r in
-                    ChatMessage(id: r.id, fromMe: r.sender_id.lowercased() == meStr,
-                                text: r.text, at: BackendDate.parse(r.created_at) ?? Date())
-                }
+                let msgs = rows.sorted { $0.created_at < $1.created_at }.map { $0.message(me: meStr) }
                 // No leídos = mensajes que ME ha mandado el otro y aún no marcados como leídos.
                 let unread = rows.filter { $0.sender_id.lowercased() == partner.lowercased() && $0.read != true }.count
                 return Conversation(id: conversationId(partner), personId: partner,

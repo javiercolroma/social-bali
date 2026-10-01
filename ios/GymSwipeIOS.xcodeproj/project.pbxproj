@@ -33,6 +33,7 @@
 		BAD7EE358BFA5FB317D4B4BE /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = 576D24DF9F2FA5F465491620 /* Localizable.strings */; };
 		C01A2049E004FBE4ADDF5F10 /* SessionFX.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6323375755B5CE9680137707 /* SessionFX.swift */; };
 		C621063B40DD7E4CCC5A1CF6 /* BackendConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7E6B792B4F4EA9197E1B827D /* BackendConfig.swift */; };
+		CCFF2A0C3EF3643596E9504F /* ChatView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EDB23F12AC1449D14A818B0F /* ChatView.swift */; };
 		D1A51AF5DF1BCC6CDABBD42C /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1596E5BECE9666DDA76867A /* Models.swift */; };
 		D2CE3175CC59ED497DD03168 /* Supabase in Frameworks */ = {isa = PBXBuildFile; productRef = 3399B2AD81B7B8CE994430CC /* Supabase */; };
 		DA05549BBC317153BBD6F71E /* AuthConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = F74AC0B6B4A95C6A9638E399 /* AuthConfig.swift */; };
@@ -70,6 +71,7 @@
 		D1596E5BECE9666DDA76867A /* Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models.swift; sourceTree = "<group>"; };
 		D6EC6B48C1199B831CEB9E85 /* SocialClub.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SocialClub.swift; sourceTree = "<group>"; };
 		E53E08D1A4CF0DE70074A344 /* ProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileView.swift; sourceTree = "<group>"; };
+		EDB23F12AC1449D14A818B0F /* ChatView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatView.swift; sourceTree = "<group>"; };
 		EE3D523E2B23CB071DE7E8BA /* Presence.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Presence.swift; sourceTree = "<group>"; };
 		F74AC0B6B4A95C6A9638E399 /* AuthConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthConfig.swift; sourceTree = "<group>"; };
 		FCD5D6AB5B854D33B50CA68B /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
@@ -114,6 +116,7 @@
 				525FBF89172E34D317FCAF44 /* Backend.swift */,
 				7E6B792B4F4EA9197E1B827D /* BackendConfig.swift */,
 				867161603B2BAD433155C11B /* ChatsView.swift */,
+				EDB23F12AC1449D14A818B0F /* ChatView.swift */,
 				A2240957DB593117FC154CFD /* ClubProfileView.swift */,
 				A415A6402658DC75C3C37C3C /* Components.swift */,
 				1D19B1F26226F79DC0669B52 /* Countries.swift */,
@@ -227,6 +230,7 @@
 				A89D564806DC6E75C368E3EB /* AuthView.swift in Sources */,
 				0B44BA771BBDD065482CD7C3 /* Backend.swift in Sources */,
 				C621063B40DD7E4CCC5A1CF6 /* BackendConfig.swift in Sources */,
+				CCFF2A0C3EF3643596E9504F /* ChatView.swift in Sources */,
 				851668B790A10004977975C2 /* ChatsView.swift in Sources */,
 				6A9B443DE5B7B54DE374C3A1 /* ClubProfileView.swift in Sources */,
 				2A71043ED4BBAF7A09523AFF /* Components.swift in Sources */,
@@ -300,7 +304,7 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 4;
+				CURRENT_PROJECT_VERSION = 5;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				DEVELOPMENT_TEAM = 5JHD53WQ67;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
@@ -367,7 +371,7 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 4;
+				CURRENT_PROJECT_VERSION = 5;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = 5JHD53WQ67;
 				ENABLE_NS_ASSERTIONS = NO;
