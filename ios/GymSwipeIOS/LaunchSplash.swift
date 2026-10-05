@@ -20,20 +20,20 @@ struct LaunchSplash: View {
                 // 1) El círculo, dibujándose.
                 HandCircle()
                     .trim(from: 0, to: drawn)
-                    .stroke(Self.ink, style: StrokeStyle(lineWidth: 6, lineCap: .round, lineJoin: .round))
+                    .stroke(Self.ink, style: StrokeStyle(lineWidth: 4, lineCap: .round, lineJoin: .round))
                 // La luz que recorre la forma.
                 HandCircle()
                     .trim(from: max(0, glow - 0.07), to: glow)
-                    .stroke(Color.white, style: StrokeStyle(lineWidth: 9, lineCap: .round))
-                    .blur(radius: 3)
+                    .stroke(Color.white, style: StrokeStyle(lineWidth: 7, lineCap: .round))
+                    .blur(radius: 2.5)
                     .opacity(glow > 0 && glow < 1 ? 0.9 : 0)
                 // 2) «Bali Circle.» escrito a mano, trazo a trazo, como con el rotulador del logo.
                 HandwrittenWordmark()
                     .trim(from: 0, to: written)
-                    .stroke(Self.ink, style: StrokeStyle(lineWidth: 4.2, lineCap: .round, lineJoin: .round))
-                    .frame(width: 118, height: 96)
+                    .stroke(Self.ink, style: StrokeStyle(lineWidth: 3, lineCap: .round, lineJoin: .round))
+                    .frame(width: 77, height: 62)
             }
-            .frame(width: 200, height: 200)
+            .frame(width: 130, height: 130)
         }
         .task {
             if reduceMotion {
@@ -115,6 +115,52 @@ struct HandwrittenWordmark: Shape {
         let t = CGAffineTransform(translationX: rect.midX - box.midX * scale, y: rect.midY - box.midY * scale)
             .scaledBy(x: scale, y: scale)
         return p.applying(t)
+    }
+}
+
+/// ¿Ha terminado la animación de arranque? Las pantallas esperan a esto para su propia
+/// entrada (si no, la harían por detrás del logo y no se vería).
+@MainActor
+final class AppLaunch: ObservableObject {
+    static let shared = AppLaunch()
+    @Published var done = false
+}
+
+/// El logo quieto (círculo + «Bali Circle.»), a cualquier tamaño.
+struct BrandMark: View {
+    var size: CGFloat = 90
+    var body: some View {
+        ZStack {
+            HandCircle()
+                .stroke(LaunchSplash.ink, style: StrokeStyle(lineWidth: max(2, size * 0.03), lineCap: .round, lineJoin: .round))
+            HandwrittenWordmark()
+                .stroke(LaunchSplash.ink, style: StrokeStyle(lineWidth: max(1.6, size * 0.023), lineCap: .round, lineJoin: .round))
+                .frame(width: size * 0.59, height: size * 0.48)
+        }
+        .frame(width: size, height: size)
+    }
+}
+
+/// Mientras carga: el logo pequeño «respirando» (en vez de la ruedita del sistema).
+struct BrandLoader: View {
+    @State private var on = false
+    var body: some View {
+        BrandMark(size: 64)
+            .scaleEffect(on ? 1.05 : 0.95)
+            .opacity(on ? 1 : 0.55)
+            .animation(.easeInOut(duration: 0.9).repeatForever(autoreverses: true), value: on)
+            .onAppear { on = true }
+    }
+}
+
+/// Lo que se ve en el selector de apps (y al volver a ella): el logo pequeño en el
+/// centro sobre el lila, en vez de una captura de tus chats.
+struct AppSwitcherCover: View {
+    var body: some View {
+        ZStack {
+            LaunchSplash.paper.ignoresSafeArea()
+            BrandMark(size: 96)
+        }
     }
 }
 

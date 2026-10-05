@@ -8,6 +8,8 @@ struct GymSwipeIOSApp: App {
 
     @Environment(\.scenePhase) private var scenePhase
     @State private var showSplash = true
+    /// Tapa con el logo al salir de la app (selector de apps): iOS hace la captura en .inactive.
+    @State private var covered = false
 
     var body: some Scene {
         WindowGroup {
@@ -26,8 +28,16 @@ struct GymSwipeIOSApp: App {
             .opacity(showSplash ? 0 : 1)
             .scaleEffect(showSplash ? 0.97 : 1)
             .overlay {
+                if covered && !showSplash {
+                    AppSwitcherCover().transition(.opacity).zIndex(99)
+                }
+            }
+            .overlay {
                 if showSplash {
-                    LaunchSplash { withAnimation(.easeInOut(duration: 0.7)) { showSplash = false } }
+                    LaunchSplash {
+                        withAnimation(.easeInOut(duration: 0.7)) { showSplash = false }
+                        AppLaunch.shared.done = true
+                    }
                         .transition(.opacity.combined(with: .scale(scale: 1.08)))
                         .zIndex(100)
                 }
@@ -63,6 +73,8 @@ struct GymSwipeIOSApp: App {
                 store.loadConversations()
             }
             .onChange(of: scenePhase) { phase in
+                if phase == .active { withAnimation(.easeOut(duration: 0.25)) { covered = false } }
+                else { covered = true }
                 if phase == .active {
                     store.loadConversations()
                     if store.auth != nil { PresenceService.shared.start() }

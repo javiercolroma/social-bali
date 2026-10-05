@@ -12,6 +12,7 @@ import CoreLocation
 struct YourCircleView: View {
     @EnvironmentObject var store: AppStore
     @ObservedObject private var presence = PresenceService.shared
+    @ObservedObject private var launch = AppLaunch.shared
 
     @State private var people: [ProfileRow] = []
     @State private var area: String?
@@ -20,6 +21,8 @@ struct YourCircleView: View {
     @State private var loading = true
     @State private var failed = false
     @State private var openProfile: ProfileRow?
+    /// Entrada suave: cabecera en fundido y fotos que llegan una tras otra.
+    @State private var appeared = false
 
     var body: some View {
         Group {
@@ -28,7 +31,8 @@ struct YourCircleView: View {
             } else if locked {
                 ArrivalView(onRefresh: { await load() })
             } else if loading && people.isEmpty {
-                ProgressView().tint(Brand.ink).frame(maxWidth: .infinity, maxHeight: .infinity)
+                BrandLoader().frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .transition(.opacity)
             } else if failed && people.isEmpty {
                 message(icon: "wifi.exclamationmark", title: "Couldn't load your circle",
                         text: "Check your connection and try again.", action: ("Try again", { Task { await load() } }))
@@ -40,7 +44,11 @@ struct YourCircleView: View {
             }
         }
         .background(Brand.bg)
+        .animation(.easeInOut(duration: 0.35), value: loading && people.isEmpty)
         .task { await load() }
+        // Las fotos entran cuando hay gente Y ha terminado el logo de arranque.
+        .onChange(of: people.isEmpty) { _ in revealIfReady() }
+        .onChange(of: launch.done) { _ in revealIfReady() }
         .onReceive(NotificationCenter.default.publisher(for: UIApplication.willEnterForegroundNotification)) { _ in
             Task { await load() }
         }
@@ -61,9 +69,16 @@ struct YourCircleView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 18) {
                 header
+                    .opacity(appeared ? 1 : 0)
+                    .offset(y: appeared ? 0 : 8)
+                    .animation(.easeOut(duration: 0.5), value: appeared)
                 Masonry(spacing: 10, aspects: people.indices.map { Self.aspect(people[$0], at: $0) }) {
                     ForEach(Array(people.enumerated()), id: \.element.id) { i, row in
                         CircleCell(row: row, myArea: area) { FX.tap(); openProfile = row }
+                            .opacity(appeared ? 1 : 0)
+                            .offset(y: appeared ? 0 : 22)
+                            .scaleEffect(appeared ? 1 : 0.97)
+                            .animation(.spring(response: 0.55, dampingFraction: 0.85).delay(0.12 + Double(min(i, 10)) * 0.06), value: appeared)
                             .onAppear { markSeen(i + 1) }
                     }
                 }
@@ -103,8 +118,6 @@ struct YourCircleView: View {
         VStack(spacing: 8) {
             Text("You've met everyone in your circle today.")
                 .font(.display(19)).foregroundColor(Brand.ink).multilineTextAlignment(.center)
-            Text("New people will appear as your community changes around you.")
-                .font(.subheadline).foregroundColor(Brand.muted).multilineTextAlignment(.center)
             TimelineView(.periodic(from: .now, by: 60)) { ctx in
                 Text(String(format: L10n.t("New circle in %@"), Self.untilTomorrow(from: ctx.date)))
                     .font(.system(size: 11, weight: .bold)).tracking(1).foregroundColor(Brand.soft)
@@ -113,6 +126,11 @@ struct YourCircleView: View {
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 30).padding(.horizontal, 12)
+    }
+
+    private func revealIfReady() {
+        guard !appeared, !people.isEmpty, launch.done else { return }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) { appeared = true }
     }
 
     private func markSeen(_ n: Int) {
