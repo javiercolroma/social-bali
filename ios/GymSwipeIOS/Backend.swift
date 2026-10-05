@@ -521,6 +521,8 @@ struct ProfileRow: Codable {
     var first_time: Bool?
     /// Actividad de un momento compartido HOY (0034): «SURF TODAY».
     var activity_today: String?
+    /// Momento reciente (0036): 'unseen' (anillo de color) · 'seen' · nil.
+    var moment_ring: String?
     /// Solo en el perfil social (`club_profile`); nil si la cuenta es privada.
     var activity: ActivitySignals?
 

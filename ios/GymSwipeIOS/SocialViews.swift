@@ -72,7 +72,11 @@ struct MeProfileView: View {
                 Text(nameLine).font(.display(32)).foregroundColor(Brand.ink)
                 ClubIdentityCard(club: store.profile.club, onEdit: { editing = true })
                 if let me = Backend.shared.currentUserId?.uuidString {
-                    MomentsSection(userId: me, isMe: true)
+                    MomentsRow(userId: me, userName: store.account?.name ?? "", avatarURL: store.profile.media?.first?.url, isMe: true)
+                        .padding(.vertical, 4)
+                }
+                if (store.profile.media ?? []).count > 1 {
+                    Text("PHOTOS").font(.system(size: 11, weight: .bold)).tracking(1.4).foregroundColor(Brand.muted)
                 }
                 MediaGallery(items: Array((store.profile.media ?? []).dropFirst()))
 

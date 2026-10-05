@@ -69,10 +69,6 @@ struct ClubProfileView: View {
                     Text("“\(bio)”").font(.display(22, weight: .regular)).foregroundColor(Brand.ink)
                         .fixedSize(horizontal: false, vertical: true)
                 }
-                // Identidad viva: lo que ha hecho de verdad (Highlights + Recent).
-                MomentsSection(userId: personId)
-                // El resto de la galería, tipo Pinterest.
-                MediaGallery(items: Array((p.media ?? []).dropFirst()))
                 if !club.sportList.isEmpty {
                     section("INTO") {
                         WrapLayout(spacing: 6) {
@@ -85,6 +81,13 @@ struct ClubProfileView: View {
                         Text(club.intentList.map(\.label).joined(separator: " · "))
                             .font(.display(19)).foregroundColor(Brand.ink)
                     }
+                }
+                // Momentos: lo que está haciendo ahora (historias), separados de sus fotos.
+                MomentsRow(userId: personId, userName: p.name ?? "", avatarURL: p.avatar_url)
+                    .padding(.vertical, 4)
+                // Fotos del perfil: quién es (galería, no momentos).
+                if (p.media ?? []).count > 1 {
+                    section("PHOTOS") { MediaGallery(items: Array((p.media ?? []).dropFirst())) }
                 }
             }
             .padding(.horizontal, 20)

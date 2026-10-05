@@ -237,6 +237,13 @@ struct CircleCell: View {
                     }
                 }
                 .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+                // Momento reciente sin ver: el mismo anillo de las historias, alrededor de la tarjeta.
+                .padding(row.moment_ring == "unseen" ? 3 : 0)
+                .overlay {
+                    if row.moment_ring == "unseen" {
+                        RoundedRectangle(cornerRadius: 21, style: .continuous).strokeBorder(MomentRing.gradient, lineWidth: 2.5)
+                    }
+                }
                 .contentShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
         }
         .buttonStyle(.plain)
