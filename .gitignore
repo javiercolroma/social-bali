@@ -35,3 +35,7 @@ ios/ipa/
 ios/ent-app.plist
 ios/ent-ext.plist
 .claude/worktrees/
+
+# Fotos de demo (pesan; se suben con backend/demo/upload_demo.py)
+backend/demo/photos/*
+!backend/demo/photos/.gitkeep

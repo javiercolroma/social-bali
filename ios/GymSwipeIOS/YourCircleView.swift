@@ -72,7 +72,7 @@ struct YourCircleView: View {
                     .opacity(appeared ? 1 : 0)
                     .offset(y: appeared ? 0 : 8)
                     .animation(.easeOut(duration: 0.5), value: appeared)
-                Masonry(spacing: 10, aspects: people.indices.map { Self.aspect(people[$0], at: $0) }) {
+                Masonry(spacing: 12, aspects: people.indices.map { Self.aspect(people[$0], at: $0) }, extraHeight: 41) {
                     ForEach(Array(people.enumerated()), id: \.element.id) { i, row in
                         CircleCell(row: row, myArea: area) { FX.tap(); openProfile = row }
                             .opacity(appeared ? 1 : 0)
@@ -91,7 +91,7 @@ struct YourCircleView: View {
 
     /// Ritmo tipo Pinterest: alturas que alternan por posición (las fotos se recortan
     /// para llenar), así la rejilla nunca queda uniforme aunque todas sean 4:5.
-    static let rhythm: [CGFloat] = [0.72, 0.58, 0.8, 0.64, 0.86, 0.6, 0.75, 0.68]
+    static let rhythm: [CGFloat] = [0.8, 0.66, 0.76, 0.7, 0.8, 0.64, 0.74, 0.68]   // 4:5 o algo más vertical
 
     static func aspect(_ r: ProfileRow, at i: Int) -> CGFloat { rhythm[i % rhythm.count] }
 
@@ -204,47 +204,46 @@ struct CircleCell: View {
 
     var body: some View {
         Button(action: onOpen) {
-            Color.clear
-                .overlay(cover)
-                .overlay(LinearGradient(colors: [.clear, .black.opacity(0.55)], startPoint: .center, endPoint: .bottom))
-                .overlay(alignment: .bottomLeading) {
-                    VStack(alignment: .leading, spacing: 2) {
-                        HStack(spacing: 6) {
-                            // Activo ahora: punto verde a la izquierda del nombre.
-                            if row.online == true {
-                                Circle().fill(Brand.online).frame(width: 9, height: 9)
-                                    .overlay(Circle().stroke(Color.white.opacity(0.9), lineWidth: 1.5))
-                                    .accessibilityLabel(Text("Active now"))
-                            }
-                            Text(nameLine).font(.system(size: 16, weight: .semibold)).lineLimit(1).minimumScaleFactor(0.8)
-                        }
-                        if let sub = subline {
-                            Text(sub).font(.system(size: 12, weight: .medium)).opacity(0.85).lineLimit(1)
+            VStack(alignment: .leading, spacing: 7) {
+                // La foto manda: casi nada encima (como mucho una etiqueta discreta).
+                Color.clear
+                    .overlay(cover)
+                    .overlay(alignment: .topLeading) {
+                        if let b = badgeText {
+                            Text(b).font(.system(size: 9, weight: .semibold)).tracking(0.8)
+                                .foregroundColor(Brand.ink)
+                                .padding(.horizontal, 7).frame(height: 19)
+                                .background(Color.white.opacity(0.88))
+                                .clipShape(Capsule())
+                                .padding(8)
                         }
                     }
-                    .foregroundColor(.white)
-                    .shadow(color: .black.opacity(0.3), radius: 3)
-                    .padding(11)
-                }
-                .overlay(alignment: .topLeading) {
-                    if let b = badgeText {
-                        Text(b).font(.system(size: 9, weight: .bold)).tracking(0.8)
-                            .foregroundColor(Brand.ink)
-                            .padding(.horizontal, 8).frame(height: 20)
-                            .background(Color.white.opacity(0.85))
-                            .clipShape(Capsule())
-                            .padding(9)
+                    .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                    // Momento reciente sin ver: el anillo de las historias, alrededor de la foto.
+                    .padding(row.moment_ring == "unseen" ? 3 : 0)
+                    .overlay {
+                        if row.moment_ring == "unseen" {
+                            RoundedRectangle(cornerRadius: 19, style: .continuous).strokeBorder(MomentRing.gradient, lineWidth: 2)
+                        }
+                    }
+                // Nombre, edad y punto verde FUERA de la foto: marco editorial.
+                VStack(alignment: .leading, spacing: 1) {
+                    HStack(spacing: 5) {
+                        if row.online == true {
+                            Circle().fill(Brand.online).frame(width: 7, height: 7)
+                                .accessibilityLabel(Text("Active now"))
+                        }
+                        Text(nameLine).font(.system(size: 15, weight: .semibold)).foregroundColor(Brand.ink)
+                            .lineLimit(1).minimumScaleFactor(0.85)
+                    }
+                    if let sub = subline {
+                        Text(sub).font(.system(size: 12)).foregroundColor(Brand.muted).lineLimit(1)
                     }
                 }
-                .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
-                // Momento reciente sin ver: el mismo anillo de las historias, alrededor de la tarjeta.
-                .padding(row.moment_ring == "unseen" ? 3 : 0)
-                .overlay {
-                    if row.moment_ring == "unseen" {
-                        RoundedRectangle(cornerRadius: 21, style: .continuous).strokeBorder(MomentRing.gradient, lineWidth: 2.5)
-                    }
-                }
-                .contentShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+                .padding(.horizontal, 2)
+                .frame(height: 34, alignment: .topLeading)
+            }
+            .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
     }

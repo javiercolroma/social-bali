@@ -113,12 +113,13 @@ extension Backend {
 
 // MARK: - Anillo
 
-/// El anillo de historias de Bali Circle: dorado-bronce cálido, nada chillón.
+/// El anillo de historias de Bali Circle: terracota y salvia, discreto.
 struct MomentRing: View {
     var active: Bool
     var lineWidth: CGFloat = 2.5
-    static let gradient = AngularGradient(colors: [Color(hex: "e2c38f"), Color(hex: "b9864f"), Color(hex: "d9a46b"),
-                                                   Color(hex: "f0d9ae"), Color(hex: "e2c38f")], center: .center)
+    /// Terracota suave y verde salvia: orgánico, de Bali, nada que ver con Instagram.
+    static let gradient = AngularGradient(colors: [Color(hex: "c98a6b"), Color(hex: "d9a184"), Color(hex: "9db08f"),
+                                                   Color(hex: "8aa07e"), Color(hex: "c98a6b")], center: .center)
     var body: some View {
         if active { Circle().stroke(Self.gradient, lineWidth: lineWidth) }
         else { Circle().stroke(Color.black.opacity(0.14), lineWidth: 1.2) }
@@ -220,11 +221,19 @@ struct MomentViewer: View {
         ZStack {
             Color.black.ignoresSafeArea()
             if let m = current {
+                // A sangre, rellenando (recorte moderado, sin deformar).
                 MediaView(item: m.media)
                     .id(m.id)
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
-                    .ignoresSafeArea(edges: .bottom)
+                    .ignoresSafeArea()
+                // Degradado muy ligero arriba (barras y nombre) y suave abajo (texto).
+                VStack(spacing: 0) {
+                    LinearGradient(colors: [.black.opacity(0.28), .clear], startPoint: .top, endPoint: .bottom).frame(height: 150)
+                    Spacer()
+                    LinearGradient(colors: [.clear, .black.opacity(0.5)], startPoint: .top, endPoint: .bottom).frame(height: 260)
+                }
+                .ignoresSafeArea()
+                .allowsHitTesting(false)
 
                 // Toques: izquierda = anterior, derecha = siguiente; mantener = pausa.
                 HStack(spacing: 0) {
@@ -312,28 +321,25 @@ struct MomentViewer: View {
             }
         }
         .padding(.horizontal, 12).padding(.top, 8)
-        .shadow(color: .black.opacity(0.35), radius: 4)
+        .shadow(color: .black.opacity(0.18), radius: 2)
     }
 
-    /// Qué hizo, dónde y cuándo — discreto, sin tapar la imagen.
+    /// Qué hizo, dónde y cuándo — texto blanco discreto, sin tarjetas encima de la foto.
     private func infoOverlay(_ m: Moment) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack(spacing: 8) {
-                Text("\(m.activityInfo.emoji) \(m.activityInfo.label)")
-                    .font(.system(size: 14, weight: .semibold)).foregroundColor(Brand.ink)
-                    .padding(.horizontal, 11).frame(height: 30).background(Color.white.opacity(0.92)).clipShape(Capsule())
-                if let a = m.areaLabel {
-                    Label(a, systemImage: "mappin").font(.system(size: 14, weight: .medium)).foregroundColor(.white)
-                }
+        VStack(alignment: .leading, spacing: 4) {
+            Text("\(m.activityInfo.emoji)  \(m.activityInfo.label)").font(.system(size: 17, weight: .semibold))
+            if let a = m.areaLabel {
+                Text(a).font(.system(size: 14, weight: .medium)).opacity(0.85)
             }
             if let n = m.note, !n.isEmpty {
-                Text(n).font(.system(size: 18, weight: .medium)).foregroundColor(.white)
+                Text(n).font(.system(size: 16)).padding(.top, 4)
                     .fixedSize(horizontal: false, vertical: true)
             }
         }
+        .foregroundColor(.white)
+        .shadow(color: .black.opacity(0.2), radius: 1.5)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.horizontal, 18).padding(.top, 40).padding(.bottom, 26)
-        .background(LinearGradient(colors: [.clear, .black.opacity(0.55)], startPoint: .top, endPoint: .bottom).ignoresSafeArea(edges: .bottom))
+        .padding(.horizontal, 20).padding(.bottom, 28)
     }
 
     private func go(_ d: Int) {
@@ -444,7 +450,9 @@ struct CreateMomentView: View {
     private var mediaPicker: some View {
         PhotosPicker(selection: $pick, matching: .any(of: [.images, .videos, .livePhotos]), photoLibrary: .shared()) {
             Color.clear
-                .frame(maxWidth: .infinity).frame(height: 380)
+                .aspectRatio(9 / 16, contentMode: .fit)
+                .frame(maxWidth: 300)
+                .frame(maxWidth: .infinity)
                 .overlay {
                     if let media { MediaView(item: media) }
                     else {

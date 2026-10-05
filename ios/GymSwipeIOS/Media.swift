@@ -96,6 +96,8 @@ struct Masonry: Layout {
     var spacing: CGFloat = 8
     /// Ancho/alto de cada subvista, en el mismo orden.
     var aspects: [CGFloat]
+    /// Alto fijo extra por pieza (p. ej. el nombre bajo la foto en el Circle).
+    var extraHeight: CGFloat = 0
 
     func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
         let width = proposal.width ?? 360
@@ -117,7 +119,7 @@ struct Masonry: Layout {
         var out: [CGRect] = []
         for i in 0..<count {
             let a = i < aspects.count ? aspects[i] : 4 / 5
-            let h = colW / max(a, 0.1)
+            let h = colW / max(a, 0.1) + extraHeight
             let c = heights.firstIndex(of: heights.min() ?? 0) ?? 0
             out.append(CGRect(x: CGFloat(c) * (colW + spacing), y: heights[c], width: colW, height: h))
             heights[c] += h + spacing

@@ -1,0 +1,942 @@
+[
+ {
+  "handle": "lena.waves",
+  "name": "Lena",
+  "area": "Pererenan",
+  "persona": "a 37-year-old German woman, sun-kissed skin, light freckles, wavy dirty-blonde shoulder-length hair, warm easy smile",
+  "photos": [
+   {
+    "file": "portrait.jpg",
+    "ratio": "4:5",
+    "prompt": "Editorial lifestyle portrait of a 37-year-old German woman, sun-kissed skin, light freckles, wavy dirty-blonde shoulder-length hair, warm easy smile, living in Bali, Pererenan coastline or tropical vegetation behind, late afternoon light, relaxed expression, face clearly visible, close framing, shallow depth of field, premium travel editorial photography, natural light, warm muted colors, moderate contrast, soft shadows, realistic skin texture, subtle analog film grain, low saturation, no HDR, no studio lighting, candid, slightly off-center composition, not stock, not an ad"
+   },
+   {
+    "file": "photo2.jpg",
+    "ratio": "4:5",
+    "prompt": "Candid lifestyle photo of the same person (a 37-year-old German woman, sun-kissed skin, light freckles, wavy dirty-blonde shoulder-length hair, warm easy smile) walking out of the ocean carrying a surfboard, Uluwatu cliffs, golden hour, premium travel editorial photography, natural light, warm muted colors, moderate contrast, soft shadows, realistic skin texture, subtle analog film grain, low saturation, no HDR, no studio lighting, candid, slightly off-center composition, not stock, not an ad"
+   },
+   {
+    "file": "photo3.jpg",
+    "ratio": "4:5",
+    "prompt": "Candid lifestyle photo of the same person (a 37-year-old German woman, sun-kissed skin, light freckles, wavy dirty-blonde shoulder-length hair, warm easy smile) on an outdoor padel court in Berawa, racket in hand, laughing between points, late afternoon, premium travel editorial photography, natural light, warm muted colors, moderate contrast, soft shadows, realistic skin texture, subtle analog film grain, low saturation, no HDR, no studio lighting, candid, slightly off-center composition, not stock, not an ad"
+   },
+   {
+    "file": "photo4.jpg",
+    "ratio": "4:5",
+    "prompt": "Relaxed candid photo of the same person (a 37-year-old German woman, sun-kissed skin, light freckles, wavy dirty-blonde shoulder-length hair, warm easy smile) in a stylish open-air café in Pererenan, iced coffee, natural tropical light, warm neutral tones, premium travel editorial photography, natural light, warm muted colors, moderate contrast, soft shadows, realistic skin texture, subtle analog film grain, low saturation, no HDR, no studio lighting, candid, slightly off-center composition, not stock, not an ad"
+   },
+   {
+    "file": "photo5.jpg",
+    "ratio": "4:5",
+    "prompt": "Spontaneous photo of the same person (a 37-year-old German woman, sun-kissed skin, light freckles, wavy dirty-blonde shoulder-length hair, warm easy smile) walking on the beach or riding a scooter through Pererenan, friends out of focus, premium travel editorial photography, natural light, warm muted colors, moderate contrast, soft shadows, realistic skin texture, subtle analog film grain, low saturation, no HDR, no studio lighting, candid, slightly off-center composition, not stock, not an ad"
+   }
+  ],
+  "moments": [
+   {
+    "file": "moment1.jpg",
+    "ratio": "9:16",
+    "activity": "surf",
+    "prompt": "Vertical 9:16 phone photo, a single surfboard leaning on a rock at Pererenan beach at sunrise, no person, in Pererenan, Bali, spontaneous and imperfect, premium travel editorial photography, natural light, warm muted colors, moderate contrast, soft shadows, realistic skin texture, subtle analog film grain, low saturation, no HDR, no studio lighting, candid, slightly off-center composition, not stock, not an ad"
+   },
+   {
+    "file": "moment2.jpg",
+    "ratio": "9:16",
+    "activity": "yoga",
+    "prompt": "Vertical 9:16 phone photo, a yoga mat rolled out on a bamboo deck facing rice fields, no person, in Pererenan, Bali, spontaneous and imperfect, premium travel editorial photography, natural light, warm muted colors, moderate contrast, soft shadows, realistic skin texture, subtle analog film grain, low saturation, no HDR, no studio lighting, candid, slightly off-center composition, not stock, not an ad"
+   }
+  ]
+ },
+ {
+  "handle": "mateo.bjj",
+  "name": "Mateo",
+  "area": "Berawa",
+  "persona": "a 36-year-old Argentinian man, olive skin, short dark curly hair, trimmed beard, athletic but not bulky",
+  "photos": [
+   {
+    "file": "portrait.jpg",
+    "ratio": "4:5",
+    "prompt": "Editorial lifestyle portrait of a 36-year-old Argentinian man, olive skin, short dark curly hair, trimmed beard, athletic but not bulky, living in Bali, Berawa coastline or tropical vegetation behind, late afternoon light, relaxed expression, face clearly visible, close framing, shallow depth of field, premium travel editorial photography, natural light, warm muted colors, moderate contrast, soft shadows, realistic skin texture, subtle analog film grain, low saturation, no HDR, no studio lighting, candid, slightly off-center composition, not stock, not an ad"
+   },
+   {
+    "file": "photo2.jpg",
+    "ratio": "4:5",
+    "prompt": "Candid lifestyle photo of the same person (a 36-year-old Argentinian man, olive skin, short dark curly hair, trimmed beard, athletic but not bulky) after training in an open-air Berawa gym, gi on, sweaty and smiling, premium travel editorial photography, natural light, warm muted colors, moderate contrast, soft shadows, realistic skin texture, subtle analog film grain, low saturation, no HDR, no studio lighting, candid, slightly off-center composition, not stock, not an ad"
+   },
+   {
+    "file": "photo3.jpg",
+    "ratio": "4:5",
+    "prompt": "Candid lifestyle photo of the same person (a 36-year-old Argentinian man, olive skin, short dark curly hair, trimmed beard, athletic but not bulky) training in a modern open-air Bali gym with tropical architecture, athletic not bodybuilding, premium travel editorial photography, natural light, warm muted colors, moderate contrast, soft shadows, realistic skin texture, subtle analog film grain, low saturation, no HDR, no studio lighting, candid, slightly off-center composition, not stock, not an ad"
+   },
+   {
+    "file": "photo4.jpg",
+    "ratio": "4:5",
+    "prompt": "Relaxed candid photo of the same person (a 36-year-old Argentinian man, olive skin, short dark curly hair, trimmed beard, athletic but not bulky) in a stylish open-air café in Berawa, iced coffee, natural tropical light, warm neutral tones, premium travel editorial photography, natural light, warm muted colors, moderate contrast, soft shadows, realistic skin texture, subtle analog film grain, low saturation, no HDR, no studio lighting, candid, slightly off-center composition, not stock, not an ad"
+   },
+   {
+    "file": "photo5.jpg",
+    "ratio": "4:5",
+    "prompt": "Spontaneous photo of the same person (a 36-year-old Argentinian man, olive skin, short dark curly hair, trimmed beard, athletic but not bulky) walking on the beach or riding a scooter through Berawa, friends out of focus, premium travel editorial photography, natural light, warm muted colors, moderate contrast, soft shadows, realistic skin texture, subtle analog film grain, low saturation, no HDR, no studio lighting, candid, slightly off-center composition, not stock, not an ad"
+   }
+  ],
+  "moments": [
+   {
+    "file": "moment1.jpg",
+    "ratio": "9:16",
+    "activity": "bjj",
+    "prompt": "Vertical 9:16 phone photo, a folded jiu-jitsu gi and belt on a gym bench, no person, in Berawa, Bali, spontaneous and imperfect, premium travel editorial photography, natural light, warm muted colors, moderate contrast, soft shadows, realistic skin texture, subtle analog film grain, low saturation, no HDR, no studio lighting, candid, slightly off-center composition, not stock, not an ad"
+   },
+   {
+    "file": "moment2.jpg",
+    "ratio": "9:16",
+    "activity": "surf",
+    "prompt": "Vertical 9:16 phone photo, a single surfboard leaning on a rock at Berawa beach at sunrise, no person, in Berawa, Bali, spontaneous and imperfect, premium travel editorial photography, natural light, warm muted colors, moderate contrast, soft shadows, realistic skin texture, subtle analog film grain, low saturation, no HDR, no studio lighting, candid, slightly off-center composition, not stock, not an ad"
+   }
+  ]
+ },
+ {
+  "handle": "chloe.flow",
+  "name": "Chloé",
+  "area": "Canggu",
+  "persona": "a 35-year-old French woman, light tan, long dark-brown hair often in a low bun, delicate features",
+  "photos": [
+   {
+    "file": "portrait.jpg",
+    "ratio": "4:5",
+    "prompt": "Editorial lifestyle portrait of a 35-year-old French woman, light tan, long dark-brown hair often in a low bun, delicate features, living in Bali, Canggu coastline or tropical vegetation behind, late afternoon light, relaxed expression, face clearly visible, close framing, shallow depth of field, premium travel editorial photography, natural light, warm muted colors, moderate contrast, soft shadows, realistic skin texture, subtle analog film grain, low saturation, no HDR, no studio lighting, candid, slightly off-center composition, not stock, not an ad"
+   },
+   {
+    "file": "photo2.jpg",
+    "ratio": "4:5",
+    "prompt": "Candid lifestyle photo of the same person (a 35-year-old French woman, light tan, long dark-brown hair often in a low bun, delicate features) doing a calm yoga pose on a wooden shala deck surrounded by jungle, morning light, premium travel editorial photography, natural light, warm muted colors, moderate contrast, soft shadows, realistic skin texture, subtle analog film grain, low saturation, no HDR, no studio lighting, candid, slightly off-center composition, not stock, not an ad"
+   },
+   {
+    "file": "photo3.jpg",
+    "ratio": "4:5",
+    "prompt": "Candid lifestyle photo of the same person (a 35-year-old French woman, light tan, long dark-brown hair often in a low bun, delicate features) on a reformer in a light, airy Canggu pilates studio, natural daylight, premium travel editorial photography, natural light, warm muted colors, moderate contrast, soft shadows, realistic skin texture, subtle analog film grain, low saturation, no HDR, no studio lighting, candid, slightly off-center composition, not stock, not an ad"
+   },
+   {
+    "file": "photo4.jpg",
+    "ratio": "4:5",
+    "prompt": "Relaxed candid photo of the same person (a 35-year-old French woman, light tan, long dark-brown hair often in a low bun, delicate features) in a stylish open-air café in Canggu, iced coffee, natural tropical light, warm neutral tones, premium travel editorial photography, natural light, warm muted colors, moderate contrast, soft shadows, realistic skin texture, subtle analog film grain, low saturation, no HDR, no studio lighting, candid, slightly off-center composition, not stock, not an ad"
+   },
+   {
+    "file": "photo5.jpg",
+    "ratio": "4:5",
+    "prompt": "Spontaneous photo of the same person (a 35-year-old French woman, light tan, long dark-brown hair often in a low bun, delicate features) walking on the beach or riding a scooter through Canggu, friends out of focus, premium travel editorial photography, natural light, warm muted colors, moderate contrast, soft shadows, realistic skin texture, subtle analog film grain, low saturation, no HDR, no studio lighting, candid, slightly off-center composition, not stock, not an ad"
+   }
+  ],
+  "moments": [
+   {
+    "file": "moment1.jpg",
+    "ratio": "9:16",
+    "activity": "yoga",
+    "prompt": "Vertical 9:16 phone photo, a yoga mat rolled out on a bamboo deck facing rice fields, no person, in Canggu, Bali, spontaneous and imperfect, premium travel editorial photography, natural light, warm muted colors, moderate contrast, soft shadows, realistic skin texture, subtle analog film grain, low saturation, no HDR, no studio lighting, candid, slightly off-center composition, not stock, not an ad"
+   },
+   {
+    "file": "moment2.jpg",
+    "ratio": "9:16",
+    "activity": "surf",
+    "prompt": "Vertical 9:16 phone photo, a single surfboard leaning on a rock at Canggu beach at sunrise, no person, in Canggu, Bali, spontaneous and imperfect, premium travel editorial photography, natural light, warm muted colors, moderate contrast, soft shadows, realistic skin texture, subtle analog film grain, low saturation, no HDR, no studio lighting, candid, slightly off-center composition, not stock, not an ad"
+   }
+  ]
+ },
+ {
+  "handle": "diego.padel",
+  "name": "Diego",
+  "area": "Berawa",
+  "persona": "a 32-year-old Spanish man, tanned, short dark hair, light stubble, friendly grin, lean build",
+  "photos": [
+   {
+    "file": "portrait.jpg",
+    "ratio": "4:5",
+    "prompt": "Editorial lifestyle portrait of a 32-year-old Spanish man, tanned, short dark hair, light stubble, friendly grin, lean build, living in Bali, Berawa coastline or tropical vegetation behind, late afternoon light, relaxed expression, face clearly visible, close framing, shallow depth of field, premium travel editorial photography, natural light, warm muted colors, moderate contrast, soft shadows, realistic skin texture, subtle analog film grain, low saturation, no HDR, no studio lighting, candid, slightly off-center composition, not stock, not an ad"
+   },
+   {
+    "file": "photo2.jpg",
+    "ratio": "4:5",
+    "prompt": "Candid lifestyle photo of the same person (a 32-year-old Spanish man, tanned, short dark hair, light stubble, friendly grin, lean build) on an outdoor padel court in Berawa, racket in hand, laughing between points, late afternoon, premium travel editorial photography, natural light, warm muted colors, moderate contrast, soft shadows, realistic skin texture, subtle analog film grain, low saturation, no HDR, no studio lighting, candid, slightly off-center composition, not stock, not an ad"
+   },
+   {
+    "file": "photo3.jpg",
+    "ratio": "4:5",
+    "prompt": "Candid lifestyle photo of the same person (a 32-year-old Spanish man, tanned, short dark hair, light stubble, friendly grin, lean build) on an outdoor tennis court, racket over shoulder, afternoon light, premium travel editorial photography, natural light, warm muted colors, moderate contrast, soft shadows, realistic skin texture, subtle analog film grain, low saturation, no HDR, no studio lighting, candid, slightly off-center composition, not stock, not an ad"
+   },
+   {
+    "file": "photo4.jpg",
+    "ratio": "4:5",
+    "prompt": "Relaxed candid photo of the same person (a 32-year-old Spanish man, tanned, short dark hair, light stubble, friendly grin, lean build) in a stylish open-air café in Berawa, iced coffee, natural tropical light, warm neutral tones, premium travel editorial photography, natural light, warm muted colors, moderate contrast, soft shadows, realistic skin texture, subtle analog film grain, low saturation, no HDR, no studio lighting, candid, slightly off-center composition, not stock, not an ad"
+   },
+   {
+    "file": "photo5.jpg",
+    "ratio": "4:5",
+    "prompt": "Spontaneous photo of the same person (a 32-year-old Spanish man, tanned, short dark hair, light stubble, friendly grin, lean build) walking on the beach or riding a scooter through Berawa, friends out of focus, premium travel editorial photography, natural light, warm muted colors, moderate contrast, soft shadows, realistic skin texture, subtle analog film grain, low saturation, no HDR, no studio lighting, candid, slightly off-center composition, not stock, not an ad"
+   }
+  ],
+  "moments": [
+   {
+    "file": "moment1.jpg",
+    "ratio": "9:16",
+    "activity": "padel",
+    "prompt": "Vertical 9:16 phone photo, padel racket and balls on a court bench, warm evening light, no person, in Berawa, Bali, spontaneous and imperfect, premium travel editorial photography, natural light, warm muted colors, moderate contrast, soft shadows, realistic skin texture, subtle analog film grain, low saturation, no HDR, no studio lighting, candid, slightly off-center composition, not stock, not an ad"
+   },
+   {
+    "file": "moment2.jpg",
+    "ratio": "9:16",
+    "activity": "gym",
+    "prompt": "Vertical 9:16 phone photo, dumbbells on a wooden floor in an open-air gym with palm leaves, no person, in Berawa, Bali, spontaneous and imperfect, premium travel editorial photography, natural light, warm muted colors, moderate contrast, soft shadows, realistic skin texture, subtle analog film grain, low saturation, no HDR, no studio lighting, candid, slightly off-center composition, not stock, not an ad"
+   }
+  ]
+ },
+ {
+  "handle": "emma.sea",
+  "name": "Emma",
+  "area": "Bingin",
+  "persona": "a 30-year-old Swedish woman, fair skin with sun, long straight blonde hair, blue eyes, no makeup",
+  "photos": [
+   {
+    "file": "portrait.jpg",
+    "ratio": "4:5",
+    "prompt": "Editorial lifestyle portrait of a 30-year-old Swedish woman, fair skin with sun, long straight blonde hair, blue eyes, no makeup, living in Bali, Bingin coastline or tropical vegetation behind, late afternoon light, relaxed expression, face clearly visible, close framing, shallow depth of field, premium travel editorial photography, natural light, warm muted colors, moderate contrast, soft shadows, realistic skin texture, subtle analog film grain, low saturation, no HDR, no studio lighting, candid, slightly off-center composition, not stock, not an ad"
+   },
+   {
+    "file": "photo2.jpg",
+    "ratio": "4:5",
+    "prompt": "Candid lifestyle photo of the same person (a 30-year-old Swedish woman, fair skin with sun, long straight blonde hair, blue eyes, no makeup) walking out of the ocean carrying a surfboard, Uluwatu cliffs, golden hour, premium travel editorial photography, natural light, warm muted colors, moderate contrast, soft shadows, realistic skin texture, subtle analog film grain, low saturation, no HDR, no studio lighting, candid, slightly off-center composition, not stock, not an ad"
+   },
+   {
+    "file": "photo3.jpg",
+    "ratio": "4:5",
+    "prompt": "Candid lifestyle photo of the same person (a 30-year-old Swedish woman, fair skin with sun, long straight blonde hair, blue eyes, no makeup) on a boat with a freediving mask pushed up on the forehead, ocean behind, premium travel editorial photography, natural light, warm muted colors, moderate contrast, soft shadows, realistic skin texture, subtle analog film grain, low saturation, no HDR, no studio lighting, candid, slightly off-center composition, not stock, not an ad"
+   },
+   {
+    "file": "photo4.jpg",
+    "ratio": "4:5",
+    "prompt": "Relaxed candid photo of the same person (a 30-year-old Swedish woman, fair skin with sun, long straight blonde hair, blue eyes, no makeup) in a stylish open-air café in Bingin, iced coffee, natural tropical light, warm neutral tones, premium travel editorial photography, natural light, warm muted colors, moderate contrast, soft shadows, realistic skin texture, subtle analog film grain, low saturation, no HDR, no studio lighting, candid, slightly off-center composition, not stock, not an ad"
+   },
+   {
+    "file": "photo5.jpg",
+    "ratio": "4:5",
+    "prompt": "Spontaneous photo of the same person (a 30-year-old Swedish woman, fair skin with sun, long straight blonde hair, blue eyes, no makeup) walking on the beach or riding a scooter through Bingin, friends out of focus, premium travel editorial photography, natural light, warm muted colors, moderate contrast, soft shadows, realistic skin texture, subtle analog film grain, low saturation, no HDR, no studio lighting, candid, slightly off-center composition, not stock, not an ad"
+   }
+  ],
+  "moments": [
+   {
+    "file": "moment1.jpg",
+    "ratio": "9:16",
+    "activity": "surf",
+    "prompt": "Vertical 9:16 phone photo, a single surfboard leaning on a rock at Bingin beach at sunrise, no person, in Bingin, Bali, spontaneous and imperfect, premium travel editorial photography, natural light, warm muted colors, moderate contrast, soft shadows, realistic skin texture, subtle analog film grain, low saturation, no HDR, no studio lighting, candid, slightly off-center composition, not stock, not an ad"
+   },
+   {
+    "file": "moment2.jpg",
+    "ratio": "9:16",
+    "activity": "swimming",
+    "prompt": "Vertical 9:16 phone photo, calm sea surface with soft sunlight, no person, in Bingin, Bali, spontaneous and imperfect, premium travel editorial photography, natural light, warm muted colors, moderate contrast, soft shadows, realistic skin texture, subtle analog film grain, low saturation, no HDR, no studio lighting, candid, slightly off-center composition, not stock, not an ad"
+   }
+  ]
+ },
+ {
+  "handle": "bella.hybrid",
+  "name": "Isabella",
+  "area": "Pererenan",
+  "persona": "a 31-year-old Italian woman, olive skin, dark hair in a high ponytail, fit and strong, confident look",
+  "photos": [
+   {
+    "file": "portrait.jpg",
+    "ratio": "4:5",
+    "prompt": "Editorial lifestyle portrait of a 31-year-old Italian woman, olive skin, dark hair in a high ponytail, fit and strong, confident look, living in Bali, Pererenan coastline or tropical vegetation behind, late afternoon light, relaxed expression, face clearly visible, close framing, shallow depth of field, premium travel editorial photography, natural light, warm muted colors, moderate contrast, soft shadows, realistic skin texture, subtle analog film grain, low saturation, no HDR, no studio lighting, candid, slightly off-center composition, not stock, not an ad"
+   },
+   {
+    "file": "photo2.jpg",
+    "ratio": "4:5",
+    "prompt": "Candid lifestyle photo of the same person (a 31-year-old Italian woman, olive skin, dark hair in a high ponytail, fit and strong, confident look) mid-workout with a kettlebell in an open-air box gym, determined smile, premium travel editorial photography, natural light, warm muted colors, moderate contrast, soft shadows, realistic skin texture, subtle analog film grain, low saturation, no HDR, no studio lighting, candid, slightly off-center composition, not stock, not an ad"
+   },
+   {
+    "file": "photo3.jpg",
+    "ratio": "4:5",
+    "prompt": "Candid lifestyle photo of the same person (a 31-year-old Italian woman, olive skin, dark hair in a high ponytail, fit and strong, confident look) running along the beach at sunrise in Canggu, relaxed stride, premium travel editorial photography, natural light, warm muted colors, moderate contrast, soft shadows, realistic skin texture, subtle analog film grain, low saturation, no HDR, no studio lighting, candid, slightly off-center composition, not stock, not an ad"
+   },
+   {
+    "file": "photo4.jpg",
+    "ratio": "4:5",
+    "prompt": "Relaxed candid photo of the same person (a 31-year-old Italian woman, olive skin, dark hair in a high ponytail, fit and strong, confident look) in a stylish open-air café in Pererenan, iced coffee, natural tropical light, warm neutral tones, premium travel editorial photography, natural light, warm muted colors, moderate contrast, soft shadows, realistic skin texture, subtle analog film grain, low saturation, no HDR, no studio lighting, candid, slightly off-center composition, not stock, not an ad"
+   },
+   {
+    "file": "photo5.jpg",
+    "ratio": "4:5",
+    "prompt": "Spontaneous photo of the same person (a 31-year-old Italian woman, olive skin, dark hair in a high ponytail, fit and strong, confident look) walking on the beach or riding a scooter through Pererenan, friends out of focus, premium travel editorial photography, natural light, warm muted colors, moderate contrast, soft shadows, realistic skin texture, subtle analog film grain, low saturation, no HDR, no studio lighting, candid, slightly off-center composition, not stock, not an ad"
+   }
+  ],
+  "moments": [
+   {
+    "file": "moment1.jpg",
+    "ratio": "9:16",
+    "activity": "crossfit",
+    "prompt": "Vertical 9:16 phone photo, a kettlebell and chalk on a gym floor, no person, in Pererenan, Bali, spontaneous and imperfect, premium travel editorial photography, natural light, warm muted colors, moderate contrast, soft shadows, realistic skin texture, subtle analog film grain, low saturation, no HDR, no studio lighting, candid, slightly off-center composition, not stock, not an ad"
+   },
+   {
+    "file": "moment2.jpg",
+    "ratio": "9:16",
+    "activity": "gym",
+    "prompt": "Vertical 9:16 phone photo, dumbbells on a wooden floor in an open-air gym with palm leaves, no person, in Pererenan, Bali, spontaneous and imperfect, premium travel editorial photography, natural light, warm muted colors, moderate contrast, soft shadows, realistic skin texture, subtle analog film grain, low saturation, no HDR, no studio lighting, candid, slightly off-center composition, not stock, not an ad"
+   }
+  ]
+ },
+ {
+  "handle": "jackruns",
+  "name": "Jack",
+  "area": "Canggu",
+  "persona": "a 34-year-old Australian man, sandy-brown hair, light stubble, runner's lean build, sunglasses on his head",
+  "photos": [
+   {
+    "file": "portrait.jpg",
+    "ratio": "4:5",
+    "prompt": "Editorial lifestyle portrait of a 34-year-old Australian man, sandy-brown hair, light stubble, runner's lean build, sunglasses on his head, living in Bali, Canggu coastline or tropical vegetation behind, late afternoon light, relaxed expression, face clearly visible, close framing, shallow depth of field, premium travel editorial photography, natural light, warm muted colors, moderate contrast, soft shadows, realistic skin texture, subtle analog film grain, low saturation, no HDR, no studio lighting, candid, slightly off-center composition, not stock, not an ad"
+   },
+   {
+    "file": "photo2.jpg",
+    "ratio": "4:5",
+    "prompt": "Candid lifestyle photo of the same person (a 34-year-old Australian man, sandy-brown hair, light stubble, runner's lean build, sunglasses on his head) running along the beach at sunrise in Canggu, relaxed stride, premium travel editorial photography, natural light, warm muted colors, moderate contrast, soft shadows, realistic skin texture, subtle analog film grain, low saturation, no HDR, no studio lighting, candid, slightly off-center composition, not stock, not an ad"
+   },
+   {
+    "file": "photo3.jpg",
+    "ratio": "4:5",
+    "prompt": "Candid lifestyle photo of the same person (a 34-year-old Australian man, sandy-brown hair, light stubble, runner's lean build, sunglasses on his head) training in a modern open-air Bali gym with tropical architecture, athletic not bodybuilding, premium travel editorial photography, natural light, warm muted colors, moderate contrast, soft shadows, realistic skin texture, subtle analog film grain, low saturation, no HDR, no studio lighting, candid, slightly off-center composition, not stock, not an ad"
+   },
+   {
+    "file": "photo4.jpg",
+    "ratio": "4:5",
+    "prompt": "Relaxed candid photo of the same person (a 34-year-old Australian man, sandy-brown hair, light stubble, runner's lean build, sunglasses on his head) in a stylish open-air café in Canggu, iced coffee, natural tropical light, warm neutral tones, premium travel editorial photography, natural light, warm muted colors, moderate contrast, soft shadows, realistic skin texture, subtle analog film grain, low saturation, no HDR, no studio lighting, candid, slightly off-center composition, not stock, not an ad"
+   },
+   {
+    "file": "photo5.jpg",
+    "ratio": "4:5",
+    "prompt": "Spontaneous photo of the same person (a 34-year-old Australian man, sandy-brown hair, light stubble, runner's lean build, sunglasses on his head) walking on the beach or riding a scooter through Canggu, friends out of focus, premium travel editorial photography, natural light, warm muted colors, moderate contrast, soft shadows, realistic skin texture, subtle analog film grain, low saturation, no HDR, no studio lighting, candid, slightly off-center composition, not stock, not an ad"
+   }
+  ],
+  "moments": [
+   {
+    "file": "moment1.jpg",
+    "ratio": "9:16",
+    "activity": "running",
+    "prompt": "Vertical 9:16 phone photo, running shoes on sand at sunrise, no person, in Canggu, Bali, spontaneous and imperfect, premium travel editorial photography, natural light, warm muted colors, moderate contrast, soft shadows, realistic skin texture, subtle analog film grain, low saturation, no HDR, no studio lighting, candid, slightly off-center composition, not stock, not an ad"
+   },
+   {
+    "file": "moment2.jpg",
+    "ratio": "9:16",
+    "activity": "cycling",
+    "prompt": "Vertical 9:16 phone photo, a road bike resting against a wall on a mountain road, no person, in Canggu, Bali, spontaneous and imperfect, premium travel editorial photography, natural light, warm muted colors, moderate contrast, soft shadows, realistic skin texture, subtle analog film grain, low saturation, no HDR, no studio lighting, candid, slightly off-center composition, not stock, not an ad"
+   }
+  ]
+ },
+ {
+  "handle": "kai.skate",
+  "name": "Kai",
+  "area": "Canggu",
+  "persona": "a 27-year-old American man, mixed Asian-American heritage, messy black hair, relaxed skater style",
+  "photos": [
+   {
+    "file": "portrait.jpg",
+    "ratio": "4:5",
+    "prompt": "Editorial lifestyle portrait of a 27-year-old American man, mixed Asian-American heritage, messy black hair, relaxed skater style, living in Bali, Canggu coastline or tropical vegetation behind, late afternoon light, relaxed expression, face clearly visible, close framing, shallow depth of field, premium travel editorial photography, natural light, warm muted colors, moderate contrast, soft shadows, realistic skin texture, subtle analog film grain, low saturation, no HDR, no studio lighting, candid, slightly off-center composition, not stock, not an ad"
+   },
+   {
+    "file": "photo2.jpg",
+    "ratio": "4:5",
+    "prompt": "Candid lifestyle photo of the same person (a 27-year-old American man, mixed Asian-American heritage, messy black hair, relaxed skater style) at a skate bowl in Canggu, sitting on the edge with a skateboard, premium travel editorial photography, natural light, warm muted colors, moderate contrast, soft shadows, realistic skin texture, subtle analog film grain, low saturation, no HDR, no studio lighting, candid, slightly off-center composition, not stock, not an ad"
+   },
+   {
+    "file": "photo3.jpg",
+    "ratio": "4:5",
+    "prompt": "Candid lifestyle photo of the same person (a 27-year-old American man, mixed Asian-American heritage, messy black hair, relaxed skater style) walking out of the ocean carrying a surfboard, Uluwatu cliffs, golden hour, premium travel editorial photography, natural light, warm muted colors, moderate contrast, soft shadows, realistic skin texture, subtle analog film grain, low saturation, no HDR, no studio lighting, candid, slightly off-center composition, not stock, not an ad"
+   },
+   {
+    "file": "photo4.jpg",
+    "ratio": "4:5",
+    "prompt": "Relaxed candid photo of the same person (a 27-year-old American man, mixed Asian-American heritage, messy black hair, relaxed skater style) in a stylish open-air café in Canggu, iced coffee, natural tropical light, warm neutral tones, premium travel editorial photography, natural light, warm muted colors, moderate contrast, soft shadows, realistic skin texture, subtle analog film grain, low saturation, no HDR, no studio lighting, candid, slightly off-center composition, not stock, not an ad"
+   },
+   {
+    "file": "photo5.jpg",
+    "ratio": "4:5",
+    "prompt": "Spontaneous photo of the same person (a 27-year-old American man, mixed Asian-American heritage, messy black hair, relaxed skater style) walking on the beach or riding a scooter through Canggu, friends out of focus, premium travel editorial photography, natural light, warm muted colors, moderate contrast, soft shadows, realistic skin texture, subtle analog film grain, low saturation, no HDR, no studio lighting, candid, slightly off-center composition, not stock, not an ad"
+   }
+  ],
+  "moments": [
+   {
+    "file": "moment1.jpg",
+    "ratio": "9:16",
+    "activity": "skate",
+    "prompt": "Vertical 9:16 phone photo, a skateboard on the lip of a concrete bowl, golden hour, no person, in Canggu, Bali, spontaneous and imperfect, premium travel editorial photography, natural light, warm muted colors, moderate contrast, soft shadows, realistic skin texture, subtle analog film grain, low saturation, no HDR, no studio lighting, candid, slightly off-center composition, not stock, not an ad"
+   },
+   {
+    "file": "moment2.jpg",
+    "ratio": "9:16",
+    "activity": "running",
+    "prompt": "Vertical 9:16 phone photo, running shoes on sand at sunrise, no person, in Canggu, Bali, spontaneous and imperfect, premium travel editorial photography, natural light, warm muted colors, moderate contrast, soft shadows, realistic skin texture, subtle analog film grain, low saturation, no HDR, no studio lighting, candid, slightly off-center composition, not stock, not an ad"
+   }
+  ]
+ },
+ {
+  "handle": "sofi.moves",
+  "name": "Sofia",
+  "area": "Berawa",
+  "persona": "a 33-year-old Portuguese woman, tanned olive skin, long dark wavy hair, expressive brown eyes",
+  "photos": [
+   {
+    "file": "portrait.jpg",
+    "ratio": "4:5",
+    "prompt": "Editorial lifestyle portrait of a 33-year-old Portuguese woman, tanned olive skin, long dark wavy hair, expressive brown eyes, living in Bali, Berawa coastline or tropical vegetation behind, late afternoon light, relaxed expression, face clearly visible, close framing, shallow depth of field, premium travel editorial photography, natural light, warm muted colors, moderate contrast, soft shadows, realistic skin texture, subtle analog film grain, low saturation, no HDR, no studio lighting, candid, slightly off-center composition, not stock, not an ad"
+   },
+   {
+    "file": "photo2.jpg",
+    "ratio": "4:5",
+    "prompt": "Candid lifestyle photo of the same person (a 33-year-old Portuguese woman, tanned olive skin, long dark wavy hair, expressive brown eyes) wrapping hands before muay thai training in an open-air gym, premium travel editorial photography, natural light, warm muted colors, moderate contrast, soft shadows, realistic skin texture, subtle analog film grain, low saturation, no HDR, no studio lighting, candid, slightly off-center composition, not stock, not an ad"
+   },
+   {
+    "file": "photo3.jpg",
+    "ratio": "4:5",
+    "prompt": "Candid lifestyle photo of the same person (a 33-year-old Portuguese woman, tanned olive skin, long dark wavy hair, expressive brown eyes) training in a modern open-air Bali gym with tropical architecture, athletic not bodybuilding, premium travel editorial photography, natural light, warm muted colors, moderate contrast, soft shadows, realistic skin texture, subtle analog film grain, low saturation, no HDR, no studio lighting, candid, slightly off-center composition, not stock, not an ad"
+   },
+   {
+    "file": "photo4.jpg",
+    "ratio": "4:5",
+    "prompt": "Relaxed candid photo of the same person (a 33-year-old Portuguese woman, tanned olive skin, long dark wavy hair, expressive brown eyes) in a stylish open-air café in Berawa, iced coffee, natural tropical light, warm neutral tones, premium travel editorial photography, natural light, warm muted colors, moderate contrast, soft shadows, realistic skin texture, subtle analog film grain, low saturation, no HDR, no studio lighting, candid, slightly off-center composition, not stock, not an ad"
+   },
+   {
+    "file": "photo5.jpg",
+    "ratio": "4:5",
+    "prompt": "Spontaneous photo of the same person (a 33-year-old Portuguese woman, tanned olive skin, long dark wavy hair, expressive brown eyes) walking on the beach or riding a scooter through Berawa, friends out of focus, premium travel editorial photography, natural light, warm muted colors, moderate contrast, soft shadows, realistic skin texture, subtle analog film grain, low saturation, no HDR, no studio lighting, candid, slightly off-center composition, not stock, not an ad"
+   }
+  ],
+  "moments": [
+   {
+    "file": "moment1.jpg",
+    "ratio": "9:16",
+    "activity": "muayThai",
+    "prompt": "Vertical 9:16 phone photo, muay thai gloves hanging in an open-air gym, no person, in Berawa, Bali, spontaneous and imperfect, premium travel editorial photography, natural light, warm muted colors, moderate contrast, soft shadows, realistic skin texture, subtle analog film grain, low saturation, no HDR, no studio lighting, candid, slightly off-center composition, not stock, not an ad"
+   },
+   {
+    "file": "moment2.jpg",
+    "ratio": "9:16",
+    "activity": "dance",
+    "prompt": "Vertical 9:16 phone photo, a sunset beach club terrace with string lights, no person, in Berawa, Bali, spontaneous and imperfect, premium travel editorial photography, natural light, warm muted colors, moderate contrast, soft shadows, realistic skin texture, subtle analog film grain, low saturation, no HDR, no studio lighting, candid, slightly off-center composition, not stock, not an ad"
+   }
+  ]
+ },
+ {
+  "handle": "maya.kite",
+  "name": "Maya",
+  "area": "Sanur",
+  "persona": "a 36-year-old Israeli woman, golden-brown skin, curly dark hair, athletic, big natural smile",
+  "photos": [
+   {
+    "file": "portrait.jpg",
+    "ratio": "4:5",
+    "prompt": "Editorial lifestyle portrait of a 36-year-old Israeli woman, golden-brown skin, curly dark hair, athletic, big natural smile, living in Bali, Sanur coastline or tropical vegetation behind, late afternoon light, relaxed expression, face clearly visible, close framing, shallow depth of field, premium travel editorial photography, natural light, warm muted colors, moderate contrast, soft shadows, realistic skin texture, subtle analog film grain, low saturation, no HDR, no studio lighting, candid, slightly off-center composition, not stock, not an ad"
+   },
+   {
+    "file": "photo2.jpg",
+    "ratio": "4:5",
+    "prompt": "Candid lifestyle photo of the same person (a 36-year-old Israeli woman, golden-brown skin, curly dark hair, athletic, big natural smile) carrying a kite on a windy Sanur beach, hair blowing, premium travel editorial photography, natural light, warm muted colors, moderate contrast, soft shadows, realistic skin texture, subtle analog film grain, low saturation, no HDR, no studio lighting, candid, slightly off-center composition, not stock, not an ad"
+   },
+   {
+    "file": "photo3.jpg",
+    "ratio": "4:5",
+    "prompt": "Candid lifestyle photo of the same person (a 36-year-old Israeli woman, golden-brown skin, curly dark hair, athletic, big natural smile) walking out of the ocean carrying a surfboard, Uluwatu cliffs, golden hour, premium travel editorial photography, natural light, warm muted colors, moderate contrast, soft shadows, realistic skin texture, subtle analog film grain, low saturation, no HDR, no studio lighting, candid, slightly off-center composition, not stock, not an ad"
+   },
+   {
+    "file": "photo4.jpg",
+    "ratio": "4:5",
+    "prompt": "Relaxed candid photo of the same person (a 36-year-old Israeli woman, golden-brown skin, curly dark hair, athletic, big natural smile) in a stylish open-air café in Sanur, iced coffee, natural tropical light, warm neutral tones, premium travel editorial photography, natural light, warm muted colors, moderate contrast, soft shadows, realistic skin texture, subtle analog film grain, low saturation, no HDR, no studio lighting, candid, slightly off-center composition, not stock, not an ad"
+   },
+   {
+    "file": "photo5.jpg",
+    "ratio": "4:5",
+    "prompt": "Spontaneous photo of the same person (a 36-year-old Israeli woman, golden-brown skin, curly dark hair, athletic, big natural smile) walking on the beach or riding a scooter through Sanur, friends out of focus, premium travel editorial photography, natural light, warm muted colors, moderate contrast, soft shadows, realistic skin texture, subtle analog film grain, low saturation, no HDR, no studio lighting, candid, slightly off-center composition, not stock, not an ad"
+   }
+  ],
+  "moments": [
+   {
+    "file": "moment1.jpg",
+    "ratio": "9:16",
+    "activity": "kitesurf",
+    "prompt": "Vertical 9:16 phone photo, a kite in the air over shallow turquoise-grey water, no person, in Sanur, Bali, spontaneous and imperfect, premium travel editorial photography, natural light, warm muted colors, moderate contrast, soft shadows, realistic skin texture, subtle analog film grain, low saturation, no HDR, no studio lighting, candid, slightly off-center composition, not stock, not an ad"
+   },
+   {
+    "file": "moment2.jpg",
+    "ratio": "9:16",
+    "activity": "yoga",
+    "prompt": "Vertical 9:16 phone photo, a yoga mat rolled out on a bamboo deck facing rice fields, no person, in Sanur, Bali, spontaneous and imperfect, premium travel editorial photography, natural light, warm muted colors, moderate contrast, soft shadows, realistic skin texture, subtle analog film grain, low saturation, no HDR, no studio lighting, candid, slightly off-center composition, not stock, not an ad"
+   }
+  ]
+ },
+ {
+  "handle": "lucas.lifts",
+  "name": "Lucas",
+  "area": "Pererenan",
+  "persona": "a 30-year-old Brazilian man, brown skin, short buzzed dark hair, strong athletic build (not bodybuilder)",
+  "photos": [
+   {
+    "file": "portrait.jpg",
+    "ratio": "4:5",
+    "prompt": "Editorial lifestyle portrait of a 30-year-old Brazilian man, brown skin, short buzzed dark hair, strong athletic build (not bodybuilder), living in Bali, Pererenan coastline or tropical vegetation behind, late afternoon light, relaxed expression, face clearly visible, close framing, shallow depth of field, premium travel editorial photography, natural light, warm muted colors, moderate contrast, soft shadows, realistic skin texture, subtle analog film grain, low saturation, no HDR, no studio lighting, candid, slightly off-center composition, not stock, not an ad"
+   },
+   {
+    "file": "photo2.jpg",
+    "ratio": "4:5",
+    "prompt": "Candid lifestyle photo of the same person (a 30-year-old Brazilian man, brown skin, short buzzed dark hair, strong athletic build (not bodybuilder)) training in a modern open-air Bali gym with tropical architecture, athletic not bodybuilding, premium travel editorial photography, natural light, warm muted colors, moderate contrast, soft shadows, realistic skin texture, subtle analog film grain, low saturation, no HDR, no studio lighting, candid, slightly off-center composition, not stock, not an ad"
+   },
+   {
+    "file": "photo3.jpg",
+    "ratio": "4:5",
+    "prompt": "Candid lifestyle photo of the same person (a 30-year-old Brazilian man, brown skin, short buzzed dark hair, strong athletic build (not bodybuilder)) playing beach volleyball at sunset, mid-laugh, premium travel editorial photography, natural light, warm muted colors, moderate contrast, soft shadows, realistic skin texture, subtle analog film grain, low saturation, no HDR, no studio lighting, candid, slightly off-center composition, not stock, not an ad"
+   },
+   {
+    "file": "photo4.jpg",
+    "ratio": "4:5",
+    "prompt": "Relaxed candid photo of the same person (a 30-year-old Brazilian man, brown skin, short buzzed dark hair, strong athletic build (not bodybuilder)) in a stylish open-air café in Pererenan, iced coffee, natural tropical light, warm neutral tones, premium travel editorial photography, natural light, warm muted colors, moderate contrast, soft shadows, realistic skin texture, subtle analog film grain, low saturation, no HDR, no studio lighting, candid, slightly off-center composition, not stock, not an ad"
+   },
+   {
+    "file": "photo5.jpg",
+    "ratio": "4:5",
+    "prompt": "Spontaneous photo of the same person (a 30-year-old Brazilian man, brown skin, short buzzed dark hair, strong athletic build (not bodybuilder)) walking on the beach or riding a scooter through Pererenan, friends out of focus, premium travel editorial photography, natural light, warm muted colors, moderate contrast, soft shadows, realistic skin texture, subtle analog film grain, low saturation, no HDR, no studio lighting, candid, slightly off-center composition, not stock, not an ad"
+   }
+  ],
+  "moments": [
+   {
+    "file": "moment1.jpg",
+    "ratio": "9:16",
+    "activity": "gym",
+    "prompt": "Vertical 9:16 phone photo, dumbbells on a wooden floor in an open-air gym with palm leaves, no person, in Pererenan, Bali, spontaneous and imperfect, premium travel editorial photography, natural light, warm muted colors, moderate contrast, soft shadows, realistic skin texture, subtle analog film grain, low saturation, no HDR, no studio lighting, candid, slightly off-center composition, not stock, not an ad"
+   },
+   {
+    "file": "moment2.jpg",
+    "ratio": "9:16",
+    "activity": "crossfit",
+    "prompt": "Vertical 9:16 phone photo, a kettlebell and chalk on a gym floor, no person, in Pererenan, Bali, spontaneous and imperfect, premium travel editorial photography, natural light, warm muted colors, moderate contrast, soft shadows, realistic skin texture, subtle analog film grain, low saturation, no HDR, no studio lighting, candid, slightly off-center composition, not stock, not an ad"
+   }
+  ]
+ },
+ {
+  "handle": "aiko.climbs",
+  "name": "Aiko",
+  "area": "Ubud",
+  "persona": "a 30-year-old Japanese woman, straight black shoulder-length hair with bangs, outdoorsy, calm smile",
+  "photos": [
+   {
+    "file": "portrait.jpg",
+    "ratio": "4:5",
+    "prompt": "Editorial lifestyle portrait of a 30-year-old Japanese woman, straight black shoulder-length hair with bangs, outdoorsy, calm smile, living in Bali, Ubud coastline or tropical vegetation behind, late afternoon light, relaxed expression, face clearly visible, close framing, shallow depth of field, premium travel editorial photography, natural light, warm muted colors, moderate contrast, soft shadows, realistic skin texture, subtle analog film grain, low saturation, no HDR, no studio lighting, candid, slightly off-center composition, not stock, not an ad"
+   },
+   {
+    "file": "photo2.jpg",
+    "ratio": "4:5",
+    "prompt": "Candid lifestyle photo of the same person (a 30-year-old Japanese woman, straight black shoulder-length hair with bangs, outdoorsy, calm smile) at an outdoor climbing wall with chalky hands, Ubud jungle behind, premium travel editorial photography, natural light, warm muted colors, moderate contrast, soft shadows, realistic skin texture, subtle analog film grain, low saturation, no HDR, no studio lighting, candid, slightly off-center composition, not stock, not an ad"
+   },
+   {
+    "file": "photo3.jpg",
+    "ratio": "4:5",
+    "prompt": "Candid lifestyle photo of the same person (a 30-year-old Japanese woman, straight black shoulder-length hair with bangs, outdoorsy, calm smile) at the top of Mount Batur at sunrise, wrapped in a light jacket, premium travel editorial photography, natural light, warm muted colors, moderate contrast, soft shadows, realistic skin texture, subtle analog film grain, low saturation, no HDR, no studio lighting, candid, slightly off-center composition, not stock, not an ad"
+   },
+   {
+    "file": "photo4.jpg",
+    "ratio": "4:5",
+    "prompt": "Relaxed candid photo of the same person (a 30-year-old Japanese woman, straight black shoulder-length hair with bangs, outdoorsy, calm smile) in a stylish open-air café in Ubud, iced coffee, natural tropical light, warm neutral tones, premium travel editorial photography, natural light, warm muted colors, moderate contrast, soft shadows, realistic skin texture, subtle analog film grain, low saturation, no HDR, no studio lighting, candid, slightly off-center composition, not stock, not an ad"
+   },
+   {
+    "file": "photo5.jpg",
+    "ratio": "4:5",
+    "prompt": "Spontaneous photo of the same person (a 30-year-old Japanese woman, straight black shoulder-length hair with bangs, outdoorsy, calm smile) walking on the beach or riding a scooter through Ubud, friends out of focus, premium travel editorial photography, natural light, warm muted colors, moderate contrast, soft shadows, realistic skin texture, subtle analog film grain, low saturation, no HDR, no studio lighting, candid, slightly off-center composition, not stock, not an ad"
+   }
+  ],
+  "moments": [
+   {
+    "file": "moment1.jpg",
+    "ratio": "9:16",
+    "activity": "climbing",
+    "prompt": "Vertical 9:16 phone photo, chalk bag and climbing shoes on a rock, no person, in Ubud, Bali, spontaneous and imperfect, premium travel editorial photography, natural light, warm muted colors, moderate contrast, soft shadows, realistic skin texture, subtle analog film grain, low saturation, no HDR, no studio lighting, candid, slightly off-center composition, not stock, not an ad"
+   },
+   {
+    "file": "moment2.jpg",
+    "ratio": "9:16",
+    "activity": "yoga",
+    "prompt": "Vertical 9:16 phone photo, a yoga mat rolled out on a bamboo deck facing rice fields, no person, in Ubud, Bali, spontaneous and imperfect, premium travel editorial photography, natural light, warm muted colors, moderate contrast, soft shadows, realistic skin texture, subtle analog film grain, low saturation, no HDR, no studio lighting, candid, slightly off-center composition, not stock, not an ad"
+   }
+  ]
+ },
+ {
+  "handle": "noah.freedive",
+  "name": "Noah",
+  "area": "Uluwatu",
+  "persona": "a 32-year-old Dutch man, tall, tousled light-brown hair, salt-and-sun look, calm eyes",
+  "photos": [
+   {
+    "file": "portrait.jpg",
+    "ratio": "4:5",
+    "prompt": "Editorial lifestyle portrait of a 32-year-old Dutch man, tall, tousled light-brown hair, salt-and-sun look, calm eyes, living in Bali, Uluwatu coastline or tropical vegetation behind, late afternoon light, relaxed expression, face clearly visible, close framing, shallow depth of field, premium travel editorial photography, natural light, warm muted colors, moderate contrast, soft shadows, realistic skin texture, subtle analog film grain, low saturation, no HDR, no studio lighting, candid, slightly off-center composition, not stock, not an ad"
+   },
+   {
+    "file": "photo2.jpg",
+    "ratio": "4:5",
+    "prompt": "Candid lifestyle photo of the same person (a 32-year-old Dutch man, tall, tousled light-brown hair, salt-and-sun look, calm eyes) on a boat with a freediving mask pushed up on the forehead, ocean behind, premium travel editorial photography, natural light, warm muted colors, moderate contrast, soft shadows, realistic skin texture, subtle analog film grain, low saturation, no HDR, no studio lighting, candid, slightly off-center composition, not stock, not an ad"
+   },
+   {
+    "file": "photo3.jpg",
+    "ratio": "4:5",
+    "prompt": "Candid lifestyle photo of the same person (a 32-year-old Dutch man, tall, tousled light-brown hair, salt-and-sun look, calm eyes) walking out of the ocean carrying a surfboard, Uluwatu cliffs, golden hour, premium travel editorial photography, natural light, warm muted colors, moderate contrast, soft shadows, realistic skin texture, subtle analog film grain, low saturation, no HDR, no studio lighting, candid, slightly off-center composition, not stock, not an ad"
+   },
+   {
+    "file": "photo4.jpg",
+    "ratio": "4:5",
+    "prompt": "Relaxed candid photo of the same person (a 32-year-old Dutch man, tall, tousled light-brown hair, salt-and-sun look, calm eyes) in a stylish open-air café in Uluwatu, iced coffee, natural tropical light, warm neutral tones, premium travel editorial photography, natural light, warm muted colors, moderate contrast, soft shadows, realistic skin texture, subtle analog film grain, low saturation, no HDR, no studio lighting, candid, slightly off-center composition, not stock, not an ad"
+   },
+   {
+    "file": "photo5.jpg",
+    "ratio": "4:5",
+    "prompt": "Spontaneous photo of the same person (a 32-year-old Dutch man, tall, tousled light-brown hair, salt-and-sun look, calm eyes) walking on the beach or riding a scooter through Uluwatu, friends out of focus, premium travel editorial photography, natural light, warm muted colors, moderate contrast, soft shadows, realistic skin texture, subtle analog film grain, low saturation, no HDR, no studio lighting, candid, slightly off-center composition, not stock, not an ad"
+   }
+  ],
+  "moments": [
+   {
+    "file": "moment1.jpg",
+    "ratio": "9:16",
+    "activity": "freediving",
+    "prompt": "Vertical 9:16 phone photo, clear blue-grey water seen from a boat edge with a freediving fin, no person, in Uluwatu, Bali, spontaneous and imperfect, premium travel editorial photography, natural light, warm muted colors, moderate contrast, soft shadows, realistic skin texture, subtle analog film grain, low saturation, no HDR, no studio lighting, candid, slightly off-center composition, not stock, not an ad"
+   },
+   {
+    "file": "moment2.jpg",
+    "ratio": "9:16",
+    "activity": "swimming",
+    "prompt": "Vertical 9:16 phone photo, calm sea surface with soft sunlight, no person, in Uluwatu, Bali, spontaneous and imperfect, premium travel editorial photography, natural light, warm muted colors, moderate contrast, soft shadows, realistic skin texture, subtle analog film grain, low saturation, no HDR, no studio lighting, candid, slightly off-center composition, not stock, not an ad"
+   }
+  ]
+ },
+ {
+  "handle": "nora.yin",
+  "name": "Nora",
+  "area": "Ubud",
+  "persona": "a 33-year-old Danish woman, pale skin with light tan, long light-blonde hair, serene expression",
+  "photos": [
+   {
+    "file": "portrait.jpg",
+    "ratio": "4:5",
+    "prompt": "Editorial lifestyle portrait of a 33-year-old Danish woman, pale skin with light tan, long light-blonde hair, serene expression, living in Bali, Ubud coastline or tropical vegetation behind, late afternoon light, relaxed expression, face clearly visible, close framing, shallow depth of field, premium travel editorial photography, natural light, warm muted colors, moderate contrast, soft shadows, realistic skin texture, subtle analog film grain, low saturation, no HDR, no studio lighting, candid, slightly off-center composition, not stock, not an ad"
+   },
+   {
+    "file": "photo2.jpg",
+    "ratio": "4:5",
+    "prompt": "Candid lifestyle photo of the same person (a 33-year-old Danish woman, pale skin with light tan, long light-blonde hair, serene expression) doing a calm yoga pose on a wooden shala deck surrounded by jungle, morning light, premium travel editorial photography, natural light, warm muted colors, moderate contrast, soft shadows, realistic skin texture, subtle analog film grain, low saturation, no HDR, no studio lighting, candid, slightly off-center composition, not stock, not an ad"
+   },
+   {
+    "file": "photo3.jpg",
+    "ratio": "4:5",
+    "prompt": "Candid lifestyle photo of the same person (a 33-year-old Danish woman, pale skin with light tan, long light-blonde hair, serene expression) running along the beach at sunrise in Canggu, relaxed stride, premium travel editorial photography, natural light, warm muted colors, moderate contrast, soft shadows, realistic skin texture, subtle analog film grain, low saturation, no HDR, no studio lighting, candid, slightly off-center composition, not stock, not an ad"
+   },
+   {
+    "file": "photo4.jpg",
+    "ratio": "4:5",
+    "prompt": "Relaxed candid photo of the same person (a 33-year-old Danish woman, pale skin with light tan, long light-blonde hair, serene expression) in a stylish open-air café in Ubud, iced coffee, natural tropical light, warm neutral tones, premium travel editorial photography, natural light, warm muted colors, moderate contrast, soft shadows, realistic skin texture, subtle analog film grain, low saturation, no HDR, no studio lighting, candid, slightly off-center composition, not stock, not an ad"
+   },
+   {
+    "file": "photo5.jpg",
+    "ratio": "4:5",
+    "prompt": "Spontaneous photo of the same person (a 33-year-old Danish woman, pale skin with light tan, long light-blonde hair, serene expression) walking on the beach or riding a scooter through Ubud, friends out of focus, premium travel editorial photography, natural light, warm muted colors, moderate contrast, soft shadows, realistic skin texture, subtle analog film grain, low saturation, no HDR, no studio lighting, candid, slightly off-center composition, not stock, not an ad"
+   }
+  ],
+  "moments": [
+   {
+    "file": "moment1.jpg",
+    "ratio": "9:16",
+    "activity": "yoga",
+    "prompt": "Vertical 9:16 phone photo, a yoga mat rolled out on a bamboo deck facing rice fields, no person, in Ubud, Bali, spontaneous and imperfect, premium travel editorial photography, natural light, warm muted colors, moderate contrast, soft shadows, realistic skin texture, subtle analog film grain, low saturation, no HDR, no studio lighting, candid, slightly off-center composition, not stock, not an ad"
+   },
+   {
+    "file": "moment2.jpg",
+    "ratio": "9:16",
+    "activity": "pilates",
+    "prompt": "Vertical 9:16 phone photo, a pilates reformer by a window with tropical plants, no person, in Ubud, Bali, spontaneous and imperfect, premium travel editorial photography, natural light, warm muted colors, moderate contrast, soft shadows, realistic skin texture, subtle analog film grain, low saturation, no HDR, no studio lighting, candid, slightly off-center composition, not stock, not an ad"
+   }
+  ]
+ },
+ {
+  "handle": "olly.cycles",
+  "name": "Oliver",
+  "area": "Umalas",
+  "persona": "a 29-year-old British man, pale skin with sun, short ginger-brown hair, lean cyclist build",
+  "photos": [
+   {
+    "file": "portrait.jpg",
+    "ratio": "4:5",
+    "prompt": "Editorial lifestyle portrait of a 29-year-old British man, pale skin with sun, short ginger-brown hair, lean cyclist build, living in Bali, Umalas coastline or tropical vegetation behind, late afternoon light, relaxed expression, face clearly visible, close framing, shallow depth of field, premium travel editorial photography, natural light, warm muted colors, moderate contrast, soft shadows, realistic skin texture, subtle analog film grain, low saturation, no HDR, no studio lighting, candid, slightly off-center composition, not stock, not an ad"
+   },
+   {
+    "file": "photo2.jpg",
+    "ratio": "4:5",
+    "prompt": "Candid lifestyle photo of the same person (a 29-year-old British man, pale skin with sun, short ginger-brown hair, lean cyclist build) with a road bike on a quiet road through rice terraces, early morning, premium travel editorial photography, natural light, warm muted colors, moderate contrast, soft shadows, realistic skin texture, subtle analog film grain, low saturation, no HDR, no studio lighting, candid, slightly off-center composition, not stock, not an ad"
+   },
+   {
+    "file": "photo3.jpg",
+    "ratio": "4:5",
+    "prompt": "Candid lifestyle photo of the same person (a 29-year-old British man, pale skin with sun, short ginger-brown hair, lean cyclist build) running along the beach at sunrise in Canggu, relaxed stride, premium travel editorial photography, natural light, warm muted colors, moderate contrast, soft shadows, realistic skin texture, subtle analog film grain, low saturation, no HDR, no studio lighting, candid, slightly off-center composition, not stock, not an ad"
+   },
+   {
+    "file": "photo4.jpg",
+    "ratio": "4:5",
+    "prompt": "Relaxed candid photo of the same person (a 29-year-old British man, pale skin with sun, short ginger-brown hair, lean cyclist build) in a stylish open-air café in Umalas, iced coffee, natural tropical light, warm neutral tones, premium travel editorial photography, natural light, warm muted colors, moderate contrast, soft shadows, realistic skin texture, subtle analog film grain, low saturation, no HDR, no studio lighting, candid, slightly off-center composition, not stock, not an ad"
+   },
+   {
+    "file": "photo5.jpg",
+    "ratio": "4:5",
+    "prompt": "Spontaneous photo of the same person (a 29-year-old British man, pale skin with sun, short ginger-brown hair, lean cyclist build) walking on the beach or riding a scooter through Umalas, friends out of focus, premium travel editorial photography, natural light, warm muted colors, moderate contrast, soft shadows, realistic skin texture, subtle analog film grain, low saturation, no HDR, no studio lighting, candid, slightly off-center composition, not stock, not an ad"
+   }
+  ],
+  "moments": [
+   {
+    "file": "moment1.jpg",
+    "ratio": "9:16",
+    "activity": "cycling",
+    "prompt": "Vertical 9:16 phone photo, a road bike resting against a wall on a mountain road, no person, in Umalas, Bali, spontaneous and imperfect, premium travel editorial photography, natural light, warm muted colors, moderate contrast, soft shadows, realistic skin texture, subtle analog film grain, low saturation, no HDR, no studio lighting, candid, slightly off-center composition, not stock, not an ad"
+   },
+   {
+    "file": "moment2.jpg",
+    "ratio": "9:16",
+    "activity": "hiking",
+    "prompt": "Vertical 9:16 phone photo, view of the sunrise over the Mount Batur caldera, no person, in Umalas, Bali, spontaneous and imperfect, premium travel editorial photography, natural light, warm muted colors, moderate contrast, soft shadows, realistic skin texture, subtle analog film grain, low saturation, no HDR, no studio lighting, candid, slightly off-center composition, not stock, not an ad"
+   }
+  ]
+ },
+ {
+  "handle": "putu.surf",
+  "name": "Putu",
+  "area": "Uluwatu",
+  "persona": "a 27-year-old Balinese man, brown skin, long black hair tied back, surfer build, warm smile",
+  "photos": [
+   {
+    "file": "portrait.jpg",
+    "ratio": "4:5",
+    "prompt": "Editorial lifestyle portrait of a 27-year-old Balinese man, brown skin, long black hair tied back, surfer build, warm smile, living in Bali, Uluwatu coastline or tropical vegetation behind, late afternoon light, relaxed expression, face clearly visible, close framing, shallow depth of field, premium travel editorial photography, natural light, warm muted colors, moderate contrast, soft shadows, realistic skin texture, subtle analog film grain, low saturation, no HDR, no studio lighting, candid, slightly off-center composition, not stock, not an ad"
+   },
+   {
+    "file": "photo2.jpg",
+    "ratio": "4:5",
+    "prompt": "Candid lifestyle photo of the same person (a 27-year-old Balinese man, brown skin, long black hair tied back, surfer build, warm smile) walking out of the ocean carrying a surfboard, Uluwatu cliffs, golden hour, premium travel editorial photography, natural light, warm muted colors, moderate contrast, soft shadows, realistic skin texture, subtle analog film grain, low saturation, no HDR, no studio lighting, candid, slightly off-center composition, not stock, not an ad"
+   },
+   {
+    "file": "photo3.jpg",
+    "ratio": "4:5",
+    "prompt": "Candid lifestyle photo of the same person (a 27-year-old Balinese man, brown skin, long black hair tied back, surfer build, warm smile) playing barefoot football on the beach at sunset, premium travel editorial photography, natural light, warm muted colors, moderate contrast, soft shadows, realistic skin texture, subtle analog film grain, low saturation, no HDR, no studio lighting, candid, slightly off-center composition, not stock, not an ad"
+   },
+   {
+    "file": "photo4.jpg",
+    "ratio": "4:5",
+    "prompt": "Relaxed candid photo of the same person (a 27-year-old Balinese man, brown skin, long black hair tied back, surfer build, warm smile) in a stylish open-air café in Uluwatu, iced coffee, natural tropical light, warm neutral tones, premium travel editorial photography, natural light, warm muted colors, moderate contrast, soft shadows, realistic skin texture, subtle analog film grain, low saturation, no HDR, no studio lighting, candid, slightly off-center composition, not stock, not an ad"
+   },
+   {
+    "file": "photo5.jpg",
+    "ratio": "4:5",
+    "prompt": "Spontaneous photo of the same person (a 27-year-old Balinese man, brown skin, long black hair tied back, surfer build, warm smile) walking on the beach or riding a scooter through Uluwatu, friends out of focus, premium travel editorial photography, natural light, warm muted colors, moderate contrast, soft shadows, realistic skin texture, subtle analog film grain, low saturation, no HDR, no studio lighting, candid, slightly off-center composition, not stock, not an ad"
+   }
+  ],
+  "moments": [
+   {
+    "file": "moment1.jpg",
+    "ratio": "9:16",
+    "activity": "surf",
+    "prompt": "Vertical 9:16 phone photo, a single surfboard leaning on a rock at Uluwatu beach at sunrise, no person, in Uluwatu, Bali, spontaneous and imperfect, premium travel editorial photography, natural light, warm muted colors, moderate contrast, soft shadows, realistic skin texture, subtle analog film grain, low saturation, no HDR, no studio lighting, candid, slightly off-center composition, not stock, not an ad"
+   },
+   {
+    "file": "moment2.jpg",
+    "ratio": "9:16",
+    "activity": "swimming",
+    "prompt": "Vertical 9:16 phone photo, calm sea surface with soft sunlight, no person, in Uluwatu, Bali, spontaneous and imperfect, premium travel editorial photography, natural light, warm muted colors, moderate contrast, soft shadows, realistic skin texture, subtle analog film grain, low saturation, no HDR, no studio lighting, candid, slightly off-center composition, not stock, not an ad"
+   }
+  ]
+ },
+ {
+  "handle": "rafa.boxing",
+  "name": "Rafael",
+  "area": "Canggu",
+  "persona": "a 33-year-old Mexican man, tan skin, short black hair with fade, boxer build, tattoos on one forearm",
+  "photos": [
+   {
+    "file": "portrait.jpg",
+    "ratio": "4:5",
+    "prompt": "Editorial lifestyle portrait of a 33-year-old Mexican man, tan skin, short black hair with fade, boxer build, tattoos on one forearm, living in Bali, Canggu coastline or tropical vegetation behind, late afternoon light, relaxed expression, face clearly visible, close framing, shallow depth of field, premium travel editorial photography, natural light, warm muted colors, moderate contrast, soft shadows, realistic skin texture, subtle analog film grain, low saturation, no HDR, no studio lighting, candid, slightly off-center composition, not stock, not an ad"
+   },
+   {
+    "file": "photo2.jpg",
+    "ratio": "4:5",
+    "prompt": "Candid lifestyle photo of the same person (a 33-year-old Mexican man, tan skin, short black hair with fade, boxer build, tattoos on one forearm) hitting pads with a coach in an open-air boxing gym, premium travel editorial photography, natural light, warm muted colors, moderate contrast, soft shadows, realistic skin texture, subtle analog film grain, low saturation, no HDR, no studio lighting, candid, slightly off-center composition, not stock, not an ad"
+   },
+   {
+    "file": "photo3.jpg",
+    "ratio": "4:5",
+    "prompt": "Candid lifestyle photo of the same person (a 33-year-old Mexican man, tan skin, short black hair with fade, boxer build, tattoos on one forearm) wrapping hands before muay thai training in an open-air gym, premium travel editorial photography, natural light, warm muted colors, moderate contrast, soft shadows, realistic skin texture, subtle analog film grain, low saturation, no HDR, no studio lighting, candid, slightly off-center composition, not stock, not an ad"
+   },
+   {
+    "file": "photo4.jpg",
+    "ratio": "4:5",
+    "prompt": "Relaxed candid photo of the same person (a 33-year-old Mexican man, tan skin, short black hair with fade, boxer build, tattoos on one forearm) in a stylish open-air café in Canggu, iced coffee, natural tropical light, warm neutral tones, premium travel editorial photography, natural light, warm muted colors, moderate contrast, soft shadows, realistic skin texture, subtle analog film grain, low saturation, no HDR, no studio lighting, candid, slightly off-center composition, not stock, not an ad"
+   },
+   {
+    "file": "photo5.jpg",
+    "ratio": "4:5",
+    "prompt": "Spontaneous photo of the same person (a 33-year-old Mexican man, tan skin, short black hair with fade, boxer build, tattoos on one forearm) walking on the beach or riding a scooter through Canggu, friends out of focus, premium travel editorial photography, natural light, warm muted colors, moderate contrast, soft shadows, realistic skin texture, subtle analog film grain, low saturation, no HDR, no studio lighting, candid, slightly off-center composition, not stock, not an ad"
+   }
+  ],
+  "moments": [
+   {
+    "file": "moment1.jpg",
+    "ratio": "9:16",
+    "activity": "boxing",
+    "prompt": "Vertical 9:16 phone photo, boxing gloves on a ring rope, no person, in Canggu, Bali, spontaneous and imperfect, premium travel editorial photography, natural light, warm muted colors, moderate contrast, soft shadows, realistic skin texture, subtle analog film grain, low saturation, no HDR, no studio lighting, candid, slightly off-center composition, not stock, not an ad"
+   },
+   {
+    "file": "moment2.jpg",
+    "ratio": "9:16",
+    "activity": "gym",
+    "prompt": "Vertical 9:16 phone photo, dumbbells on a wooden floor in an open-air gym with palm leaves, no person, in Canggu, Bali, spontaneous and imperfect, premium travel editorial photography, natural light, warm muted colors, moderate contrast, soft shadows, realistic skin texture, subtle analog film grain, low saturation, no HDR, no studio lighting, candid, slightly off-center composition, not stock, not an ad"
+   }
+  ]
+ },
+ {
+  "handle": "tom.wanders",
+  "name": "Tom",
+  "area": "Bingin",
+  "persona": "a 31-year-old Canadian man, light skin, shaggy brown hair, beard, easygoing traveller vibe",
+  "photos": [
+   {
+    "file": "portrait.jpg",
+    "ratio": "4:5",
+    "prompt": "Editorial lifestyle portrait of a 31-year-old Canadian man, light skin, shaggy brown hair, beard, easygoing traveller vibe, living in Bali, Bingin coastline or tropical vegetation behind, late afternoon light, relaxed expression, face clearly visible, close framing, shallow depth of field, premium travel editorial photography, natural light, warm muted colors, moderate contrast, soft shadows, realistic skin texture, subtle analog film grain, low saturation, no HDR, no studio lighting, candid, slightly off-center composition, not stock, not an ad"
+   },
+   {
+    "file": "photo2.jpg",
+    "ratio": "4:5",
+    "prompt": "Candid lifestyle photo of the same person (a 31-year-old Canadian man, light skin, shaggy brown hair, beard, easygoing traveller vibe) walking out of the ocean carrying a surfboard, Uluwatu cliffs, golden hour, premium travel editorial photography, natural light, warm muted colors, moderate contrast, soft shadows, realistic skin texture, subtle analog film grain, low saturation, no HDR, no studio lighting, candid, slightly off-center composition, not stock, not an ad"
+   },
+   {
+    "file": "photo3.jpg",
+    "ratio": "4:5",
+    "prompt": "Candid lifestyle photo of the same person (a 31-year-old Canadian man, light skin, shaggy brown hair, beard, easygoing traveller vibe) at the top of Mount Batur at sunrise, wrapped in a light jacket, premium travel editorial photography, natural light, warm muted colors, moderate contrast, soft shadows, realistic skin texture, subtle analog film grain, low saturation, no HDR, no studio lighting, candid, slightly off-center composition, not stock, not an ad"
+   },
+   {
+    "file": "photo4.jpg",
+    "ratio": "4:5",
+    "prompt": "Relaxed candid photo of the same person (a 31-year-old Canadian man, light skin, shaggy brown hair, beard, easygoing traveller vibe) in a stylish open-air café in Bingin, iced coffee, natural tropical light, warm neutral tones, premium travel editorial photography, natural light, warm muted colors, moderate contrast, soft shadows, realistic skin texture, subtle analog film grain, low saturation, no HDR, no studio lighting, candid, slightly off-center composition, not stock, not an ad"
+   },
+   {
+    "file": "photo5.jpg",
+    "ratio": "4:5",
+    "prompt": "Spontaneous photo of the same person (a 31-year-old Canadian man, light skin, shaggy brown hair, beard, easygoing traveller vibe) walking on the beach or riding a scooter through Bingin, friends out of focus, premium travel editorial photography, natural light, warm muted colors, moderate contrast, soft shadows, realistic skin texture, subtle analog film grain, low saturation, no HDR, no studio lighting, candid, slightly off-center composition, not stock, not an ad"
+   }
+  ],
+  "moments": [
+   {
+    "file": "moment1.jpg",
+    "ratio": "9:16",
+    "activity": "surf",
+    "prompt": "Vertical 9:16 phone photo, a single surfboard leaning on a rock at Bingin beach at sunrise, no person, in Bingin, Bali, spontaneous and imperfect, premium travel editorial photography, natural light, warm muted colors, moderate contrast, soft shadows, realistic skin texture, subtle analog film grain, low saturation, no HDR, no studio lighting, candid, slightly off-center composition, not stock, not an ad"
+   },
+   {
+    "file": "moment2.jpg",
+    "ratio": "9:16",
+    "activity": "football",
+    "prompt": "Vertical 9:16 phone photo, a football on the sand at low tide, no person, in Bingin, Bali, spontaneous and imperfect, premium travel editorial photography, natural light, warm muted colors, moderate contrast, soft shadows, realistic skin texture, subtle analog film grain, low saturation, no HDR, no studio lighting, candid, slightly off-center composition, not stock, not an ad"
+   }
+  ]
+ },
+ {
+  "handle": "vale.dance",
+  "name": "Valentina",
+  "area": "Seminyak",
+  "persona": "a 34-year-old Colombian woman, warm brown skin, long dark curly hair, elegant and joyful",
+  "photos": [
+   {
+    "file": "portrait.jpg",
+    "ratio": "4:5",
+    "prompt": "Editorial lifestyle portrait of a 34-year-old Colombian woman, warm brown skin, long dark curly hair, elegant and joyful, living in Bali, Seminyak coastline or tropical vegetation behind, late afternoon light, relaxed expression, face clearly visible, close framing, shallow depth of field, premium travel editorial photography, natural light, warm muted colors, moderate contrast, soft shadows, realistic skin texture, subtle analog film grain, low saturation, no HDR, no studio lighting, candid, slightly off-center composition, not stock, not an ad"
+   },
+   {
+    "file": "photo2.jpg",
+    "ratio": "4:5",
+    "prompt": "Candid lifestyle photo of the same person (a 34-year-old Colombian woman, warm brown skin, long dark curly hair, elegant and joyful) dancing barefoot on a beach club terrace at sunset, candid, premium travel editorial photography, natural light, warm muted colors, moderate contrast, soft shadows, realistic skin texture, subtle analog film grain, low saturation, no HDR, no studio lighting, candid, slightly off-center composition, not stock, not an ad"
+   },
+   {
+    "file": "photo3.jpg",
+    "ratio": "4:5",
+    "prompt": "Candid lifestyle photo of the same person (a 34-year-old Colombian woman, warm brown skin, long dark curly hair, elegant and joyful) on a reformer in a light, airy Canggu pilates studio, natural daylight, premium travel editorial photography, natural light, warm muted colors, moderate contrast, soft shadows, realistic skin texture, subtle analog film grain, low saturation, no HDR, no studio lighting, candid, slightly off-center composition, not stock, not an ad"
+   },
+   {
+    "file": "photo4.jpg",
+    "ratio": "4:5",
+    "prompt": "Relaxed candid photo of the same person (a 34-year-old Colombian woman, warm brown skin, long dark curly hair, elegant and joyful) in a stylish open-air café in Seminyak, iced coffee, natural tropical light, warm neutral tones, premium travel editorial photography, natural light, warm muted colors, moderate contrast, soft shadows, realistic skin texture, subtle analog film grain, low saturation, no HDR, no studio lighting, candid, slightly off-center composition, not stock, not an ad"
+   },
+   {
+    "file": "photo5.jpg",
+    "ratio": "4:5",
+    "prompt": "Spontaneous photo of the same person (a 34-year-old Colombian woman, warm brown skin, long dark curly hair, elegant and joyful) walking on the beach or riding a scooter through Seminyak, friends out of focus, premium travel editorial photography, natural light, warm muted colors, moderate contrast, soft shadows, realistic skin texture, subtle analog film grain, low saturation, no HDR, no studio lighting, candid, slightly off-center composition, not stock, not an ad"
+   }
+  ],
+  "moments": [
+   {
+    "file": "moment1.jpg",
+    "ratio": "9:16",
+    "activity": "dance",
+    "prompt": "Vertical 9:16 phone photo, a sunset beach club terrace with string lights, no person, in Seminyak, Bali, spontaneous and imperfect, premium travel editorial photography, natural light, warm muted colors, moderate contrast, soft shadows, realistic skin texture, subtle analog film grain, low saturation, no HDR, no studio lighting, candid, slightly off-center composition, not stock, not an ad"
+   },
+   {
+    "file": "moment2.jpg",
+    "ratio": "9:16",
+    "activity": "yoga",
+    "prompt": "Vertical 9:16 phone photo, a yoga mat rolled out on a bamboo deck facing rice fields, no person, in Seminyak, Bali, spontaneous and imperfect, premium travel editorial photography, natural light, warm muted colors, moderate contrast, soft shadows, realistic skin texture, subtle analog film grain, low saturation, no HDR, no studio lighting, candid, slightly off-center composition, not stock, not an ad"
+   }
+  ]
+ },
+ {
+  "handle": "cami.golf",
+  "name": "Camille",
+  "area": "Pecatu",
+  "persona": "a 36-year-old French woman, light tan, chic short brown bob, effortless style",
+  "photos": [
+   {
+    "file": "portrait.jpg",
+    "ratio": "4:5",
+    "prompt": "Editorial lifestyle portrait of a 36-year-old French woman, light tan, chic short brown bob, effortless style, living in Bali, Pecatu coastline or tropical vegetation behind, late afternoon light, relaxed expression, face clearly visible, close framing, shallow depth of field, premium travel editorial photography, natural light, warm muted colors, moderate contrast, soft shadows, realistic skin texture, subtle analog film grain, low saturation, no HDR, no studio lighting, candid, slightly off-center composition, not stock, not an ad"
+   },
+   {
+    "file": "photo2.jpg",
+    "ratio": "4:5",
+    "prompt": "Candid lifestyle photo of the same person (a 36-year-old French woman, light tan, chic short brown bob, effortless style) on the cliff-top golf course in Pecatu, ocean behind, premium travel editorial photography, natural light, warm muted colors, moderate contrast, soft shadows, realistic skin texture, subtle analog film grain, low saturation, no HDR, no studio lighting, candid, slightly off-center composition, not stock, not an ad"
+   },
+   {
+    "file": "photo3.jpg",
+    "ratio": "4:5",
+    "prompt": "Candid lifestyle photo of the same person (a 36-year-old French woman, light tan, chic short brown bob, effortless style) on an outdoor tennis court, racket over shoulder, afternoon light, premium travel editorial photography, natural light, warm muted colors, moderate contrast, soft shadows, realistic skin texture, subtle analog film grain, low saturation, no HDR, no studio lighting, candid, slightly off-center composition, not stock, not an ad"
+   },
+   {
+    "file": "photo4.jpg",
+    "ratio": "4:5",
+    "prompt": "Relaxed candid photo of the same person (a 36-year-old French woman, light tan, chic short brown bob, effortless style) in a stylish open-air café in Pecatu, iced coffee, natural tropical light, warm neutral tones, premium travel editorial photography, natural light, warm muted colors, moderate contrast, soft shadows, realistic skin texture, subtle analog film grain, low saturation, no HDR, no studio lighting, candid, slightly off-center composition, not stock, not an ad"
+   },
+   {
+    "file": "photo5.jpg",
+    "ratio": "4:5",
+    "prompt": "Spontaneous photo of the same person (a 36-year-old French woman, light tan, chic short brown bob, effortless style) walking on the beach or riding a scooter through Pecatu, friends out of focus, premium travel editorial photography, natural light, warm muted colors, moderate contrast, soft shadows, realistic skin texture, subtle analog film grain, low saturation, no HDR, no studio lighting, candid, slightly off-center composition, not stock, not an ad"
+   }
+  ],
+  "moments": [
+   {
+    "file": "moment1.jpg",
+    "ratio": "9:16",
+    "activity": "golf",
+    "prompt": "Vertical 9:16 phone photo, golf ball on a tee with the ocean behind, no person, in Pecatu, Bali, spontaneous and imperfect, premium travel editorial photography, natural light, warm muted colors, moderate contrast, soft shadows, realistic skin texture, subtle analog film grain, low saturation, no HDR, no studio lighting, candid, slightly off-center composition, not stock, not an ad"
+   },
+   {
+    "file": "moment2.jpg",
+    "ratio": "9:16",
+    "activity": "swimming",
+    "prompt": "Vertical 9:16 phone photo, calm sea surface with soft sunlight, no person, in Pecatu, Bali, spontaneous and imperfect, premium travel editorial photography, natural light, warm muted colors, moderate contrast, soft shadows, realistic skin texture, subtle analog film grain, low saturation, no HDR, no studio lighting, candid, slightly off-center composition, not stock, not an ad"
+   }
+  ]
+ }
+]
