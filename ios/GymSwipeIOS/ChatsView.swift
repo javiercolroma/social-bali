@@ -129,12 +129,6 @@ struct ChatsView: View {
 
     private func avatar(_ person: SocialPerson?, online isOnline: Bool) -> some View {
         PersonAvatar(person: person, size: 54)
-            .overlay(alignment: .bottomTrailing) {
-                if isOnline {
-                    Circle().fill(Brand.online).frame(width: 13, height: 13)
-                        .overlay(Circle().stroke(Brand.bg, lineWidth: 2.5))
-                }
-            }
     }
 
     private func row(_ c: Conversation) -> some View {
@@ -145,6 +139,9 @@ struct ChatsView: View {
                 avatar(person, online: online.contains(c.personId.lowercased()))
                 VStack(alignment: .leading, spacing: 3) {
                     HStack(spacing: 5) {
+                        if online.contains(c.personId.lowercased()) {
+                            Circle().fill(Brand.online).frame(width: 8, height: 8)
+                        }
                         Text(person?.name ?? "…").font(.system(size: 16, weight: bold ? .bold : .semibold)).foregroundColor(Brand.ink)
                         if let co = person?.club?.homeCountry, !co.isEmpty { Text(countryFlag(co)).font(.system(size: 14)) }
                         Spacer()
@@ -186,6 +183,7 @@ struct ChatsView: View {
                 avatar(AppStore.asPeople([p]).first, online: p.online == true)
                 VStack(alignment: .leading, spacing: 2) {
                     HStack(spacing: 5) {
+                        if p.online == true { Circle().fill(Brand.online).frame(width: 8, height: 8) }
                         Text(p.age.map { "\(p.name ?? ""), \($0)" } ?? (p.name ?? "")).font(.system(size: 16, weight: .semibold)).foregroundColor(Brand.ink)
                         if let co = p.club.homeCountry, !co.isEmpty { Text(countryFlag(co)).font(.system(size: 14)) }
                     }

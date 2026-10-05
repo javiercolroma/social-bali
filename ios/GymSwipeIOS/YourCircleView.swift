@@ -210,6 +210,12 @@ struct CircleCell: View {
                 .overlay(alignment: .bottomLeading) {
                     VStack(alignment: .leading, spacing: 2) {
                         HStack(spacing: 6) {
+                            // Activo ahora: punto verde a la izquierda del nombre.
+                            if row.online == true {
+                                Circle().fill(Brand.online).frame(width: 9, height: 9)
+                                    .overlay(Circle().stroke(Color.white.opacity(0.9), lineWidth: 1.5))
+                                    .accessibilityLabel(Text("Active now"))
+                            }
                             Text(nameLine).font(.system(size: 16, weight: .semibold)).lineLimit(1).minimumScaleFactor(0.8)
                         }
                         if let sub = subline {
@@ -219,16 +225,6 @@ struct CircleCell: View {
                     .foregroundColor(.white)
                     .shadow(color: .black.opacity(0.3), radius: 3)
                     .padding(11)
-                }
-                // Activo ahora: punto verde arriba a la derecha, como en Grindr.
-                .overlay(alignment: .topTrailing) {
-                    if row.online == true {
-                        Circle().fill(Brand.online).frame(width: 12, height: 12)
-                            .overlay(Circle().stroke(Color.white, lineWidth: 2))
-                            .shadow(color: .black.opacity(0.25), radius: 2)
-                            .padding(10)
-                            .accessibilityLabel(Text("Active now"))
-                    }
                 }
                 .overlay(alignment: .topLeading) {
                     if let b = badgeText {

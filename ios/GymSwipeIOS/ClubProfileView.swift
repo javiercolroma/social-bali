@@ -114,13 +114,12 @@ struct ClubProfileView: View {
     /// Nombre, edad y bandera sobre la foto (y «activo» si lo está).
     private func heroTitle(_ p: ProfileRow, _ club: ClubIdentity) -> some View {
         VStack(alignment: .leading, spacing: 6) {
-            if p.online == true {
-                HStack(spacing: 6) {
-                    Circle().fill(Brand.online).frame(width: 8, height: 8)
-                    Text("Active now").font(.system(size: 12, weight: .semibold))
+            HStack(alignment: .center, spacing: 10) {
+                if p.online == true {
+                    Circle().fill(Brand.online).frame(width: 12, height: 12)
+                        .overlay(Circle().stroke(Color.white, lineWidth: 2))
+                        .accessibilityLabel(Text("Active now"))
                 }
-            }
-            HStack(alignment: .firstTextBaseline, spacing: 10) {
                 Text(p.name ?? "").font(.display(38))
                 if let a = p.age { Text("\(a)").font(.display(30, weight: .regular)).opacity(0.9) }
                 if let c = club.homeCountry, !c.isEmpty { Text(countryFlag(c)).font(.system(size: 30)) }

@@ -27,138 +27,46 @@ enum PendingMedia: Identifiable {
     }
 }
 
+/// Menú del «+», como en WhatsApp: una tarjeta con la lista de opciones, cada una con su
+/// icono de color. (Contacto, documento o encuesta no se ponen hasta que la app los soporte.)
 struct AttachPanel: View {
     enum Action { case camera, library, location }
     var onAction: (Action) -> Void
-    var onSend: ([PendingMedia]) -> Void
-
-    @State private var assets: [PHAsset] = []
-    @State private var selected: [String] = []
-    @State private var auth: PHAuthorizationStatus = PHPhotoLibrary.authorizationStatus(for: .readWrite)
+    var onSend: ([PendingMedia]) -> Void = { _ in }
 
     var body: some View {
-        VStack(spacing: 18) {
-            Capsule().fill(Brand.line).frame(width: 40, height: 5).padding(.top, 8)
-
-            // Tira de fotos recientes (la cámara primero), como en WhatsApp.
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 6) {
-                    Button { onAction(.camera) } label: {
-                        ZStack {
-                            Brand.ink
-                            Image(systemName: "camera.fill").font(.system(size: 26)).foregroundColor(Brand.onAccent)
-                        }
-                        .frame(width: 104, height: 128).clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
-                    }.buttonStyle(.plain)
-                    if auth == .authorized || auth == .limited {
-                        ForEach(assets, id: \.localIdentifier) { a in
-                            Button { toggle(a) } label: { tile(a) }.buttonStyle(.plain)
-                        }
-                    } else {
-                        Button { requestAccess() } label: {
-                            VStack(spacing: 6) {
-                                Image(systemName: "photo.on.rectangle").font(.system(size: 22))
-                                Text("Show recent photos").font(.system(size: 12, weight: .medium)).multilineTextAlignment(.center)
-                            }
-                            .foregroundColor(Brand.ink)
-                            .frame(width: 104, height: 128).background(Brand.sand)
-                            .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
-                        }.buttonStyle(.plain)
-                    }
-                }
-                .padding(.horizontal, 16)
+        VStack(spacing: 0) {
+            Capsule().fill(Color.black.opacity(0.15)).frame(width: 36, height: 5).padding(.top, 8).padding(.bottom, 14)
+            VStack(spacing: 0) {
+                row(.library, "Photos", "photo.on.rectangle", Color(hex: "1d8bf1"))
+                divider
+                row(.camera, "Camera", "camera.fill", Color(hex: "1f1f1f"))
+                divider
+                row(.location, "Location", "location.fill", Color(hex: "1dab61"))
             }
-
-            if selected.isEmpty {
-                HStack(spacing: 0) {
-                    item(.library, "Gallery", "photo.on.rectangle.angled")
-                    item(.camera, "Camera", "camera")
-                    item(.location, "Location", "mappin.and.ellipse")
-                }
-                .padding(.horizontal, 12)
-            } else {
-                Button { onSend(selected.compactMap { id in assets.first { $0.localIdentifier == id }.map(PendingMedia.asset) }) } label: {
-                    HStack(spacing: 8) {
-                        Text(selected.count == 1 ? L10n.t("Send 1 photo") : String(format: L10n.t("Send %lld photos"), selected.count))
-                        Image(systemName: "arrow.right")
-                    }
-                }
-                .buttonStyle(PrimaryButtonStyle())
-                .padding(.horizontal, 16)
-                .transition(.move(edge: .bottom).combined(with: .opacity))
-            }
+            .background(Color.white)
+            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+            .padding(.horizontal, 14)
             Spacer(minLength: 0)
         }
-        .animation(.easeOut(duration: 0.18), value: selected.isEmpty)
-        .background(Brand.bg)
-        .presentationDetents([.height(300)])
-        .task { if auth == .authorized || auth == .limited { load() } }
+        .background(Color(hex: "f2f2f7"))
+        .presentationDetents([.height(250)])
     }
 
-    private func tile(_ a: PHAsset) -> some View {
-        let n = selected.firstIndex(of: a.localIdentifier).map { $0 + 1 }
-        return AssetThumb(asset: a)
-            .frame(width: 104, height: 128)
-            .overlay(alignment: .bottomLeading) {
-                if a.mediaType == .video {
-                    Text(String(format: "%d:%02d", Int(a.duration) / 60, Int(a.duration) % 60))
-                        .font(.system(size: 11, weight: .semibold)).foregroundColor(.white)
-                        .padding(.horizontal, 5).background(.black.opacity(0.4)).clipShape(Capsule()).padding(6)
-                }
-            }
-            .overlay(alignment: .topTrailing) {
-                ZStack {
-                    Circle().fill(n != nil ? Brand.accent : Color.black.opacity(0.2)).frame(width: 24, height: 24)
-                    Circle().stroke(Color.white, lineWidth: 1.5).frame(width: 24, height: 24)
-                    if let n { Text("\(n)").font(.system(size: 12, weight: .bold)).foregroundColor(Brand.onAccent) }
-                }
-                .padding(7)
-            }
-            .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).stroke(n != nil ? Brand.ink : .clear, lineWidth: 3))
-            .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
-            .scaleEffect(n != nil ? 0.96 : 1)
-            .animation(.spring(response: 0.25, dampingFraction: 0.7), value: n)
-    }
+    private var divider: some View { Divider().padding(.leading, 62) }
 
-    private func item(_ a: Action, _ title: LocalizedStringKey, _ icon: String) -> some View {
+    private func row(_ a: Action, _ title: LocalizedStringKey, _ icon: String, _ color: Color) -> some View {
         Button { FX.tap(); onAction(a) } label: {
-            VStack(spacing: 8) {
-                Image(systemName: icon).font(.system(size: 21, weight: .medium)).foregroundColor(Brand.ink)
-                    .frame(width: 58, height: 58)
-                    .background(Brand.sand).clipShape(Circle())
-                    .overlay(Circle().stroke(Brand.sandDeep, lineWidth: 1))
-                Text(title).font(.system(size: 13, weight: .medium)).foregroundColor(Brand.ink)
+            HStack(spacing: 14) {
+                Image(systemName: icon).font(.system(size: 16, weight: .semibold)).foregroundColor(.white)
+                    .frame(width: 32, height: 32).background(color).clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                Text(title).font(.system(size: 17)).foregroundColor(.black)
+                Spacer()
             }
-            .frame(maxWidth: .infinity)
+            .padding(.horizontal, 14).frame(height: 52)
+            .contentShape(Rectangle())
         }
-        .buttonStyle(PressableButtonStyle())
-    }
-
-    private func toggle(_ a: PHAsset) {
-        FX.selection()
-        if let i = selected.firstIndex(of: a.localIdentifier) { selected.remove(at: i) }
-        else if selected.count < 10 { selected.append(a.localIdentifier) }
-    }
-
-    private func requestAccess() {
-        if auth == .denied || auth == .restricted {
-            if let u = URL(string: UIApplication.openSettingsURLString) { UIApplication.shared.open(u) }
-            return
-        }
-        PHPhotoLibrary.requestAuthorization(for: .readWrite) { s in
-            Task { @MainActor in auth = s; if s == .authorized || s == .limited { load() } }
-        }
-    }
-
-    private func load() {
-        let o = PHFetchOptions()
-        o.sortDescriptors = [NSSortDescriptor(key: "creationDate", ascending: false)]
-        o.fetchLimit = 40
-        o.predicate = NSPredicate(format: "mediaType == %d OR mediaType == %d", PHAssetMediaType.image.rawValue, PHAssetMediaType.video.rawValue)
-        let r = PHAsset.fetchAssets(with: o)
-        var out: [PHAsset] = []
-        r.enumerateObjects { a, _, _ in out.append(a) }
-        assets = out
+        .buttonStyle(.plain)
     }
 }
 

@@ -158,18 +158,14 @@ struct ChatView: View {
             Task { await preparePicked(items) }
         }
         .fullScreenCover(isPresented: $showCamera) {
-            CameraPicker { result in
+            // Cámara como la de WhatsApp: tocar = foto, mantener = vídeo, tira de recientes.
+            ChatCameraView(onCaptured: { items in
                 showCamera = false
-                guard let result else { return }
-                // Como en WhatsApp: tras la foto, vista previa con pie de foto antes de enviar.
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
-                    switch result {
-                    case .image(let img): pendingBatch = PendingBatch(items: [.image(img)])
-                    case .video(let url): pendingBatch = PendingBatch(items: [.video(url)])
-                    }
-                }
-            }
-            .ignoresSafeArea()
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { pendingBatch = PendingBatch(items: items) }
+            }, onOpenLibrary: {
+                showCamera = false
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.45) { showLibrary = true }
+            }, onClose: { showCamera = false })
         }
         .fullScreenCover(item: $pendingBatch) { batch in
             MediaSendPreview(items: batch.items, recipientName: person?.name ?? "",
@@ -203,8 +199,13 @@ struct ChatView: View {
     private var header: some View {
         HStack(spacing: 10) {
             Button { onClose() } label: {
-                Image(systemName: "chevron.left").font(.system(size: 19, weight: .semibold)).foregroundColor(Brand.ink)
-                    .frame(width: 34, height: 40)
+                HStack(spacing: 2) {
+                    Image(systemName: "chevron.left").font(.system(size: 19, weight: .semibold))
+                    let others = store.conversations.filter { $0.personId.lowercased() != personId.lowercased() }.reduce(0) { $0 + $1.unread }
+                    if others > 0 { Text("\(others)").font(.system(size: 17)) }
+                }
+                .foregroundColor(Color(hex: "007aff"))
+                .frame(minWidth: 34, minHeight: 40, alignment: .leading)
             }
             Button { showProfile = true } label: {
                 HStack(spacing: 10) {
@@ -215,7 +216,7 @@ struct ChatView: View {
                             if let c = person?.club?.homeCountry, !c.isEmpty { Text(countryFlag(c)).font(.system(size: 14)) }
                         }
                         if let s = statusLine {
-                            Text(s).font(.system(size: 12)).foregroundColor(theyAreTyping || isOnline ? Brand.online : Brand.muted)
+                            Text(s).font(.system(size: 12)).foregroundColor(theyAreTyping ? ChatColors.green : Color(hex: "8a8a8e"))
                                 .transition(.opacity)
                         }
                     }
@@ -226,7 +227,7 @@ struct ChatView: View {
         }
         .animation(.easeInOut(duration: 0.2), value: statusLine)
         .padding(.horizontal, 8).padding(.vertical, 6)
-        .background(Brand.bg).overlay(Divider(), alignment: .bottom)
+        .background(Color(hex: "f6f6f6").ignoresSafeArea(edges: .top)).overlay(Divider(), alignment: .bottom)
     }
 
     private func daySeparator(_ d: Date) -> some View {
@@ -334,9 +335,9 @@ struct ChatView: View {
 
     private func replyBar(_ r: ChatMessage) -> some View {
         HStack(spacing: 10) {
-            Rectangle().fill(Brand.bronze).frame(width: 3).clipShape(Capsule())
+            Rectangle().fill(ChatColors.green).frame(width: 3).clipShape(Capsule())
             VStack(alignment: .leading, spacing: 2) {
-                Text(r.fromMe ? L10n.t("You") : (person?.name ?? "")).font(.system(size: 13, weight: .semibold)).foregroundColor(Brand.bronze)
+                Text(r.fromMe ? L10n.t("You") : (person?.name ?? "")).font(.system(size: 13, weight: .semibold)).foregroundColor(ChatColors.green)
                 Text(r.preview).font(.system(size: 14)).foregroundColor(Brand.muted).lineLimit(1)
             }
             Spacer()
@@ -389,54 +390,51 @@ struct ChatView: View {
                 .transition(.opacity)
             } else {
                 Button { typing = false; attachMenu = true } label: {
-                    Image(systemName: "plus").font(.system(size: 22, weight: .regular)).foregroundColor(Brand.ink)
-                        .frame(width: 36, height: 44)
+                    Image(systemName: "plus").font(.system(size: 24, weight: .regular)).foregroundColor(Color(hex: "007aff"))
+                        .frame(width: 34, height: 40)
                 }
-                HStack(alignment: .bottom, spacing: 6) {
-                    TextField("Message", text: $draft, axis: .vertical)
-                        .lineLimit(1...6)
-                        .focused($typing)
-                        .font(.system(size: 17))
-                        .padding(.leading, 14).padding(.vertical, 10)
-                    if draft.isEmpty {
-                        // Cámara dentro del campo, como en WhatsApp.
-                        Button { showCamera = true } label: {
-                            Image(systemName: "camera").font(.system(size: 18)).foregroundColor(Brand.muted)
-                                .frame(width: 36, height: 40)
-                        }
-                        .padding(.trailing, 4)
+                TextField("", text: $draft, axis: .vertical)
+                    .lineLimit(1...6)
+                    .focused($typing)
+                    .font(.system(size: 17))
+                    .padding(.horizontal, 14).padding(.vertical, 8)
+                    .background(Color.white).clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+                    .overlay(RoundedRectangle(cornerRadius: 20, style: .continuous).stroke(Color.black.opacity(0.12)))
+                if draft.isEmpty {
+                    Button { typing = false; showCamera = true } label: {
+                        Image(systemName: "camera").font(.system(size: 21)).foregroundColor(Color(hex: "007aff"))
+                            .frame(width: 34, height: 40)
                     }
                 }
-                .background(Color.white).clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
-                .overlay(RoundedRectangle(cornerRadius: 22, style: .continuous).stroke(Brand.line))
             }
             if recorder.isRecording && recordLocked {
                 Button { recordLocked = false; Task { await sendVoice() } } label: {
-                    Image(systemName: "paperplane.fill").font(.system(size: 17)).foregroundColor(Brand.onAccent)
-                        .frame(width: 44, height: 44).background(Brand.accent).clipShape(Circle())
+                    Image(systemName: "arrow.up").font(.system(size: 17, weight: .bold)).foregroundColor(.white)
+                        .frame(width: 40, height: 40).background(ChatColors.green).clipShape(Circle())
                 }
             } else if draft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                 micButton
             } else {
                 Button { sendText() } label: {
-                    Image(systemName: "paperplane.fill").font(.system(size: 17)).foregroundColor(Brand.onAccent)
-                        .frame(width: 44, height: 44).background(Brand.accent).clipShape(Circle())
+                    Image(systemName: "arrow.up").font(.system(size: 17, weight: .bold)).foregroundColor(.white)
+                        .frame(width: 36, height: 36).background(ChatColors.green).clipShape(Circle())
+                        .frame(height: 40)
                 }
             }
         }
         .animation(.easeOut(duration: 0.15), value: recorder.isRecording)
         .animation(.easeOut(duration: 0.15), value: draft.isEmpty)
-        .padding(.horizontal, 8).padding(.vertical, 7)
-        .background(Brand.bg).overlay(Divider(), alignment: .top)
+        .padding(.horizontal, 8).padding(.vertical, 6)
+        .background(Color(hex: "f6f6f6").ignoresSafeArea(edges: .bottom)).overlay(Divider(), alignment: .top)
     }
 
     /// Mantener para grabar, como en WhatsApp: soltar envía, deslizar a la izquierda cancela.
     private var micButton: some View {
-        Image(systemName: "mic.fill")
-            .font(.system(size: recorder.isRecording ? 22 : 19))
-            .foregroundColor(Brand.onAccent)
-            .frame(width: recorder.isRecording ? 58 : 44, height: recorder.isRecording ? 58 : 44)
-            .background(Circle().fill(Brand.accent))
+        Image(systemName: recorder.isRecording ? "mic.fill" : "mic")
+            .font(.system(size: recorder.isRecording ? 24 : 21))
+            .foregroundColor(recorder.isRecording ? .white : Color(hex: "007aff"))
+            .frame(width: recorder.isRecording ? 64 : 34, height: recorder.isRecording ? 64 : 40)
+            .background(Circle().fill(recorder.isRecording ? ChatColors.green : Color.clear))
             .offset(x: recorder.isRecording ? max(-90, min(0, holdDragX)) : 0,
                     y: recorder.isRecording ? max(-70, min(0, holdDragY)) : 0)
             .overlay(alignment: .top) {
@@ -680,6 +678,17 @@ struct PendingBatch: Identifiable {
     let items: [PendingMedia]
 }
 
+// MARK: - Colores del chat (como WhatsApp)
+
+enum ChatColors {
+    static let outgoing = Color(hex: "d9fdd3")      // burbuja propia, verde claro
+    static let incoming = Color.white
+    static let wallpaper = Color(hex: "efeae2")     // fondo beige
+    static let readTicks = Color(hex: "53bdeb")     // doble check azul
+    static let green = Color(hex: "1dab61")         // enviar / grabar
+    static let meta = Color(hex: "667781")          // hora
+}
+
 // MARK: - Burbujas
 
 struct ChatBubble: View {
@@ -738,15 +747,15 @@ struct ChatBubble: View {
         return r.count == 2 && r[0] == r[1] ? "\(r[0]) 2" : r.joined()
     }
 
-    private var bubbleColor: Color { message.fromMe ? Brand.sand : Color.white }
+    private var bubbleColor: Color { message.fromMe ? ChatColors.outgoing : ChatColors.incoming }
 
     @ViewBuilder
     private var quote: some View {
         if let q = quoted {
             HStack(spacing: 8) {
-                Rectangle().fill(Brand.bronze).frame(width: 3)
+                Rectangle().fill(ChatColors.green).frame(width: 3)
                 VStack(alignment: .leading, spacing: 1) {
-                    Text(q.fromMe ? L10n.t("You") : L10n.t("Them")).font(.system(size: 12, weight: .semibold)).foregroundColor(Brand.bronze)
+                    Text(q.fromMe ? L10n.t("You") : L10n.t("Them")).font(.system(size: 12, weight: .semibold)).foregroundColor(ChatColors.green)
                     Text(q.preview).font(.system(size: 13)).foregroundColor(Brand.muted).lineLimit(2)
                 }
                 Spacer(minLength: 0)
@@ -829,12 +838,12 @@ struct ChatBubble: View {
                     ViewThatFits(in: .horizontal) {
                         HStack(alignment: .lastTextBaseline, spacing: 8) {
                             bodyText.fixedSize()
-                            meta.foregroundColor(Brand.muted)
+                            meta.foregroundColor(ChatColors.meta)
                         }
                         VStack(alignment: .trailing, spacing: 2) {
                             bodyText.fixedSize(horizontal: false, vertical: true)
                                 .frame(maxWidth: .infinity, alignment: .leading)
-                            meta.foregroundColor(Brand.muted)
+                            meta.foregroundColor(ChatColors.meta)
                         }
                     }
                 }
@@ -863,7 +872,7 @@ struct ChatBubble: View {
                     Image(systemName: "checkmark").offset(x: 1.5)
                 }
                 .font(.system(size: 9, weight: .bold))
-                .foregroundColor(message.read == true ? Color(hex: "3b9ae8") : Brand.soft)
+                .foregroundColor(message.read == true ? ChatColors.readTicks : ChatColors.meta.opacity(0.7))
             }
         }
     }
@@ -947,7 +956,7 @@ struct ChatWallpaper: View {
                 y += step * 0.75; row += 1
             }
         }
-        .background(Color(hex: "efe9df"))
+        .background(ChatColors.wallpaper)
     }
 }
 

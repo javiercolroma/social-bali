@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		07FE7704A1170A2A3912D674 /* ChatCamera.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5897B8573FD666CE8CE71419 /* ChatCamera.swift */; };
 		0897EB10B993D37439BAEE79 /* L10n.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00CC401644E3732F65E33662 /* L10n.swift */; };
 		0B44BA771BBDD065482CD7C3 /* Backend.swift in Sources */ = {isa = PBXBuildFile; fileRef = 525FBF89172E34D317FCAF44 /* Backend.swift */; };
 		0C13CF2C45615798373A8B62 /* GoogleSignIn in Frameworks */ = {isa = PBXBuildFile; productRef = A833925758C2164FA36A9245 /* GoogleSignIn */; };
@@ -56,6 +57,7 @@
 		4FDBAEC8202622CA34A302EA /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
 		51DF717BE919A8C661988A97 /* Moments.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Moments.swift; sourceTree = "<group>"; };
 		525FBF89172E34D317FCAF44 /* Backend.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Backend.swift; sourceTree = "<group>"; };
+		5897B8573FD666CE8CE71419 /* ChatCamera.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatCamera.swift; sourceTree = "<group>"; };
 		5D321FCC3B325158C232F567 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		6323375755B5CE9680137707 /* SessionFX.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionFX.swift; sourceTree = "<group>"; };
 		65AB2F19CF6DCC5B645AB356 /* NotificationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationManager.swift; sourceTree = "<group>"; };
@@ -124,6 +126,7 @@
 				525FBF89172E34D317FCAF44 /* Backend.swift */,
 				7E6B792B4F4EA9197E1B827D /* BackendConfig.swift */,
 				C79990C6E9E1DD8E1E2ECE72 /* ChatAttach.swift */,
+				5897B8573FD666CE8CE71419 /* ChatCamera.swift */,
 				1F5D6DB2C7D68DB27D0C39C4 /* ChatKit.swift */,
 				867161603B2BAD433155C11B /* ChatsView.swift */,
 				EDB23F12AC1449D14A818B0F /* ChatView.swift */,
@@ -243,6 +246,7 @@
 				0B44BA771BBDD065482CD7C3 /* Backend.swift in Sources */,
 				C621063B40DD7E4CCC5A1CF6 /* BackendConfig.swift in Sources */,
 				8D97FCE1E2969654D912871F /* ChatAttach.swift in Sources */,
+				07FE7704A1170A2A3912D674 /* ChatCamera.swift in Sources */,
 				AFA3179FD6DCF9C72EA02C7A /* ChatKit.swift in Sources */,
 				CCFF2A0C3EF3643596E9504F /* ChatView.swift in Sources */,
 				851668B790A10004977975C2 /* ChatsView.swift in Sources */,
@@ -320,7 +324,7 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 14;
+				CURRENT_PROJECT_VERSION = 15;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				DEVELOPMENT_TEAM = 5JHD53WQ67;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
@@ -387,7 +391,7 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 14;
+				CURRENT_PROJECT_VERSION = 15;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = 5JHD53WQ67;
 				ENABLE_NS_ASSERTIONS = NO;
