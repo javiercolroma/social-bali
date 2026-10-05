@@ -7,13 +7,14 @@ struct RootView: View {
     @EnvironmentObject var store: AppStore
     enum Tab: Hashable { case circle, chats, profile }
     @State private var tab: Tab = .circle
-    @State private var chatPerson: IdString?
+    /// Pila de navegación de Chats: el chat abierto (deslizar desde el borde para volver).
+    @State private var chatPath: [String] = []
 
     var body: some View {
         VStack(spacing: 0) {
             ZStack {
                 screen(.circle) { YourCircleView() }
-                screen(.chats) { ChatsView(asTab: true, onOpenChat: { chatPerson = IdString(id: $0) }) }
+                screen(.chats) { ChatsView(asTab: true, path: $chatPath) }
                 screen(.profile) { MeProfileView() }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -21,27 +22,24 @@ struct RootView: View {
 
             // .id(tab): obliga a redibujar la barra al cambiar de pestaña. Sin él, SwiftUI a
             // veces se salta el refresco y el resaltado se queda en la primera pestaña.
-            ClubTabBar(tab: tab, chatsBadge: store.unreadMessages) { tab = $0 }
-                .id(tab)
+            // Dentro de un chat no hay barra de pestañas (como en WhatsApp).
+            if !(tab == .chats && !chatPath.isEmpty) {
+                ClubTabBar(tab: tab, chatsBadge: store.unreadMessages) { tab = $0 }
+                    .id(tab)
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
+            }
         }
         .background(Brand.bg.ignoresSafeArea())
         // «Message» / aceptar una conexión: abre el chat desde cualquier pantalla.
         .onReceive(store.$openChatWith.compactMap { $0 }) { pid in
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.45) {
-                chatPerson = IdString(id: pid)
+                tab = .chats
+                chatPath = [pid]
                 // Se limpia DESPUÉS: las hojas abiertas (perfil, solicitudes) se cierran al VER el valor.
                 store.openChatWith = nil
             }
         }
-        .overlay {
-            if let item = chatPerson {
-                ChatView(personId: item.id, onOpenProfile: { _ in }, onClose: { chatPerson = nil })
-                    .environmentObject(store)
-                    .transition(.move(edge: .trailing))
-                    .zIndex(5)
-            }
-        }
-        .animation(.easeInOut(duration: 0.28), value: chatPerson?.id)
+        .animation(.easeInOut(duration: 0.25), value: chatPath.isEmpty)
         // Aviso breve (toast).
         .overlay(alignment: .bottom) {
             if let msg = store.flashMessage {

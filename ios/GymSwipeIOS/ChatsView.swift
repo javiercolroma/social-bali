@@ -8,7 +8,8 @@ struct ChatsView: View {
     @Environment(\.dismiss) private var dismiss
     /// Como pestaña no lleva «Done» (solo cuando se presenta como hoja).
     var asTab = false
-    var onOpenChat: (String) -> Void
+    /// Ruta de navegación (el chat abierto). Atrás nativo y deslizar desde el borde.
+    @Binding var path: [String]
     @State private var openProfile: ProfileRow?
     @State private var query = ""
     @State private var results: [ProfileRow] = []
@@ -39,7 +40,7 @@ struct ChatsView: View {
     }
 
     var body: some View {
-        NavigationStack {
+        NavigationStack(path: $path) {
             List {
                 searchField
                     .listRowSeparator(.hidden).listRowBackground(Brand.bg)
@@ -97,6 +98,9 @@ struct ChatsView: View {
             .scrollDismissesKeyboard(.immediately)
             .background(Brand.bg)
             .navigationTitle("Chats").navigationBarTitleDisplayMode(.large)
+            .navigationDestination(for: String.self) { pid in
+                ChatView(personId: pid, onOpenProfile: { _ in }).environmentObject(store)
+            }
             .confirmationDialog("Delete this chat?", isPresented: Binding(get: { confirmClear != nil }, set: { if !$0 { confirmClear = nil } }),
                                 titleVisibility: .visible) {
                 Button("Delete chat", role: .destructive) { if let c = confirmClear { store.clearChat(c.personId) }; confirmClear = nil }
@@ -134,7 +138,7 @@ struct ChatsView: View {
     private func row(_ c: Conversation) -> some View {
         let person = store.person(c.personId)
         let bold = c.unread > 0
-        return Button { FX.tap(); onOpenChat(c.personId) } label: {
+        return Button { FX.tap(); path.append(c.personId) } label: {
             HStack(spacing: 12) {
                 avatar(person, online: online.contains(c.personId.lowercased()))
                 VStack(alignment: .leading, spacing: 3) {

@@ -24,6 +24,8 @@ struct GymSwipeIOSApp: App {
             .environment(\.locale, L10n.locale)
             .environmentObject(store)
             // Arranque con el logo dibujándose.
+            // Capturas bloqueadas (salen en negro) y tapa al grabar la pantalla.
+            .captureGuard()
             // Entrada suave: la app aparece (y se asienta) mientras el logo crece y se desvanece.
             .opacity(showSplash ? 0 : 1)
             .scaleEffect(showSplash ? 0.97 : 1)

@@ -141,6 +141,13 @@ struct MomentsRow: View {
 
     struct ViewerStart: Identifiable { let id = UUID(); let index: Int }
 
+    /// Agrupados por temática (todos los «Run» juntos), el grupo con lo más reciente primero.
+    private var groups: [[Moment]] {
+        Dictionary(grouping: moments, by: \.activity).values
+            .map { $0.sorted { $0.date < $1.date } }
+            .sorted { ($0.last?.date ?? .distantPast) > ($1.last?.date ?? .distantPast) }
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             Text("MOMENTS").font(.system(size: 11, weight: .bold)).tracking(1.4).foregroundColor(Brand.muted)
@@ -156,11 +163,19 @@ struct MomentsRow: View {
                             } ring: { Circle().strokeBorder(Brand.sandDeep, style: StrokeStyle(lineWidth: 1.2, dash: [4, 3])) }
                         }.buttonStyle(.plain)
                     }
-                    ForEach(Array(moments.enumerated()), id: \.element.id) { i, m in
+                    ForEach(Array(groups.enumerated()), id: \.element.first?.activity) { i, g in
+                        let latest = g.last!
                         Button { viewerStart = ViewerStart(index: i) } label: {
-                            circleItem(label: m.isRecent ? m.activityInfo.label : m.whenLabel) {
-                                RemoteFill(url: m.media.url).clipShape(Circle())
-                            } ring: { MomentRing(active: m.isRecent && m.viewed != true && !isMe) }
+                            circleItem(label: latest.activityInfo.label) {
+                                RemoteFill(url: latest.media.url).clipShape(Circle())
+                                    .overlay(alignment: .bottomTrailing) {
+                                        if g.count > 1 {
+                                            Text("\(g.count)").font(.system(size: 10, weight: .bold)).foregroundColor(Brand.ink)
+                                                .frame(minWidth: 18, minHeight: 18).background(Color.white).clipShape(Circle())
+                                                .overlay(Circle().stroke(Brand.bg, lineWidth: 1.5))
+                                        }
+                                    }
+                            } ring: { MomentRing(active: !isMe && g.contains { $0.isRecent && $0.viewed != true }) }
                         }.buttonStyle(.plain)
                     }
                 }
@@ -175,7 +190,7 @@ struct MomentsRow: View {
         }
         .task(id: userId) { await load() }
         .fullScreenCover(item: $viewerStart) { start in
-            MomentViewer(moments: moments, startIndex: start.index, userName: userName, avatarURL: avatarURL,
+            MomentViewer(groups: groups, startGroup: start.index, userName: userName, avatarURL: avatarURL,
                          isMe: isMe, onChange: { Task { await load() } })
         }
         .fullScreenCover(isPresented: $composing) {
@@ -201,14 +216,17 @@ struct MomentsRow: View {
 
 struct MomentViewer: View {
     @Environment(\.dismiss) private var dismiss
-    let moments: [Moment]
-    var startIndex: Int
+    /// Momentos agrupados por actividad; se recorre el grupo y luego se pasa al siguiente.
+    let groups: [[Moment]]
+    var startGroup: Int
     var userName: String
     var avatarURL: String?
     var isMe = false
     var onChange: () -> Void = {}
 
+    @State private var group = 0
     @State private var index = 0
+    private var moments: [Moment] { groups.indices.contains(group) ? groups[group] : [] }
     @State private var progress: CGFloat = 0
     @State private var paused = false
     @State private var dragY: CGFloat = 0
@@ -262,8 +280,13 @@ struct MomentViewer: View {
                 }
         )
         .statusBarHidden()
-        .onAppear { index = min(max(0, startIndex), max(0, moments.count - 1)); markViewed() }
-        .task(id: index) {
+        .onAppear {
+            group = min(max(0, startGroup), max(0, groups.count - 1))
+            // Empieza por el primero que no has visto del grupo (como en Instagram).
+            index = moments.firstIndex { $0.viewed != true } ?? 0
+            markViewed()
+        }
+        .task(id: "\(group)-\(index)") {
             progress = 0
             let step = 0.05
             while !Task.isCancelled {
@@ -344,8 +367,16 @@ struct MomentViewer: View {
 
     private func go(_ d: Int) {
         let n = index + d
-        if n < 0 { progress = 0; return }
-        if n >= moments.count { dismiss(); return }
+        if n < 0 {
+            // Al principio del grupo: al grupo anterior (su último momento).
+            if group > 0 { group -= 1; index = max(0, moments.count - 1); markViewed() } else { progress = 0 }
+            return
+        }
+        if n >= moments.count {
+            // Fin del grupo: al siguiente; si no hay más, se cierra.
+            if group + 1 < groups.count { group += 1; index = 0; markViewed() } else { dismiss() }
+            return
+        }
         index = n
         markViewed()
     }
@@ -366,6 +397,12 @@ struct CreateMomentView: View {
     @State private var pick: PhotosPickerItem?
     @State private var media: MediaItem?
     @State private var uploading = false
+    /// Flujo tipo Instagram: cámara/galería → editor → detalles.
+    enum Stage { case capture, edit(UIImage), details }
+    @State private var stage: Stage = .capture
+    @State private var showLibrary = false
+    /// Vista previa local de lo que se va a publicar (mientras sube).
+    @State private var previewImage: UIImage?
     @State private var activity: String?
     @State private var area: String?
     @State private var note = ""
@@ -375,6 +412,57 @@ struct CreateMomentView: View {
     private var canPost: Bool { media != nil && activity != nil && !posting && !uploading }
 
     var body: some View {
+        switch stage {
+        case .capture:
+            ChatCameraView(onCaptured: { items in
+                guard let m = items.first else { return }
+                Task { await choose(m) }
+            }, onOpenLibrary: { showLibrary = true }, onClose: { dismiss() })
+            .photosPicker(isPresented: $showLibrary, selection: $pick, matching: .any(of: [.images, .videos]), photoLibrary: .shared())
+            .onChange(of: pick) { item in
+                guard let item else { return }
+                pick = nil
+                Task {
+                    if item.supportedContentTypes.contains(where: { $0.conforms(to: .movie) }),
+                       let mv = try? await item.loadTransferable(type: PickedMovie.self) {
+                        await choose(.video(mv.url))
+                    } else if let d = try? await item.loadTransferable(type: Data.self), let img = UIImage(data: d) {
+                        await choose(.image(img))
+                    }
+                }
+            }
+        case .edit(let img):
+            StoryEditor(image: img, onDone: { edited in
+                previewImage = edited
+                stage = .details
+                Task { await uploadEdited(edited) }
+            }, onCancel: { stage = .capture })
+        case .details:
+            details
+        }
+    }
+
+    /// Foto → editor. Vídeo → directo a los detalles (se sube tal cual).
+    private func choose(_ m: PendingMedia) async {
+        if let img = await PendingImageLoader.image(for: m) {
+            stage = .edit(img)
+        } else {
+            stage = .details
+            uploading = true; error = nil
+            do { media = try await PendingUploader.upload(m) }
+            catch { self.error = (error as? LocalizedError)?.errorDescription ?? L10n.t("Couldn't upload. Try again.") }
+            uploading = false
+        }
+    }
+
+    private func uploadEdited(_ img: UIImage) async {
+        uploading = true; error = nil
+        do { media = try await PendingUploader.upload(.image(img)) }
+        catch { self.error = L10n.t("Couldn't upload. Try again.") }
+        uploading = false
+    }
+
+    private var details: some View {
         NavigationStack {
             ZStack(alignment: .bottom) {
                 ScrollView {
@@ -434,53 +522,29 @@ struct CreateMomentView: View {
                 }
             }
             .onAppear { if area == nil { area = store.profile.neighborhood } }
-            .onChange(of: pick) { item in
-                guard let item else { return }
-                Task {
-                    uploading = true; error = nil
-                    do { media = try await MediaUploader.upload(item) }
-                    catch { self.error = (error as? LocalizedError)?.errorDescription ?? L10n.t("Couldn't upload. Try again.") }
-                    uploading = false
-                }
-            }
         }
     }
 
-    /// Vista previa vertical (formato historia), para cambiar o quitar el archivo.
+    /// Vista previa vertical (formato historia) de lo elegido, con «Change» para volver a la cámara.
     private var mediaPicker: some View {
-        PhotosPicker(selection: $pick, matching: .any(of: [.images, .videos, .livePhotos]), photoLibrary: .shared()) {
-            Color.clear
-                .aspectRatio(9 / 16, contentMode: .fit)
-                .frame(maxWidth: 300)
-                .frame(maxWidth: .infinity)
-                .overlay {
-                    if let media { MediaView(item: media) }
-                    else {
-                        ZStack {
-                            Brand.surface
-                            VStack(spacing: 10) {
-                                if uploading { ProgressView().tint(Brand.ink) }
-                                else {
-                                    Image(systemName: "camera.on.rectangle").font(.system(size: 36, weight: .light))
-                                    Text("Add a photo or video").font(.system(size: 15, weight: .medium))
-                                }
-                            }.foregroundColor(Brand.muted)
-                        }
-                    }
-                }
-                .overlay(alignment: .topTrailing) {
-                    if media != nil {
-                        Button { media = nil; pick = nil } label: {
-                            Image(systemName: "xmark").font(.system(size: 13, weight: .bold)).foregroundColor(.white)
-                                .frame(width: 32, height: 32).background(.black.opacity(0.45)).clipShape(Circle())
-                        }.padding(10)
-                    }
-                }
-                .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
-                .overlay(RoundedRectangle(cornerRadius: 22, style: .continuous)
-                    .strokeBorder(Brand.line, style: StrokeStyle(lineWidth: 1, dash: media == nil ? [6, 5] : [])))
-        }
-        .disabled(uploading)
+        Color.clear
+            .aspectRatio(9 / 16, contentMode: .fit)
+            .frame(maxWidth: 260)
+            .overlay {
+                if let previewImage { Image(uiImage: previewImage).resizable().scaledToFill() }
+                else if let media { MediaView(item: media) }
+                else { Brand.surface }
+            }
+            .overlay { if uploading { ProgressView().tint(.white).padding(12).background(.black.opacity(0.35)).clipShape(Circle()) } }
+            .overlay(alignment: .bottomTrailing) {
+                Button { media = nil; previewImage = nil; stage = .capture } label: {
+                    Label("Change", systemImage: "arrow.uturn.backward").font(.system(size: 13, weight: .semibold))
+                        .foregroundColor(.white).padding(.horizontal, 12).frame(height: 32)
+                        .background(.black.opacity(0.45)).clipShape(Capsule())
+                }.padding(10)
+            }
+            .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+            .frame(maxWidth: .infinity)
     }
 
     private func field<C: View>(_ title: LocalizedStringKey, @ViewBuilder _ content: () -> C) -> some View {

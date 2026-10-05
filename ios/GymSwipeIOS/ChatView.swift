@@ -40,6 +40,7 @@ struct ChatView: View {
     @State private var focusedMessage: ChatMessage?
     @State private var atBottom = true
     @StateObject private var recorder = VoiceRecorder()
+    @Namespace private var mediaNS
     @State private var holdDragX: CGFloat = 0
     @State private var holdCancelled = false
     @State private var holding = false
@@ -54,7 +55,6 @@ struct ChatView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            header
             ZStack(alignment: .bottomTrailing) {
                 ScrollViewReader { proxy in
                     ScrollView {
@@ -69,7 +69,8 @@ struct ChatView: View {
                                 let lastOfGroup = i == messages.count - 1 || messages[i + 1].fromMe != m.fromMe
                                     || !Calendar.current.isDate(messages[i + 1].at, inSameDayAs: m.at)
                                 ChatBubble(message: m, quoted: quoted(m), tail: lastOfGroup,
-                                           onOpen: { viewer = m },
+                                           ns: mediaNS, viewing: viewer?.id == m.id,
+                                           onOpen: { withAnimation(.spring(response: 0.38, dampingFraction: 0.86)) { viewer = m } },
                                            onReply: { reply(to: m) },
                                            onLongPress: { FX.tap(); focusedMessage = m })
                                     .padding(.bottom, lastOfGroup ? 8 : 2)
@@ -116,7 +117,11 @@ struct ChatView: View {
             composer
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(Brand.bg.ignoresSafeArea())
+        .background(ChatColors.wallpaper.ignoresSafeArea())
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar { ToolbarItem(placement: .principal) { titleView.frame(width: UIScreen.main.bounds.width - 120) } }
+        .toolbarBackground(Color(hex: "f6f6f6"), for: .navigationBar)
+        .toolbarBackground(.visible, for: .navigationBar)
         .overlay { if let m = focusedMessage { focusOverlay(m) } }
         .animation(.easeOut(duration: 0.18), value: focusedMessage?.id)
         .animation(.easeOut(duration: 0.18), value: atBottom)
@@ -180,7 +185,15 @@ struct ChatView: View {
                 deliver(MessageInsert(sender_id: "", recipient_id: "", text: "", kind: "location", lat: c.latitude, lon: c.longitude))
             }
         }
-        .fullScreenCover(item: $viewer) { MediaViewer(message: $0) }
+        // La foto crece desde su burbuja (y vuelve a ella al cerrar).
+        .overlay {
+            if viewer != nil {
+                ChatMediaViewer(items: messages.filter { ($0.type == "image" || $0.type == "video") && $0.deleted != true },
+                                current: $viewer, ns: mediaNS, senderName: person?.name ?? "")
+                    .zIndex(10)
+            }
+        }
+        .toolbar(viewer != nil ? .hidden : .visible, for: .navigationBar)
     }
 
     // MARK: Cabecera
@@ -196,38 +209,28 @@ struct ChatView: View {
         return String(format: L10n.t("last seen %@"), f.string(from: d))
     }
 
-    private var header: some View {
-        HStack(spacing: 10) {
-            Button { onClose() } label: {
-                HStack(spacing: 2) {
-                    Image(systemName: "chevron.left").font(.system(size: 19, weight: .semibold))
-                    let others = store.conversations.filter { $0.personId.lowercased() != personId.lowercased() }.reduce(0) { $0 + $1.unread }
-                    if others > 0 { Text("\(others)").font(.system(size: 17)) }
-                }
-                .foregroundColor(Color(hex: "007aff"))
-                .frame(minWidth: 34, minHeight: 40, alignment: .leading)
-            }
-            Button { showProfile = true } label: {
-                HStack(spacing: 10) {
-                    PersonAvatar(person: person, size: 38)
-                    VStack(alignment: .leading, spacing: 1) {
-                        HStack(spacing: 5) {
-                            Text(person?.name ?? "…").font(.system(size: 17, weight: .semibold)).foregroundColor(Brand.ink)
-                            if let c = person?.club?.homeCountry, !c.isEmpty { Text(countryFlag(c)).font(.system(size: 14)) }
-                        }
-                        if let s = statusLine {
-                            Text(s).font(.system(size: 12)).foregroundColor(theyAreTyping ? ChatColors.green : Color(hex: "8a8a8e"))
-                                .transition(.opacity)
-                        }
+    /// Cabecera en la barra de navegación nativa: así funciona «atrás» y deslizar desde el borde.
+    private var titleView: some View {
+        Button { showProfile = true } label: {
+            HStack(spacing: 9) {
+                PersonAvatar(person: person, size: 34)
+                VStack(alignment: .leading, spacing: 0) {
+                    HStack(spacing: 5) {
+                        Text(person?.name ?? "…").font(.system(size: 16, weight: .semibold)).foregroundColor(Brand.ink)
+                        if let c = person?.club?.homeCountry, !c.isEmpty { Text(countryFlag(c)).font(.system(size: 13)) }
                     }
-                    Spacer(minLength: 0)
+                    if let s = statusLine {
+                        Text(s).font(.system(size: 12)).foregroundColor(theyAreTyping ? ChatColors.green : Color(hex: "8a8a8e"))
+                            .transition(.opacity)
+                    }
                 }
-                .contentShape(Rectangle())
-            }.buttonStyle(.plain)
+                Spacer(minLength: 0)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .contentShape(Rectangle())
+            .animation(.easeInOut(duration: 0.2), value: statusLine)
         }
-        .animation(.easeInOut(duration: 0.2), value: statusLine)
-        .padding(.horizontal, 8).padding(.vertical, 6)
-        .background(Color(hex: "f6f6f6").ignoresSafeArea(edges: .top)).overlay(Divider(), alignment: .bottom)
+        .buttonStyle(.plain)
     }
 
     private func daySeparator(_ d: Date) -> some View {
@@ -695,6 +698,9 @@ struct ChatBubble: View {
     let message: ChatMessage
     var quoted: ChatMessage? = nil
     var tail = true
+    var ns: Namespace.ID? = nil
+    /// Esta foto está abierta en el visor: aquí se deja su hueco.
+    var viewing = false
     var onOpen: () -> Void
     var onReply: () -> Void
     var onLongPress: () -> Void
@@ -784,8 +790,15 @@ struct ChatBubble: View {
                     quote
                     Button(action: onOpen) {
                         ZStack {
-                            RemoteFill(url: message.posterURL ?? message.mediaURL ?? "")
-                            if message.type == "video" {
+                            if viewing {
+                                Color.clear
+                            } else if let ns {
+                                RemoteFill(url: message.posterURL ?? message.mediaURL ?? "")
+                                    .matchedGeometryEffect(id: message.id, in: ns)
+                            } else {
+                                RemoteFill(url: message.posterURL ?? message.mediaURL ?? "")
+                            }
+                            if message.type == "video" && !viewing {
                                 Image(systemName: "play.fill").font(.system(size: 20)).foregroundColor(.white)
                                     .frame(width: 48, height: 48).background(.black.opacity(0.4)).clipShape(Circle())
                             }
