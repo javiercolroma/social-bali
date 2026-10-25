@@ -34,16 +34,16 @@ struct RootView: View {
         #if DEBUG
         // Capturas en el simulador: BALI_DEBUG_OPEN = tab:chats | tab:profile | chat:<uuid> | profile:<uuid>
         .task {
-            guard let open = ProcessInfo.processInfo.environment["BALI_DEBUG_OPEN"] else { return }
+            guard let open = ProcessInfo.processInfo.environment["BALI_DEBUG_OPEN"], !open.isEmpty else { return }
+            NSLog("[DebugOpen] %@", open)
             try? await Task.sleep(nanoseconds: 4_000_000_000)
             let parts = open.split(separator: ":", maxSplits: 1).map(String.init)
-            switch (parts.first, parts.count > 1 ? parts[1] : nil) {
-            case ("tab", "chats"?): tab = .chats
-            case ("tab", "profile"?): tab = .profile
-            case ("chat", let id?): tab = .chats; chatPath = [id]
-            case ("profile", let id?): debugProfile = IdString(id: id)
-            default: break
-            }
+            let kind = parts.first ?? "", arg = parts.count > 1 ? parts[1] : ""
+            NSLog("[DebugOpen] applying %@ %@", kind, arg)
+            if kind == "tab" && arg == "chats" { tab = .chats }
+            else if kind == "tab" && arg == "profile" { tab = .profile }
+            else if kind == "chat" { tab = .chats; chatPath = [arg] }
+            else if kind == "profile" { debugProfile = IdString(id: arg) }
         }
         .sheet(item: $debugProfile) { ClubProfileView(personId: $0.id).environmentObject(store) }
         #endif
