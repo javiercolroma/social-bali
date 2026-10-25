@@ -41,10 +41,10 @@
 				<string>NSPrivacyCollectedDataTypePurposeAppFunctionality</string>
 			</array>
 		</dict>
-		<!-- Entrenos: series, volumen, duración, XP, récords, racha. -->
+		<!-- Notas de voz del chat (Storage). -->
 		<dict>
 			<key>NSPrivacyCollectedDataType</key>
-			<string>NSPrivacyCollectedDataTypeFitness</string>
+			<string>NSPrivacyCollectedDataTypeAudioData</string>
 			<key>NSPrivacyCollectedDataTypeLinked</key>
 			<true/>
 			<key>NSPrivacyCollectedDataTypeTracking</key>
@@ -54,9 +54,8 @@
 				<string>NSPrivacyCollectedDataTypePurposeAppFunctionality</string>
 			</array>
 		</dict>
-		<!-- Ubicación APROXIMADA: Backend.updatePresence escribe geo_cell_lat/lon
-		     redondeadas a celdas de 0,05° (~5 km) para Ranking y Partner.
-		     Nunca se envía la posición exacta. -->
+		<!-- Ubicación APROXIMADA: el servidor la ajusta a ~110 m y solo devuelve distancias;
+		     sirve para Your Circle y para confirmar que estás en Bali. -->
 		<dict>
 			<key>NSPrivacyCollectedDataType</key>
 			<string>NSPrivacyCollectedDataTypeCoarseLocation</string>
@@ -69,7 +68,7 @@
 				<string>NSPrivacyCollectedDataTypePurposeAppFunctionality</string>
 			</array>
 		</dict>
-		<!-- Foto de perfil y fotos de entreno (Storage). -->
+		<!-- Fotos y vídeos del perfil, de los Momentos y del chat (Storage). -->
 		<dict>
 			<key>NSPrivacyCollectedDataType</key>
 			<string>NSPrivacyCollectedDataTypePhotosorVideos</string>

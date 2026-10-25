@@ -396,11 +396,9 @@ struct SettingsView: View {
                         Divider()
                         NavigationLink { LegalView(kind: .community) } label: { settingsRow("Community guidelines", "person.2.fill", chevron: true) }.buttonStyle(.plain)
                         Divider()
-                        if let url = URL(string: "mailto:soporte@forgeloop.app") {
-                            Link(destination: url) { settingsRow("Support", "questionmark.circle.fill", chevron: true) }
-                        }
+                        Link(destination: Links.support) { settingsRow("Support", "questionmark.circle.fill", chevron: true) }
                         Divider()
-                        HStack { Label("Version", systemImage: "info.circle"); Spacer(); Text("1.0").foregroundColor(Brand.soft) }
+                        HStack { Label("Version", systemImage: "info.circle"); Spacer(); Text(Links.versionLabel).foregroundColor(Brand.soft) }
                             .font(.system(size: 15, weight: .semibold)).foregroundColor(Brand.ink)
                     }
 
@@ -485,7 +483,8 @@ struct LegalView: View {
             • Your account (name and email) and your profile: photos and videos, age, where you're from, your area in Bali, how long you're staying, your sports, bio and what you're looking for.
             • Your location, only while the app is open. It is rounded to a grid of about 110 m before it is stored, and other members only ever see an approximate distance, never your position. It is also used to confirm you are in Bali.
             • When you're online, if you choose to show it. You can hide your distance and your online status in Settings.
-            • Your connection requests and messages with people you've connected with.
+            • Your messages (text, photos, videos, voice notes and shared locations) with other members, and the Moments you share. Moments disappear after 24 hours unless you keep them on your profile.
+            • Reports and blocks, to keep the community safe.
 
             Where it is stored
             • On our servers (Supabase). It is not sold or passed on to third parties for advertising.
@@ -494,7 +493,7 @@ struct LegalView: View {
             • You can edit your data at any time from your profile, and delete your account and all its data from Settings.
 
             Contact
-            • For any questions, write to us at soporte@forgeloop.app.
+            • For any questions, write to us at \(Links.supportEmail).
 
             This policy may be updated; we will let you know about relevant changes inside the app.
             """
@@ -518,7 +517,7 @@ struct LegalView: View {
             • The app is provided "as is". To the extent permitted by law, we are not liable for damages arising from the use of the app.
 
             Contact
-            • soporte@forgeloop.app
+            • \(Links.supportEmail)
             """
         case .community:
             return """
@@ -543,7 +542,7 @@ struct LegalView: View {
             • Breaking these guidelines may lead to removal of content, limited features or deletion of the account.
 
             Report a problem or appeal
-            • Write to us at soporte@forgeloop.app.
+            • Write to us at \(Links.supportEmail).
             """
         }
     }

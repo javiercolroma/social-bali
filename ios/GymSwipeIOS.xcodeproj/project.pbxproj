@@ -22,6 +22,7 @@
 		46EBB8712F3CB101DB8A4FED /* AppStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = D0B083763AEA6D7CE3C7B500 /* AppStore.swift */; };
 		4E84259B7279388EEDCF0D2B /* Presence.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE3D523E2B23CB071DE7E8BA /* Presence.swift */; };
 		5D87F9D09E700FC924A4C724 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B83B0B92285D78A53157123F /* Assets.xcassets */; };
+		62F55E41245C364AB83B5DAE /* Links.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A7CE6C37B8C8F59BACA3EE3 /* Links.swift */; };
 		6A9B443DE5B7B54DE374C3A1 /* ClubProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2240957DB593117FC154CFD /* ClubProfileView.swift */; };
 		6F3B3519B39CCE8280492005 /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 29747A9B85AA4E6D8D9D3843 /* RootView.swift */; };
 		851668B790A10004977975C2 /* ChatsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 867161603B2BAD433155C11B /* ChatsView.swift */; };
@@ -69,6 +70,7 @@
 		75B84C1241AA6578E1A438C3 /* AuthView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthView.swift; sourceTree = "<group>"; };
 		7E6B792B4F4EA9197E1B827D /* BackendConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackendConfig.swift; sourceTree = "<group>"; };
 		867161603B2BAD433155C11B /* ChatsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatsView.swift; sourceTree = "<group>"; };
+		8A7CE6C37B8C8F59BACA3EE3 /* Links.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Links.swift; sourceTree = "<group>"; };
 		923B0E1366B1AA23B28A79D9 /* ChatMediaViewer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatMediaViewer.swift; sourceTree = "<group>"; };
 		9C951BC98D3C387AE7EC6AB5 /* Media.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Media.swift; sourceTree = "<group>"; };
 		9CAC012CB53EB545C20ED468 /* GymSwipeIOSApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GymSwipeIOSApp.swift; sourceTree = "<group>"; };
@@ -145,6 +147,7 @@
 				45AAAB98E146869DA2747469 /* Info.plist */,
 				00CC401644E3732F65E33662 /* L10n.swift */,
 				B882A7727979F051EE5D14F5 /* LaunchSplash.swift */,
+				8A7CE6C37B8C8F59BACA3EE3 /* Links.swift */,
 				9C951BC98D3C387AE7EC6AB5 /* Media.swift */,
 				D1596E5BECE9666DDA76867A /* Models.swift */,
 				E7365092E74F9DFDA1F336F8 /* MomentEditor.swift */,
@@ -266,6 +269,7 @@
 				FBCDEE4F608FFD8E2591F44A /* GymSwipeIOSApp.swift in Sources */,
 				0897EB10B993D37439BAEE79 /* L10n.swift in Sources */,
 				BAA07060CE7F7A1A7CC504CA /* LaunchSplash.swift in Sources */,
+				62F55E41245C364AB83B5DAE /* Links.swift in Sources */,
 				282D409F85299EB36125F5F7 /* Media.swift in Sources */,
 				D1A51AF5DF1BCC6CDABBD42C /* Models.swift in Sources */,
 				D1DA1FE08D37C199E9A9B2E1 /* MomentEditor.swift in Sources */,
@@ -336,7 +340,7 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 18;
+				CURRENT_PROJECT_VERSION = 19;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				DEVELOPMENT_TEAM = 5JHD53WQ67;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
@@ -403,7 +407,7 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 18;
+				CURRENT_PROJECT_VERSION = 19;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = 5JHD53WQ67;
 				ENABLE_NS_ASSERTIONS = NO;

@@ -83,8 +83,10 @@ struct AuthProviderSheet: View {
                         .signInWithAppleButtonStyle(.black)
                         .frame(height: 52).clipShape(RoundedRectangle(cornerRadius: 14))
 
-                    providerButton(creating ? "Sign up with Google" : "Continue with Google", action: { handleGoogle() }) {
-                        GoogleGLogo(size: 18)
+                    if GoogleAuth.isConfigured {
+                        providerButton(creating ? "Sign up with Google" : "Continue with Google", action: { handleGoogle() }) {
+                            GoogleGLogo(size: 18)
+                        }
                     }
                 }
                 if busy { ProgressView().tint(Brand.ink) }

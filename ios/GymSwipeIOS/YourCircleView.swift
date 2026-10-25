@@ -369,11 +369,45 @@ struct ArrivalView: View {
                     .font(.subheadline).foregroundColor(Brand.muted).multilineTextAlignment(.center)
                 Button { FX.tap(); Task { await onRefresh() } } label: { Text("I'm in Bali — check again") }
                     .buttonStyle(PrimaryButtonStyle()).padding(.top, 6)
+
+                // Código de acceso: abre el Circle desde fuera de Bali (revisión de Apple,
+                // equipo, invitados). Lo canjea el servidor (0037).
+                if showCode {
+                    VStack(spacing: 8) {
+                        TextField("Access code", text: $code)
+                            .textInputAutocapitalization(.characters).autocorrectionDisabled()
+                            .font(.system(size: 17, weight: .semibold)).multilineTextAlignment(.center)
+                            .padding(.horizontal, 14).frame(height: 50).background(Color.white)
+                            .clipShape(RoundedRectangle(cornerRadius: 14)).overlay(RoundedRectangle(cornerRadius: 14).stroke(Brand.line))
+                        Button { Task { await redeem() } } label: { if redeeming { ProgressView() } else { Text("Unlock") } }
+                            .buttonStyle(PrimaryButtonStyle(enabled: !code.trimmingCharacters(in: .whitespaces).isEmpty))
+                            .disabled(code.trimmingCharacters(in: .whitespaces).isEmpty || redeeming)
+                        if let codeError { Text(codeError).font(.footnote).foregroundColor(Brand.redText) }
+                    }
+                    .padding(.top, 6)
+                } else {
+                    Button { withAnimation { showCode = true } } label: {
+                        Text("Have an access code?").font(.system(size: 14, weight: .medium)).foregroundColor(Brand.muted).underline()
+                    }
+                    .padding(.top, 4)
+                }
             }
             .padding(.horizontal, 32)
         }
         .refreshable { await onRefresh() }
         .background(Brand.bg)
+    }
+
+    @State private var showCode = false
+    @State private var code = ""
+    @State private var redeeming = false
+    @State private var codeError: String?
+
+    private func redeem() async {
+        redeeming = true; codeError = nil
+        let ok = await Backend.shared.redeemAccessCode(code.trimmingCharacters(in: .whitespaces))
+        redeeming = false
+        if ok { FX.success(); await onRefresh() } else { FX.warning(); codeError = L10n.t("That code isn't valid.") }
     }
 }
 

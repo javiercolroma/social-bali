@@ -31,6 +31,15 @@ final class Backend {
         return try? await client?.auth.session.user.id
     }
 
+    #if DEBUG
+    /// Solo DEBUG: sesión con email y contraseña para el simulador (capturas, pruebas).
+    func debugSignIn(email: String, password: String) async throws -> UUID {
+        guard let client else { throw BackendError.notConfigured }
+        let s = try await client.auth.signIn(email: email, password: password)
+        return s.user.id
+    }
+    #endif
+
     // MARK: - Auth (ID token nativo → sesión Supabase)
 
     /// Inicia sesión en Supabase con el ID token de Apple (requiere el `nonce` en crudo).
@@ -198,6 +207,14 @@ final class Backend {
         _ = try await client.storage.from("media")
             .upload(path, data: data, options: FileOptions(contentType: contentType, upsert: false))
         return try client.storage.from("media").getPublicURL(path: path).absoluteString
+    }
+
+    /// Canjea un código de acceso (0037): abre el Circle desde fuera de Bali durante un tiempo.
+    func redeemAccessCode(_ code: String) async -> Bool {
+        guard let client, client.auth.currentSession != nil else { return false }
+        struct P: Encodable { let code: String }
+        let ok: Bool? = try? await client.rpc("redeem_access_code", params: P(code: code)).execute().value
+        return ok == true
     }
 
     /// ¿Estoy en Bali? (0029) — decide si el Circle se abre o enseña la llegada.
