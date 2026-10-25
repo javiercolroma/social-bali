@@ -66,17 +66,22 @@ struct GymSwipeIOSApp: App {
             // Arranque. Sesión local SIN sesión en el servidor (p. ej. un login que el servidor
             // rechazó): se cierra, para ver el login en vez de pantallas que no cargan.
             .task {
+                var justSignedIn = false
                 #if DEBUG
                 // Simulador: BALI_DEBUG_EMAIL / BALI_DEBUG_PASSWORD abren sesión sin Apple.
                 let env = ProcessInfo.processInfo.environment
-                if store.auth == nil, let e = env["BALI_DEBUG_EMAIL"], let p = env["BALI_DEBUG_PASSWORD"],
-                   let uid = try? await Backend.shared.debugSignIn(email: e, password: p) {
-                    store.signIn(provider: "email", userId: uid.uuidString, email: e, name: nil)
-                    store.hydrateAccountFromBackend()
+                if store.auth == nil, let e = env["BALI_DEBUG_EMAIL"], let p = env["BALI_DEBUG_PASSWORD"] {
+                    do {
+                        let uid = try await Backend.shared.debugSignIn(email: e, password: p)
+                        NSLog("[DebugLogin] ok %@", uid.uuidString)
+                        store.signIn(provider: "email", userId: uid.uuidString, email: e, name: nil)
+                        store.hydrateAccountFromBackend()
+                        justSignedIn = true
+                    } catch { NSLog("[DebugLogin] failed: %@", String(describing: error)) }
                 }
                 #endif
                 guard store.auth != nil else { return }
-                await store.validateBackendSession()
+                if !justSignedIn { await store.validateBackendSession() }
                 guard store.auth != nil else { return }
                 if store.account == nil { store.hydrateAccountFromBackend() }
                 Task { await Backend.shared.touchPresence() }

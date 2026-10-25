@@ -36,6 +36,9 @@ final class Backend {
     func debugSignIn(email: String, password: String) async throws -> UUID {
         guard let client else { throw BackendError.notConfigured }
         let s = try await client.auth.signIn(email: email, password: password)
+        NSLog("[DebugLogin] currentSession after signIn: %@", client.auth.currentSession == nil ? "nil" : "ok")
+        do { _ = try await client.auth.session; NSLog("[DebugLogin] auth.session ok") }
+        catch { NSLog("[DebugLogin] auth.session threw: %@", String(describing: error)) }
         return s.user.id
     }
     #endif

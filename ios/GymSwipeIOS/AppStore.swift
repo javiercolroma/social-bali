@@ -239,7 +239,7 @@ final class AppStore: ObservableObject {
         } catch let e as URLError {
             print("[Auth] sin red al validar la sesión; se mantiene:", e.code)
         } catch {
-            print("[Auth] sesión de Supabase no válida → cierre local:", error)
+            NSLog("[Auth] sesión de Supabase no válida → cierre local: %@", String(describing: error))
             logout()
         }
     }

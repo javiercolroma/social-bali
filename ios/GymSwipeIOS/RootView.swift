@@ -9,6 +9,7 @@ struct RootView: View {
     @State private var tab: Tab = .circle
     /// Pila de navegación de Chats: el chat abierto (deslizar desde el borde para volver).
     @State private var chatPath: [String] = []
+    @State private var debugProfile: IdString?
 
     var body: some View {
         VStack(spacing: 0) {
@@ -30,6 +31,22 @@ struct RootView: View {
             }
         }
         .background(Brand.bg.ignoresSafeArea())
+        #if DEBUG
+        // Capturas en el simulador: BALI_DEBUG_OPEN = tab:chats | tab:profile | chat:<uuid> | profile:<uuid>
+        .task {
+            guard let open = ProcessInfo.processInfo.environment["BALI_DEBUG_OPEN"] else { return }
+            try? await Task.sleep(nanoseconds: 4_000_000_000)
+            let parts = open.split(separator: ":", maxSplits: 1).map(String.init)
+            switch (parts.first, parts.count > 1 ? parts[1] : nil) {
+            case ("tab", "chats"?): tab = .chats
+            case ("tab", "profile"?): tab = .profile
+            case ("chat", let id?): tab = .chats; chatPath = [id]
+            case ("profile", let id?): debugProfile = IdString(id: id)
+            default: break
+            }
+        }
+        .sheet(item: $debugProfile) { ClubProfileView(personId: $0.id).environmentObject(store) }
+        #endif
         // «Message» / aceptar una conexión: abre el chat desde cualquier pantalla.
         .onReceive(store.$openChatWith.compactMap { $0 }) { pid in
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.45) {
