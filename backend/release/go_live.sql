@@ -6,10 +6,8 @@
 -- ─────────────────────────────────────────────────────────────────────────────
 update public.app_settings set value = 'true' where key = 'require_bali';
 
--- Ficheros subidos por la cuenta de prueba (caras IA, demo): solo las filas; el bucket
--- se limpia solo al no quedar referencias.
-delete from storage.objects where bucket_id = 'media' and name like '5eed0000-0000-4000-8000-0000000000aa/%';
-
+-- Los ficheros de la cuenta de prueba (caras IA, demo) se borran por la API de Storage
+-- ANTES de ejecutar esto (Supabase no permite borrarlos por SQL): ver backend/release/README.
 -- La cascada se lleva perfil, presencia, momentos, mensajes y ajustes.
 delete from auth.users where id in (select id from public.profiles where is_seed);
 delete from public.discover_decks;   -- los mazos de hoy apuntaban a perfiles borrados
