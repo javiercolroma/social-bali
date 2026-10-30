@@ -14,6 +14,8 @@ final class AppStore: ObservableObject {
     @Published var auth: Auth?
     @Published var account: Account?
     @Published var conversations: [Conversation] = []
+    /// Solicitud de ingreso (0039). nil = aún no consultado.
+    @Published var membership: Membership? = nil
     /// Ajustes de cada chat (fijado, silenciado, vaciado), por id de la otra persona.
     @Published var chatSettings: [String: Backend.ChatSetting] = [:]
 
@@ -159,6 +161,8 @@ final class AppStore: ObservableObject {
     func saveAccount(_ acc: Account) {
         account = acc; persist()
         syncProfileToBackend()
+        // El perfil acaba de crearse: en unos segundos el servidor sabrá si está pendiente.
+        Task { try? await Task.sleep(nanoseconds: 2_500_000_000); loadMembership() }
     }
 
     /// Best-effort: sube el perfil a Supabase si hay backend configurado y sesión abierta.
@@ -402,4 +406,16 @@ extension AppStore {
         s.cleared_at = BackendDate.iso.string(from: Date()); s.pinned = false; chatSettings[k] = s
         Task { await Backend.shared.saveChatSetting(other: k, pinned: false, clear: true) }
     }
+}
+
+// MARK: - Puerta de entrada (0039)
+
+extension AppStore {
+    func loadMembership() {
+        guard BackendConfig.isConfigured else { return }
+        Task { if let m = await Backend.shared.myMembership() { membership = m } }
+    }
+
+    /// ¿Puede usar la app? Mientras no se sabe, se asume que sí (no bloquear por un fallo de red).
+    var isMemberOrUnknown: Bool { membership?.isApproved ?? true }
 }

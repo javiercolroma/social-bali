@@ -80,6 +80,10 @@ struct MeProfileView: View {
                 }
                 MediaGallery(items: Array((store.profile.media ?? []).dropFirst()))
 
+                if let m = store.membership {
+                    if m.is_admin == true { AdminApplicationsRow(count: m.pending_count ?? 0).environmentObject(store) }
+                    if let code = m.invite_code { InviteCard(code: code, left: m.invites_left ?? 0) }
+                }
                 HStack(spacing: 10) {
                     Button { FX.tap(); editing = true } label: {
                         Label("Edit profile", systemImage: "pencil").frame(maxWidth: .infinity)

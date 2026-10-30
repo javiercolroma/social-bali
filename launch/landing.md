@@ -1,6 +1,6 @@
 # Landing (una página)
 
-URL sugerida: balicircle.app o balicircle.club (comprueba disponibilidad). Mientras tanto, GitHub Pages vale.
+URL actual: **https://balicircle.vercel.app** (Vercel, proyecto `balicircle` del equipo Bali Circle, publica sola desde la carpeta `balicircle/` del repo javiercolroma/forgeloop-legal en cada push a main). Dominio propio pendiente: balicircle.club estaba libre el 2026-10-26.
 Una sola pantalla. Fondo marfil, titular en serifa, un botón. Nada más.
 
 ---

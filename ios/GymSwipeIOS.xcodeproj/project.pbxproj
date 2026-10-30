@@ -17,6 +17,7 @@
 		2A71043ED4BBAF7A09523AFF /* Components.swift in Sources */ = {isa = PBXBuildFile; fileRef = A415A6402658DC75C3C37C3C /* Components.swift */; };
 		2A882A99A8CD48DE197DD5A5 /* PhotoSupport.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3A318726DFFA74FF768BA96D /* PhotoSupport.swift */; };
 		2DBD55AA73382ED2781DF3BB /* Moments.swift in Sources */ = {isa = PBXBuildFile; fileRef = 51DF717BE919A8C661988A97 /* Moments.swift */; };
+		30E78BD7078FF6481F45A68D /* Membership.swift in Sources */ = {isa = PBXBuildFile; fileRef = E21131378E581317FAB93BE3 /* Membership.swift */; };
 		388862FD824CE56B55EE672A /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4FDBAEC8202622CA34A302EA /* Theme.swift */; };
 		44168B322E9C8DF64A6B35D2 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 5D321FCC3B325158C232F567 /* PrivacyInfo.xcprivacy */; };
 		46EBB8712F3CB101DB8A4FED /* AppStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = D0B083763AEA6D7CE3C7B500 /* AppStore.swift */; };
@@ -87,6 +88,7 @@
 		D0B083763AEA6D7CE3C7B500 /* AppStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppStore.swift; sourceTree = "<group>"; };
 		D1596E5BECE9666DDA76867A /* Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models.swift; sourceTree = "<group>"; };
 		D6EC6B48C1199B831CEB9E85 /* SocialClub.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SocialClub.swift; sourceTree = "<group>"; };
+		E21131378E581317FAB93BE3 /* Membership.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Membership.swift; sourceTree = "<group>"; };
 		E53E08D1A4CF0DE70074A344 /* ProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileView.swift; sourceTree = "<group>"; };
 		E7365092E74F9DFDA1F336F8 /* MomentEditor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MomentEditor.swift; sourceTree = "<group>"; };
 		EDB23F12AC1449D14A818B0F /* ChatView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatView.swift; sourceTree = "<group>"; };
@@ -149,6 +151,7 @@
 				B882A7727979F051EE5D14F5 /* LaunchSplash.swift */,
 				8A7CE6C37B8C8F59BACA3EE3 /* Links.swift */,
 				9C951BC98D3C387AE7EC6AB5 /* Media.swift */,
+				E21131378E581317FAB93BE3 /* Membership.swift */,
 				D1596E5BECE9666DDA76867A /* Models.swift */,
 				E7365092E74F9DFDA1F336F8 /* MomentEditor.swift */,
 				51DF717BE919A8C661988A97 /* Moments.swift */,
@@ -271,6 +274,7 @@
 				BAA07060CE7F7A1A7CC504CA /* LaunchSplash.swift in Sources */,
 				62F55E41245C364AB83B5DAE /* Links.swift in Sources */,
 				282D409F85299EB36125F5F7 /* Media.swift in Sources */,
+				30E78BD7078FF6481F45A68D /* Membership.swift in Sources */,
 				D1A51AF5DF1BCC6CDABBD42C /* Models.swift in Sources */,
 				D1DA1FE08D37C199E9A9B2E1 /* MomentEditor.swift in Sources */,
 				2DBD55AA73382ED2781DF3BB /* Moments.swift in Sources */,
@@ -340,7 +344,7 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 20;
+				CURRENT_PROJECT_VERSION = 22;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				DEVELOPMENT_TEAM = 5JHD53WQ67;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
@@ -360,7 +364,7 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 1.1;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
@@ -407,7 +411,7 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 20;
+				CURRENT_PROJECT_VERSION = 22;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = 5JHD53WQ67;
 				ENABLE_NS_ASSERTIONS = NO;
@@ -421,7 +425,7 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 1.1;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -450,7 +454,7 @@
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SUPPORTS_MACCATALYST = NO;
 				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				TARGETED_DEVICE_FAMILY = 1;
 			};
 			name = Release;
 		};
@@ -472,7 +476,7 @@
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SUPPORTS_MACCATALYST = NO;
 				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				TARGETED_DEVICE_FAMILY = 1;
 			};
 			name = Debug;
 		};

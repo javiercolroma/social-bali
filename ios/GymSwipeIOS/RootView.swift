@@ -12,6 +12,16 @@ struct RootView: View {
     @State private var debugProfile: IdString?
 
     var body: some View {
+        // Puerta de entrada (0039): mientras la solicitud está pendiente o fue rechazada,
+        // la app entera es la pantalla de membresía (con código de invitación).
+        if store.account != nil, let m = store.membership, !m.isApproved {
+            MembershipGate(membership: m).environmentObject(store)
+        } else {
+            tabs
+        }
+    }
+
+    private var tabs: some View {
         VStack(spacing: 0) {
             ZStack {
                 screen(.circle) { YourCircleView() }

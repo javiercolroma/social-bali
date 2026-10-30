@@ -212,6 +212,29 @@ final class Backend {
         return try client.storage.from("media").getPublicURL(path: path).absoluteString
     }
 
+    /// Mi situación en el club (0039): pending · approved · declined.
+    func myMembership() async -> Membership? {
+        guard let client, client.auth.currentSession != nil else { return nil }
+        return try? await client.rpc("my_membership").execute().value
+    }
+
+    func pendingApplications() async -> [ProfileRow] {
+        guard let client else { return [] }
+        return (try? await client.rpc("pending_applications").execute().value) ?? []
+    }
+
+    func reviewApplication(_ id: String, approve: Bool) async -> Bool {
+        guard let client else { return false }
+        struct P: Encodable { let target: String; let approve: Bool }
+        do { try await client.rpc("review_application", params: P(target: id.lowercased(), approve: approve)).execute(); return true }
+        catch { print("[Membership] revisar falló:", error); return false }
+    }
+
+    func reapply() async {
+        guard let client else { return }
+        _ = try? await client.rpc("reapply").execute()
+    }
+
     /// Canjea un código de acceso (0037): abre el Circle desde fuera de Bali durante un tiempo.
     func redeemAccessCode(_ code: String) async -> Bool {
         guard let client, client.auth.currentSession != nil else { return false }
@@ -539,6 +562,9 @@ struct ProfileRow: Codable {
     var days_left: Int?
     /// Primera vez que aparece en MI Circle (para «4 new»).
     var first_time: Bool?
+    /// Solo lo reciben los admins (0039): pending · approved · declined.
+    var membership: String?
+    var applied_at: String?
     /// Actividad de un momento compartido HOY (0034): «SURF TODAY».
     var activity_today: String?
     /// Momento reciente (0036): 'unseen' (anillo de color) · 'seen' · nil.
@@ -596,6 +622,16 @@ struct ActivitySignals: Codable, Hashable {
     let week_streak: Int?
 }
 
+struct Membership: Decodable, Equatable {
+    let status: String            // pending · approved · declined · none
+    var is_admin: Bool? = nil
+    var pending_count: Int? = nil
+    var invite_code: String? = nil
+    var invites_left: Int? = nil
+    var applied_at: String? = nil
+    var isApproved: Bool { status == "approved" }
+}
+
 struct ArrivalState: Decodable {
     let in_bali: Bool
     let arrival_date: String?
@@ -605,8 +641,9 @@ struct ArrivalState: Decodable {
 struct CircleDeck: Decodable {
     let day: String
     let position: Int
-    /// Aún no estás en Bali: el Circle se abre al llegar (0029).
+    /// Aún no estás en Bali, o aún no te han admitido: el Circle no se abre (0029/0039).
     var locked: Bool? = nil
+    var reason: String? = nil     // pending · declined · not_in_bali
     var arrival_date: String? = nil
     /// Mi barrio declarado (cabecera «YOUR CIRCLE · Canggu»).
     let area: String?

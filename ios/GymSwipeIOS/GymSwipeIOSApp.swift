@@ -86,13 +86,13 @@ struct GymSwipeIOSApp: App {
                 if store.account == nil { store.hydrateAccountFromBackend() }
                 Task { await Backend.shared.touchPresence() }
                 PresenceService.shared.start()   // online + distancia de Your Circle (solo con la app abierta)
-                store.loadConversations()
+                store.loadConversations(); store.loadMembership()
             }
             .onChange(of: scenePhase) { phase in
                 if phase == .active { withAnimation(.easeOut(duration: 0.25)) { covered = false } }
                 else { covered = true }
                 if phase == .active {
-                    store.loadConversations()
+                    store.loadConversations(); store.loadMembership()
                     if store.auth != nil { PresenceService.shared.start() }
                 } else if phase == .background {
                     PresenceService.shared.stop()   // deja de salir online al momento

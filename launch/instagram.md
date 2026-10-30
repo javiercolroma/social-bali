@@ -1,5 +1,8 @@
 # Instagram de la marca (sin cara)
 
+> ⚠️ **Superado el 2026-10-28.** La marca y el contenido viven ahora en el sistema creativo `~/Downloads/balicircle-instagram/` (empezar por su `CLAUDE.md`). Este archivo se conserva como histórico.
+
+
 Handle: `@balicircle` (si está cogido: `@balicircle.app`, `@bali.circle`)
 Nombre visible: Bali Circle
 Categoría: App page
@@ -15,7 +18,50 @@ La misma de la app: marfil, negro, arena, titulares en serifa. Fotos de Bali rea
 
 ---
 
+## Plan de contenido v2 (definido por Javier, 2026-10-26)
+
+**Frase de marca:** *Meet people. Do things. See what happens.* Deja caer la parte romántica sin decir "dating".
+**Regla:** 70 % vender la vida y la comunidad que representa Bali Circle, 30 % explicar funcionalidades.
+**Fijados arriba del perfil:** post 1 (problema), post 2 (producto), post 8 (exclusividad y CTA). El post 9 es la alternativa de marca si se quiere un fijado sin texto largo.
+
+Imágenes finales (1080×1350, JPG calidad 95, render a 2x) en `~/Downloads/balicircle-instagram/v3/`, nombradas `postNN-slide.jpg`. La carpeta v2 es la versión anterior. Diseño: logo + "BALI CIRCLE" arriba en cada slide, logo grande abajo a la derecha en la última, sin contador (Instagram ya lo pone).
+Fotos en `~/Downloads/balicircle-instagram/fotos/`: 12 elegidas por Javier (surf, playa, costa) y 12 de Unsplash elegidas por Claude (gym, café, run, pádel, yoga, grupos). Todas con licencia Unsplash; créditos en CREDITOS.txt. Para cambiar una foto: sustituye el archivo con el mismo nombre (`post03-4.jpg`…) y Claude vuelve a renderizar.
+
+| # | Tema | Slides | Notas |
+|---|---|---|---|
+| 1 | Manifiesto: "You came to Bali for more than the place." | 5 | Fijado. Termina en "Coming soon" |
+| 2 | Qué es: "Not a dating app. Not a fitness app." | 5 | Fijado |
+| 3 | Dating sin decirlo: "Maybe you meet for a workout…" | 5 | El más lifestyle |
+| 4 | Exclusividad: "Bali Circle isn't open to everyone." | 5 | Ver nota sobre "limited" |
+| 5 | Discovery: "Who's around today?" | 5 | Primera vez que sale la rejilla de la app (personas ilustrativas, iniciales) |
+| 6 | Deporte como excusa: "Don't just match. Do something." | 5 | |
+| 7 | Moments: "Profiles tell you who someone is…" | 5 | Círculos + slides tipo historia |
+| 8 | Primeros 50: "We're looking for the first 50." | 5 | Fijado. CTA "Apply to join" |
+| 9 | Marca: "Meet people. Do things. See what happens." | 1 | Imagen única |
+| 10 | "Bali is full of people." | 4 | Mensaje más importante |
+
+**Pendiente de decidir (Javier):** "Apply to join", "Membership is limited" y "isn't open to everyone" prometen un proceso de solicitud. Hoy la app es abierta (solo exige estar en Bali, o un código). Opciones: (a) formulario de solicitud en la landing que lleve a una lista de espera y se aprueba a mano; (b) usar los códigos de acceso que ya existen en Supabase (`access_codes`) y repartirlos a quien escriba; (c) suavizar el texto a "Join the first 50". Sin una de las tres, el post genera expectativas que la app no cumple.
+
+### Captions sugeridas (cortas, en la voz de la marca)
+1. You came to Bali for more than the place. Bali Circle is a private social circle for active people. Canggu · Uluwatu. Coming soon.
+2. Not a dating app. Not a fitness app. A circle of people who surf, train, run and go out, and want to do it together.
+3. Meet people. Do things. See what happens.
+4. Small community first, big app later. If you actually live the lifestyle, you'll fit in.
+5. Not 500 profiles. A small selection of people around you, every day.
+6. Meeting people is easier when there's something to do. Surf, gym, a Sunday run, coffee after.
+7. Profiles tell you who someone is. Moments tell you what they're doing today.
+8. We're looking for the first 50 in Canggu and Uluwatu. Not followers. People.
+9. Meet people. Do things. See what happens.
+10. Bali is full of people. That doesn't mean you've found your people. We're working on that.
+
+Hashtags (máx. 5, rotar): #canggu #uluwatu #balisurf #baliexpats #balidigitalnomad · Geotag: Canggu o Uluwatu según el post.
+
+<details><summary>Versión anterior (v1, descartada por Javier el 26 oct)</summary>
+
 ## Los 6 primeros posts (publicar días 2–5)
+
+Imágenes listas (1080×1350) en `~/Downloads/balicircle-instagram/`: post1-1, post1-2, post1-3 (carrusel), post2, post3, post4, post5, post6. Generadas el 2026-10-26 con HTML; fuente en el scratchpad de la sesión.
+Notas: las personas de las tarjetas son ilustrativas (iniciales, sin caras). post1-3 dice "Free on the App Store" y post6 "Now live": publícalos cuando Apple apruebe la app. El post 4 era un vídeo de pantalla; esta es su versión estática hasta que grabes la pantalla real.
 
 **1. Presentación (carrusel, 3 slides)**
 Slide 1: Foto de Batu Bolong al amanecer. Texto: "You just landed in Canggu. You know nobody."
@@ -40,10 +86,12 @@ Fondo arena, texto grande: "15 people a day. That's it."
 Caption: We don't want you scrolling. 15 people a day, picked by distance, sports and who's new in town. Tomorrow, 15 more. Spend the time surfing instead.
 
 **6. Llamada a los fundadores (imagen)**
-Texto: "Looking for the first 50 members in Canggu."
-Caption: Bali Circle is live and tiny on purpose. If you're in Canggu and you surf, train or run, install it, set up your profile, and tell us what's missing. The first 50 people shape everything. Link in bio.
+Texto: "Looking for the first 50." Surfers, lifters, runners and yogis in Canggu and Uluwatu.
+Caption: Bali Circle is live and tiny on purpose. If you're in Canggu or Uluwatu and you surf, train or run, install it, set up your profile, and tell us what's missing. The first 50 people shape everything. Link in bio.
 
 ---
+
+</details>
 
 ## Semana 2 en adelante: 10 ideas de reels sin cara (1 al día)
 1. POV: "You just landed in Canggu" → pantalla de la app → "You have a crew by tomorrow." Plano de la carretera a Canggu.

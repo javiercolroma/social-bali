@@ -16,6 +16,15 @@ Las instalaciones por canal se ven en App Analytics con 24–48 h de retraso. Ap
 
 ## Los tres números de cada semana
 
+**Atajo (aplicado el 2026-10-26, migración 0038):** en el SQL editor de Supabase ejecuta solo esto y te da la tabla semana a semana, sin perfiles semilla:
+
+```sql
+select * from analytics.launch_weekly;
+```
+
+Las consultas de abajo son el detalle de lo que calcula esa vista.
+
+
 Guarda estas consultas en Supabase (SQL editor → "Lanzamiento"). Ajusta nombres de columna si cambian.
 
 ```sql

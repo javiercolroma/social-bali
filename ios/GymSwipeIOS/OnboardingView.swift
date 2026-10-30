@@ -505,9 +505,12 @@ struct OnboardingView: View {
                 .frame(width: 116, height: 116).clipShape(Circle())
                 .scaleEffect(avatarIn ? 1 : 0.4).opacity(avatarIn ? 1 : 0)
             }
-            Question(firstName.isEmpty ? "You're all set!" : "You're all set, \(firstName)!")
+            Question(firstName.isEmpty ? "Your application is ready" : "Your application is ready, \(firstName)")
+            Text("We review every profile by hand — usually within 24 hours. You'll see your circle as soon as you're in.")
+                .font(.system(size: 15)).foregroundColor(Brand.muted).multilineTextAlignment(.center)
+                .fixedSize(horizontal: false, vertical: true)
         } actions: {
-            primary("Enter Bali Circle") { commit() }
+            primary("Send application") { commit() }
         }
     }
 

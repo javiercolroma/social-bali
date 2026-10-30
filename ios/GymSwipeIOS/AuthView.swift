@@ -32,7 +32,7 @@ struct AuthView: View {
                 Spacer()
 
                 Button { FX.tap(); providerMode = .signup } label: {
-                    Text("Join Bali Circle").frame(maxWidth: .infinity)
+                    Text("Apply to join").frame(maxWidth: .infinity)
                 }.buttonStyle(PrimaryButtonStyle())
 
                 Button { FX.tap(); providerMode = .login } label: {
@@ -68,9 +68,9 @@ struct AuthProviderSheet: View {
         NavigationStack {
             VStack(spacing: 14) {
                 VStack(spacing: 4) {
-                    Text(creating ? "Join Bali Circle" : "Welcome back")
+                    Text(creating ? "Apply to join" : "Welcome back")
                         .font(.display(26)).foregroundColor(Brand.ink)
-                    Text(creating ? "Create your account in seconds." : "Good to see you again.")
+                    Text(creating ? "Every profile is reviewed by hand. It takes a minute to apply." : "Good to see you again.")
                         .font(.footnote).foregroundColor(Brand.muted)
                 }.padding(.top, 26)
 
