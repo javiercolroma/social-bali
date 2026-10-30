@@ -162,7 +162,9 @@ Leyenda: [x] hecho · [ ] pendiente · [~] en curso · ⛔ bloqueado. Entre par�
 ---
 
 ### Producto
-- [~] Puerta de entrada (decisión de Javier, 30 oct): solicitud → aprobación manual por el admin desde la app → dentro; códigos de invitación personales (3 usos) y códigos `APPLEREVIEW`/`FOUNDER`. Va en la 1.1 (la 1.0 está en revisión desde el 25 oct); el servidor lleva el interruptor `require_approval`, apagado hasta que la 1.1 esté en la tienda (Claude) — 30 oct
+- [x] Puerta de entrada (decisión de Javier, 30 oct): solicitud → aprobación manual por el admin desde la app (Profile → Applications) → dentro; código personal de invitación `BALI-XXXX` (3 usos, Profile → Invite a friend) y códigos `APPLEREVIEW`/`FOUNDER`. Hecho en servidor (migración 0039, aplicada) y app (1.1, build 22 subida a TestFlight) (Claude) — 30 oct
+- ⛔ Encender la aprobación manual: `backend/run-sql.sh tmwgcvnibyvxedpqjqkr backend/release/enable_approval.sql` — SOLO cuando la 1.1 esté en la App Store (la 1.0 no tiene la pantalla de solicitud). Mientras, todo el que se registra entra directamente, como hasta ahora
+- ⛔ Versión 1.1 en App Store Connect: Apple no deja crearla mientras la 1.0 esté «Waiting for Review» (desde el 25 oct). Al resolverse la 1.0: crear 1.1, enlazar build 22, actualizar notas del revisor (código `APPLEREVIEW` en la pantalla «You're on the list») y enviar (Claude)
 
 ---
 

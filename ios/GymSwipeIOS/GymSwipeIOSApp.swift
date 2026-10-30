@@ -68,6 +68,13 @@ struct GymSwipeIOSApp: App {
             .task {
                 var justSignedIn = false
                 #if DEBUG
+                // Vista previa sin servidor de la puerta de entrada: BALI_DEBUG_MEMBERSHIP=pending|declined
+                if let st = ProcessInfo.processInfo.environment["BALI_DEBUG_MEMBERSHIP"], !st.isEmpty {
+                    if store.auth == nil { store.auth = Auth(provider: "debug", userId: "debug", email: nil, name: "Mia") }
+                    if store.account == nil { store.account = Account(name: "Mia", handle: "debug") }
+                    store.membership = Membership(status: st)
+                    return
+                }
                 // Simulador: BALI_DEBUG_EMAIL / BALI_DEBUG_PASSWORD abren sesión sin Apple.
                 let env = ProcessInfo.processInfo.environment
                 if store.auth == nil, let e = env["BALI_DEBUG_EMAIL"], let p = env["BALI_DEBUG_PASSWORD"] {
